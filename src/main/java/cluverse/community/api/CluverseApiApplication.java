@@ -1,4 +1,4 @@
-package com.cluverse.cluverse_api;
+package cluverse.community.api;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

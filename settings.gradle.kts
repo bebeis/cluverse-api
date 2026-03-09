@@ -1,1 +1,1 @@
-rootProject.name = "cluverse-api"
+rootProject.name = "cluverse"
