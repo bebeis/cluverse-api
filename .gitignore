@@ -229,6 +229,9 @@ crash.*.log
 # to change depending on the environment.
 *.tfvars
 *.tfvars.json
+.terraform.lock.hcl
+.terraform/
+.env
 
 # Ignore override files as they are usually used to override resources locally and so
 # are not checked in
@@ -265,5 +268,10 @@ terraform.rc
 # Ignore all local history of files
 .history
 .ionide
+
+## ssh
+*.pem
+cluverse-key
+cluverse-key.*
 
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij,macos,visualstudiocode,terraform
