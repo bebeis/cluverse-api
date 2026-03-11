@@ -24,9 +24,86 @@ Cluverse API 서버의 REST API 문서입니다.
 | `400 Bad Request`
 | 잘못된 요청
 
+| `401 Unauthorized`
+| 인증 실패
+
 | `404 Not Found`
 | 리소스를 찾을 수 없음
 
 | `500 Internal Server Error`
 | 서버 내부 오류
 |===
+
+== 인증 API
+
+=== 이메일 로그인
+
+==== 요청
+
+include::{snippets}/auth/login/http-request.adoc[]
+include::{snippets}/auth/login/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/auth/login/http-response.adoc[]
+include::{snippets}/auth/login/response-fields.adoc[]
+
+=== 이메일 로그인 실패 - 잘못된 자격증명
+
+==== 요청
+
+include::{snippets}/auth/login-fail/http-request.adoc[]
+include::{snippets}/auth/login-fail/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/auth/login-fail/http-response.adoc[]
+include::{snippets}/auth/login-fail/response-fields.adoc[]
+
+=== 이메일 로그인 실패 - 유효성 검사
+
+==== 요청
+
+include::{snippets}/auth/login-validation-fail/http-request.adoc[]
+include::{snippets}/auth/login-validation-fail/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/auth/login-validation-fail/http-response.adoc[]
+include::{snippets}/auth/login-validation-fail/response-fields.adoc[]
+
+=== 로그아웃
+
+==== 요청
+
+include::{snippets}/auth/logout/http-request.adoc[]
+
+==== 응답
+
+include::{snippets}/auth/logout/http-response.adoc[]
+include::{snippets}/auth/logout/response-fields.adoc[]
+
+== OAuth2 API
+
+=== 지원하지 않는 provider 인증 실패
+
+==== 요청
+
+include::{snippets}/oauth2/authorize-fail/http-request.adoc[]
+include::{snippets}/oauth2/authorize-fail/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/oauth2/authorize-fail/http-response.adoc[]
+include::{snippets}/oauth2/authorize-fail/response-fields.adoc[]
+
+=== 카카오 콜백
+
+==== 요청
+
+include::{snippets}/oauth2/callback/http-request.adoc[]
+include::{snippets}/oauth2/callback/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/oauth2/callback/http-response.adoc[]
