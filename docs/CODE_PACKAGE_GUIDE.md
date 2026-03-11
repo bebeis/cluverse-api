@@ -31,6 +31,10 @@
 - 다른 애그리거트에 있는 엔티티는 연관관계 매핑 X (id로 참조)
 - 연관관계 매핑이 필요한 경우, 양방향 매핑보다는 단방향 매핑을 선호한다.
     - Aggregate Root에 종속적인 관계를 제외하면 양방향 매핑은 지양한다. (예시: Order - OrderItem)
+- 엔티티 매핑 시 fetch 전략은 기본적으로 LAZY로 설정한다. (예시: @ManyToOne(fetch = FetchType.LAZY))
+    - N+1 문제를 해결하기 위해서는 fetch join을 활용하여 조회하도록 한다. (예시: OrderRepository에서 Order과 OrderItem을 함께 조회할 때 fetch join을 활용한다.)
+- NOT NULL 제약 조건, 유니크 제약 조건 등 구체적인 제약조건은 DB 스키마에서만 관리하도록 한다.
+    - ddl-auto: none으로 운영한다.
 
 ## 5. 도메인 형 패키지 구조 간 격벽
 

@@ -20,6 +20,7 @@ public class MemberStatusHistory extends BaseTimeEntity {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    // SCD Type 3으로 저장
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MemberStatus previousStatus;
@@ -38,7 +39,7 @@ public class MemberStatusHistory extends BaseTimeEntity {
     private Long changedBy;
 
     private MemberStatusHistory(Member member, MemberStatus previousStatus, MemberStatus newStatus,
-                                 String changeType, String changeReason, Long changedBy) {
+                                String changeType, String changeReason, Long changedBy) {
         this.member = member;
         this.previousStatus = previousStatus;
         this.newStatus = newStatus;
@@ -48,7 +49,7 @@ public class MemberStatusHistory extends BaseTimeEntity {
     }
 
     public static MemberStatusHistory of(Member member, MemberStatus previousStatus, MemberStatus newStatus,
-                                          String changeType, String changeReason, Long changedBy) {
+                                         String changeType, String changeReason, Long changedBy) {
         return new MemberStatusHistory(member, previousStatus, newStatus, changeType, changeReason, changedBy);
     }
 }
