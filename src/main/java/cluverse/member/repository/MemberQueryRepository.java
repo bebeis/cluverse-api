@@ -1,15 +1,16 @@
 package cluverse.member.repository;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import cluverse.member.domain.Member;
 import cluverse.member.domain.OAuthProvider;
-import cluverse.member.domain.QMember;
-import cluverse.member.domain.QMemberAuth;
-import cluverse.member.domain.QSocialAccount;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+
+import static cluverse.member.domain.QMember.member;
+import static cluverse.member.domain.QMemberAuth.memberAuth;
+import static cluverse.member.domain.QSocialAccount.socialAccount;
 
 @Repository
 @RequiredArgsConstructor
@@ -18,9 +19,6 @@ public class MemberQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     public Optional<Member> findByEmail(String email) {
-        QMember member = QMember.member;
-        QMemberAuth memberAuth = QMemberAuth.memberAuth;
-
         return Optional.ofNullable(
                 queryFactory.selectFrom(member)
                         .join(member.memberAuth, memberAuth).fetchJoin()
@@ -30,9 +28,6 @@ public class MemberQueryRepository {
     }
 
     public Optional<Member> findBySocialAccount(OAuthProvider provider, String providerUserId) {
-        QMember member = QMember.member;
-        QSocialAccount socialAccount = QSocialAccount.socialAccount;
-
         return Optional.ofNullable(
                 queryFactory.selectFrom(member)
                         .join(member.socialAccounts, socialAccount).fetchJoin()
