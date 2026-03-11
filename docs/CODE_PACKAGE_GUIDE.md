@@ -11,19 +11,26 @@
 
 그런데 두 개가 같은데 따로 만들기엔 귀찮으니까 일단 서비스 계층의 DTO로 사용가능하다면 하나만 만든다.
 
-## 2. DTO 네이밍
+## 2. DTO 네이밍 및 패키지 구조
 
 - Request : [도메인][기능][Request]
 - Response : [도메인][기능][Response]
     - 범용적으로 사용되는 조회 쿼리 시  [도메인][Response]로 네이밍 가능하다.
 
-## 3. DTO 패키지 구조
+**패키지**
 
 - controller/request
 - controller/response
 - service/request
 - service/response
   물론 DTO가 존재하지 않는 경우 패키지 자체를 생성하지 않아도 된다.
+
+## 3. DTO 검증
+
+- 값에 대한 검증은 도메인 내부가 아닌 DTO에서 처리하도록 한다. (예시: OrderRequest DTO에서 주문 수량이 0보다 큰지 검증한다.)
+    - ex. 단순히 길이가 0보다 큰지 검증하는 경우, @NotEmpty 어노테이션을 활용하여 검증한다.
+- 그 외의 검증은 서비스 계층이나 도메인 모델 내부에서 처리하도록 한다. (예시: OrderService에서 주문 수량이 재고보다 많은지 검증한다.)
+- DTO 검증은 Spring Validation을 활용하여 처리한다. (예시: @Valid 어노테이션을 활용하여 DTO 검증을 처리한다.)
 
 ## 4. 연관관계 매핑
 
@@ -98,3 +105,4 @@
     - Tell, Don't Ask 원칙을 지키도록 한다. (예시: Order 객체의 상태를 변경할 때, Order 객체에 changeStatus() 메서드를 호출하여 상태를 변경하도록 한다.)
 - Repository에서 조회해오는 로직이 재활용가능하고 복잡한 경우, Service와 Repository 사이에 ImplementLayer(XXXReader, XXXWriter 등)를 만들어서 해당 로직을
   구현하도록 한다. (예시: OrderReader 인터페이스를 만들어서 OrderRepository에서 조회해오는 로직을 구현하도록 한다.)
+- JpaRepository를 상속받는 인터페이스의 쿼리 메서드 이름이 너무 길어지는 경우, querydsl을 활용하여 쿼리를 작성하도록 한다.
