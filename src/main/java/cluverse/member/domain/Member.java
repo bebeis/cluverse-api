@@ -17,6 +17,8 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseTimeEntity {
 
+    private static final long MIN_PRIMARY_MAJOR_COUNT = 1L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_id")
@@ -58,8 +60,13 @@ public class Member extends BaseTimeEntity {
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberMajor> majors = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MemberInterest> interests = new ArrayList<>();
+    @ElementCollection
+    @CollectionTable(
+            name = "member_interests",
+            joinColumns = @JoinColumn(name = "member_id")
+    )
+    @Column(name = "interest_id", nullable = false)
+    private List<Long> interests = new ArrayList<>();
 
     private Member(String nickname, Long universityId) {
         this.nickname = nickname;
@@ -102,7 +109,7 @@ public class Member extends BaseTimeEntity {
 
         if (target.getMajorType() == MajorType.PRIMARY) {
             long primaryCount = majors.stream().filter(m -> m.getMajorType() == MajorType.PRIMARY).count();
-            if (primaryCount <= 1) {
+            if (primaryCount <= MIN_PRIMARY_MAJOR_COUNT) {
                 throw new BadRequestException(MemberExceptionMessage.PRIMARY_MAJOR_REQUIRED.getMessage());
             }
         }
@@ -110,16 +117,16 @@ public class Member extends BaseTimeEntity {
     }
 
     public void addInterest(Long interestId) {
-        boolean alreadyExists = interests.stream().anyMatch(i -> i.getInterestId().equals(interestId));
+        boolean alreadyExists = interests.stream().anyMatch(interest -> interest.equals(interestId));
         if (alreadyExists) {
             throw new BadRequestException(MemberExceptionMessage.INTEREST_ALREADY_REGISTERED.getMessage());
         }
-        interests.add(MemberInterest.of(this, interestId));
+        interests.add(interestId);
     }
 
     public void removeInterest(Long interestId) {
-        MemberInterest target = interests.stream()
-                .filter(i -> i.getInterestId().equals(interestId))
+        Long target = interests.stream()
+                .filter(interest -> interest.equals(interestId))
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException(MemberExceptionMessage.INTEREST_NOT_FOUND.getMessage()));
         interests.remove(target);

@@ -111,7 +111,8 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public List<MemberInterestResponse> getInterests(Long memberId) {
-        return memberQueryRepository.findInterestsByMemberId(memberId).stream()
+        Member member = findMemberOrThrow(memberId);
+        return member.getInterests().stream()
                 .map(MemberInterestResponse::from)
                 .toList();
     }
@@ -120,11 +121,7 @@ public class MemberService {
         validateInterestExists(request.interestId());
         Member member = findMemberOrThrow(memberId);
         member.addInterest(request.interestId());
-        MemberInterest added = member.getInterests().stream()
-                .filter(i -> i.getInterestId().equals(request.interestId()))
-                .findFirst()
-                .orElseThrow();
-        return MemberInterestResponse.from(added);
+        return MemberInterestResponse.from(request.interestId());
     }
 
     public void removeInterest(Long memberId, Long interestId) {

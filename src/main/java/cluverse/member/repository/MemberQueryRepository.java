@@ -1,7 +1,6 @@
 package cluverse.member.repository;
 
 import cluverse.member.domain.Member;
-import cluverse.member.domain.MemberInterest;
 import cluverse.member.domain.MemberMajor;
 import cluverse.member.domain.OAuthProvider;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -15,7 +14,6 @@ import java.util.Optional;
 import static cluverse.member.domain.QBlock.block;
 import static cluverse.member.domain.QMember.member;
 import static cluverse.member.domain.QMemberAuth.memberAuth;
-import static cluverse.member.domain.QMemberInterest.memberInterest;
 import static cluverse.member.domain.QMemberMajor.memberMajor;
 import static cluverse.member.domain.QMemberProfile.memberProfile;
 import static cluverse.member.domain.QSocialAccount.socialAccount;
@@ -57,12 +55,6 @@ public class MemberQueryRepository {
     public List<MemberMajor> findMajorsByMemberId(Long memberId) {
         return queryFactory.selectFrom(memberMajor)
                 .where(memberMajor.member.id.eq(memberId))
-                .fetch();
-    }
-
-    public List<MemberInterest> findInterestsByMemberId(Long memberId) {
-        return queryFactory.selectFrom(memberInterest)
-                .where(memberInterest.member.id.eq(memberId))
                 .fetch();
     }
 
