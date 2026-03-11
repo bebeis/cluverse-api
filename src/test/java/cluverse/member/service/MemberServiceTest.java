@@ -11,6 +11,7 @@ import cluverse.member.repository.FollowRepository;
 import cluverse.member.repository.MemberQueryRepository;
 import cluverse.member.repository.MemberRepository;
 import cluverse.member.service.response.BlockedMemberResponse;
+import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberProfileResponse;
 import cluverse.university.domain.University;
 import cluverse.university.repository.UniversityRepository;
@@ -161,6 +162,41 @@ class MemberServiceTest {
         assertThat(responses.getFirst().memberId()).isEqualTo(2L);
         assertThat(responses.getFirst().nickname()).isEqualTo("blocked-user");
         assertThat(responses.getFirst().blockedAt()).isEqualTo(blockedAt);
+    }
+
+    @Test
+    void 관심사_목록을_조회할_수_있다() {
+        // given
+        Member member = createMember(1L, "luna", 10L);
+        member.addInterest(100L);
+        member.addInterest(200L);
+
+        when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
+
+        // when
+        List<MemberInterestResponse> responses = memberService.getInterests(1L);
+
+        // then
+        assertThat(responses).containsExactly(
+                new MemberInterestResponse(100L),
+                new MemberInterestResponse(200L)
+        );
+    }
+
+    @Test
+    void 관심사를_추가할_수_있다() {
+        // given
+        Member member = createMember(1L, "luna", 10L);
+
+        when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
+        when(interestRepository.existsById(300L)).thenReturn(true);
+
+        // when
+        MemberInterestResponse response = memberService.addInterest(1L, new cluverse.member.service.request.AddInterestRequest(300L));
+
+        // then
+        assertThat(response).isEqualTo(new MemberInterestResponse(300L));
+        assertThat(member.getInterests()).containsExactly(300L);
     }
 
     @Test
