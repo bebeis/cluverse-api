@@ -99,6 +99,7 @@
 - 변수 이름은 명확하게 작성한다. (예시: orderId, userId 등)
 - 상수는 대문자로 작성한다.
 - 상수는 final 키워드를 활용하여 변경 불가능하도록 한다. (예시: private static final String ORDER_STATUS_PENDING = "PENDING";)
+- 비즈니스 제약 조건(ex. 1개 이상)에서 숫자 1을 직접 사용하는 경우, 상수로 관리한다. (예시: private static final int MIN_ORDER_QUANTITY = 1;)
 - 메서드 모듈화를 신경쓴다. 예를 들면, if (xxx) throw new IllegalArgumentException("xxx"); 이런 경우, validateXxx() 메서드를 만들어서 해당 메서드에서
   검증하도록 한다. (예시: validateOrderStatus() 메서드에서 주문 상태를 검증하도록 한다.)
 - 도메인 모델 패턴에 따라, 도메인 로직을 최대한 도메인 모델 내부에 위치하도록 한다. (예시: Order 객체의 상태 변경 로직은 Order 객체 내부에 위치하도록 한다.)
@@ -106,3 +107,5 @@
 - Repository에서 조회해오는 로직이 재활용가능하고 복잡한 경우, Service와 Repository 사이에 ImplementLayer(XXXReader, XXXWriter 등)를 만들어서 해당 로직을
   구현하도록 한다. (예시: OrderReader 인터페이스를 만들어서 OrderRepository에서 조회해오는 로직을 구현하도록 한다.)
 - JpaRepository를 상속받는 인터페이스의 쿼리 메서드 이름이 너무 길어지는 경우, querydsl을 활용하여 쿼리를 작성하도록 한다.
+- Repository에서 DTO 프로젝션을 할 때, DTO는 Repository 패키지 내부에 위치하도록 한다. (예시: OrderRepository.OrderSummaryDTO)
+    - 레이어간 단방향 의존관계를 유지하기 위함이다. 
