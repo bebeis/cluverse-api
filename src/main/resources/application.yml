@@ -12,17 +12,18 @@ spring:
   jpa:
     defer-datasource-initialization: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: validate
     properties:
       hibernate:
-        format_sql: true
-        show_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+        show_sql: false
     open-in-view: false
 
 decorator:
   datasource:
     p6spy:
-      enable-logging: true # 운영 환경에선 끄기
+      enable-logging: false # 운영 환경에선 끄기
       multiline: true
       logging: slf4j
 
@@ -51,4 +52,5 @@ server:
 aws:
   s3:
     bucket: ${AWS_S3_BUCKET_NAME:cluverse-images}
+    endpoint: ""   # 기본값 없음 = AWS 실제 엔드포인트 사용 (운영)
   region: ap-northeast-2
