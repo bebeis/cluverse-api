@@ -24,6 +24,10 @@ public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolve
                                   NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
         HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
         HttpSession session = request.getSession(false);
+        return getLoginMember(session);
+    }
+
+    private LoginMember getLoginMember(HttpSession session) {
         if (session == null) {
             throw new UnauthorizedException();
         }

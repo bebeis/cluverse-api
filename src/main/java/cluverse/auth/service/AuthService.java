@@ -4,6 +4,7 @@ import cluverse.auth.client.OAuthUserInfo;
 import cluverse.common.auth.LoginMember;
 import cluverse.common.auth.LoginMemberArgumentResolver;
 import cluverse.common.config.PasswordConfig;
+import cluverse.common.exception.ExceptionMessage;
 import cluverse.common.exception.UnauthorizedException;
 import cluverse.member.domain.Member;
 import cluverse.member.domain.OAuthProvider;
@@ -36,12 +37,8 @@ public class AuthService {
     }
 
     public LoginMember loginWithEmail(String email, String rawPassword, String clientIp, HttpServletRequest request) {
-        Member member = memberQueryRepository.findByEmail(email)
-                .orElseThrow(() -> new UnauthorizedException("이메일 또는 비밀번호가 올바르지 않습니다."));
-
-        if (!passwordConfig.matches(rawPassword, member.getMemberAuth().getPasswordHash())) {
-            throw new UnauthorizedException("이메일 또는 비밀번호가 올바르지 않습니다.");
-        }
+        Member member = findMemberByEmailOrThrow(email);
+        validatePassword(rawPassword, member.getMemberAuth().getPasswordHash());
 
         member.updateLastLogin(clientIp);
 
@@ -54,6 +51,17 @@ public class AuthService {
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();
+        }
+    }
+
+    private Member findMemberByEmailOrThrow(String email) {
+        return memberQueryRepository.findByEmail(email)
+                .orElseThrow(() -> new UnauthorizedException(ExceptionMessage.INVALID_CREDENTIALS));
+    }
+
+    private void validatePassword(String rawPassword, String hashedPassword) {
+        if (!passwordConfig.matches(rawPassword, hashedPassword)) {
+            throw new UnauthorizedException(ExceptionMessage.INVALID_CREDENTIALS);
         }
     }
 
