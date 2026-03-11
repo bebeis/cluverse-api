@@ -19,6 +19,13 @@ spring:
         show_sql: true
     open-in-view: false
 
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true # 운영 환경에선 끄기
+      multiline: true
+      logging: slf4j
+
 logging:
   level:
     org.springframework: info
