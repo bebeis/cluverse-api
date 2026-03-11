@@ -10,7 +10,8 @@
                 "ssm:*",
                 "rds:*",
                 "iam:*",
-                "cloudwatch:*"
+                "cloudwatch:*",
+                "s3:*"
             ],
             "Resource": "*"
         },

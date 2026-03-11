@@ -666,6 +666,78 @@ output "ecr_repository_url" {
   value = aws_ecr_repository.app.repository_url
 }
 
+# ============================================================
+# S3 버킷 (이미지 업로드)
+# ============================================================
+resource "aws_s3_bucket" "images" {
+  bucket = var.s3_bucket_name
+
+  tags = {
+    Name = "cluverse-images"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "images" {
+  bucket = aws_s3_bucket.images.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "images" {
+  bucket = aws_s3_bucket.images.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "images" {
+  bucket = aws_s3_bucket.images.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# EC2 IAM 역할에 S3 접근 정책 추가
+resource "aws_iam_role_policy" "s3_policy" {
+  name = "s3-policy"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.images.arn,
+          "${aws_s3_bucket.images.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+output "s3_bucket_name" {
+  value       = aws_s3_bucket.images.bucket
+  description = "이미지 업로드용 S3 버킷 이름"
+}
+
+output "s3_bucket_arn" {
+  value       = aws_s3_bucket.images.arn
+  description = "이미지 업로드용 S3 버킷 ARN"
+}
+
 # 키 페어 생성
 resource "aws_key_pair" "cluverse" {
   key_name   = "cluverse-key"

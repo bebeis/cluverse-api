@@ -59,12 +59,12 @@ jobs:
                 "docker rm cluverse-app || true",
                 "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin '"$REGISTRY"'",
                 "docker pull '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'",
-                "docker run -d --name cluverse-app --restart unless-stopped -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL='"'"'jdbc:mysql://${{ secrets.RDS_ENDPOINT }}/cluverse?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true'"'"' -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'"
+                "docker run -d --name cluverse-app --restart unless-stopped -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL='"'"'jdbc:mysql://${{ secrets.RDS_ENDPOINT }}/cluverse?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true'"'"' -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} -e AWS_S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} -e AWS_REGION=ap-northeast-2 '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'"
               ]
             }' \
             --query 'Command.CommandId' \
             --output text)
-          
+
           echo "Waiting for API Instance 1 deployment..."
           aws ssm wait command-executed \
             --command-id "$COMMAND_ID" \
@@ -102,12 +102,12 @@ jobs:
                 "docker rm cluverse-app || true",
                 "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin '"$REGISTRY"'",
                 "docker pull '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'",
-                "docker run -d --name cluverse-app --restart unless-stopped -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL='"'"'jdbc:mysql://${{ secrets.RDS_ENDPOINT }}/cluverse?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true'"'"' -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'"
+                "docker run -d --name cluverse-app --restart unless-stopped -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL='"'"'jdbc:mysql://${{ secrets.RDS_ENDPOINT }}/cluverse?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true'"'"' -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} -e AWS_S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} -e AWS_REGION=ap-northeast-2 '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'"
               ]
             }' \
             --query 'Command.CommandId' \
             --output text)
-          
+
           echo "Waiting for API Instance 2 deployment..."
           aws ssm wait command-executed \
             --command-id "$COMMAND_ID" \

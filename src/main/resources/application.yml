@@ -47,3 +47,8 @@ server:
   servlet:
     session:
       timeout: 120s                # 세션 타임아웃
+
+aws:
+  s3:
+    bucket: ${AWS_S3_BUCKET_NAME:cluverse-images}
+  region: ap-northeast-2
