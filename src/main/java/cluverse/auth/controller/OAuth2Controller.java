@@ -46,14 +46,22 @@ public class OAuth2Controller {
                          @RequestParam String code,
                          HttpServletRequest request,
                          HttpServletResponse response) throws IOException {
-        OAuthProvider oAuthProvider = OAuthProvider.valueOf(provider.toUpperCase());
         OAuthUserInfo userInfo = switch (provider) {
             case "kakao" -> kakaoOAuth2Client.getUserInfo(code);
             case "google" -> googleOAuth2Client.getUserInfo(code);
             default -> throw new BadRequestException(AuthExceptionMessage.UNSUPPORTED_OAUTH_PROVIDER.getMessage());
         };
+        OAuthProvider oAuthProvider = resolveProvider(provider);
 
         authService.loginWithOAuth(userInfo, oAuthProvider, request.getRemoteAddr(), request);
         response.sendRedirect(frontendUrl);
+    }
+
+    private OAuthProvider resolveProvider(String provider) {
+        return switch (provider) {
+            case "kakao" -> OAuthProvider.KAKAO;
+            case "google" -> OAuthProvider.GOOGLE;
+            default -> throw new BadRequestException(AuthExceptionMessage.UNSUPPORTED_OAUTH_PROVIDER.getMessage());
+        };
     }
 }
