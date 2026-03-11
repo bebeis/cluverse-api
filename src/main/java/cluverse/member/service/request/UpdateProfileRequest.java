@@ -1,6 +1,9 @@
 package cluverse.member.service.request;
 
+import cluverse.member.domain.MemberProfileField;
 import jakarta.validation.constraints.Size;
+
+import java.util.List;
 
 public record UpdateProfileRequest(
         @Size(max = 500, message = "자기소개는 500자 이하여야 합니다.")
@@ -13,6 +16,6 @@ public record UpdateProfileRequest(
         String linkInstagram,
         String linkEtc,
         boolean isPublic,
-        String visibleFields
+        List<MemberProfileField> visibleFields
 ) {
 }

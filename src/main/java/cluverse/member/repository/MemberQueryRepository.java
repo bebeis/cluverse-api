@@ -8,14 +8,18 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static cluverse.member.domain.QBlock.block;
 import static cluverse.member.domain.QMember.member;
 import static cluverse.member.domain.QMemberAuth.memberAuth;
 import static cluverse.member.domain.QMemberInterest.memberInterest;
 import static cluverse.member.domain.QMemberMajor.memberMajor;
+import static cluverse.member.domain.QMemberProfile.memberProfile;
 import static cluverse.member.domain.QSocialAccount.socialAccount;
+import static cluverse.university.domain.QUniversity.university;
 
 @Repository
 @RequiredArgsConstructor
@@ -60,5 +64,47 @@ public class MemberQueryRepository {
         return queryFactory.selectFrom(memberInterest)
                 .where(memberInterest.member.id.eq(memberId))
                 .fetch();
+    }
+
+    public List<BlockedMemberDTO> findBlockedMembersByBlockerId(Long blockerId) {
+        return queryFactory
+                .select(
+                        block.blockedId,
+                        member.nickname,
+                        member.universityId,
+                        university.name,
+                        university.badgeImageUrl,
+                        memberProfile.profileImageUrl,
+                        block.createdAt
+                )
+                .from(block)
+                .join(member).on(block.blockedId.eq(member.id))
+                .leftJoin(memberProfile).on(memberProfile.memberId.eq(member.id))
+                .leftJoin(university).on(university.id.eq(member.universityId))
+                .where(block.blockerId.eq(blockerId))
+                .orderBy(block.createdAt.desc())
+                .fetch()
+                .stream()
+                .map(tuple -> new BlockedMemberDTO(
+                        tuple.get(block.blockedId),
+                        tuple.get(member.nickname),
+                        tuple.get(member.universityId),
+                        tuple.get(university.name),
+                        tuple.get(university.badgeImageUrl),
+                        tuple.get(memberProfile.profileImageUrl),
+                        tuple.get(block.createdAt)
+                ))
+                .toList();
+    }
+
+    public record BlockedMemberDTO(
+            Long memberId,
+            String nickname,
+            Long universityId,
+            String universityName,
+            String universityBadgeImageUrl,
+            String profileImageUrl,
+            LocalDateTime blockedAt
+    ) {
     }
 }

@@ -13,9 +13,13 @@ import cluverse.member.repository.BlockRepository;
 import cluverse.member.repository.FollowRepository;
 import cluverse.member.repository.MemberQueryRepository;
 import cluverse.member.repository.MemberRepository;
+import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberMajorResponse;
 import cluverse.member.service.response.MemberProfileResponse;
+import cluverse.member.service.response.MemberProfileSummaryResponse;
+import cluverse.university.domain.University;
+import cluverse.university.repository.UniversityRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,11 +37,22 @@ public class MemberService {
     private final BlockRepository blockRepository;
     private final MajorRepository majorRepository;
     private final InterestRepository interestRepository;
+    private final UniversityRepository universityRepository;
 
     @Transactional(readOnly = true)
-    public MemberProfileResponse getProfile(Long targetMemberId) {
+    public MemberProfileResponse getProfile(Long viewerId, Long targetMemberId) {
         Member member = findMemberOrThrow(targetMemberId);
-        return MemberProfileResponse.of(member, member.getProfile());
+        boolean sameMember = viewerId.equals(targetMemberId);
+        return MemberProfileResponse.of(
+                member,
+                member.getProfile(),
+                getUniversitySummary(member.getUniversityId()),
+                !sameMember && followRepository.existsByFollowerIdAndFollowingId(viewerId, targetMemberId),
+                !sameMember && blockRepository.existsByBlockerIdAndBlockedId(viewerId, targetMemberId),
+                followRepository.countByFollowingId(targetMemberId),
+                followRepository.countByFollowerId(targetMemberId),
+                sameMember
+        );
     }
 
     public MemberProfileResponse updateProfile(Long memberId, UpdateProfileRequest request) {
@@ -58,7 +73,16 @@ public class MemberService {
                 request.isPublic(),
                 request.visibleFields()
         );
-        return MemberProfileResponse.of(member, profile);
+        return MemberProfileResponse.of(
+                member,
+                profile,
+                getUniversitySummary(member.getUniversityId()),
+                false,
+                false,
+                followRepository.countByFollowingId(memberId),
+                followRepository.countByFollowerId(memberId),
+                true
+        );
     }
 
     @Transactional(readOnly = true)
@@ -145,6 +169,21 @@ public class MemberService {
         return blockRepository.existsByBlockerIdAndBlockedId(blockerId, blockedId);
     }
 
+    @Transactional(readOnly = true)
+    public List<BlockedMemberResponse> getBlockedMembers(Long blockerId) {
+        return memberQueryRepository.findBlockedMembersByBlockerId(blockerId).stream()
+                .map(result -> new BlockedMemberResponse(
+                        result.memberId(),
+                        result.nickname(),
+                        result.universityId(),
+                        result.universityName(),
+                        result.universityBadgeImageUrl(),
+                        result.profileImageUrl(),
+                        result.blockedAt()
+                ))
+                .toList();
+    }
+
     private Member findMemberOrThrow(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.MEMBER_NOT_FOUND.getMessage()));
@@ -184,5 +223,15 @@ public class MemberService {
         if (!interestRepository.existsById(interestId)) {
             throw new NotFoundException(MemberExceptionMessage.INTEREST_NOT_FOUND.getMessage());
         }
+    }
+
+    private MemberProfileSummaryResponse getUniversitySummary(Long universityId) {
+        University university = universityRepository.findById(universityId)
+                .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.UNIVERSITY_NOT_FOUND.getMessage()));
+        return new MemberProfileSummaryResponse(
+                university.getId(),
+                university.getName(),
+                university.getBadgeImageUrl()
+        );
     }
 }
