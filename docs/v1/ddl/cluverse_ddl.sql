@@ -215,13 +215,9 @@ CREATE TABLE interest_major_relation (
 
 -- 2.6 member_interests (회원-관심태그 매핑)
 CREATE TABLE member_interests (
-    member_interest_id BIGINT   NOT NULL AUTO_INCREMENT,
     member_id          BIGINT   NOT NULL                       COMMENT '→ member.member_id',
     interest_id        BIGINT   NOT NULL                       COMMENT '→ interests.interest_id',
-    created_at         DATETIME NOT NULL DEFAULT NOW(),
-    updated_at         DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
-    PRIMARY KEY (member_interest_id),
-    UNIQUE KEY uk_member_interest (member_id, interest_id)
+    PRIMARY KEY (member_id, interest_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='회원-관심태그 매핑';
 
