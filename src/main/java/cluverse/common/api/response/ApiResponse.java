@@ -25,8 +25,6 @@ public class ApiResponse<T> {
         return of(httpStatus, httpStatus.name(), data);
     }
 
-    // ── 2xx ──
-
     public static <T> ApiResponse<T> ok(T data) {
         return of(HttpStatus.OK, data);
     }
@@ -38,8 +36,6 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> created(T data) {
         return of(HttpStatus.CREATED, data);
     }
-
-    // ── 4xx ──
 
     public static <T> ApiResponse<T> badRequest(String message) {
         return of(HttpStatus.BAD_REQUEST, message, null);
@@ -56,8 +52,6 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> notFound(String message) {
         return of(HttpStatus.NOT_FOUND, message, null);
     }
-
-    // ── 5xx ──
 
     public static <T> ApiResponse<T> error(String message) {
         return of(HttpStatus.INTERNAL_SERVER_ERROR, message, null);
