@@ -1,6 +1,7 @@
 package cluverse.common.api;
 
 import cluverse.common.api.response.ApiResponse;
+import cluverse.common.exception.UnauthorizedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,5 +18,11 @@ public class ApiControllerAdvice {
                 e.getBindingResult().getAllErrors().getFirst().getDefaultMessage(),
                 null
         );
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiResponse<Object> unauthorizedException(UnauthorizedException e) {
+        return ApiResponse.unauthorized(e.getMessage());
     }
 }
