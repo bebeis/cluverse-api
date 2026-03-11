@@ -80,10 +80,11 @@
 
 - setter 메서드는 지양한다. (예시: Order 객체의 상태를 변경할 때, setStatus() 메서드 대신 changeStatus() 메서드를 활용한다.)
 - Lombok을 활용하여 getter, constructor 등을 자동으로 생성한다.
-- Lombok의 @Builder 어노테이션을 활용하여 빌더 패턴을 사용한다.
-- Lombok의 @Slf4j 어노테이션을 활용하여 로그를 남긴다.
+- 도메인 객체 생성자의 파라미터가 많을 경우 Lombok의 @Builder 어노테이션을 활용하여 빌더 패턴을 사용한다.
+- Lombok의 @Slf4j 어노테이션을 활용하여 로그를 남긴다. (필요한 경우)
 - 불필요한 주석은 지양한다. (예시: // getter, setter 등 Lombok으로 자동 생성되는 메서드에 대한 주석은 지양한다.)
 - 메서드 이름은 동사로 시작하도록 한다. (예시: createOrder(), getOrderById() 등)
+    - 정적 팩토리 메서드의 경우 of, from을 써도 돼. 기술적인 (ex.ApiResponse)의 경우 of, from이 더 잘 어울리고, 도메인을 담는 경우 동사형을 쓰면 좋겠지
 - 변수 이름은 명확하게 작성한다. (예시: orderId, userId 등)
 - 상수는 대문자로 작성한다.
 - 상수는 final 키워드를 활용하여 변경 불가능하도록 한다. (예시: private static final String ORDER_STATUS_PENDING = "PENDING";)
