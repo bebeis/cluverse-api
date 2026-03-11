@@ -59,7 +59,7 @@ jobs:
                 "docker rm cluverse-app || true",
                 "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin '"$REGISTRY"'",
                 "docker pull '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'",
-                "docker run -d --name cluverse-app --restart unless-stopped -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL='"'"'jdbc:mysql://${{ secrets.RDS_ENDPOINT }}/cluverse?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true'"'"' -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} -e AWS_S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} -e AWS_REGION=ap-northeast-2 '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'"
+                "docker run -d --name cluverse-app --restart unless-stopped -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL='"'"'jdbc:mysql://${{ secrets.RDS_ENDPOINT }}/cluverse?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true'"'"' -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} -e AWS_S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} -e AWS_REGION=ap-northeast-2 -e KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }} -e KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }} -e KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }} -e GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} -e GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} -e GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }} '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'"
               ]
             }' \
             --query 'Command.CommandId' \
@@ -102,7 +102,7 @@ jobs:
                 "docker rm cluverse-app || true",
                 "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin '"$REGISTRY"'",
                 "docker pull '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'",
-                "docker run -d --name cluverse-app --restart unless-stopped -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL='"'"'jdbc:mysql://${{ secrets.RDS_ENDPOINT }}/cluverse?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true'"'"' -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} -e AWS_S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} -e AWS_REGION=ap-northeast-2 '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'"
+                "docker run -d --name cluverse-app --restart unless-stopped -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL='"'"'jdbc:mysql://${{ secrets.RDS_ENDPOINT }}/cluverse?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true'"'"' -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} -e AWS_S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} -e AWS_REGION=ap-northeast-2 -e KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }} -e KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }} -e KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }} -e GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} -e GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} -e GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }} '"$REGISTRY"'/'"$ECR_REPOSITORY"':'"${{ github.sha }}"'"
               ]
             }' \
             --query 'Command.CommandId' \
