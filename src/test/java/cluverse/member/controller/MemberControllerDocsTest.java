@@ -7,6 +7,7 @@ import cluverse.member.domain.MemberRole;
 import cluverse.member.domain.VerificationStatus;
 import cluverse.member.service.MemberService;
 import cluverse.member.service.response.BlockedMemberResponse;
+import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberProfileResponse;
 import cluverse.member.service.response.MemberProfileSummaryResponse;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -141,6 +144,55 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data[].universityBadgeImageUrl").type(JsonFieldType.STRING).description("차단한 회원 학교 배지 이미지 URL"),
                                 fieldWithPath("data[].profileImageUrl").type(JsonFieldType.STRING).description("차단한 회원 프로필 이미지 URL"),
                                 fieldWithPath("data[].blockedAt").type(JsonFieldType.STRING).description("차단 시각")
+                        )
+                ));
+    }
+
+    @Test
+    void 내_관심사_목록_조회() throws Exception {
+        when(memberService.getInterests(1L)).thenReturn(List.of(
+                new MemberInterestResponse(100L),
+                new MemberInterestResponse(200L)
+        ));
+
+        mockMvc.perform(get("/api/v1/members/me/interests")
+                        .session(createSession()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].interestId").value(100))
+                .andDo(document("members/get-my-interests",
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data[].interestId").type(JsonFieldType.NUMBER).description("관심 태그 ID")
+                        )
+                ));
+    }
+
+    @Test
+    void 관심사_추가() throws Exception {
+        when(memberService.addInterest(1L, new cluverse.member.service.request.AddInterestRequest(300L)))
+                .thenReturn(new MemberInterestResponse(300L));
+
+        mockMvc.perform(post("/api/v1/members/me/interests")
+                        .session(createSession())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "interestId": 300
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.interestId").value(300))
+                .andDo(document("members/add-interest",
+                        requestFields(
+                                fieldWithPath("interestId").type(JsonFieldType.NUMBER).description("추가할 관심 태그 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.interestId").type(JsonFieldType.NUMBER).description("추가된 관심 태그 ID")
                         )
                 ));
     }
