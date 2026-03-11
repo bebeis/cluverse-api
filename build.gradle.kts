@@ -38,6 +38,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:2.0.0")
     implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
     compileOnly("org.projectlombok:lombok")
