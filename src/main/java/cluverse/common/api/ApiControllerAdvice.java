@@ -1,6 +1,7 @@
 package cluverse.common.api;
 
 import cluverse.common.api.response.ApiResponse;
+import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.UnauthorizedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
@@ -18,6 +19,12 @@ public class ApiControllerAdvice {
                 e.getBindingResult().getAllErrors().getFirst().getDefaultMessage(),
                 null
         );
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Object> badRequestException(BadRequestException e) {
+        return ApiResponse.badRequest(e.getMessage());
     }
 
     @ExceptionHandler(UnauthorizedException.class)
