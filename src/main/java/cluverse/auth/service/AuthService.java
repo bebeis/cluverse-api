@@ -4,7 +4,7 @@ import cluverse.auth.client.OAuthUserInfo;
 import cluverse.common.auth.LoginMember;
 import cluverse.common.auth.LoginMemberArgumentResolver;
 import cluverse.common.config.PasswordConfig;
-import cluverse.common.exception.ExceptionMessage;
+import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.common.exception.UnauthorizedException;
 import cluverse.member.domain.Member;
 import cluverse.member.domain.OAuthProvider;
@@ -56,12 +56,12 @@ public class AuthService {
 
     private Member findMemberByEmailOrThrow(String email) {
         return memberQueryRepository.findByEmail(email)
-                .orElseThrow(() -> new UnauthorizedException(ExceptionMessage.INVALID_CREDENTIALS));
+                .orElseThrow(() -> new UnauthorizedException(AuthExceptionMessage.INVALID_CREDENTIALS.getMessage()));
     }
 
     private void validatePassword(String rawPassword, String hashedPassword) {
         if (!passwordConfig.matches(rawPassword, hashedPassword)) {
-            throw new UnauthorizedException(ExceptionMessage.INVALID_CREDENTIALS);
+            throw new UnauthorizedException(AuthExceptionMessage.INVALID_CREDENTIALS.getMessage());
         }
     }
 

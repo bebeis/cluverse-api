@@ -1,5 +1,6 @@
 package cluverse.common.auth;
 
+import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.common.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -29,11 +30,11 @@ public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolve
 
     private LoginMember getLoginMember(HttpSession session) {
         if (session == null) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException(AuthExceptionMessage.UNAUTHORIZED.getMessage());
         }
         LoginMember loginMember = (LoginMember) session.getAttribute(SESSION_KEY);
         if (loginMember == null) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException(AuthExceptionMessage.UNAUTHORIZED.getMessage());
         }
         return loginMember;
     }

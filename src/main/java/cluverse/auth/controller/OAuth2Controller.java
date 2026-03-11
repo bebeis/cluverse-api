@@ -4,6 +4,8 @@ import cluverse.auth.client.GoogleOAuth2Client;
 import cluverse.auth.client.KakaoOAuth2Client;
 import cluverse.auth.client.OAuthUserInfo;
 import cluverse.auth.service.AuthService;
+import cluverse.auth.exception.AuthExceptionMessage;
+import cluverse.common.exception.BadRequestException;
 import cluverse.member.domain.OAuthProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +36,7 @@ public class OAuth2Controller {
         String authorizationUrl = switch (provider) {
             case "kakao" -> kakaoOAuth2Client.getAuthorizationUrl();
             case "google" -> googleOAuth2Client.getAuthorizationUrl();
-            default -> throw new IllegalArgumentException("지원하지 않는 provider: " + provider);
+            default -> throw new BadRequestException(AuthExceptionMessage.UNSUPPORTED_OAUTH_PROVIDER.getMessage());
         };
         response.sendRedirect(authorizationUrl);
     }
@@ -48,7 +50,7 @@ public class OAuth2Controller {
         OAuthUserInfo userInfo = switch (provider) {
             case "kakao" -> kakaoOAuth2Client.getUserInfo(code);
             case "google" -> googleOAuth2Client.getUserInfo(code);
-            default -> throw new IllegalArgumentException("지원하지 않는 provider: " + provider);
+            default -> throw new BadRequestException(AuthExceptionMessage.UNSUPPORTED_OAUTH_PROVIDER.getMessage());
         };
 
         authService.loginWithOAuth(userInfo, oAuthProvider, request.getRemoteAddr(), request);

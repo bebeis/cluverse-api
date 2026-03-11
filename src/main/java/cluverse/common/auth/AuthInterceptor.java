@@ -1,5 +1,6 @@
 package cluverse.common.auth;
 
+import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.common.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +18,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private void requireAuthenticated(HttpSession session) {
         if (session == null || session.getAttribute(LoginMemberArgumentResolver.SESSION_KEY) == null) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException(AuthExceptionMessage.UNAUTHORIZED.getMessage());
         }
     }
 }
