@@ -17,6 +17,10 @@ java {
 
 val asciidoctorExt: Configuration by configurations.creating
 
+asciidoctorj {
+    setVersion("3.0.0")
+}
+
 configurations {
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
