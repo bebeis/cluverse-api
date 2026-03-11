@@ -30,7 +30,7 @@ class MemberQueryRepositoryTest {
     @Test
     void 이메일로_회원_조회_성공() {
         // given
-        Member member = Member.create("testuser");
+        Member member = Member.create("testuser", 1L);
         memberRepository.save(member);
 
         MemberAuth memberAuth = MemberAuth.ofEmail(member, "test@example.com", "hashedpw");
@@ -59,7 +59,7 @@ class MemberQueryRepositoryTest {
     @Test
     void 소셜_계정으로_회원_조회_성공() {
         // given
-        Member member = Member.create("kakaouser");
+        Member member = Member.create("kakaouser", 1L);
         member.initMemberAuthBySocial("kakao@example.com");
         member.addSocialAccount(OAuthProvider.KAKAO, "kakao-provider-id");
         memberRepository.save(member);
@@ -86,7 +86,7 @@ class MemberQueryRepositoryTest {
     @Test
     void 다른_provider로_조회시_미조회() {
         // given
-        Member member = Member.create("googleuser");
+        Member member = Member.create("googleuser", 1L);
         member.initMemberAuthBySocial("google@example.com");
         member.addSocialAccount(OAuthProvider.GOOGLE, "google-provider-id");
         memberRepository.save(member);
