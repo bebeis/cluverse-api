@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -27,7 +28,7 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false, unique = true)
     private String nickname;
 
-    @Column(name = "university_id", nullable = false)
+    @Column(name = "university_id")
     private Long universityId;
 
     @Enumerated(EnumType.STRING)
@@ -74,7 +75,11 @@ public class Member extends BaseTimeEntity {
     }
 
     public static Member create(String nickname, Long universityId) {
-        return new Member(nickname, universityId);
+        return new Member(nickname, Objects.requireNonNull(universityId));
+    }
+
+    public static Member createSocialMember(String nickname) {
+        return new Member(nickname, null);
     }
 
     public void initMemberAuth(String email, String passwordHash) {
@@ -139,6 +144,14 @@ public class Member extends BaseTimeEntity {
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    public void assignUniversity(Long universityId) {
+        this.universityId = Objects.requireNonNull(universityId);
+    }
+
+    public boolean hasUniversity() {
+        return this.universityId != null;
     }
 
     public void requestVerification() {

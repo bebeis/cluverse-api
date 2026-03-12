@@ -1,0 +1,83 @@
+== 인증 API
+
+=== 이메일 로그인
+
+==== 요청
+
+include::{snippets}/auth/login/http-request.adoc[]
+include::{snippets}/auth/login/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/auth/login/http-response.adoc[]
+include::{snippets}/auth/login/response-fields.adoc[]
+
+=== 이메일 로그인 실패 - 잘못된 자격증명
+
+==== 요청
+
+include::{snippets}/auth/login-fail/http-request.adoc[]
+include::{snippets}/auth/login-fail/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/auth/login-fail/http-response.adoc[]
+include::{snippets}/auth/login-fail/response-fields.adoc[]
+
+=== 이메일 로그인 실패 - 유효성 검사
+
+==== 요청
+
+include::{snippets}/auth/login-validation-fail/http-request.adoc[]
+include::{snippets}/auth/login-validation-fail/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/auth/login-validation-fail/http-response.adoc[]
+include::{snippets}/auth/login-validation-fail/response-fields.adoc[]
+
+=== 로그아웃
+
+==== 요청
+
+include::{snippets}/auth/logout/http-request.adoc[]
+
+==== 응답
+
+include::{snippets}/auth/logout/http-response.adoc[]
+include::{snippets}/auth/logout/response-fields.adoc[]
+
+== OAuth2 API
+
+=== 소셜 로그인 기대 동작 흐름
+
+1. 클라이언트가 OAuth2 인증을 마치고 콜백을 호출하면 서버는 `provider + providerUserId`로 기존 연동 계정을 먼저 조회합니다.
+2. 이미 연동된 소셜 계정이 있으면 해당 `member`로 로그인합니다.
+3. 연동된 소셜 계정이 없고, 동일한 이메일을 사용하는 기존 회원이 있으면 신규 회원을 만들지 않고 그 `member`에 소셜 계정을 연결합니다.
+4. 동일한 이메일 회원도 없으면 신규 소셜 회원을 생성합니다.
+5. 신규 소셜 회원 생성 시 닉네임 후보가 기존 회원과 충돌하면 다른 suffix로 재시도합니다.
+6. 닉네임 충돌은 서버 내부에서 흡수하며, 단순 unique 충돌 때문에 소셜 가입이 실패하지 않아야 합니다.
+7. 하나의 `member`에는 여러 개의 `social_account`가 연결될 수 있습니다.
+
+=== 지원하지 않는 provider 인증 실패
+
+==== 요청
+
+include::{snippets}/oauth2/authorize-fail/http-request.adoc[]
+include::{snippets}/oauth2/authorize-fail/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/oauth2/authorize-fail/http-response.adoc[]
+include::{snippets}/oauth2/authorize-fail/response-fields.adoc[]
+
+=== 카카오 콜백
+
+==== 요청
+
+include::{snippets}/oauth2/callback/http-request.adoc[]
+include::{snippets}/oauth2/callback/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/oauth2/callback/http-response.adoc[]

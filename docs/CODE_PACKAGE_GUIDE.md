@@ -61,15 +61,20 @@
 - Controller에서 여러 Service를 호출해야 하는 경우, Facade를 도입하여 하나의 Service에서 여러 Service를 호출하도록 한다.
 - Facade 패턴을 활용하면 Controller의 복잡도를 낮출 수 있다.
 
-## 7. 도메인 서비스
+## 7. Implement Layer
 
-- 도메인 서비스는 도메인 로직이 여러 애그리거트에 걸쳐 있는 경우에 사용한다.
-- 도메인 서비스는 애그리거트에 종속적이지 않으며, 도메인 로직을 캡슐화한다.
-- 도메인 서비스는 stateless하게 구현한다.
-- 예시: 결제 로직이 Order와 Payment 애그리거트에 걸쳐 있는 경우, PaymentService에서 결제 로직을 처리하도록 한다.
-- 도메인 서비스는 애그리거트의 상태를 변경하지 않도록 한다. (예시: OrderService에서 Order의 상태를 변경하는 로직은 Order 애그리거트 내부에서 처리하도록 한다.)
-- 도메인 서비스는 애그리거트의 상태를 변경하는 경우, 해당 애그리거트의 메서드를 호출하여 상태를 변경하도록 한다. (예시: OrderService에서 Order의 상태를 변경하는 경우, Order 애그리거트의
-  changeStatus() 메서드를 호출하여 상태를 변경하도록 한다.)
+- Service 계층은, 비즈니스 로직의 흐름을 나타내야 한다.
+- 하지만 Service 계층에 Repository에서 조회해오는 로직이 들어가게 되면, Service 계층이 Data Access Layer의 기술적인 부분까지 알게 되는 문제가 생긴다.
+- 뿐만 아니라, 읽기 / 쓰기에 관한 로직이 섞이게 되면, Service 계층이 복잡해지는 문제가 생긴다. (예시: if (xxx) throw new IllegalArgumentException("xxx"); 같은
+  코드가 Service 계층에 존재하게 된다.)
+- 그래서 Service layer 하위에 Implement layer를 만들어 (ex. XXXReader, XXXWriter, XXXAdder, ...)
+  Repository에서 조회해오는 로직이나, 쓰는 로직, 더하는 로직 등을 구현하도록 한다.
+
+- 그렇다면 Service Layer는 Data Access Layer 기술을 자세히 알 필요가 없어지고, ImplementLayer가 상세 구현 로직을 담당하게 된다.
+  참고: https://geminikims.medium.com/%EC%A7%80%EC%86%8D-%EC%84%B1%EC%9E%A5-%EA%B0%80%EB%8A%A5%ED%95%9C-%EC%86%8C%ED%94%84%ED%8A%B8%EC%9B%A8%EC%96%B4%EB%A5%BC-%EB%A7%8C%EB%93%A4%EC%96%B4%EA%B0%80%EB%8A%94-%EB%B0%A9%EB%B2%95-97844c5dab63
+
+- 다른 도메인의 Implement Layer간 참조는 불가능하다. 반드시 Service 계층을 통해서 참조하도록 한다. (예시: OrderService에서 PaymentReader를 참조하는 경우,
+  OrderService에서 PaymentService를 참조하여 PaymentReader를 사용하도록 한다.)
 
 ## 8. 예외 처리
 
@@ -108,4 +113,16 @@
   구현하도록 한다. (예시: OrderReader 인터페이스를 만들어서 OrderRepository에서 조회해오는 로직을 구현하도록 한다.)
 - JpaRepository를 상속받는 인터페이스의 쿼리 메서드 이름이 너무 길어지는 경우, querydsl을 활용하여 쿼리를 작성하도록 한다.
 - Repository에서 DTO 프로젝션을 할 때, DTO는 Repository 패키지 내부에 위치하도록 한다. (예시: OrderRepository.OrderSummaryDTO)
-    - 레이어간 단방향 의존관계를 유지하기 위함이다. 
+    - 레이어간 단방향 의존관계를 유지하기 위함이다.
+
+-----------
+
+## 도메인 서비스 (Domain Service) - 보류함
+
+- 도메인 서비스는 도메인 로직이 여러 애그리거트에 걸쳐 있는 경우에 사용한다.
+- 도메인 서비스는 애그리거트에 종속적이지 않으며, 도메인 로직을 캡슐화한다.
+- 도메인 서비스는 stateless하게 구현한다.
+- 예시: 결제 로직이 Order와 Payment 애그리거트에 걸쳐 있는 경우, PaymentService에서 결제 로직을 처리하도록 한다.
+- 도메인 서비스는 애그리거트의 상태를 변경하지 않도록 한다. (예시: OrderService에서 Order의 상태를 변경하는 로직은 Order 애그리거트 내부에서 처리하도록 한다.)
+- 도메인 서비스는 애그리거트의 상태를 변경하는 경우, 해당 애그리거트의 메서드를 호출하여 상태를 변경하도록 한다. (예시: OrderService에서 Order의 상태를 변경하는 경우, Order 애그리거트의
+  changeStatus() 메서드를 호출하여 상태를 변경하도록 한다.)

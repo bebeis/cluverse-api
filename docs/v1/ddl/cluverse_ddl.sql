@@ -12,7 +12,7 @@
 CREATE TABLE member (
     member_id    BIGINT       NOT NULL AUTO_INCREMENT,
     nickname     VARCHAR(50)  NOT NULL,
-    university_id BIGINT      NOT NULL                          COMMENT '소속 학교 → university.university_id',
+    university_id BIGINT      NULL                              COMMENT '소속 학교 → university.university_id, 소셜 가입 직후에는 NULL 가능',
     status       VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE'         COMMENT 'ACTIVE / SUSPENDED / BANNED / DELETED',
     verification_status VARCHAR(20) NOT NULL DEFAULT 'NONE'     COMMENT 'NONE / PENDING / APPROVED / REJECTED',
     verification_rejected_reason VARCHAR(50) NULL               COMMENT '인증 거절 사유 (범주형 코드)',
