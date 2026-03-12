@@ -1,6 +1,7 @@
 package cluverse.auth.client;
 
 import cluverse.auth.properties.OAuth2Properties;
+import cluverse.member.domain.OAuthProvider;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -8,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class GoogleOAuth2Client {
+public class GoogleOAuth2Client implements OAuth2Client {
 
     private static final String AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
     private static final String TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -21,6 +22,17 @@ public class GoogleOAuth2Client {
         this.properties = properties.google();
     }
 
+    @Override
+    public String providerKey() {
+        return "google";
+    }
+
+    @Override
+    public OAuthProvider provider() {
+        return OAuthProvider.GOOGLE;
+    }
+
+    @Override
     public String getAuthorizationUrl() {
         return AUTH_URL
                 + "?client_id=" + properties.clientId()
@@ -29,6 +41,7 @@ public class GoogleOAuth2Client {
                 + "&scope=email profile";
     }
 
+    @Override
     public OAuthUserInfo getUserInfo(String code) {
         String accessToken = exchangeToken(code);
         return fetchUserInfo(accessToken);
