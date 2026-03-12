@@ -17,6 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,13 +48,26 @@ class AuthWriterTest {
     @Test
     void OAuth_로그인_신규_회원_자동_가입() {
         OAuthUserInfo userInfo = new OAuthUserInfo("new-provider-id", "new@example.com", "newuser");
-        when(memberRepository.existsByNickname("newuser")).thenReturn(false);
         when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Member result = authWriter.registerBySocial(userInfo, OAuthProvider.GOOGLE);
 
-        assertThat(result.getNickname()).isEqualTo("newuser");
+        assertThat(result.getNickname()).startsWith("newuser_");
+        assertThat(result.getNickname()).hasSizeLessThanOrEqualTo(50);
+        assertThat(result.getUniversityId()).isNull();
         assertThat(result.getMemberAuth().getEmail()).isEqualTo("new@example.com");
         assertThat(result.getSocialAccounts()).hasSize(1);
+        verify(memberRepository, never()).existsByNickname(any());
+    }
+
+    @Test
+    void OAuth_로그인_닉네임은_최대_길이를_초과하지_않는다() {
+        OAuthUserInfo userInfo = new OAuthUserInfo("provider-id", "new@example.com", "a".repeat(100));
+        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Member result = authWriter.registerBySocial(userInfo, OAuthProvider.GOOGLE);
+
+        assertThat(result.getNickname()).hasSizeLessThanOrEqualTo(50);
+        assertThat(result.getNickname()).matches("a{41}_[0-9a-f]{8}");
     }
 }

@@ -19,12 +19,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Locale;
 
 @Component
 @RequiredArgsConstructor
 @Transactional
 public class AuthWriter {
+
+    private static final int NICKNAME_MAX_LENGTH = 50;
+    private static final int SOCIAL_NICKNAME_SUFFIX_LENGTH = 8;
+    private static final String SOCIAL_NICKNAME_SEPARATOR = "_";
+    private static final String DEFAULT_SOCIAL_NICKNAME = "user";
 
     private final MemberRepository memberRepository;
     private final MemberQueryRepository memberQueryRepository;
@@ -53,8 +62,8 @@ public class AuthWriter {
     }
 
     public Member registerBySocial(OAuthUserInfo userInfo, OAuthProvider provider) {
-        String nickname = generateUniqueNickname(userInfo.nickname());
-        Member member = Member.create(nickname, 0L);
+        String nickname = generateSocialNickname(userInfo.nickname(), provider, userInfo.providerId());
+        Member member = Member.createSocialMember(nickname);
         member.initMemberAuthBySocial(userInfo.email());
         member.addSocialAccount(provider, userInfo.providerId());
 
@@ -95,12 +104,38 @@ public class AuthWriter {
         }
     }
 
-    private String generateUniqueNickname(String base) {
-        String nickname = base;
-        int suffix = 1;
-        while (memberRepository.existsByNickname(nickname)) {
-            nickname = base + suffix++;
+    private String generateSocialNickname(String base, OAuthProvider provider, String providerUserId) {
+        String normalizedBase = normalizeNicknameBase(base);
+        String suffix = createSocialNicknameSuffix(provider, providerUserId);
+        int maxBaseLength = NICKNAME_MAX_LENGTH - SOCIAL_NICKNAME_SEPARATOR.length() - suffix.length();
+        String truncatedBase = normalizedBase.length() > maxBaseLength
+                ? normalizedBase.substring(0, maxBaseLength)
+                : normalizedBase;
+        return truncatedBase + SOCIAL_NICKNAME_SEPARATOR + suffix;
+    }
+
+    private String normalizeNicknameBase(String base) {
+        if (base == null || base.isBlank()) {
+            return DEFAULT_SOCIAL_NICKNAME;
         }
-        return nickname;
+        return base.trim();
+    }
+
+    private String createSocialNicknameSuffix(OAuthProvider provider, String providerUserId) {
+        String hashSource = provider.name() + ":" + providerUserId;
+        byte[] digest = sha256(hashSource);
+        StringBuilder builder = new StringBuilder(SOCIAL_NICKNAME_SUFFIX_LENGTH);
+        for (int i = 0; builder.length() < SOCIAL_NICKNAME_SUFFIX_LENGTH && i < digest.length; i++) {
+            builder.append(String.format(Locale.ROOT, "%02x", digest[i]));
+        }
+        return builder.substring(0, SOCIAL_NICKNAME_SUFFIX_LENGTH);
+    }
+
+    private byte[] sha256(String value) {
+        try {
+            return MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm is unavailable.", e);
+        }
     }
 }

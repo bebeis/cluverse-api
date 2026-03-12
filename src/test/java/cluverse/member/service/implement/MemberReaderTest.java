@@ -1,5 +1,6 @@
 package cluverse.member.service.implement;
 
+import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.NotFoundException;
 import cluverse.member.domain.Member;
 import cluverse.member.domain.MemberProfile;
@@ -173,6 +174,18 @@ class MemberReaderTest {
         assertThatThrownBy(() -> memberReader.getProfile(1L, 1L))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage("존재하지 않는 학교입니다.");
+    }
+
+    @Test
+    void 소셜_회원은_학교가_없으면_프로필을_조회할_수_없다() {
+        Member member = Member.createSocialMember("social-user");
+        ReflectionTestUtils.setField(member, "id", 1L);
+
+        when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
+
+        assertThatThrownBy(() -> memberReader.getProfile(1L, 1L))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("학교 등록을 먼저 진행해주세요.");
     }
 
     private Member createMember(Long memberId, String nickname, Long universityId) {

@@ -1,5 +1,6 @@
 package cluverse.member.service.implement;
 
+import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.NotFoundException;
 import cluverse.member.domain.Member;
 import cluverse.member.exception.MemberExceptionMessage;
@@ -86,6 +87,9 @@ public class MemberReader {
     }
 
     public MemberProfileSummaryResponse readUniversitySummary(Long universityId) {
+        if (universityId == null) {
+            throw new BadRequestException(MemberExceptionMessage.UNIVERSITY_REGISTRATION_REQUIRED.getMessage());
+        }
         University university = universityRepository.findById(universityId)
                 .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.UNIVERSITY_NOT_FOUND.getMessage()));
         return new MemberProfileSummaryResponse(

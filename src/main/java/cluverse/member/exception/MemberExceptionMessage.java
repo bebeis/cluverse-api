@@ -9,6 +9,7 @@ public enum MemberExceptionMessage {
 
     MEMBER_NOT_FOUND("존재하지 않는 회원입니다."),
     UNIVERSITY_NOT_FOUND("존재하지 않는 학교입니다."),
+    UNIVERSITY_REGISTRATION_REQUIRED("학교 등록을 먼저 진행해주세요."),
     MAJOR_NOT_FOUND("존재하지 않는 학과입니다."),
     INTEREST_NOT_FOUND("존재하지 않는 관심 태그입니다."),
     ALREADY_FOLLOWING("이미 팔로우한 회원입니다."),
