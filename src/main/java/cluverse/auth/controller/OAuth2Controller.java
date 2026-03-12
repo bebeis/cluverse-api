@@ -1,12 +1,9 @@
 package cluverse.auth.controller;
 
-import cluverse.auth.client.GoogleOAuth2Client;
-import cluverse.auth.client.KakaoOAuth2Client;
+import cluverse.auth.client.OAuth2Client;
+import cluverse.auth.client.OAuth2ClientManager;
 import cluverse.auth.client.OAuthUserInfo;
 import cluverse.auth.service.AuthService;
-import cluverse.auth.exception.AuthExceptionMessage;
-import cluverse.common.exception.BadRequestException;
-import cluverse.member.domain.OAuthProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +21,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class OAuth2Controller {
 
-    private final KakaoOAuth2Client kakaoOAuth2Client;
-    private final GoogleOAuth2Client googleOAuth2Client;
+    private final OAuth2ClientManager oAuth2ClientManager;
     private final AuthService authService;
 
     @Value("${app.frontend-url}")
@@ -33,12 +29,8 @@ public class OAuth2Controller {
 
     @GetMapping("/{provider}")
     public void authorize(@PathVariable String provider, HttpServletResponse response) throws IOException {
-        String authorizationUrl = switch (provider) {
-            case "kakao" -> kakaoOAuth2Client.getAuthorizationUrl();
-            case "google" -> googleOAuth2Client.getAuthorizationUrl();
-            default -> throw new BadRequestException(AuthExceptionMessage.UNSUPPORTED_OAUTH_PROVIDER.getMessage());
-        };
-        response.sendRedirect(authorizationUrl);
+        OAuth2Client client = oAuth2ClientManager.getClient(provider);
+        response.sendRedirect(client.getAuthorizationUrl());
     }
 
     @GetMapping("/{provider}/callback")
@@ -46,22 +38,10 @@ public class OAuth2Controller {
                          @RequestParam String code,
                          HttpServletRequest request,
                          HttpServletResponse response) throws IOException {
-        OAuthUserInfo userInfo = switch (provider) {
-            case "kakao" -> kakaoOAuth2Client.getUserInfo(code);
-            case "google" -> googleOAuth2Client.getUserInfo(code);
-            default -> throw new BadRequestException(AuthExceptionMessage.UNSUPPORTED_OAUTH_PROVIDER.getMessage());
-        };
-        OAuthProvider oAuthProvider = resolveProvider(provider);
+        OAuth2Client client = oAuth2ClientManager.getClient(provider);
+        OAuthUserInfo userInfo = client.getUserInfo(code);
 
-        authService.loginWithOAuth(userInfo, oAuthProvider, request.getRemoteAddr(), request);
+        authService.loginWithOAuth(userInfo, client.provider(), request.getRemoteAddr(), request);
         response.sendRedirect(frontendUrl);
-    }
-
-    private OAuthProvider resolveProvider(String provider) {
-        return switch (provider) {
-            case "kakao" -> OAuthProvider.KAKAO;
-            case "google" -> OAuthProvider.GOOGLE;
-            default -> throw new BadRequestException(AuthExceptionMessage.UNSUPPORTED_OAUTH_PROVIDER.getMessage());
-        };
     }
 }

@@ -6,10 +6,7 @@ import cluverse.auth.service.request.MemberRegisterRequest;
 import cluverse.common.config.PasswordConfig;
 import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.NotFoundException;
-import cluverse.member.domain.Member;
-import cluverse.member.domain.MemberProfile;
-import cluverse.member.domain.MemberTermsAgreement;
-import cluverse.member.domain.OAuthProvider;
+import cluverse.member.domain.*;
 import cluverse.member.repository.MemberQueryRepository;
 import cluverse.member.repository.MemberRepository;
 import cluverse.member.repository.MemberTermsAgreementRepository;
@@ -22,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -94,9 +92,9 @@ public class AuthWriter {
 
     private void validateRequiredTermsAgreed(List<Long> agreedTermsIds) {
         List<Long> requiredTermsIds = termsRepository.findAllByIsActiveTrueAndIsRequiredTrue().stream()
-                .map(terms -> terms.getId())
+                .map(Terms::getId)
                 .toList();
-        if (!agreedTermsIds.containsAll(requiredTermsIds)) {
+        if (!new HashSet<>(agreedTermsIds).containsAll(requiredTermsIds)) {
             throw new BadRequestException(AuthExceptionMessage.REQUIRED_TERMS_NOT_AGREED.getMessage());
         }
     }

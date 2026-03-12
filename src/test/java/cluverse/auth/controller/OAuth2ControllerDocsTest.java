@@ -1,10 +1,13 @@
 package cluverse.auth.controller;
 
-import cluverse.auth.client.GoogleOAuth2Client;
-import cluverse.auth.client.KakaoOAuth2Client;
+import cluverse.auth.client.OAuth2Client;
+import cluverse.auth.client.OAuth2ClientManager;
 import cluverse.auth.client.OAuthUserInfo;
+import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.auth.service.AuthService;
+import cluverse.common.exception.BadRequestException;
 import cluverse.docs.RestDocsSupport;
+import cluverse.member.domain.OAuthProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -22,19 +25,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class OAuth2ControllerDocsTest extends RestDocsSupport {
 
-    private final KakaoOAuth2Client kakaoOAuth2Client = mock(KakaoOAuth2Client.class);
-    private final GoogleOAuth2Client googleOAuth2Client = mock(GoogleOAuth2Client.class);
+    private final OAuth2ClientManager oAuth2ClientManager = mock(OAuth2ClientManager.class);
+    private final OAuth2Client oAuth2Client = mock(OAuth2Client.class);
     private final AuthService authService = mock(AuthService.class);
 
     @Override
     protected Object initController() {
-        OAuth2Controller controller = new OAuth2Controller(kakaoOAuth2Client, googleOAuth2Client, authService);
+        OAuth2Controller controller = new OAuth2Controller(oAuth2ClientManager, authService);
         ReflectionTestUtils.setField(controller, "frontendUrl", "http://localhost:3000");
         return controller;
     }
 
     @Test
     void 지원하지_않는_provider_인증_실패() throws Exception {
+        when(oAuth2ClientManager.getClient("unknown"))
+                .thenThrow(new BadRequestException(AuthExceptionMessage.UNSUPPORTED_OAUTH_PROVIDER.getMessage()));
+
         mockMvc.perform(get("/oauth2/{provider}", "unknown"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
@@ -54,7 +60,9 @@ class OAuth2ControllerDocsTest extends RestDocsSupport {
     @Test
     void 카카오_콜백_성공() throws Exception {
         OAuthUserInfo userInfo = new OAuthUserInfo("kakao-id", "kakao@example.com", "kakaouser");
-        when(kakaoOAuth2Client.getUserInfo("auth-code")).thenReturn(userInfo);
+        when(oAuth2ClientManager.getClient("kakao")).thenReturn(oAuth2Client);
+        when(oAuth2Client.getUserInfo("auth-code")).thenReturn(userInfo);
+        when(oAuth2Client.provider()).thenReturn(OAuthProvider.KAKAO);
 
         mockMvc.perform(get("/oauth2/{provider}/callback", "kakao")
                         .param("code", "auth-code"))

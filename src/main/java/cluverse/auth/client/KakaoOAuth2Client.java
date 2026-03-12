@@ -1,6 +1,7 @@
 package cluverse.auth.client;
 
 import cluverse.auth.properties.OAuth2Properties;
+import cluverse.member.domain.OAuthProvider;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -8,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class KakaoOAuth2Client {
+public class KakaoOAuth2Client implements OAuth2Client {
 
     private static final String AUTH_URL = "https://kauth.kakao.com/oauth/authorize";
     private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
@@ -21,6 +22,17 @@ public class KakaoOAuth2Client {
         this.properties = properties.kakao();
     }
 
+    @Override
+    public String providerKey() {
+        return "kakao";
+    }
+
+    @Override
+    public OAuthProvider provider() {
+        return OAuthProvider.KAKAO;
+    }
+
+    @Override
     public String getAuthorizationUrl() {
         return AUTH_URL
                 + "?client_id=" + properties.clientId()
@@ -28,6 +40,7 @@ public class KakaoOAuth2Client {
                 + "&response_type=code";
     }
 
+    @Override
     public OAuthUserInfo getUserInfo(String code) {
         String accessToken = exchangeToken(code);
         return fetchUserInfo(accessToken);
