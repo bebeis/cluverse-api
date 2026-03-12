@@ -6,7 +6,7 @@
 2. 비회원이 프로필 조회를 시도하면 `401 Unauthorized`를 반환합니다.
 3. 소셜 회원은 학교 정보 없이 생성될 수 있으므로, 학교 미등록 상태에서도 프로필 조회 응답은 정상적으로 반환되어야 합니다.
 4. 학교 정보가 없는 회원의 프로필 응답에서는 `university` 필드가 `null`입니다.
-5. 학교 정보가 있는 회원은 기존과 동일하게 `universityId`, `universityName`, `universityBadgeImageUrl`를 반환합니다.
+5. 학교 정보가 있는 회원은 `university` 객체로 응답하며, 객체 내부에 `universityId`, `universityName`, `universityBadgeImageUrl` 필드를 포함합니다.
 
 === 내 프로필 조회
 
