@@ -1,5 +1,7 @@
 package cluverse.docs;
 
+import cluverse.common.api.ApiControllerAdvice;
+import cluverse.common.auth.LoginMemberArgumentResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.restdocs.RestDocumentationContextProvider;
@@ -18,6 +20,8 @@ public abstract class RestDocsSupport {
     void setUp(RestDocumentationContextProvider provider) {
         this.mockMvc = MockMvcBuilders
                 .standaloneSetup(initController())
+                .setCustomArgumentResolvers(new LoginMemberArgumentResolver())
+                .setControllerAdvice(new ApiControllerAdvice())
                 .apply(documentationConfiguration(provider))
                 .build();
     }
