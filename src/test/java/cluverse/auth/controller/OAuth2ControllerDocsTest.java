@@ -5,8 +5,11 @@ import cluverse.auth.client.OAuth2ClientManager;
 import cluverse.auth.client.OAuthUserInfo;
 import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.auth.service.AuthService;
+import cluverse.common.auth.LoginMember;
+import cluverse.common.auth.LoginSessionManager;
 import cluverse.common.exception.BadRequestException;
 import cluverse.docs.RestDocsSupport;
+import cluverse.member.domain.MemberRole;
 import cluverse.member.domain.OAuthProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -28,10 +31,11 @@ class OAuth2ControllerDocsTest extends RestDocsSupport {
     private final OAuth2ClientManager oAuth2ClientManager = mock(OAuth2ClientManager.class);
     private final OAuth2Client oAuth2Client = mock(OAuth2Client.class);
     private final AuthService authService = mock(AuthService.class);
+    private final LoginSessionManager loginSessionManager = mock(LoginSessionManager.class);
 
     @Override
     protected Object initController() {
-        OAuth2Controller controller = new OAuth2Controller(oAuth2ClientManager, authService);
+        OAuth2Controller controller = new OAuth2Controller(oAuth2ClientManager, authService, loginSessionManager);
         ReflectionTestUtils.setField(controller, "frontendUrl", "http://localhost:3000");
         return controller;
     }
@@ -63,6 +67,8 @@ class OAuth2ControllerDocsTest extends RestDocsSupport {
         when(oAuth2ClientManager.getClient("kakao")).thenReturn(oAuth2Client);
         when(oAuth2Client.getUserInfo("auth-code")).thenReturn(userInfo);
         when(oAuth2Client.provider()).thenReturn(OAuthProvider.KAKAO);
+        when(authService.loginWithOAuth(userInfo, OAuthProvider.KAKAO, "127.0.0.1"))
+                .thenReturn(new LoginMember(1L, "kakaouser", MemberRole.MEMBER));
 
         mockMvc.perform(get("/oauth2/{provider}/callback", "kakao")
                         .param("code", "auth-code"))

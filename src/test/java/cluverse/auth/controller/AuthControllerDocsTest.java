@@ -2,6 +2,7 @@ package cluverse.auth.controller;
 
 import cluverse.auth.service.AuthService;
 import cluverse.common.auth.LoginMember;
+import cluverse.common.auth.LoginSessionManager;
 import cluverse.common.exception.UnauthorizedException;
 import cluverse.docs.RestDocsSupport;
 import cluverse.member.domain.MemberRole;
@@ -25,16 +26,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerDocsTest extends RestDocsSupport {
 
     private final AuthService authService = mock(AuthService.class);
+    private final LoginSessionManager loginSessionManager = mock(LoginSessionManager.class);
 
     @Override
     protected Object initController() {
-        return new AuthController(authService);
+        return new AuthController(authService, loginSessionManager);
     }
 
     @Test
     void 이메일_로그인_성공() throws Exception {
         LoginMember loginMember = new LoginMember(1L, "testuser", MemberRole.MEMBER);
-        when(authService.loginWithEmail(anyString(), anyString(), anyString(), any()))
+        when(authService.loginWithEmail(anyString(), anyString(), anyString()))
                 .thenReturn(loginMember);
 
         mockMvc.perform(post("/api/v1/auth/login")
@@ -67,7 +69,7 @@ class AuthControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 이메일_로그인_실패_잘못된_자격증명() throws Exception {
-        when(authService.loginWithEmail(anyString(), anyString(), anyString(), any()))
+        when(authService.loginWithEmail(anyString(), anyString(), anyString()))
                 .thenThrow(new UnauthorizedException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
         mockMvc.perform(post("/api/v1/auth/login")
@@ -121,7 +123,7 @@ class AuthControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 로그아웃_성공() throws Exception {
-        doNothing().when(authService).logout(any());
+        doNothing().when(loginSessionManager).invalidateSession(any());
 
         mockMvc.perform(post("/api/v1/auth/logout"))
                 .andExpect(status().isOk())

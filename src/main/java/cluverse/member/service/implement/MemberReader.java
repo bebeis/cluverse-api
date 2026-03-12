@@ -1,8 +1,6 @@
 package cluverse.member.service.implement;
 
-import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.common.exception.NotFoundException;
-import cluverse.common.exception.UnauthorizedException;
 import cluverse.member.domain.Member;
 import cluverse.member.exception.MemberExceptionMessage;
 import cluverse.member.repository.BlockRepository;
@@ -12,7 +10,6 @@ import cluverse.member.repository.MemberRepository;
 import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberMajorResponse;
-import cluverse.member.service.response.MemberProfileResponse;
 import cluverse.member.service.response.MemberProfileSummaryResponse;
 import cluverse.university.domain.University;
 import cluverse.university.repository.UniversityRepository;
@@ -33,29 +30,13 @@ public class MemberReader {
     private final BlockRepository blockRepository;
     private final UniversityRepository universityRepository;
 
-    public MemberProfileResponse getProfile(Long viewerId, Long targetMemberId) {
-        validateViewerId(viewerId);
-        Member member = readOrThrow(targetMemberId);
-        boolean sameMember = viewerId.equals(targetMemberId);
-        return MemberProfileResponse.of(
-                member,
-                member.getProfile(),
-                readUniversitySummary(member.getUniversityId()),
-                !sameMember && followRepository.existsByFollowerIdAndFollowingId(viewerId, targetMemberId),
-                !sameMember && blockRepository.existsByBlockerIdAndBlockedId(viewerId, targetMemberId),
-                followRepository.countByFollowingId(targetMemberId),
-                followRepository.countByFollowerId(targetMemberId),
-                sameMember
-        );
-    }
-
-    public List<MemberMajorResponse> getMajors(Long memberId) {
+    public List<MemberMajorResponse> readMajors(Long memberId) {
         return memberQueryRepository.findMajorsByMemberId(memberId).stream()
                 .map(MemberMajorResponse::from)
                 .toList();
     }
 
-    public List<MemberInterestResponse> getInterests(Long memberId) {
+    public List<MemberInterestResponse> readInterests(Long memberId) {
         return readOrThrow(memberId).getInterests().stream()
                 .map(MemberInterestResponse::from)
                 .toList();
@@ -69,7 +50,15 @@ public class MemberReader {
         return blockRepository.existsByBlockerIdAndBlockedId(blockerId, blockedId);
     }
 
-    public List<BlockedMemberResponse> getBlockedMembers(Long blockerId) {
+    public long countFollowers(Long memberId) {
+        return followRepository.countByFollowingId(memberId);
+    }
+
+    public long countFollowings(Long memberId) {
+        return followRepository.countByFollowerId(memberId);
+    }
+
+    public List<BlockedMemberResponse> readBlockedMembers(Long blockerId) {
         return memberQueryRepository.findBlockedMembersByBlockerId(blockerId).stream()
                 .map(result -> new BlockedMemberResponse(
                         result.memberId(),
@@ -99,11 +88,5 @@ public class MemberReader {
                 university.getName(),
                 university.getBadgeImageUrl()
         );
-    }
-
-    private void validateViewerId(Long viewerId) {
-        if (viewerId == null) {
-            throw new UnauthorizedException(AuthExceptionMessage.UNAUTHORIZED.getMessage());
-        }
     }
 }

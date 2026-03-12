@@ -15,9 +15,6 @@ import cluverse.member.repository.FollowRepository;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
-import cluverse.member.service.response.MemberInterestResponse;
-import cluverse.member.service.response.MemberMajorResponse;
-import cluverse.member.service.response.MemberProfileResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,19 +24,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class MemberWriter {
 
-    private final MemberReader memberReader;
     private final FollowRepository followRepository;
     private final BlockRepository blockRepository;
     private final MajorRepository majorRepository;
     private final InterestRepository interestRepository;
 
-    public MemberProfileResponse updateProfile(Long memberId, UpdateProfileRequest request) {
-        Member member = memberReader.readOrThrow(memberId);
-        MemberProfile profile = member.getProfile();
-        if (profile == null) {
-            profile = MemberProfile.create(member);
-            member.initProfile(profile);
-        }
+    public void updateProfile(Member member, UpdateProfileRequest request) {
+        MemberProfile profile = ensureProfile(member);
         profile.update(
                 request.bio(),
                 request.profileImageUrl(),
@@ -51,49 +42,34 @@ public class MemberWriter {
                 request.isPublic(),
                 request.visibleFields()
         );
-        return MemberProfileResponse.of(
-                member,
-                profile,
-                memberReader.readUniversitySummary(member.getUniversityId()),
-                false,
-                false,
-                followRepository.countByFollowingId(memberId),
-                followRepository.countByFollowerId(memberId),
-                true
-        );
     }
 
-    public MemberMajorResponse addMajor(Long memberId, AddMajorRequest request) {
+    public MemberMajor addMajor(Member member, AddMajorRequest request) {
         validateMajorExists(request.majorId());
-        Member member = memberReader.readOrThrow(memberId);
         member.addMajor(request.majorId(), request.majorType());
-        MemberMajor added = member.getMajors().stream()
+        return member.getMajors().stream()
                 .filter(major -> major.getMajorId().equals(request.majorId()))
                 .findFirst()
                 .orElseThrow();
-        return MemberMajorResponse.from(added);
     }
 
-    public void removeMajor(Long memberId, Long majorId) {
+    public void removeMajor(Member member, Long majorId) {
         validateMajorExists(majorId);
-        memberReader.readOrThrow(memberId).removeMajor(majorId);
+        member.removeMajor(majorId);
     }
 
-    public MemberInterestResponse addInterest(Long memberId, AddInterestRequest request) {
+    public void addInterest(Member member, AddInterestRequest request) {
         validateInterestExists(request.interestId());
-        Member member = memberReader.readOrThrow(memberId);
         member.addInterest(request.interestId());
-        return MemberInterestResponse.from(request.interestId());
     }
 
-    public void removeInterest(Long memberId, Long interestId) {
+    public void removeInterest(Member member, Long interestId) {
         validateInterestExists(interestId);
-        memberReader.readOrThrow(memberId).removeInterest(interestId);
+        member.removeInterest(interestId);
     }
 
     public void follow(Long followerId, Long followingId) {
         validateCannotTargetSelf(followerId, followingId, MemberExceptionMessage.CANNOT_FOLLOW_SELF);
-        memberReader.readOrThrow(followingId);
         validateNotAlreadyFollowing(followerId, followingId);
         followRepository.save(Follow.of(followerId, followingId));
     }
@@ -106,7 +82,6 @@ public class MemberWriter {
 
     public void block(Long blockerId, Long blockedId) {
         validateCannotTargetSelf(blockerId, blockedId, MemberExceptionMessage.CANNOT_BLOCK_SELF);
-        memberReader.readOrThrow(blockedId);
         validateNotAlreadyBlocked(blockerId, blockedId);
         blockRepository.save(Block.of(blockerId, blockedId));
     }
@@ -121,6 +96,15 @@ public class MemberWriter {
         if (actorId.equals(targetId)) {
             throw new BadRequestException(message.getMessage());
         }
+    }
+
+    private MemberProfile ensureProfile(Member member) {
+        MemberProfile profile = member.getProfile();
+        if (profile == null) {
+            profile = MemberProfile.create(member);
+            member.initProfile(profile);
+        }
+        return profile;
     }
 
     private void validateNotAlreadyFollowing(Long followerId, Long followingId) {

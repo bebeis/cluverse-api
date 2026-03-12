@@ -1,15 +1,11 @@
 package cluverse.member.service.implement;
 
-import cluverse.member.domain.Member;
-import cluverse.member.domain.MemberProfileField;
-import cluverse.member.repository.BlockRepository;
-import cluverse.member.repository.FollowRepository;
-import cluverse.member.service.request.AddInterestRequest;
-import cluverse.member.service.request.UpdateProfileRequest;
-import cluverse.member.service.response.MemberInterestResponse;
-import cluverse.member.service.response.MemberProfileResponse;
 import cluverse.interest.repository.InterestRepository;
 import cluverse.major.repository.MajorRepository;
+import cluverse.member.domain.Member;
+import cluverse.member.domain.MemberProfileField;
+import cluverse.member.service.request.AddInterestRequest;
+import cluverse.member.service.request.UpdateProfileRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,15 +22,6 @@ import static org.mockito.Mockito.when;
 class MemberWriterTest {
 
     @Mock
-    private MemberReader memberReader;
-
-    @Mock
-    private FollowRepository followRepository;
-
-    @Mock
-    private BlockRepository blockRepository;
-
-    @Mock
     private MajorRepository majorRepository;
 
     @Mock
@@ -48,12 +35,10 @@ class MemberWriterTest {
         Member member = Member.create("luna", 10L);
         ReflectionTestUtils.setField(member, "id", 1L);
 
-        when(memberReader.readOrThrow(1L)).thenReturn(member);
         when(interestRepository.existsById(300L)).thenReturn(true);
 
-        MemberInterestResponse response = memberWriter.addInterest(1L, new AddInterestRequest(300L));
+        memberWriter.addInterest(member, new AddInterestRequest(300L));
 
-        assertThat(response).isEqualTo(new MemberInterestResponse(300L));
         assertThat(member.getInterests()).containsExactly(300L);
     }
 
@@ -62,12 +47,8 @@ class MemberWriterTest {
         Member member = Member.createSocialMember("social-user");
         ReflectionTestUtils.setField(member, "id", 1L);
 
-        when(memberReader.readOrThrow(1L)).thenReturn(member);
-        when(followRepository.countByFollowingId(1L)).thenReturn(0L);
-        when(followRepository.countByFollowerId(1L)).thenReturn(0L);
-
-        MemberProfileResponse response = memberWriter.updateProfile(
-                1L,
+        memberWriter.updateProfile(
+                member,
                 new UpdateProfileRequest(
                         "소개",
                         null,
@@ -82,7 +63,6 @@ class MemberWriterTest {
         );
 
         assertThat(member.getProfile()).isNotNull();
-        assertThat(response.university()).isNull();
-        assertThat(response.bio()).isEqualTo("소개");
+        assertThat(member.getProfile().getBio()).isEqualTo("소개");
     }
 }

@@ -1,5 +1,8 @@
 package cluverse.member.service;
 
+import cluverse.auth.exception.AuthExceptionMessage;
+import cluverse.common.exception.UnauthorizedException;
+import cluverse.member.domain.Member;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.member.service.implement.MemberWriter;
 import cluverse.member.service.request.AddInterestRequest;
@@ -25,40 +28,50 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MemberProfileResponse getProfile(Long viewerId, Long targetMemberId) {
-        return memberReader.getProfile(viewerId, targetMemberId);
+        validateViewerId(viewerId);
+        Member member = memberReader.readOrThrow(targetMemberId);
+        return buildProfileResponse(viewerId, member);
     }
 
     public MemberProfileResponse updateProfile(Long memberId, UpdateProfileRequest request) {
-        return memberWriter.updateProfile(memberId, request);
+        Member member = memberReader.readOrThrow(memberId);
+        memberWriter.updateProfile(member, request);
+        return buildProfileResponse(memberId, member);
     }
 
     @Transactional(readOnly = true)
     public List<MemberMajorResponse> getMajors(Long memberId) {
-        return memberReader.getMajors(memberId);
+        return memberReader.readMajors(memberId);
     }
 
     public MemberMajorResponse addMajor(Long memberId, AddMajorRequest request) {
-        return memberWriter.addMajor(memberId, request);
+        Member member = memberReader.readOrThrow(memberId);
+        return MemberMajorResponse.from(memberWriter.addMajor(member, request));
     }
 
     public void removeMajor(Long memberId, Long majorId) {
-        memberWriter.removeMajor(memberId, majorId);
+        Member member = memberReader.readOrThrow(memberId);
+        memberWriter.removeMajor(member, majorId);
     }
 
     @Transactional(readOnly = true)
     public List<MemberInterestResponse> getInterests(Long memberId) {
-        return memberReader.getInterests(memberId);
+        return memberReader.readInterests(memberId);
     }
 
     public MemberInterestResponse addInterest(Long memberId, AddInterestRequest request) {
-        return memberWriter.addInterest(memberId, request);
+        Member member = memberReader.readOrThrow(memberId);
+        memberWriter.addInterest(member, request);
+        return MemberInterestResponse.from(request.interestId());
     }
 
     public void removeInterest(Long memberId, Long interestId) {
-        memberWriter.removeInterest(memberId, interestId);
+        Member member = memberReader.readOrThrow(memberId);
+        memberWriter.removeInterest(member, interestId);
     }
 
     public void follow(Long followerId, Long followingId) {
+        memberReader.readOrThrow(followingId);
         memberWriter.follow(followerId, followingId);
     }
 
@@ -72,6 +85,7 @@ public class MemberService {
     }
 
     public void block(Long blockerId, Long blockedId) {
+        memberReader.readOrThrow(blockedId);
         memberWriter.block(blockerId, blockedId);
     }
 
@@ -86,6 +100,26 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public List<BlockedMemberResponse> getBlockedMembers(Long blockerId) {
-        return memberReader.getBlockedMembers(blockerId);
+        return memberReader.readBlockedMembers(blockerId);
+    }
+
+    private MemberProfileResponse buildProfileResponse(Long viewerId, Member member) {
+        boolean sameMember = viewerId.equals(member.getId());
+        return MemberProfileResponse.of(
+                member,
+                member.getProfile(),
+                memberReader.readUniversitySummary(member.getUniversityId()),
+                !sameMember && memberReader.isFollowing(viewerId, member.getId()),
+                !sameMember && memberReader.isBlocked(viewerId, member.getId()),
+                memberReader.countFollowers(member.getId()),
+                memberReader.countFollowings(member.getId()),
+                sameMember
+        );
+    }
+
+    private void validateViewerId(Long viewerId) {
+        if (viewerId == null) {
+            throw new UnauthorizedException(AuthExceptionMessage.UNAUTHORIZED.getMessage());
+        }
     }
 }
