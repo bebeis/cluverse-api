@@ -34,6 +34,7 @@ public class AuthWriter {
     private static final int NICKNAME_MAX_LENGTH = 50;
     private static final int SOCIAL_NICKNAME_SUFFIX_LENGTH = 8;
     private static final int MAX_SOCIAL_NICKNAME_RETRY_COUNT = 10;
+    private static final int MAX_RANDOM_SOCIAL_NICKNAME_RETRY_COUNT = 100;
     private static final String SOCIAL_NICKNAME_SEPARATOR = "_";
     private static final String DEFAULT_SOCIAL_NICKNAME = "user";
 
@@ -143,7 +144,7 @@ public class AuthWriter {
 
     private String generateRandomSocialNickname(String base) {
         String normalizedBase = normalizeNicknameBase(base);
-        while (true) {
+        for (int attempt = 0; attempt < MAX_RANDOM_SOCIAL_NICKNAME_RETRY_COUNT; attempt++) {
             String suffix = UUID.randomUUID().toString().replace("-", "")
                     .substring(0, SOCIAL_NICKNAME_SUFFIX_LENGTH);
             String nickname = joinSocialNickname(normalizedBase, suffix);
@@ -151,6 +152,7 @@ public class AuthWriter {
                 return nickname;
             }
         }
+        throw new IllegalStateException(AuthExceptionMessage.SOCIAL_NICKNAME_GENERATION_FAILED.getMessage());
     }
 
     private String generateSocialNickname(String base, OAuthProvider provider, String providerUserId, int attempt) {

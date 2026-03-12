@@ -1,6 +1,7 @@
 package cluverse.auth.service.implement;
 
 import cluverse.auth.client.OAuthUserInfo;
+import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.member.domain.Member;
 import cluverse.member.domain.MemberProfile;
 import cluverse.member.domain.OAuthProvider;
@@ -20,6 +21,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -113,5 +115,16 @@ class AuthWriterTest {
 
         assertThat(result.getNickname()).startsWith("retry-user_");
         verify(memberRepository, times(2)).existsByNickname(anyString());
+    }
+
+    @Test
+    void OAuth_로그인_닉네임을_끝내_생성하지_못하면_예외가_발생한다() {
+        OAuthUserInfo userInfo = new OAuthUserInfo("retry-provider-id", "retry@example.com", "retry-user");
+        when(memberQueryRepository.findByEmail("retry@example.com")).thenReturn(Optional.empty());
+        when(memberRepository.existsByNickname(anyString())).thenReturn(true);
+
+        assertThatThrownBy(() -> authWriter.registerBySocial(userInfo, OAuthProvider.KAKAO))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage(AuthExceptionMessage.SOCIAL_NICKNAME_GENERATION_FAILED.getMessage());
     }
 }
