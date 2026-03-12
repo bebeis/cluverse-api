@@ -1,7 +1,8 @@
 package cluverse.member.service.implement;
 
-import cluverse.common.exception.BadRequestException;
+import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.common.exception.NotFoundException;
+import cluverse.common.exception.UnauthorizedException;
 import cluverse.member.domain.Member;
 import cluverse.member.domain.MemberProfile;
 import cluverse.member.domain.MemberProfileField;
@@ -177,15 +178,25 @@ class MemberReaderTest {
     }
 
     @Test
-    void 소셜_회원은_학교가_없으면_프로필을_조회할_수_없다() {
+    void 소셜_회원은_학교가_없어도_프로필을_조회할_수_있다() {
         Member member = Member.createSocialMember("social-user");
         ReflectionTestUtils.setField(member, "id", 1L);
 
         when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
+        when(followRepository.countByFollowingId(1L)).thenReturn(0L);
+        when(followRepository.countByFollowerId(1L)).thenReturn(0L);
 
-        assertThatThrownBy(() -> memberReader.getProfile(1L, 1L))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessage("학교 등록을 먼저 진행해주세요.");
+        MemberProfileResponse response = memberReader.getProfile(1L, 1L);
+
+        assertThat(response.memberId()).isEqualTo(1L);
+        assertThat(response.university()).isNull();
+    }
+
+    @Test
+    void 비회원은_프로필을_조회할_수_없다() {
+        assertThatThrownBy(() -> memberReader.getProfile(null, 1L))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessage(AuthExceptionMessage.UNAUTHORIZED.getMessage());
     }
 
     private Member createMember(Long memberId, String nickname, Long universityId) {

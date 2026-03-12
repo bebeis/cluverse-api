@@ -24,6 +24,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -32,6 +33,7 @@ public class AuthWriter {
 
     private static final int NICKNAME_MAX_LENGTH = 50;
     private static final int SOCIAL_NICKNAME_SUFFIX_LENGTH = 8;
+    private static final int MAX_SOCIAL_NICKNAME_RETRY_COUNT = 10;
     private static final String SOCIAL_NICKNAME_SEPARATOR = "_";
     private static final String DEFAULT_SOCIAL_NICKNAME = "user";
 
@@ -62,15 +64,9 @@ public class AuthWriter {
     }
 
     public Member registerBySocial(OAuthUserInfo userInfo, OAuthProvider provider) {
-        String nickname = generateSocialNickname(userInfo.nickname(), provider, userInfo.providerId());
-        Member member = Member.createSocialMember(nickname);
-        member.initMemberAuthBySocial(userInfo.email());
-        member.addSocialAccount(provider, userInfo.providerId());
-
-        MemberProfile profile = MemberProfile.create(member);
-        member.initProfile(profile);
-
-        return memberRepository.save(member);
+        return memberQueryRepository.findByEmail(userInfo.email())
+                .map(member -> linkSocialAccount(member, provider, userInfo.providerId()))
+                .orElseGet(() -> createSocialMember(userInfo, provider));
     }
 
     public void updateLastLogin(Member member, String clientIp) {
@@ -104,9 +100,66 @@ public class AuthWriter {
         }
     }
 
-    private String generateSocialNickname(String base, OAuthProvider provider, String providerUserId) {
+    private Member linkSocialAccount(Member member, OAuthProvider provider, String providerUserId) {
+        if (hasSocialAccount(member, provider, providerUserId)) {
+            ensureProfile(member);
+            return member;
+        }
+
+        member.addSocialAccount(provider, providerUserId);
+        ensureProfile(member);
+        return memberRepository.save(member);
+    }
+
+    private Member createSocialMember(OAuthUserInfo userInfo, OAuthProvider provider) {
+        String nickname = createAvailableSocialNickname(userInfo.nickname(), provider, userInfo.providerId());
+        Member member = Member.createSocialMember(nickname);
+        member.initMemberAuthBySocial(userInfo.email());
+        member.addSocialAccount(provider, userInfo.providerId());
+        ensureProfile(member);
+        return memberRepository.save(member);
+    }
+
+    private boolean hasSocialAccount(Member member, OAuthProvider provider, String providerUserId) {
+        return member.getSocialAccounts().stream()
+                .anyMatch(account -> account.getProvider() == provider && account.getProviderUserId().equals(providerUserId));
+    }
+
+    private void ensureProfile(Member member) {
+        if (member.getProfile() == null) {
+            member.initProfile(MemberProfile.create(member));
+        }
+    }
+
+    private String createAvailableSocialNickname(String base, OAuthProvider provider, String providerUserId) {
+        for (int attempt = 0; attempt < MAX_SOCIAL_NICKNAME_RETRY_COUNT; attempt++) {
+            String nickname = generateSocialNickname(base, provider, providerUserId, attempt);
+            if (!memberRepository.existsByNickname(nickname)) {
+                return nickname;
+            }
+        }
+        return generateRandomSocialNickname(base);
+    }
+
+    private String generateRandomSocialNickname(String base) {
         String normalizedBase = normalizeNicknameBase(base);
-        String suffix = createSocialNicknameSuffix(provider, providerUserId);
+        while (true) {
+            String suffix = UUID.randomUUID().toString().replace("-", "")
+                    .substring(0, SOCIAL_NICKNAME_SUFFIX_LENGTH);
+            String nickname = joinSocialNickname(normalizedBase, suffix);
+            if (!memberRepository.existsByNickname(nickname)) {
+                return nickname;
+            }
+        }
+    }
+
+    private String generateSocialNickname(String base, OAuthProvider provider, String providerUserId, int attempt) {
+        String normalizedBase = normalizeNicknameBase(base);
+        String suffix = createSocialNicknameSuffix(provider, providerUserId, attempt);
+        return joinSocialNickname(normalizedBase, suffix);
+    }
+
+    private String joinSocialNickname(String normalizedBase, String suffix) {
         int maxBaseLength = NICKNAME_MAX_LENGTH - SOCIAL_NICKNAME_SEPARATOR.length() - suffix.length();
         String truncatedBase = normalizedBase.length() > maxBaseLength
                 ? normalizedBase.substring(0, maxBaseLength)
@@ -121,8 +174,11 @@ public class AuthWriter {
         return base.trim();
     }
 
-    private String createSocialNicknameSuffix(OAuthProvider provider, String providerUserId) {
+    private String createSocialNicknameSuffix(OAuthProvider provider, String providerUserId, int attempt) {
         String hashSource = provider.name() + ":" + providerUserId;
+        if (attempt > 0) {
+            hashSource = hashSource + ":" + attempt;
+        }
         byte[] digest = sha256(hashSource);
         StringBuilder builder = new StringBuilder(SOCIAL_NICKNAME_SUFFIX_LENGTH);
         for (int i = 0; builder.length() < SOCIAL_NICKNAME_SUFFIX_LENGTH && i < digest.length; i++) {

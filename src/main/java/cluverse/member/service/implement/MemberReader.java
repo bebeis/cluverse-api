@@ -1,7 +1,8 @@
 package cluverse.member.service.implement;
 
-import cluverse.common.exception.BadRequestException;
+import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.common.exception.NotFoundException;
+import cluverse.common.exception.UnauthorizedException;
 import cluverse.member.domain.Member;
 import cluverse.member.exception.MemberExceptionMessage;
 import cluverse.member.repository.BlockRepository;
@@ -33,6 +34,7 @@ public class MemberReader {
     private final UniversityRepository universityRepository;
 
     public MemberProfileResponse getProfile(Long viewerId, Long targetMemberId) {
+        validateViewerId(viewerId);
         Member member = readOrThrow(targetMemberId);
         boolean sameMember = viewerId.equals(targetMemberId);
         return MemberProfileResponse.of(
@@ -88,7 +90,7 @@ public class MemberReader {
 
     public MemberProfileSummaryResponse readUniversitySummary(Long universityId) {
         if (universityId == null) {
-            throw new BadRequestException(MemberExceptionMessage.UNIVERSITY_REGISTRATION_REQUIRED.getMessage());
+            return null;
         }
         University university = universityRepository.findById(universityId)
                 .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.UNIVERSITY_NOT_FOUND.getMessage()));
@@ -97,5 +99,11 @@ public class MemberReader {
                 university.getName(),
                 university.getBadgeImageUrl()
         );
+    }
+
+    private void validateViewerId(Long viewerId) {
+        if (viewerId == null) {
+            throw new UnauthorizedException(AuthExceptionMessage.UNAUTHORIZED.getMessage());
+        }
     }
 }
