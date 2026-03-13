@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -25,4 +27,42 @@ public class University extends BaseTimeEntity {
 
     @Column(nullable = false)
     private boolean isActive = true;
+
+    private University(String name, String emailDomain, String badgeImageUrl, String address, boolean isActive) {
+        this.name = normalizeRequired(name);
+        this.emailDomain = normalizeOptional(emailDomain);
+        this.badgeImageUrl = normalizeOptional(badgeImageUrl);
+        this.address = normalizeOptional(address);
+        this.isActive = isActive;
+    }
+
+    public static University create(
+            String name,
+            String emailDomain,
+            String badgeImageUrl,
+            String address,
+            boolean isActive
+    ) {
+        return new University(name, emailDomain, badgeImageUrl, address, isActive);
+    }
+
+    public void update(String name, String emailDomain, String badgeImageUrl, String address, boolean isActive) {
+        this.name = normalizeRequired(name);
+        this.emailDomain = normalizeOptional(emailDomain);
+        this.badgeImageUrl = normalizeOptional(badgeImageUrl);
+        this.address = normalizeOptional(address);
+        this.isActive = isActive;
+    }
+
+    private String normalizeRequired(String value) {
+        return normalizeOptional(Objects.requireNonNull(value));
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
 }

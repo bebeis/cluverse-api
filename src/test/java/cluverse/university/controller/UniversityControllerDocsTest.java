@@ -42,11 +42,13 @@ class UniversityControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 학교_목록_검색() throws Exception {
+        // given
         when(universityService.searchUniversities(any())).thenReturn(List.of(
                 new UniversitySummaryResponse(1L, "클루대학교", "https://cdn.example.com/universities/clu-badge.png"),
                 new UniversitySummaryResponse(2L, "클루공과대학교", "https://cdn.example.com/universities/clu-tech-badge.png")
         ));
 
+        // when, then
         mockMvc.perform(get("/api/v1/universities")
                         .queryParam("keyword", "클루"))
                 .andExpect(status().isOk())
@@ -69,8 +71,10 @@ class UniversityControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 학교_상세_조회() throws Exception {
+        // given
         when(universityService.getUniversity(1L)).thenReturn(createUniversityDetailResponse());
 
+        // when, then
         mockMvc.perform(get("/api/v1/universities/{universityId}", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.universityId").value(1))
@@ -94,8 +98,10 @@ class UniversityControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 학교_등록() throws Exception {
+        // given
         when(universityService.createUniversity(eq(1L), any())).thenReturn(createUniversityDetailResponse());
 
+        // when, then
         mockMvc.perform(post("/api/v1/universities")
                         .session(createAdminSession())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -134,6 +140,7 @@ class UniversityControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 학교_수정() throws Exception {
+        // given
         when(universityService.updateUniversity(eq(1L), eq(1L), any())).thenReturn(new UniversityDetailResponse(
                 1L,
                 "클루대학교",
@@ -143,6 +150,7 @@ class UniversityControllerDocsTest extends RestDocsSupport {
                 true
         ));
 
+        // when, then
         mockMvc.perform(put("/api/v1/universities/{universityId}", 1L)
                         .session(createAdminSession())
                         .contentType(MediaType.APPLICATION_JSON)

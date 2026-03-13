@@ -175,4 +175,8 @@ public class Member extends BaseTimeEntity {
     public boolean isActive() {
         return this.status == MemberStatus.ACTIVE;
     }
+
+    public boolean isAdmin() {
+        return this.role == MemberRole.ADMIN;
+    }
 }
