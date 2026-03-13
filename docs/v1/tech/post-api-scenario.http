@@ -1,0 +1,171 @@
+### 게시글 API 시나리오
+### IntelliJ HTTP Client 기준
+### 실행 전 universityId, agreedTermsIds 값을 실제 데이터에 맞게 수정한다.
+
+@baseUrl = http://localhost:8080
+@email = post-scenario@example.com
+@password = password1234
+@nickname = postScenarioUser
+@universityId = 1
+@agreedTermsIds = [1]
+@boardId = 1
+
+### 1. 회원 가입
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "nickname": "{{nickname}}",
+  "universityId": {{universityId}},
+  "agreedTermsIds": {{agreedTermsIds}}
+}
+
+> {%
+    if (response.status !== 201) {
+        client.log("회원 가입 실패 status=" + response.status);
+        client.log("회원 가입 실패 body=" + JSON.stringify(response.body));
+        throw new Error("회원 가입 실패: universityId, agreedTermsIds 값을 확인하세요.");
+    }
+
+    const registerCookie = response.headers.valueOf("Set-Cookie");
+    if (!registerCookie) {
+        throw new Error("회원 가입 응답에 Set-Cookie 헤더가 없습니다.");
+    }
+
+    const registerSession = registerCookie.match(/JSESSIONID=[^;]+/);
+    if (!registerSession) {
+        throw new Error("회원 가입 응답에서 JSESSIONID를 찾지 못했습니다.");
+    }
+
+    client.global.set("memberSession", registerSession[0]);
+    client.global.set("memberId", String(response.body.data.memberId));
+    client.log("회원 가입 성공");
+    client.log("memberId=" + client.global.get("memberId"));
+    client.log("memberSession=" + client.global.get("memberSession"));
+%}
+
+### 2. 로그아웃
+POST {{baseUrl}}/api/v1/auth/logout
+Cookie: {{memberSession}}
+
+### 3. 로그인
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    if (response.status !== 200) {
+        client.log("로그인 실패 status=" + response.status);
+        client.log("로그인 실패 body=" + JSON.stringify(response.body));
+        throw new Error("로그인 실패: email, password 값을 확인하세요.");
+    }
+
+    const loginCookie = response.headers.valueOf("Set-Cookie");
+    if (!loginCookie) {
+        throw new Error("로그인 응답에 Set-Cookie 헤더가 없습니다.");
+    }
+
+    const loginSession = loginCookie.match(/JSESSIONID=[^;]+/);
+    if (!loginSession) {
+        throw new Error("로그인 응답에서 JSESSIONID를 찾지 못했습니다.");
+    }
+
+    client.global.set("memberSession", loginSession[0]);
+    client.global.set("memberId", String(response.body.data.memberId));
+    client.log("로그인 성공");
+    client.log("memberId=" + client.global.get("memberId"));
+    client.log("memberSession=" + client.global.get("memberSession"));
+%}
+
+### 4. 게시글 이미지 presigned URL 발급
+POST {{baseUrl}}/api/v1/post-images/presigned-urls
+Content-Type: application/json
+Cookie: {{memberSession}}
+
+{
+  "originalFileName": "study-banner.png",
+  "contentType": "image/png"
+}
+
+> {%
+    if (response.status !== 200) {
+        client.log("presigned URL 발급 실패 status=" + response.status);
+        client.log("presigned URL 발급 실패 body=" + JSON.stringify(response.body));
+        throw new Error("presigned URL 발급 실패: 로그인 세션과 contentType 값을 확인하세요.");
+    }
+
+    client.global.set("postImageUrl", response.body.data.imageUrl);
+    client.global.set("postUploadUrl", response.body.data.uploadUrl);
+    client.log("게시글 이미지 presigned URL 발급 성공");
+    client.log("postImageUrl=" + client.global.get("postImageUrl"));
+    client.log("postUploadUrl=" + client.global.get("postUploadUrl"));
+%}
+
+### 5. 게시글 작성
+POST {{baseUrl}}/api/v1/posts
+Content-Type: application/json
+Cookie: {{memberSession}}
+
+{
+  "boardId": {{boardId}},
+  "title": "게시글 API 시나리오 테스트",
+  "content": "회원 가입과 로그인 이후 게시글을 작성하는 시나리오입니다.",
+  "category": "INFORMATION",
+  "tags": ["spring", "http"],
+  "isAnonymous": false,
+  "isPinned": false,
+  "isExternalVisible": true,
+  "imageUrls": ["{{postImageUrl}}"]
+}
+
+> {%
+    if (response.status !== 201) {
+        client.log("게시글 작성 실패 status=" + response.status);
+        client.log("게시글 작성 실패 body=" + JSON.stringify(response.body));
+        throw new Error("게시글 작성 실패: boardId 값과 로그인 세션을 확인하세요.");
+    }
+
+    client.global.set("postId", String(response.body.data.postId));
+    client.log("게시글 작성 성공");
+    client.log("postId=" + client.global.get("postId"));
+%}
+
+### 6. 비회원 게시글 목록 조회
+GET {{baseUrl}}/api/v1/posts?boardId={{boardId}}&sort=LATEST&page=1&size=20
+
+### 7. 비회원 게시글 상세 조회
+GET {{baseUrl}}/api/v1/posts/{{postId}}
+
+### 8. 회원 게시글 상세 조회
+GET {{baseUrl}}/api/v1/posts/{{postId}}
+Cookie: {{memberSession}}
+
+### 9. 회원 게시글 수정
+PUT {{baseUrl}}/api/v1/posts/{{postId}}
+Content-Type: application/json
+Cookie: {{memberSession}}
+
+{
+  "title": "게시글 API 시나리오 테스트 수정",
+  "content": "게시글 수정까지 포함한 시나리오입니다.",
+  "category": "INFORMATION",
+  "tags": ["spring", "http", "update"],
+  "isAnonymous": false,
+  "isPinned": false,
+  "isExternalVisible": true,
+  "imageUrls": ["{{postImageUrl}}"]
+}
+
+### 10. 회원 게시글 삭제
+DELETE {{baseUrl}}/api/v1/posts/{{postId}}
+Cookie: {{memberSession}}
+
+### 11. 최종 로그아웃
+POST {{baseUrl}}/api/v1/auth/logout
+Cookie: {{memberSession}}
