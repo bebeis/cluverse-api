@@ -266,6 +266,15 @@ CREATE TABLE post (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='게시글';
 
+CREATE INDEX idx_post_board_status_created_id
+    ON post (board_id, status, created_at DESC, post_id DESC);
+
+CREATE INDEX idx_post_board_status_view_id
+    ON post (board_id, status, view_count DESC, post_id DESC);
+
+CREATE INDEX idx_post_board_category_status_created_id
+    ON post (board_id, category, status, created_at DESC, post_id DESC);
+
 -- 3.3 post_image (게시글 이미지)
 CREATE TABLE post_image (
     post_image_id BIGINT       NOT NULL AUTO_INCREMENT,
