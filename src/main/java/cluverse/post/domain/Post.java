@@ -44,6 +44,10 @@ public class Post extends BaseTimeEntity {
     @Column(nullable = false)
     private String content;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PostCategory category;
+
     @Builder.Default
     private boolean isAnonymous = false;
     @Builder.Default
@@ -58,12 +62,14 @@ public class Post extends BaseTimeEntity {
     private LocalDateTime deletedAt;
     private String clientIp;
 
-    public static Post createByMember(List<String> tags, Long boardId, Long memberId, String title, String content, boolean isAnonymous, String clientIp) {
+    public static Post createByMember(List<String> tags, Long boardId, Long memberId, String title, String content,
+                                      PostCategory category, boolean isAnonymous, String clientIp) {
         Post post = Post.builder()
                 .boardId(boardId)
                 .memberId(memberId)
                 .title(title)
                 .content(content)
+                .category(category)
                 .isAnonymous(isAnonymous)
                 .clientIp(clientIp)
                 .build();

@@ -249,7 +249,7 @@ CREATE TABLE post (
     member_id           BIGINT       NOT NULL                  COMMENT '작성자 → member.member_id',
     title               VARCHAR(200) NOT NULL,
     content             TEXT         NOT NULL,
-    category            VARCHAR(30)  NULL                      COMMENT '질문/정보/후기/자료/모집 등',
+    category            VARCHAR(30)  NOT NULL                  COMMENT '질문/정보/후기/자료/모집 등',
     is_anonymous        BOOLEAN      NOT NULL DEFAULT FALSE,
     is_pinned           BOOLEAN      NOT NULL DEFAULT FALSE,
     is_external_visible BOOLEAN      NOT NULL DEFAULT TRUE     COMMENT '외부 공개 여부 (그룹 게시판용)',

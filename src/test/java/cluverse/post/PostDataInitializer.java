@@ -1,6 +1,7 @@
 package cluverse.post;
 
 import cluverse.post.domain.Post;
+import cluverse.post.domain.PostCategory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
@@ -51,6 +52,7 @@ public class PostDataInitializer {
                         1L,
                         "title" + i,
                         "content" + i,
+                        PostCategory.INFORMATION,
                         false,
                         "127.0.0.1"
                 );
