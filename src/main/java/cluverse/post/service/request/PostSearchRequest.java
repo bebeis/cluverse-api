@@ -1,19 +1,16 @@
 package cluverse.post.service.request;
 
 import cluverse.post.domain.PostCategory;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
 
 public record PostSearchRequest(
-        // 없으면 전체 게시판에서 검색, 있으면 해당 게시판에서 검색
+        @NotNull(message = "게시판 ID를 입력해주세요.")
         Long boardId,
 
-        // 없으면 전체 카테고리에서 검색, 있으면 해당 카테고리에서 검색
         PostCategory category,
-
-        @Size(max = 50, message = "태그는 50자 이하여야 합니다.")
-        String tag,
 
         PostSortType sort,
 
@@ -22,7 +19,7 @@ public record PostSearchRequest(
 
         @Min(value = 1, message = "조회 건수는 1 이상이어야 합니다.")
         @Max(value = 100, message = "조회 건수는 100 이하여야 합니다.")
-        Integer pageSize
+        Integer size
 ) {
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_SIZE = 20;
@@ -33,10 +30,15 @@ public record PostSearchRequest(
     }
 
     public int sizeOrDefault() {
-        return pageSize == null ? DEFAULT_SIZE : pageSize;
+        return size == null ? DEFAULT_SIZE : size;
     }
 
     public PostSortType sortOrDefault() {
         return sort == null ? DEFAULT_SORT : sort;
+    }
+
+    @AssertTrue(message = "카테고리 필터와 정렬 조건은 함께 사용할 수 없습니다.")
+    public boolean isCategorySortable() {
+        return category == null || sort == null;
     }
 }

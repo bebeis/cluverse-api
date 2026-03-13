@@ -13,28 +13,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
-public class PostController {
+public class PostControllerV1 {
 
     private final PostService postService;
 
     @GetMapping
     public ApiResponse<PostPageResponse> getPostList(@Login LoginMember loginMember,
                                                      @Valid @ModelAttribute PostSearchRequest request) {
-        return ApiResponse.ok(postService.getPosts(loginMember.memberId(), request));
+        return ApiResponse.ok(postService.getPosts(extractMemberId(loginMember), request));
     }
 
     @PostMapping
@@ -50,7 +41,7 @@ public class PostController {
     @GetMapping("/{postId}")
     public ApiResponse<PostDetailResponse> readPost(@Login LoginMember loginMember,
                                                     @PathVariable Long postId) {
-        return ApiResponse.ok(postService.readPost(loginMember.memberId(), postId));
+        return ApiResponse.ok(postService.readPost(extractMemberId(loginMember), postId));
     }
 
     @PutMapping("/{postId}")
@@ -65,5 +56,9 @@ public class PostController {
                                         @PathVariable Long postId) {
         postService.deletePost(loginMember.memberId(), postId);
         return ApiResponse.ok();
+    }
+
+    private Long extractMemberId(LoginMember loginMember) {
+        return loginMember == null ? null : loginMember.memberId();
     }
 }

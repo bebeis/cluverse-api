@@ -1,10 +1,13 @@
 package cluverse.post.domain;
 
 import cluverse.common.entity.BaseTimeEntity;
+import cluverse.common.exception.BadRequestException;
+import cluverse.post.exception.PostExceptionMessage;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +29,11 @@ public class Post extends BaseTimeEntity {
     @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "tag_name")
     private Set<String> tags = new HashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
+    private List<PostImage> images = new ArrayList<>();
 
     @Column(nullable = false)
     private Long boardId;
@@ -62,8 +70,9 @@ public class Post extends BaseTimeEntity {
     private LocalDateTime deletedAt;
     private String clientIp;
 
-    public static Post createByMember(List<String> tags, Long boardId, Long memberId, String title, String content,
-                                      PostCategory category, boolean isAnonymous, String clientIp) {
+    public static Post createByMember(List<String> tags, List<String> imageUrls, Long boardId, Long memberId,
+                                      String title, String content, PostCategory category, boolean isAnonymous,
+                                      boolean isPinned, boolean isExternalVisible, String clientIp) {
         Post post = Post.builder()
                 .boardId(boardId)
                 .memberId(memberId)
@@ -71,17 +80,92 @@ public class Post extends BaseTimeEntity {
                 .content(content)
                 .category(category)
                 .isAnonymous(isAnonymous)
+                .isPinned(isPinned)
+                .isExternalVisible(isExternalVisible)
                 .clientIp(clientIp)
                 .build();
 
-        if (tags != null) {
-            post.tags.addAll(tags);
-        }
-
+        post.replaceTags(tags);
+        post.replaceImages(imageUrls);
         return post;
     }
 
-    public void addTag(String tag) {
-        this.tags.add(tag);
+    public void update(String title, String content, PostCategory category, List<String> tags, List<String> imageUrls,
+                       boolean isAnonymous, boolean isPinned, boolean isExternalVisible) {
+        this.title = title;
+        this.content = content;
+        this.category = category;
+        this.isAnonymous = isAnonymous;
+        this.isPinned = isPinned;
+        this.isExternalVisible = isExternalVisible;
+        replaceTags(tags);
+        replaceImages(imageUrls);
+    }
+
+    public void delete() {
+        this.status = PostStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
+
+    public void increaseLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decreaseLikeCount() {
+        if (likeCount == 0) {
+            throw new BadRequestException(PostExceptionMessage.POST_LIKE_COUNT_ALREADY_ZERO.getMessage());
+        }
+        this.likeCount--;
+    }
+
+    public void increaseBookmarkCount() {
+        this.bookmarkCount++;
+    }
+
+    public void decreaseBookmarkCount() {
+        if (bookmarkCount == 0) {
+            throw new BadRequestException(PostExceptionMessage.POST_BOOKMARK_COUNT_ALREADY_ZERO.getMessage());
+        }
+        this.bookmarkCount--;
+    }
+
+    public boolean isAuthor(Long memberId) {
+        return this.memberId.equals(memberId);
+    }
+
+    public boolean isActive() {
+        return this.status == PostStatus.ACTIVE;
+    }
+
+    public String getThumbnailImageUrl() {
+        return images.isEmpty() ? null : images.getFirst().getImageUrl();
+    }
+
+    public List<String> getImageUrls() {
+        return images.stream()
+                .map(PostImage::getImageUrl)
+                .toList();
+    }
+
+    private void replaceTags(List<String> tags) {
+        this.tags.clear();
+        if (tags == null) {
+            return;
+        }
+        this.tags.addAll(tags);
+    }
+
+    private void replaceImages(List<String> imageUrls) {
+        this.images.clear();
+        if (imageUrls == null) {
+            return;
+        }
+        for (int i = 0; i < imageUrls.size(); i++) {
+            this.images.add(PostImage.of(this, imageUrls.get(i), i));
+        }
     }
 }

@@ -20,30 +20,22 @@ import java.util.List;
 import static cluverse.common.auth.LoginMemberArgumentResolver.SESSION_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
-import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
-import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class PostControllerDocsTest extends RestDocsSupport {
+class PostControllerV1DocsTest extends RestDocsSupport {
 
     private final PostService postService = mock(PostService.class);
 
     @Override
     protected Object initController() {
-        return new PostController(postService);
+        return new PostControllerV1(postService);
     }
 
     @Test
@@ -61,9 +53,6 @@ class PostControllerDocsTest extends RestDocsSupport {
                                 false,
                                 false,
                                 true,
-                                false,
-                                true,
-                                false,
                                 120L,
                                 15L,
                                 4L,
@@ -80,20 +69,16 @@ class PostControllerDocsTest extends RestDocsSupport {
         mockMvc.perform(get("/api/v1/posts")
                         .session(createSession())
                         .queryParam("boardId", "3")
-                        .queryParam("category", "INFORMATION")
-                        .queryParam("tag", "spring")
                         .queryParam("sort", "LATEST")
                         .queryParam("page", "1")
                         .queryParam("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.posts[0].postId").value(10))
-                .andExpect(jsonPath("$.data.posts[0].likedByMe").value(true))
                 .andDo(document("posts/get-post-list",
                         queryParameters(
                                 parameterWithName("boardId").description("조회할 게시판 ID"),
                                 parameterWithName("category").description("게시글 카테고리").optional(),
-                                parameterWithName("tag").description("태그 필터").optional(),
-                                parameterWithName("sort").description("정렬 기준 (`LATEST`, `VIEW_COUNT`, `COMMENT_COUNT`)").optional(),
+                                parameterWithName("sort").description("정렬 기준 (`LATEST`, `VIEW_COUNT`)").optional(),
                                 parameterWithName("page").description("페이지 번호 (1부터 시작)").optional(),
                                 parameterWithName("size").description("페이지 크기").optional()
                         ),
@@ -112,9 +97,6 @@ class PostControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.posts[].isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 여부"),
                                 fieldWithPath("data.posts[].isPinned").type(JsonFieldType.BOOLEAN).description("상단 고정 여부"),
                                 fieldWithPath("data.posts[].isExternalVisible").type(JsonFieldType.BOOLEAN).description("외부 공개 여부"),
-                                fieldWithPath("data.posts[].isMine").type(JsonFieldType.BOOLEAN).description("내가 작성한 게시글 여부"),
-                                fieldWithPath("data.posts[].likedByMe").type(JsonFieldType.BOOLEAN).description("내가 좋아요한 게시글 여부"),
-                                fieldWithPath("data.posts[].bookmarkedByMe").type(JsonFieldType.BOOLEAN).description("내가 북마크한 게시글 여부"),
                                 fieldWithPath("data.posts[].viewCount").type(JsonFieldType.NUMBER).description("조회수"),
                                 fieldWithPath("data.posts[].likeCount").type(JsonFieldType.NUMBER).description("좋아요 수"),
                                 fieldWithPath("data.posts[].commentCount").type(JsonFieldType.NUMBER).description("댓글 수"),
@@ -128,6 +110,21 @@ class PostControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부")
                         )
                 ));
+    }
+
+    @Test
+    void 비회원도_게시글_목록을_조회할_수_있다() throws Exception {
+        when(postService.getPosts(isNull(), any())).thenReturn(new PostPageResponse(
+                List.of(),
+                1,
+                20,
+                false
+        ));
+
+        mockMvc.perform(get("/api/v1/posts")
+                        .queryParam("boardId", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.posts").isArray());
     }
 
     @Test
@@ -181,9 +178,6 @@ class PostControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 여부"),
                                 fieldWithPath("data.isPinned").type(JsonFieldType.BOOLEAN).description("상단 고정 여부"),
                                 fieldWithPath("data.isExternalVisible").type(JsonFieldType.BOOLEAN).description("외부 공개 여부"),
-                                fieldWithPath("data.isMine").type(JsonFieldType.BOOLEAN).description("내가 작성한 게시글 여부"),
-                                fieldWithPath("data.likedByMe").type(JsonFieldType.BOOLEAN).description("내가 좋아요한 게시글 여부"),
-                                fieldWithPath("data.bookmarkedByMe").type(JsonFieldType.BOOLEAN).description("내가 북마크한 게시글 여부"),
                                 fieldWithPath("data.viewCount").type(JsonFieldType.NUMBER).description("조회수"),
                                 fieldWithPath("data.likeCount").type(JsonFieldType.NUMBER).description("좋아요 수"),
                                 fieldWithPath("data.commentCount").type(JsonFieldType.NUMBER).description("댓글 수"),
@@ -205,7 +199,6 @@ class PostControllerDocsTest extends RestDocsSupport {
                         .session(createSession()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.postId").value(10))
-                .andExpect(jsonPath("$.data.bookmarkedByMe").value(true))
                 .andDo(document("posts/read-post",
                         pathParameters(
                                 parameterWithName("postId").description("조회할 게시글 ID")
@@ -224,9 +217,6 @@ class PostControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 여부"),
                                 fieldWithPath("data.isPinned").type(JsonFieldType.BOOLEAN).description("상단 고정 여부"),
                                 fieldWithPath("data.isExternalVisible").type(JsonFieldType.BOOLEAN).description("외부 공개 여부"),
-                                fieldWithPath("data.isMine").type(JsonFieldType.BOOLEAN).description("내가 작성한 게시글 여부"),
-                                fieldWithPath("data.likedByMe").type(JsonFieldType.BOOLEAN).description("내가 좋아요한 게시글 여부"),
-                                fieldWithPath("data.bookmarkedByMe").type(JsonFieldType.BOOLEAN).description("내가 북마크한 게시글 여부"),
                                 fieldWithPath("data.viewCount").type(JsonFieldType.NUMBER).description("조회수"),
                                 fieldWithPath("data.likeCount").type(JsonFieldType.NUMBER).description("좋아요 수"),
                                 fieldWithPath("data.commentCount").type(JsonFieldType.NUMBER).description("댓글 수"),
@@ -291,9 +281,6 @@ class PostControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 여부"),
                                 fieldWithPath("data.isPinned").type(JsonFieldType.BOOLEAN).description("상단 고정 여부"),
                                 fieldWithPath("data.isExternalVisible").type(JsonFieldType.BOOLEAN).description("외부 공개 여부"),
-                                fieldWithPath("data.isMine").type(JsonFieldType.BOOLEAN).description("내가 작성한 게시글 여부"),
-                                fieldWithPath("data.likedByMe").type(JsonFieldType.BOOLEAN).description("내가 좋아요한 게시글 여부"),
-                                fieldWithPath("data.bookmarkedByMe").type(JsonFieldType.BOOLEAN).description("내가 북마크한 게시글 여부"),
                                 fieldWithPath("data.viewCount").type(JsonFieldType.NUMBER).description("조회수"),
                                 fieldWithPath("data.likeCount").type(JsonFieldType.NUMBER).description("좋아요 수"),
                                 fieldWithPath("data.commentCount").type(JsonFieldType.NUMBER).description("댓글 수"),
@@ -348,9 +335,6 @@ class PostControllerDocsTest extends RestDocsSupport {
                 false,
                 false,
                 true,
-                true,
-                false,
-                true,
                 120L,
                 15L,
                 4L,
@@ -372,9 +356,6 @@ class PostControllerDocsTest extends RestDocsSupport {
                 List.of("https://cdn.example.com/posts/image-1.png"),
                 false,
                 true,
-                true,
-                true,
-                false,
                 true,
                 140L,
                 18L,

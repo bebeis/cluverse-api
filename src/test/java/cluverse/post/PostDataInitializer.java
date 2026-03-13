@@ -4,6 +4,7 @@ import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Disabled
 @SpringBootTest
 public class PostDataInitializer {
     static final int BULK_INSERT_SIZE = 2000;
@@ -48,12 +50,15 @@ public class PostDataInitializer {
             for (int i = 0; i < BULK_INSERT_SIZE; i++) {
                 Post postByMember = Post.createByMember(
                         generateTags(),
+                        List.of(),
                         1L,
                         1L,
                         "title" + i,
                         "content" + i,
                         PostCategory.INFORMATION,
                         false,
+                        false,
+                        true,
                         "127.0.0.1"
                 );
                 em.persist(postByMember);
