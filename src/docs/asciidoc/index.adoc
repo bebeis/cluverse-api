@@ -12,4 +12,6 @@ include::auth/index.adoc[]
 
 include::member/index.adoc[]
 
+include::university/index.adoc[]
+
 include::post/index.adoc[]
