@@ -1,0 +1,74 @@
+== 게시글 API
+
+=== 게시글 목록 조회
+
+==== 요청
+
+include::{snippets}/posts/get-post-list/http-request.adoc[]
+include::{snippets}/posts/get-post-list/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/get-post-list/http-response.adoc[]
+include::{snippets}/posts/get-post-list/response-fields.adoc[]
+
+=== 게시글 작성
+
+==== 요청
+
+include::{snippets}/posts/create-post/http-request.adoc[]
+include::{snippets}/posts/create-post/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/create-post/http-response.adoc[]
+include::{snippets}/posts/create-post/response-fields.adoc[]
+
+=== 게시글 상세 조회
+
+==== 요청
+
+include::{snippets}/posts/read-post/http-request.adoc[]
+include::{snippets}/posts/read-post/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/read-post/http-response.adoc[]
+include::{snippets}/posts/read-post/response-fields.adoc[]
+
+=== 게시글 수정
+
+==== 요청
+
+include::{snippets}/posts/update-post/http-request.adoc[]
+include::{snippets}/posts/update-post/path-parameters.adoc[]
+include::{snippets}/posts/update-post/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/update-post/http-response.adoc[]
+include::{snippets}/posts/update-post/response-fields.adoc[]
+
+=== 게시글 삭제
+
+==== 요청
+
+include::{snippets}/posts/delete-post/http-request.adoc[]
+include::{snippets}/posts/delete-post/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/delete-post/http-response.adoc[]
+include::{snippets}/posts/delete-post/response-fields.adoc[]
+
+=== 게시글 이미지 업로드용 Presigned URL 발급
+
+==== 요청
+
+include::{snippets}/post-images/create-presigned-url/http-request.adoc[]
+include::{snippets}/post-images/create-presigned-url/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/post-images/create-presigned-url/http-response.adoc[]
+include::{snippets}/post-images/create-presigned-url/response-fields.adoc[]
