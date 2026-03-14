@@ -5,10 +5,7 @@ spring:
     password: ${RDS_PASSWORD:test1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      maximum-pool-size: 64
-  # // TODO: Named Lock 을 위해 아래 주석을 해제해야함
-  #    hikari:
-  #      maximum-pool-size: 64
+      maximum-pool-size: 128
   jpa:
     defer-datasource-initialization: true
     hibernate:
