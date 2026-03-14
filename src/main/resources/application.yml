@@ -5,7 +5,7 @@ spring:
     password: ${RDS_PASSWORD:test1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      maximum-pool-size: 128
+      maximum-pool-size: 200
   jpa:
     defer-datasource-initialization: true
     hibernate:
