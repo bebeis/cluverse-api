@@ -1,0 +1,77 @@
+# Test Data Seed Scripts
+
+MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
+
+## 대상 수량
+
+- `university`: 30건
+- `member`: 50,000건
+- `major`: 300건
+- `interest`: 200건
+- `post`: 2,000,000건
+- `comment`: 3,000,000건
+- `follow`: 250,000건
+- `block`: 25,000건
+
+## 파일 목록
+
+- `01_university_seed.sql`
+- `02_member_seed.sql`
+- `03_major_seed.sql`
+- `04_interest_seed.sql`
+- `05_post_seed.sql`
+- `06_comment_seed.sql`
+- `07_follow_seed.sql`
+- `08_block_seed.sql`
+
+## 실행 순서
+
+1. `01_university_seed.sql`
+2. `02_member_seed.sql`
+3. `03_major_seed.sql`
+4. `04_interest_seed.sql`
+5. `05_post_seed.sql`
+6. `06_comment_seed.sql`
+7. `07_follow_seed.sql`
+8. `08_block_seed.sql`
+
+## 의존성
+
+- `member`는 `university`를 참조하므로 `university` 이후에 실행해야 합니다.
+- `major`는 `member_major`를 함께 생성하므로 `member` 이후에 실행해야 합니다.
+- `interest`는 `major`, `member`를 참조하므로 `major` 이후에 실행해야 합니다.
+- `post`는 `member`를 참조하므로 `member` 이후에 실행해야 합니다.
+- `comment`는 `post`, `member`를 참조하므로 `post` 이후에 실행해야 합니다.
+- `follow`, `block`은 `member`만 참조하므로 `member` 이후면 어느 시점에 실행해도 됩니다.
+
+## 재실행 주의사항
+
+- 상위 도메인 스크립트를 다시 실행하면 하위 도메인 데이터의 참조 일관성이 깨질 수 있습니다.
+- 예를 들어 `05_post_seed.sql`을 다시 실행했다면 `06_comment_seed.sql`도 다시 실행해야 합니다.
+- 같은 이유로 `02_member_seed.sql`을 다시 실행했다면 `03_major_seed.sql`, `04_interest_seed.sql`, `05_post_seed.sql`, `06_comment_seed.sql`, `07_follow_seed.sql`, `08_block_seed.sql`도 다시 실행하는 것이 안전합니다.
+
+## ID 범위
+
+- `university`: `1001` ~ `1030`
+- `terms`: `1101` ~ `1103`
+- `member`: `1000001` ~ `1050000`
+- `major.board`: `2100001` ~ `2100300`
+- `major`: `3100001` ~ `3100300`
+- `interest.board`: `2200001` ~ `2200200`
+- `interest`: `3200001` ~ `3200200`
+- `post.board`: `2000001` ~ `2000120`
+- `post`: `3000001` ~ `5000000`
+- `comment`: `6000001` ~ `9000000`
+
+## 보조 데이터
+
+- `member` 스크립트는 `member_auth`, `member_profile`, `member_status_history`, `terms`, `member_terms_agreement`도 함께 생성합니다.
+- `major` 스크립트는 `board`, `member_major`를 함께 생성합니다.
+- `interest` 스크립트는 `board`, `interest_major_relation`, `member_interests`를 함께 생성합니다.
+- `post` 스크립트는 `board`, `post_tag`, `post_image`를 함께 생성합니다.
+- `comment` 스크립트는 댓글 삽입 후 `post.comment_count`, `comment.reply_count`를 갱신합니다.
+
+## 실행 환경
+
+- MySQL 8.x
+- `DELIMITER`, 저장 프로시저, `JSON_ARRAY`, `CREATE TEMPORARY TABLE` 사용
