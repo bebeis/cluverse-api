@@ -12,18 +12,18 @@ spring:
   jpa:
     defer-datasource-initialization: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: none
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: false
-        show_sql: false
+        format_sql: true
+        show_sql: true
     open-in-view: false
 
 decorator:
   datasource:
     p6spy:
-      enable-logging: false # 운영 환경에선 끄기
+      enable-logging: true # 운영 환경에선 끄기
       multiline: true
       logging: slf4j
 

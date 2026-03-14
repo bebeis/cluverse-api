@@ -285,6 +285,9 @@ CREATE TABLE post_image (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='게시글 이미지';
 
+CREATE INDEX idx_post_image_post_display
+    ON post_image (post_id, display_order);
+
 -- 3.4 post_tag (게시글-태그 매핑)
 CREATE TABLE post_tag (
     post_id  BIGINT      NOT NULL                              COMMENT '→ post.post_id',
