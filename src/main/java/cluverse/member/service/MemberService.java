@@ -99,6 +99,11 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
+    public boolean isAdmin(Long memberId) {
+        return memberReader.readOrThrow(memberId).isAdmin();
+    }
+
+    @Transactional(readOnly = true)
     public List<BlockedMemberResponse> getBlockedMembers(Long blockerId) {
         return memberReader.readBlockedMembers(blockerId);
     }

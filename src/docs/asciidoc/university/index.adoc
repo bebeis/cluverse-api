@@ -1,0 +1,50 @@
+== 학교 API
+
+=== 학교 검색
+
+==== 요청
+
+include::{snippets}/universities/search/http-request.adoc[]
+include::{snippets}/universities/search/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/universities/search/http-response.adoc[]
+include::{snippets}/universities/search/response-fields.adoc[]
+
+=== 학교 상세 조회
+
+==== 요청
+
+include::{snippets}/universities/get-detail/http-request.adoc[]
+include::{snippets}/universities/get-detail/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/universities/get-detail/http-response.adoc[]
+include::{snippets}/universities/get-detail/response-fields.adoc[]
+
+=== 학교 등록
+
+==== 요청
+
+include::{snippets}/universities/create/http-request.adoc[]
+include::{snippets}/universities/create/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/universities/create/http-response.adoc[]
+include::{snippets}/universities/create/response-fields.adoc[]
+
+=== 학교 수정
+
+==== 요청
+
+include::{snippets}/universities/update/http-request.adoc[]
+include::{snippets}/universities/update/path-parameters.adoc[]
+include::{snippets}/universities/update/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/universities/update/http-response.adoc[]
+include::{snippets}/universities/update/response-fields.adoc[]

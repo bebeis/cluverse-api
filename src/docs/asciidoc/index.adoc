@@ -11,3 +11,7 @@ include::common/_overview.adoc[]
 include::auth/index.adoc[]
 
 include::member/index.adoc[]
+
+include::university/index.adoc[]
+
+include::post/index.adoc[]

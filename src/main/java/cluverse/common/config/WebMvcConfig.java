@@ -15,9 +15,14 @@ import java.util.List;
 @EnableConfigurationProperties(OAuth2Properties.class)
 public class WebMvcConfig implements WebMvcConfigurer {
 
+    private static final List<String> PUBLIC_GET_PATH_PATTERNS = List.of(
+            "/api/v1/posts",
+            "/api/v1/posts/*"
+    );
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new AuthInterceptor())
+        registry.addInterceptor(new AuthInterceptor(PUBLIC_GET_PATH_PATTERNS))
                 .addPathPatterns("/api/v1/**")
                 .excludePathPatterns(
                         "/api/v1/auth/register",

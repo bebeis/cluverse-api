@@ -22,6 +22,12 @@ decorator:
 app:
   frontend-url: http://localhost:3000
 
+aws:
+  region: ap-northeast-2
+  s3:
+    bucket: test-bucket
+    endpoint: http://localhost:4566
+
 oauth2:
   kakao:
     client-id: test

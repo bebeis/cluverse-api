@@ -249,7 +249,7 @@ CREATE TABLE post (
     member_id           BIGINT       NOT NULL                  COMMENT '작성자 → member.member_id',
     title               VARCHAR(200) NOT NULL,
     content             TEXT         NOT NULL,
-    category            VARCHAR(30)  NULL                      COMMENT '질문/정보/후기/자료/모집 등',
+    category            VARCHAR(30)  NOT NULL                  COMMENT '질문/정보/후기/자료/모집 등',
     is_anonymous        BOOLEAN      NOT NULL DEFAULT FALSE,
     is_pinned           BOOLEAN      NOT NULL DEFAULT FALSE,
     is_external_visible BOOLEAN      NOT NULL DEFAULT TRUE     COMMENT '외부 공개 여부 (그룹 게시판용)',
@@ -265,6 +265,15 @@ CREATE TABLE post (
     PRIMARY KEY (post_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='게시글';
+
+CREATE INDEX idx_post_board_status_created_id
+    ON post (board_id, status, created_at DESC, post_id DESC);
+
+CREATE INDEX idx_post_board_status_view_id
+    ON post (board_id, status, view_count DESC, post_id DESC);
+
+CREATE INDEX idx_post_board_category_status_created_id
+    ON post (board_id, category, status, created_at DESC, post_id DESC);
 
 -- 3.3 post_image (게시글 이미지)
 CREATE TABLE post_image (
