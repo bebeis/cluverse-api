@@ -83,7 +83,7 @@ public class PostQueryRepository {
                         post.createdAt.goe(date.atStartOfDay()),
                         post.createdAt.lt(date.plusDays(1).atTime(LocalTime.MIDNIGHT))
                 )
-                .orderBy(post.id.desc())
+                .orderBy(post.createdAt.desc(), post.id.desc())
                 .limit(size + 1L)
                 .fetch();
 
