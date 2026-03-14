@@ -174,7 +174,7 @@ BEGIN
         SELECT
             v_start + v_offset + seq AS member_id,
             CONCAT('seed_user_', LPAD(v_offset + seq + 1, 6, '0'), '@seed.local') AS email,
-            '$2a$10$123456789012345678901u6GqZ2J3Vj9x3R7nP0dR1mY8cYw5M7Qe' AS password_hash,
+            '$2a$10$8l6GdC7HYSYQwNSKGwstwedK3vmbqP1O/29FLpZg2fZEGf1/WBubu' AS password_hash,
             DATE_SUB(NOW(), INTERVAL MOD(v_offset + seq, 720) HOUR) AS created_at,
             NOW() AS updated_at
         FROM tmp_seed_seq_10000

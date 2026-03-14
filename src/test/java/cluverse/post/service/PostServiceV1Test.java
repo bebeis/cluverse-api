@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -49,7 +50,8 @@ class PostServiceV1Test {
 
     @Test
     void 게시글_목록_조회시_서비스가_정렬된_ID_순서대로_응답을_조립한다() {
-        PostSearchRequest request = new PostSearchRequest(3L, null, PostSortType.LATEST, 1, 20);
+        // given
+        PostSearchRequest request = new PostSearchRequest(3L, null, PostSortType.LATEST, 1, 20, null);
         when(postQueryRepository.findPostPage(99L, request)).thenReturn(new PostPageQueryResult(
                 List.of(
                         createPostSummaryQueryDto(2L, 20L, false),
@@ -58,10 +60,37 @@ class PostServiceV1Test {
                 true
         ));
 
+        // when
         PostPageResponse response = postService.getPosts(99L, request);
 
+        // then
         assertThat(response.posts()).extracting("postId").containsExactly(2L, 1L);
         assertThat(response.hasNext()).isTrue();
+        assertThat(response.page()).isEqualTo(1);
+        assertThat(response.dateBased()).isFalse();
+    }
+
+    @Test
+    void 날짜_기반_목록_조회시_date_기반_쿼리를_호출하고_page는_null이다() {
+        // given
+        LocalDate date = LocalDate.of(2024, 1, 15);
+        PostSearchRequest request = new PostSearchRequest(3L, null, null, null, 20, date);
+        when(postQueryRepository.findPostPageByDate(99L, request)).thenReturn(new PostPageQueryResult(
+                List.of(
+                        createPostSummaryQueryDto(5L, 20L, false),
+                        createPostSummaryQueryDto(4L, 20L, false)
+                ),
+                false
+        ));
+
+        // when
+        PostPageResponse response = postService.getPosts(99L, request);
+
+        // then
+        assertThat(response.posts()).extracting("postId").containsExactly(5L, 4L);
+        assertThat(response.page()).isNull();
+        assertThat(response.dateBased()).isTrue();
+        assertThat(response.hasNext()).isFalse();
     }
 
     @Test

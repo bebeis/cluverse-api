@@ -31,7 +31,9 @@ public class PostServiceV1 implements PostService {
     @Override
     @Transactional(readOnly = true)
     public PostPageResponse getPosts(Long memberId, PostSearchRequest request) {
-        PostPageQueryResult queryResult = postQueryRepository.findPostPage(memberId, request);
+        PostPageQueryResult queryResult = request.isDateBased()
+                ? postQueryRepository.findPostPageByDate(memberId, request)
+                : postQueryRepository.findPostPage(memberId, request);
 
         List<PostSummaryResponse> responses = queryResult.posts().stream()
                 .map(PostSummaryResponse::from)
@@ -39,9 +41,10 @@ public class PostServiceV1 implements PostService {
 
         return new PostPageResponse(
                 responses,
-                request.pageOrDefault(),
+                request.isDateBased() ? null : request.pageOrDefault(),
                 request.sizeOrDefault(),
-                queryResult.hasNext()
+                queryResult.hasNext(),
+                request.isDateBased()
         );
     }
 

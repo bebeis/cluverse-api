@@ -56,6 +56,9 @@ CREATE TABLE member_status_history (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='회원 상태 이력';
 
+CREATE INDEX idx_member_status_history_member_id
+    ON member_status_history (member_id);
+
 -- 1.4 member_credential (인증 자료)
 CREATE TABLE member_credential (
     member_credential_id BIGINT       NOT NULL AUTO_INCREMENT,
@@ -73,6 +76,9 @@ CREATE TABLE member_credential (
     PRIMARY KEY (member_credential_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='회원 인증 자료';
+
+CREATE INDEX idx_member_credential_member_id
+    ON member_credential (member_id);
 
 -- 1.5 member_profile (프로필) — Shared PK
 CREATE TABLE member_profile (
@@ -184,6 +190,7 @@ CREATE TABLE member_major (
     UNIQUE KEY uk_member_major (member_id, major_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='회원-학과 매핑';
+
 
 -- 2.4 interests (관심 태그 마스터) — board 상속 (board_id 보유)
 CREATE TABLE interests (
@@ -316,6 +323,12 @@ CREATE TABLE comment (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='댓글/대댓글';
 
+CREATE INDEX idx_comment_post_status_created
+    ON comment (post_id, status, created_at ASC);
+
+CREATE INDEX idx_comment_member_id
+    ON comment (member_id);
+
 -- 3.7 post_like (게시글 좋아요)
 CREATE TABLE post_like (
     post_like_id BIGINT   NOT NULL AUTO_INCREMENT,
@@ -370,6 +383,9 @@ CREATE TABLE follow (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='팔로우';
 
+CREATE INDEX idx_follow_following_id
+    ON follow (following_id);
+
 -- 4.2 block (차단)
 CREATE TABLE block (
     block_id   BIGINT   NOT NULL AUTO_INCREMENT,
@@ -382,6 +398,9 @@ CREATE TABLE block (
     CONSTRAINT chk_block_self CHECK (blocker_id <> blocked_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='차단';
+
+CREATE INDEX idx_block_blocker_created
+    ON block (blocker_id, created_at DESC);
 
 
 -- ------------------------------------------------------------
@@ -593,6 +612,9 @@ CREATE TABLE member_notification (
     PRIMARY KEY (member_notification_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='알림';
+
+CREATE INDEX idx_member_notification_member_created
+    ON member_notification (member_id, created_at DESC);
 
 -- 7.2 notification_setting (알림 수신 설정) — Shared PK
 CREATE TABLE notification_setting (

@@ -22,6 +22,8 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -58,6 +60,30 @@ public class PostQueryRepository {
                 )
                 .orderBy(resolveOrderSpecifiers(request.sortOrDefault()))
                 .offset(offset)
+                .limit(size + 1L)
+                .fetch();
+
+        boolean hasNext = postIds.size() > size;
+        if (hasNext) {
+            postIds = postIds.subList(0, size);
+        }
+        return new PostPageQueryResult(readPostSummaries(memberId, postIds), hasNext);
+    }
+
+    public PostPageQueryResult findPostPageByDate(Long memberId, PostSearchRequest request) {
+        int size = request.sizeOrDefault();
+        LocalDate date = request.date();
+
+        List<Long> postIds = queryFactory.select(post.id)
+                .from(post)
+                .where(
+                        post.status.eq(PostStatus.ACTIVE),
+                        boardIdEq(request.boardId()),
+                        categoryEq(request.category()),
+                        post.createdAt.goe(date.atStartOfDay()),
+                        post.createdAt.lt(date.plusDays(1).atTime(LocalTime.MIDNIGHT))
+                )
+                .orderBy(resolveOrderSpecifiers(PostSortType.LATEST))
                 .limit(size + 1L)
                 .fetch();
 

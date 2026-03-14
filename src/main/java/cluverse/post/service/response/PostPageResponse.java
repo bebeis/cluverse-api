@@ -4,9 +4,10 @@ import java.util.List;
 
 public record PostPageResponse(
         List<PostSummaryResponse> posts,
-        int page,
+        Integer page,
         int size,
-        boolean hasNext
+        boolean hasNext,
+        boolean dateBased
 ) {
     public PostPageResponse {
         posts = posts == null ? List.of() : List.copyOf(posts);
