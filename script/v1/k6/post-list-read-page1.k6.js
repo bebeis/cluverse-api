@@ -6,18 +6,14 @@ import {Counter, Rate, Trend} from 'k6/metrics';
 // k6 run \
 //   -e BASE_URL=http://localhost:8080 \
 //   -e BOARD_ID=2000001 \
-//   -e MAX_PAGE=10000 \
-//   -e PAGE_BIAS=3 \
 //   -e RATE=100 \
 //   -e DURATION=2m \
-//   script/v1/k6/post-list-read.k6.js
+//   script/v1/k6/post-list-read-page1.k6.js
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const BOARD_ID = Number(__ENV.BOARD_ID || 2000001);
 const CATEGORY = __ENV.CATEGORY;
 const SORT = __ENV.SORT || 'LATEST';
-const MAX_PAGE = Number(__ENV.MAX_PAGE || 1000);
-const PAGE_BIAS = Number(__ENV.PAGE_BIAS || 3);
 const SIZE = 10;
 const RATE = Number(__ENV.RATE || 50);
 const DURATION = __ENV.DURATION || '1m';
@@ -27,9 +23,9 @@ const THINK_TIME = Number(__ENV.THINK_TIME || 0);
 
 export const options = {
     scenarios: {
-        post_list_read: {
+        post_list_read_page1: {
             executor: 'constant-arrival-rate',
-            exec: 'readPostListScenario',
+            exec: 'readPostListPage1Scenario',
             rate: RATE,
             timeUnit: '1s',
             duration: DURATION,
@@ -49,23 +45,12 @@ export const options = {
 const postListDuration = new Trend('post_list_duration', true);
 const postListSuccessRate = new Rate('post_list_success_rate');
 const postListRequests = new Counter('post_list_requests');
-const postListSelectedPage = new Trend('post_list_selected_page');
 
-function pickPage() {
-    const maxPage = Math.max(1, Math.floor(MAX_PAGE));
-    const bias = PAGE_BIAS > 0 ? PAGE_BIAS : 3;
-
-    return Math.min(
-        maxPage,
-        Math.floor(Math.pow(Math.random(), bias) * maxPage) + 1,
-    );
-}
-
-function buildListUrl(page) {
+function buildListUrl() {
     const params = [
         `boardId=${encodeURIComponent(String(BOARD_ID))}`,
         `sort=${encodeURIComponent(SORT)}`,
-        `page=${encodeURIComponent(String(page))}`,
+        `page=1`,
         `size=${encodeURIComponent(String(SIZE))}`,
     ];
 
@@ -84,15 +69,14 @@ function hasPostsArray(response) {
     }
 }
 
-export function readPostListScenario() {
-    const page = pickPage();
-    const response = http.get(buildListUrl(page), {
+export function readPostListPage1Scenario() {
+    const url = buildListUrl();
+    const response = http.get(url, {
         tags: {
-            name: 'post_list_read',
+            name: 'post_list_read_page1',
         },
     });
 
-    postListSelectedPage.add(page);
     postListDuration.add(response.timings.duration);
 
     const ok = check(response, {

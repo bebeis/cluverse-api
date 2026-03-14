@@ -1,24 +1,27 @@
 import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { Counter, Rate, Trend } from 'k6/metrics';
+import {check, sleep} from 'k6';
+import {Counter, Rate, Trend} from 'k6/metrics';
 
 // Example:
 // k6 run \
 //   -e BASE_URL=http://localhost:8080 \
 //   -e BOARD_ID=2000001 \
 //   -e POST_ID=3000001 \
+//   -e MAX_PAGE=10000 \
+//   -e PAGE_BIAS=3 \
 //   -e LIST_RATE=100 \
 //   -e DETAIL_RATE=100 \
 //   -e DURATION=2m \
-//   docs/v1/tech/post-read.k6.js
+//   script/v1/k6/post-read.k6.js
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const BOARD_ID = Number(__ENV.BOARD_ID || 2000001);
 const POST_ID = Number(__ENV.POST_ID || 3000001);
 const CATEGORY = __ENV.CATEGORY;
 const SORT = __ENV.SORT || 'LATEST';
-const PAGE = Number(__ENV.PAGE || 1);
-const SIZE = Number(__ENV.SIZE || 20);
+const MAX_PAGE = Number(__ENV.MAX_PAGE || 1000);
+const PAGE_BIAS = Number(__ENV.PAGE_BIAS || 3);
+const SIZE = 10;
 const LIST_RATE = Number(__ENV.LIST_RATE || 50);
 const DETAIL_RATE = Number(__ENV.DETAIL_RATE || 50);
 const DURATION = __ENV.DURATION || '1m';
@@ -64,20 +67,31 @@ const postListSuccessRate = new Rate('post_list_success_rate');
 const postDetailSuccessRate = new Rate('post_detail_success_rate');
 const postListRequests = new Counter('post_list_requests');
 const postDetailRequests = new Counter('post_detail_requests');
+const postListSelectedPage = new Trend('post_list_selected_page');
 
-function buildListUrl() {
-    const query = new URLSearchParams({
-        boardId: String(BOARD_ID),
-        sort: SORT,
-        page: String(PAGE),
-        size: String(SIZE),
-    });
+function pickPage() {
+    const maxPage = Math.max(1, Math.floor(MAX_PAGE));
+    const bias = PAGE_BIAS > 0 ? PAGE_BIAS : 3;
+
+    return Math.min(
+        maxPage,
+        Math.floor(Math.pow(Math.random(), bias) * maxPage) + 1,
+    );
+}
+
+function buildListUrl(page) {
+    const params = [
+        `boardId=${encodeURIComponent(String(BOARD_ID))}`,
+        `sort=${encodeURIComponent(SORT)}`,
+        `page=${encodeURIComponent(String(page))}`,
+        `size=${encodeURIComponent(String(SIZE))}`,
+    ];
 
     if (CATEGORY) {
-        query.set('category', CATEGORY);
+        params.push(`category=${encodeURIComponent(CATEGORY)}`);
     }
 
-    return `${BASE_URL}/api/v1/posts?${query.toString()}`;
+    return `${BASE_URL}/api/v1/posts?${params.join('&')}`;
 }
 
 function buildDetailUrl() {
@@ -102,12 +116,14 @@ function hasPostId(response) {
 }
 
 export function readPostListScenario() {
-    const response = http.get(buildListUrl(), {
+    const page = pickPage();
+    const response = http.get(buildListUrl(page), {
         tags: {
             name: 'post_list_read',
         },
     });
 
+    postListSelectedPage.add(page);
     postListDuration.add(response.timings.duration);
 
     const ok = check(response, {

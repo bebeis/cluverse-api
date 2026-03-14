@@ -1,6 +1,6 @@
 import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { Counter, Rate, Trend } from 'k6/metrics';
+import {check, sleep} from 'k6';
+import {Counter, Rate, Trend} from 'k6/metrics';
 
 // Example:
 // k6 run \
@@ -8,7 +8,7 @@ import { Counter, Rate, Trend } from 'k6/metrics';
 //   -e POST_ID=3000001 \
 //   -e RATE=100 \
 //   -e DURATION=2m \
-//   docs/v1/tech/post-detail-read.k6.js
+//   script/v1/k6/post-detail-read.k6.js
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const POST_ID = Number(__ENV.POST_ID || 3000001);

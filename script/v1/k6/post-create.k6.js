@@ -1,12 +1,12 @@
 import http from 'k6/http';
-import { check, sleep, fail } from 'k6';
+import {check, fail, sleep} from 'k6';
 import exec from 'k6/execution';
-import { Counter, Rate, Trend } from 'k6/metrics';
+import {Counter, Rate, Trend} from 'k6/metrics';
 
 // Example:
 // LOGIN_EMAIL=seed_user_000101@seed.local LOGIN_PASSWORD=... \
 // BOARD_ID=2000001 RATE=50 DURATION=2m \
-// k6 run docs/v1/tech/post-create.k6.js
+// k6 run script/v1/k6/post-create.k6.js
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const LOGIN_EMAIL = __ENV.LOGIN_EMAIL;
