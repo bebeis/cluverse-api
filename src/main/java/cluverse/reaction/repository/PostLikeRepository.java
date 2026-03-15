@@ -7,13 +7,10 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
     boolean existsByPostIdAndMemberId(Long postId, Long memberId);
-
-    Optional<PostLike> findByPostIdAndMemberId(Long postId, Long memberId);
 
     @Query("""
             select postLike.postId

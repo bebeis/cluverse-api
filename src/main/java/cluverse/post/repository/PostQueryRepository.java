@@ -1,6 +1,9 @@
 package cluverse.post.repository;
 
 import cluverse.common.exception.NotFoundException;
+import cluverse.meta.domain.QPostBookmarkCount;
+import cluverse.meta.domain.QPostCommentCount;
+import cluverse.meta.domain.QPostLikeCount;
 import cluverse.post.domain.PostStatus;
 import cluverse.post.domain.QPostImage;
 import cluverse.post.exception.PostExceptionMessage;
@@ -16,6 +19,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.BooleanPath;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -43,7 +47,13 @@ public class PostQueryRepository {
     private static final StringPath POST_TAG = Expressions.stringPath("postTag");
     private static final BooleanPath IS_MINE = Expressions.booleanPath("isMine");
     private static final StringPath CONTENT_PREVIEW = Expressions.stringPath("contentPreview");
+    private static final NumberPath<Long> LIKE_COUNT = Expressions.numberPath(Long.class, "likeCount");
+    private static final NumberPath<Long> COMMENT_COUNT = Expressions.numberPath(Long.class, "commentCount");
+    private static final NumberPath<Long> BOOKMARK_COUNT = Expressions.numberPath(Long.class, "bookmarkCount");
     private static final int CONTENT_PREVIEW_LENGTH = 120;
+    private static final QPostLikeCount postLikeCount = QPostLikeCount.postLikeCount;
+    private static final QPostCommentCount postCommentCount = QPostCommentCount.postCommentCount;
+    private static final QPostBookmarkCount postBookmarkCount = QPostBookmarkCount.postBookmarkCount;
 
     private final JPAQueryFactory queryFactory;
 
@@ -111,9 +121,9 @@ public class PostQueryRepository {
                         post.isExternalVisible,
                         isMineExpression,
                         post.viewCount.longValue(),
-                        post.likeCount.longValue(),
-                        post.commentCount.longValue(),
-                        post.bookmarkCount.longValue(),
+                        ExpressionUtils.as(postLikeCount.likeCount.coalesce(0).longValue(), LIKE_COUNT),
+                        ExpressionUtils.as(postCommentCount.commentCount.coalesce(0).longValue(), COMMENT_COUNT),
+                        ExpressionUtils.as(postBookmarkCount.bookmarkCount.coalesce(0).longValue(), BOOKMARK_COUNT),
                         member.id,
                         member.nickname,
                         memberProfile.profileImageUrl,
@@ -123,6 +133,9 @@ public class PostQueryRepository {
                 .from(post)
                 .leftJoin(post.tags, POST_TAG)
                 .leftJoin(postImage).on(postImage.post.eq(post))
+                .leftJoin(postLikeCount).on(postLikeCount.postId.eq(post.id))
+                .leftJoin(postCommentCount).on(postCommentCount.postId.eq(post.id))
+                .leftJoin(postBookmarkCount).on(postBookmarkCount.postId.eq(post.id))
                 .join(member).on(member.id.eq(post.memberId))
                 .leftJoin(memberProfile).on(memberProfile.memberId.eq(member.id))
                 .where(
@@ -177,9 +190,9 @@ public class PostQueryRepository {
                         post.isExternalVisible,
                         isMineExpression,
                         post.viewCount.longValue(),
-                        post.likeCount.longValue(),
-                        post.commentCount.longValue(),
-                        post.bookmarkCount.longValue(),
+                        ExpressionUtils.as(postLikeCount.likeCount.coalesce(0).longValue(), LIKE_COUNT),
+                        ExpressionUtils.as(postCommentCount.commentCount.coalesce(0).longValue(), COMMENT_COUNT),
+                        ExpressionUtils.as(postBookmarkCount.bookmarkCount.coalesce(0).longValue(), BOOKMARK_COUNT),
                         member.id,
                         member.nickname,
                         memberProfile.profileImageUrl,
@@ -191,6 +204,9 @@ public class PostQueryRepository {
                         THUMBNAIL_IMAGE.post.eq(post),
                         THUMBNAIL_IMAGE.displayOrder.eq(0)
                 )
+                .leftJoin(postLikeCount).on(postLikeCount.postId.eq(post.id))
+                .leftJoin(postCommentCount).on(postCommentCount.postId.eq(post.id))
+                .leftJoin(postBookmarkCount).on(postBookmarkCount.postId.eq(post.id))
                 .join(member).on(member.id.eq(post.memberId))
                 .leftJoin(memberProfile).on(memberProfile.memberId.eq(member.id))
                 .where(post.id.in(postIds))
@@ -229,9 +245,9 @@ public class PostQueryRepository {
                 booleanValue(row.get(post.isExternalVisible)),
                 booleanValue(row.get(IS_MINE)),
                 numberValue(row.get(post.viewCount.longValue())),
-                numberValue(row.get(post.likeCount.longValue())),
-                numberValue(row.get(post.commentCount.longValue())),
-                numberValue(row.get(post.bookmarkCount.longValue())),
+                numberValue(row.get(LIKE_COUNT)),
+                numberValue(row.get(COMMENT_COUNT)),
+                numberValue(row.get(BOOKMARK_COUNT)),
                 row.get(member.id),
                 row.get(member.nickname),
                 row.get(memberProfile.profileImageUrl),
@@ -269,9 +285,9 @@ public class PostQueryRepository {
                 booleanValue(firstRow.get(post.isExternalVisible)),
                 booleanValue(firstRow.get(IS_MINE)),
                 numberValue(firstRow.get(post.viewCount.longValue())),
-                numberValue(firstRow.get(post.likeCount.longValue())),
-                numberValue(firstRow.get(post.commentCount.longValue())),
-                numberValue(firstRow.get(post.bookmarkCount.longValue())),
+                numberValue(firstRow.get(LIKE_COUNT)),
+                numberValue(firstRow.get(COMMENT_COUNT)),
+                numberValue(firstRow.get(BOOKMARK_COUNT)),
                 firstRow.get(member.id),
                 firstRow.get(member.nickname),
                 firstRow.get(memberProfile.profileImageUrl),

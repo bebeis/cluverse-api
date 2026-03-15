@@ -1,8 +1,6 @@
 package cluverse.post.domain;
 
 import cluverse.common.entity.BaseTimeEntity;
-import cluverse.common.exception.BadRequestException;
-import cluverse.post.exception.PostExceptionMessage;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -64,9 +62,6 @@ public class Post extends BaseTimeEntity {
     private boolean isExternalVisible = true;
 
     private int viewCount;
-    private int likeCount;
-    private int commentCount;
-    private int bookmarkCount;
     private LocalDateTime deletedAt;
     private String clientIp;
 
@@ -109,28 +104,6 @@ public class Post extends BaseTimeEntity {
 
     public void increaseViewCount() {
         this.viewCount++;
-    }
-
-    public void increaseLikeCount() {
-        this.likeCount++;
-    }
-
-    public void decreaseLikeCount() {
-        if (likeCount == 0) {
-            throw new BadRequestException(PostExceptionMessage.POST_LIKE_COUNT_ALREADY_ZERO.getMessage());
-        }
-        this.likeCount--;
-    }
-
-    public void increaseBookmarkCount() {
-        this.bookmarkCount++;
-    }
-
-    public void decreaseBookmarkCount() {
-        if (bookmarkCount == 0) {
-            throw new BadRequestException(PostExceptionMessage.POST_BOOKMARK_COUNT_ALREADY_ZERO.getMessage());
-        }
-        this.bookmarkCount--;
     }
 
     public boolean isAuthor(Long memberId) {

@@ -19,11 +19,5 @@ public interface PostService {
 
     void deletePost(Long memberId, Long postId);
 
-    void increaseLikeCount(Long postId);
-
-    void decreaseLikeCount(Long postId);
-
-    void increaseBookmarkCount(Long postId);
-
-    void decreaseBookmarkCount(Long postId);
+    void validatePostExists(Long postId);
 }

@@ -12,18 +12,6 @@ include::{snippets}/post-reactions/like-post/path-parameters.adoc[]
 include::{snippets}/post-reactions/like-post/http-response.adoc[]
 include::{snippets}/post-reactions/like-post/response-fields.adoc[]
 
-=== 게시글 좋아요 취소
-
-==== 요청
-
-include::{snippets}/post-reactions/unlike-post/http-request.adoc[]
-include::{snippets}/post-reactions/unlike-post/path-parameters.adoc[]
-
-==== 응답
-
-include::{snippets}/post-reactions/unlike-post/http-response.adoc[]
-include::{snippets}/post-reactions/unlike-post/response-fields.adoc[]
-
 === 게시글 북마크
 
 ==== 요청

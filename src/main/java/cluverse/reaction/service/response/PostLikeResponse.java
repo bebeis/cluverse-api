@@ -8,8 +8,4 @@ public record PostLikeResponse(
     public static PostLikeResponse like(Long postId) {
         return new PostLikeResponse(postId, true);
     }
-
-    public static PostLikeResponse unlike(Long postId) {
-        return new PostLikeResponse(postId, false);
-    }
 }

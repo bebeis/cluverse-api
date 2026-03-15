@@ -24,12 +24,6 @@ public class PostReactionController {
         return ApiResponse.created(postReactionService.likePost(loginMember.memberId(), postId));
     }
 
-    @DeleteMapping("/{postId}/likes")
-    public ApiResponse<PostLikeResponse> unlikePost(@Login LoginMember loginMember,
-                                                    @PathVariable Long postId) {
-        return ApiResponse.ok(postReactionService.unlikePost(loginMember.memberId(), postId));
-    }
-
     @PostMapping("/{postId}/bookmarks")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<PostBookmarkResponse> bookmarkPost(@Login LoginMember loginMember,

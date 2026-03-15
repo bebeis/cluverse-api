@@ -8,17 +8,7 @@ import java.util.Optional;
 
 public interface PostRepositoryCustom {
 
-    Optional<Post> findActiveByIdForUpdate(Long postId);
-
     int increaseViewCount(Long postId);
-
-    int increaseLikeCount(Long postId);
-
-    int decreaseLikeCount(Long postId);
-
-    int increaseBookmarkCount(Long postId);
-
-    int decreaseBookmarkCount(Long postId);
 
     Optional<Post> findWithImagesById(Long postId);
 

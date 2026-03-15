@@ -4,7 +4,6 @@ import cluverse.post.domain.Post;
 import cluverse.post.domain.PostStatus;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -26,19 +25,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     }
 
     @Override
-    public Optional<Post> findActiveByIdForUpdate(Long postId) {
-        return Optional.ofNullable(
-                queryFactory.selectFrom(post)
-                        .where(
-                                post.id.eq(postId),
-                                post.status.eq(PostStatus.ACTIVE)
-                        )
-                        .setLockMode(LockModeType.PESSIMISTIC_WRITE)
-                        .fetchOne()
-        );
-    }
-
-    @Override
     public int increaseViewCount(Long postId) {
         return executeCount(
                 queryFactory.update(post)
@@ -46,60 +32,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         .where(
                                 post.id.eq(postId),
                                 post.status.eq(PostStatus.ACTIVE)
-                        )
-                        .execute()
-        );
-    }
-
-    @Override
-    public int increaseLikeCount(Long postId) {
-        return executeCount(
-                queryFactory.update(post)
-                        .set(post.likeCount, post.likeCount.add(1))
-                        .where(
-                                post.id.eq(postId),
-                                post.status.eq(PostStatus.ACTIVE)
-                        )
-                        .execute()
-        );
-    }
-
-    @Override
-    public int decreaseLikeCount(Long postId) {
-        return executeCount(
-                queryFactory.update(post)
-                        .set(post.likeCount, post.likeCount.subtract(1))
-                        .where(
-                                post.id.eq(postId),
-                                post.status.eq(PostStatus.ACTIVE),
-                                post.likeCount.gt(0)
-                        )
-                        .execute()
-        );
-    }
-
-    @Override
-    public int increaseBookmarkCount(Long postId) {
-        return executeCount(
-                queryFactory.update(post)
-                        .set(post.bookmarkCount, post.bookmarkCount.add(1))
-                        .where(
-                                post.id.eq(postId),
-                                post.status.eq(PostStatus.ACTIVE)
-                        )
-                        .execute()
-        );
-    }
-
-    @Override
-    public int decreaseBookmarkCount(Long postId) {
-        return executeCount(
-                queryFactory.update(post)
-                        .set(post.bookmarkCount, post.bookmarkCount.subtract(1))
-                        .where(
-                                post.id.eq(postId),
-                                post.status.eq(PostStatus.ACTIVE),
-                                post.bookmarkCount.gt(0)
                         )
                         .execute()
         );

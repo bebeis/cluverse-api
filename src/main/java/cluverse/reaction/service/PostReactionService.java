@@ -1,5 +1,6 @@
 package cluverse.reaction.service;
 
+import cluverse.meta.service.PostMetaService;
 import cluverse.post.service.PostService;
 import cluverse.reaction.service.implement.PostReactionWriter;
 import cluverse.reaction.service.response.PostBookmarkResponse;
@@ -14,29 +15,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostReactionService {
 
     private final PostReactionWriter postReactionWriter;
+    private final PostMetaService postMetaService;
     private final PostService postService;
 
     public PostLikeResponse likePost(Long memberId, Long postId) {
+        postService.validatePostExists(postId);
         postReactionWriter.likePost(memberId, postId);
-        postService.increaseLikeCount(postId);
+        postMetaService.increaseLikeCount(postId);
         return PostLikeResponse.like(postId);
     }
 
-    public PostLikeResponse unlikePost(Long memberId, Long postId) {
-        postReactionWriter.unlikePost(memberId, postId);
-        postService.decreaseLikeCount(postId);
-        return PostLikeResponse.unlike(postId);
-    }
-
     public PostBookmarkResponse bookmarkPost(Long memberId, Long postId) {
+        postService.validatePostExists(postId);
         postReactionWriter.bookmarkPost(memberId, postId);
-        postService.increaseBookmarkCount(postId);
+        postMetaService.increaseBookmarkCount(postId);
         return PostBookmarkResponse.bookmark(postId);
     }
 
     public PostBookmarkResponse removeBookmark(Long memberId, Long postId) {
+        postService.validatePostExists(postId);
         postReactionWriter.removeBookmark(memberId, postId);
-        postService.decreaseBookmarkCount(postId);
+        postMetaService.decreaseBookmarkCount(postId);
         return PostBookmarkResponse.remove(postId);
     }
 }

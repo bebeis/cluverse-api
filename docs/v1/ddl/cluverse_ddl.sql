@@ -262,9 +262,6 @@ CREATE TABLE post (
     is_external_visible BOOLEAN      NOT NULL DEFAULT TRUE     COMMENT '외부 공개 여부 (그룹 게시판용)',
     status              VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE / BLINDED / DELETED',
     view_count          INT          NOT NULL DEFAULT 0,
-    like_count          INT          NOT NULL DEFAULT 0        COMMENT '반정규화',
-    comment_count       INT          NOT NULL DEFAULT 0        COMMENT '반정규화',
-    bookmark_count      INT          NOT NULL DEFAULT 0        COMMENT '반정규화',
     deleted_at          DATETIME     NULL,
     client_ip           VARCHAR(45)  NULL                      COMMENT '작성자 IP (분쟁/법적 대응)',
     created_at          DATETIME     NOT NULL DEFAULT NOW(),
@@ -329,7 +326,37 @@ CREATE INDEX idx_comment_post_status_created
 CREATE INDEX idx_comment_member_id
     ON comment (member_id);
 
--- 3.7 post_like (게시글 좋아요)
+-- 3.7 post_like_count (게시글 좋아요 수)
+CREATE TABLE post_like_count (
+    post_id      BIGINT   NOT NULL                             COMMENT '→ post.post_id',
+    like_count   INT      NOT NULL DEFAULT 0,
+    created_at   DATETIME NOT NULL DEFAULT NOW(),
+    updated_at   DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+    PRIMARY KEY (post_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='게시글 좋아요 수';
+
+-- 3.8 post_comment_count (게시글 댓글 수)
+CREATE TABLE post_comment_count (
+    post_id        BIGINT   NOT NULL                          COMMENT '→ post.post_id',
+    comment_count  INT      NOT NULL DEFAULT 0,
+    created_at     DATETIME NOT NULL DEFAULT NOW(),
+    updated_at     DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+    PRIMARY KEY (post_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='게시글 댓글 수';
+
+-- 3.9 post_bookmark_count (게시글 북마크 수)
+CREATE TABLE post_bookmark_count (
+    post_id          BIGINT   NOT NULL                        COMMENT '→ post.post_id',
+    bookmark_count   INT      NOT NULL DEFAULT 0,
+    created_at       DATETIME NOT NULL DEFAULT NOW(),
+    updated_at       DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+    PRIMARY KEY (post_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='게시글 북마크 수';
+
+-- 3.10 post_like (게시글 좋아요)
 CREATE TABLE post_like (
     post_like_id BIGINT   NOT NULL AUTO_INCREMENT,
     post_id      BIGINT   NOT NULL                             COMMENT '→ post.post_id',
@@ -341,7 +368,7 @@ CREATE TABLE post_like (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='게시글 좋아요';
 
--- 3.8 comment_like (댓글 좋아요)
+-- 3.11 comment_like (댓글 좋아요)
 CREATE TABLE comment_like (
     comment_like_id BIGINT   NOT NULL AUTO_INCREMENT,
     comment_id      BIGINT   NOT NULL                          COMMENT '→ comment.comment_id',
@@ -353,7 +380,7 @@ CREATE TABLE comment_like (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='댓글 좋아요';
 
--- 3.9 bookmark (북마크)
+-- 3.12 bookmark (북마크)
 CREATE TABLE bookmark (
     bookmark_id BIGINT   NOT NULL AUTO_INCREMENT,
     member_id   BIGINT   NOT NULL                              COMMENT '→ member.member_id',

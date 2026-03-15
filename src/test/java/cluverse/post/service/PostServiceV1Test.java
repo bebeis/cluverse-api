@@ -140,15 +140,16 @@ class PostServiceV1Test {
     }
 
     @Test
-    void 게시글_좋아요_수_증가는_작성기에게_위임한다() {
+    void 게시글_존재_검증은_리더에게_위임한다() {
         // given
-        doNothing().when(postWriter).increaseLikeCount(10L);
+        Post post = createPost(10L, 3L, 1L, "게시글 존재 확인", false);
+        when(postReader.readOrThrow(10L)).thenReturn(post);
 
         // when
-        postService.increaseLikeCount(10L);
+        postService.validatePostExists(10L);
 
         // then
-        verify(postWriter).increaseLikeCount(10L);
+        verify(postReader).readOrThrow(10L);
     }
 
     private PostSummaryQueryDto createPostSummaryQueryDto(

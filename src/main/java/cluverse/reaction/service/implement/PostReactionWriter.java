@@ -2,7 +2,6 @@ package cluverse.reaction.service.implement;
 
 import cluverse.common.exception.BadRequestException;
 import cluverse.reaction.domain.PostBookmark;
-import cluverse.reaction.domain.PostLike;
 import cluverse.reaction.exception.PostReactionExceptionMessage;
 import cluverse.reaction.repository.PostBookmarkRepository;
 import cluverse.reaction.repository.PostLikeRepository;
@@ -20,13 +19,7 @@ public class PostReactionWriter {
 
     public void likePost(Long memberId, Long postId) {
         validateNotAlreadyLiked(memberId, postId);
-        postLikeRepository.save(PostLike.of(postId, memberId));
-    }
-
-    public void unlikePost(Long memberId, Long postId) {
-        PostLike postLike = postLikeRepository.findByPostIdAndMemberId(postId, memberId)
-                .orElseThrow(() -> new BadRequestException(PostReactionExceptionMessage.POST_NOT_LIKED.getMessage()));
-        postLikeRepository.delete(postLike);
+        postLikeRepository.save(cluverse.reaction.domain.PostLike.of(postId, memberId));
     }
 
     public void bookmarkPost(Long memberId, Long postId) {

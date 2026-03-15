@@ -1,5 +1,6 @@
 package cluverse.reaction.service;
 
+import cluverse.meta.service.PostMetaService;
 import cluverse.post.service.PostService;
 import cluverse.reaction.service.implement.PostReactionWriter;
 import cluverse.reaction.service.response.PostBookmarkResponse;
@@ -24,6 +25,9 @@ class PostReactionServiceTest {
     @Mock
     private PostService postService;
 
+    @Mock
+    private PostMetaService postMetaService;
+
     @InjectMocks
     private PostReactionService postReactionService;
 
@@ -33,24 +37,12 @@ class PostReactionServiceTest {
         PostLikeResponse response = postReactionService.likePost(1L, 10L);
 
         // then
-        InOrder inOrder = inOrder(postReactionWriter, postService);
+        InOrder inOrder = inOrder(postService, postReactionWriter, postMetaService);
+        inOrder.verify(postService).validatePostExists(10L);
         inOrder.verify(postReactionWriter).likePost(1L, 10L);
-        inOrder.verify(postService).increaseLikeCount(10L);
-        verifyNoMoreInteractions(postReactionWriter, postService);
+        inOrder.verify(postMetaService).increaseLikeCount(10L);
+        verifyNoMoreInteractions(postService, postReactionWriter, postMetaService);
         assertThat(response).isEqualTo(PostLikeResponse.like(10L));
-    }
-
-    @Test
-    void 게시글_좋아요를_취소하고_좋아요_수를_감소시킨다() {
-        // when
-        PostLikeResponse response = postReactionService.unlikePost(1L, 10L);
-
-        // then
-        InOrder inOrder = inOrder(postReactionWriter, postService);
-        inOrder.verify(postReactionWriter).unlikePost(1L, 10L);
-        inOrder.verify(postService).decreaseLikeCount(10L);
-        verifyNoMoreInteractions(postReactionWriter, postService);
-        assertThat(response).isEqualTo(PostLikeResponse.unlike(10L));
     }
 
     @Test
@@ -59,10 +51,11 @@ class PostReactionServiceTest {
         PostBookmarkResponse response = postReactionService.bookmarkPost(1L, 10L);
 
         // then
-        InOrder inOrder = inOrder(postReactionWriter, postService);
+        InOrder inOrder = inOrder(postService, postReactionWriter, postMetaService);
+        inOrder.verify(postService).validatePostExists(10L);
         inOrder.verify(postReactionWriter).bookmarkPost(1L, 10L);
-        inOrder.verify(postService).increaseBookmarkCount(10L);
-        verifyNoMoreInteractions(postReactionWriter, postService);
+        inOrder.verify(postMetaService).increaseBookmarkCount(10L);
+        verifyNoMoreInteractions(postService, postReactionWriter, postMetaService);
         assertThat(response).isEqualTo(PostBookmarkResponse.bookmark(10L));
     }
 
@@ -72,10 +65,11 @@ class PostReactionServiceTest {
         PostBookmarkResponse response = postReactionService.removeBookmark(1L, 10L);
 
         // then
-        InOrder inOrder = inOrder(postReactionWriter, postService);
+        InOrder inOrder = inOrder(postService, postReactionWriter, postMetaService);
+        inOrder.verify(postService).validatePostExists(10L);
         inOrder.verify(postReactionWriter).removeBookmark(1L, 10L);
-        inOrder.verify(postService).decreaseBookmarkCount(10L);
-        verifyNoMoreInteractions(postReactionWriter, postService);
+        inOrder.verify(postMetaService).decreaseBookmarkCount(10L);
+        verifyNoMoreInteractions(postService, postReactionWriter, postMetaService);
         assertThat(response).isEqualTo(PostBookmarkResponse.remove(10L));
     }
 }
