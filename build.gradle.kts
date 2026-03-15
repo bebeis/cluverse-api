@@ -43,6 +43,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:2.0.0")
     implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
