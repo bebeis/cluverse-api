@@ -9,6 +9,8 @@ public enum BoardExceptionMessage {
 
     BOARD_NOT_FOUND("존재하지 않는 게시판입니다."),
     BOARD_ACCESS_DENIED("게시판 관리 권한이 없습니다."),
+    BOARD_READ_ACCESS_DENIED("게시판 조회 권한이 없습니다."),
+    BOARD_WRITE_ACCESS_DENIED("게시판 작성 권한이 없습니다."),
     BOARD_GROUP_TYPE_NOT_SUPPORTED("그룹 게시판은 그룹 도메인에서 관리해야 합니다."),
     BOARD_PARENT_NOT_FOUND("상위 게시판을 찾을 수 없습니다."),
     BOARD_PARENT_TYPE_MISMATCH("상위 게시판과 동일한 타입의 게시판만 생성할 수 있습니다."),

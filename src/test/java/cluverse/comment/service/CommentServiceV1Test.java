@@ -71,7 +71,7 @@ class CommentServiceV1Test {
         assertThat(response.limit()).isEqualTo(20);
         assertThat(response.hasNext()).isTrue();
         assertThat(response.comments().getFirst().author().nickname()).isEqualTo("익명");
-        verify(postService).validatePostExists(10L);
+        verify(postService).validateReadablePost(99L, 10L);
     }
 
     @Test
@@ -90,7 +90,7 @@ class CommentServiceV1Test {
 
         // then
         assertThat(response.commentId()).isEqualTo(101L);
-        verify(postService).validatePostExists(10L);
+        verify(postService).validateWritablePost(1L, 10L);
         verify(commentWriter).increaseReplyCount(100L);
         verify(postMetaService).increaseCommentCount(10L);
     }

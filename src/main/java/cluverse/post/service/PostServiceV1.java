@@ -1,5 +1,6 @@
 package cluverse.post.service;
 
+import cluverse.board.service.BoardService;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.post.domain.Post;
 import cluverse.post.exception.PostExceptionMessage;
@@ -27,10 +28,13 @@ public class PostServiceV1 implements PostService {
     private final PostReader postReader;
     private final PostWriter postWriter;
     private final PostQueryRepository postQueryRepository;
+    private final BoardService boardService;
 
     @Override
     @Transactional(readOnly = true)
     public PostPageResponse getPosts(Long memberId, PostSearchRequest request) {
+        boardService.validateReadableBoard(memberId, request.boardId());
+
         PostPageQueryResult queryResult = request.isDateBased()
                 ? postQueryRepository.findPostPageByDate(memberId, request)
                 : postQueryRepository.findPostPage(memberId, request);
@@ -50,13 +54,16 @@ public class PostServiceV1 implements PostService {
 
     @Override
     public PostDetailResponse createPost(Long memberId, PostCreateRequest request, String clientIp) {
+        boardService.validateWritableBoard(memberId, request.boardId());
         Post post = postWriter.create(memberId, request, clientIp);
         return PostDetailResponse.from(postQueryRepository.findPostDetail(memberId, post.getId()));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public PostDetailResponse readPost(Long memberId, Long postId) {
+        Post post = postReader.readOrThrow(postId);
+        boardService.validateReadableBoard(memberId, post.getBoardId());
+        postWriter.increaseViewCount(postId);
         return PostDetailResponse.from(postQueryRepository.findPostDetail(memberId, postId));
     }
 
@@ -83,6 +90,18 @@ public class PostServiceV1 implements PostService {
     @Override
     public void validatePostExists(Long postId) {
         postReader.readOrThrow(postId);
+    }
+
+    @Override
+    public void validateReadablePost(Long memberId, Long postId) {
+        Post post = postReader.readOrThrow(postId);
+        boardService.validateReadableBoard(memberId, post.getBoardId());
+    }
+
+    @Override
+    public void validateWritablePost(Long memberId, Long postId) {
+        Post post = postReader.readOrThrow(postId);
+        boardService.validateWritableBoard(memberId, post.getBoardId());
     }
 
     private void validateAuthor(Long memberId, Post post) {

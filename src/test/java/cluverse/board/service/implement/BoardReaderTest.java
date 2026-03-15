@@ -2,6 +2,7 @@ package cluverse.board.service.implement;
 
 import cluverse.board.domain.Board;
 import cluverse.board.domain.BoardType;
+import cluverse.common.exception.ForbiddenException;
 import cluverse.board.repository.BoardQueryRepository;
 import cluverse.board.repository.BoardRepository;
 import cluverse.board.repository.dto.BoardGroupQueryDto;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -78,6 +80,19 @@ class BoardReaderTest {
         assertThat(result.isManageable()).isTrue();
         assertThat(result.group()).isNotNull();
         assertThat(result.group().groupId()).isEqualTo(100L);
+    }
+
+    @Test
+    void 그룹_보드_상세는_비멤버면_조회할_수_없다() {
+        // given
+        Board board = createBoard(31L, BoardType.GROUP, "AI 프로젝트 게시판", null, 0);
+        when(boardRepository.findById(31L)).thenReturn(Optional.of(board));
+        when(boardQueryRepository.findGroupBoardMap(Set.of(31L), 7L)).thenReturn(Map.of());
+
+        // when, then
+        assertThatThrownBy(() -> boardReader.readBoardDetail(7L, true, 31L))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("게시판 조회 권한이 없습니다.");
     }
 
     @Test

@@ -18,6 +18,7 @@ import cluverse.board.service.response.BoardPostingPolicyResponse;
 import cluverse.board.service.response.BoardSortOption;
 import cluverse.board.service.response.BoardSummaryResponse;
 import cluverse.board.service.response.GroupBoardSummaryResponse;
+import cluverse.common.exception.ForbiddenException;
 import cluverse.common.exception.NotFoundException;
 import cluverse.group.domain.GroupMemberRole;
 import cluverse.group.domain.GroupVisibility;
@@ -61,17 +62,20 @@ public class BoardReader {
         BoardType boardType = resolveBoardType(parentBoard, request.type());
         boolean activeOnly = request.activeOnlyOrDefault();
 
+        validateDirectoryReadable(memberId, parentBoard, boardType);
+
         List<BoardQueryDto> allBoards = boardQueryRepository.findBoardSummaries(boardType, activeOnly);
         List<BoardQueryDto> scopedBoards = filterScopedBoards(allBoards, parentBoard, request.depthOrDefault());
         List<BoardQueryDto> filteredBoards = filterKeyword(scopedBoards, request.keyword());
         Map<Long, BoardGroupQueryDto> groupBoardMap = readGroupBoardMap(filteredBoards, memberId);
+        List<BoardQueryDto> readableBoards = filterReadableBoards(filteredBoards, groupBoardMap);
 
         return new BoardDirectoryResponse(
                 boardType,
                 request.parentBoardId(),
                 request.depthOrDefault(),
                 activeOnly,
-                filteredBoards.stream()
+                readableBoards.stream()
                         .map(board -> toBoardSummaryResponse(board, verified, groupBoardMap.get(board.boardId())))
                         .toList()
         );
@@ -80,6 +84,7 @@ public class BoardReader {
     public BoardDetailResponse readBoardDetail(Long memberId, boolean verified, Long boardId) {
         Board board = readOrThrow(boardId);
         BoardGroupQueryDto groupBoard = readGroupBoard(board, memberId);
+        validateReadable(board.getBoardType(), groupBoard);
 
         return new BoardDetailResponse(
                 board.getId(),
@@ -104,6 +109,7 @@ public class BoardReader {
     public BoardHomeResponse readBoardHome(Long memberId, boolean verified, Long boardId) {
         Board board = readOrThrow(boardId);
         BoardGroupQueryDto groupBoard = readGroupBoard(board, memberId);
+        validateReadable(board.getBoardType(), groupBoard);
 
         return new BoardHomeResponse(
                 board.getId(),
@@ -122,8 +128,32 @@ public class BoardReader {
         );
     }
 
+    public void validateReadable(Long memberId, Long boardId) {
+        Board board = readOrThrow(boardId);
+        BoardGroupQueryDto groupBoard = readGroupBoard(board, memberId);
+        validateReadable(board.getBoardType(), groupBoard);
+    }
+
+    public void validateWritable(Long memberId, boolean verified, Long boardId) {
+        Board board = readOrThrow(boardId);
+        BoardGroupQueryDto groupBoard = readGroupBoard(board, memberId);
+        if (!isWritable(board.getBoardType(), verified, groupBoard)) {
+            throw new ForbiddenException(BoardExceptionMessage.BOARD_WRITE_ACCESS_DENIED.getMessage());
+        }
+    }
+
     private BoardType resolveBoardType(Board parentBoard, BoardType requestedBoardType) {
         return parentBoard == null ? requestedBoardType : parentBoard.getBoardType();
+    }
+
+    private void validateDirectoryReadable(Long memberId, Board parentBoard, BoardType boardType) {
+        if (parentBoard != null && parentBoard.getBoardType() == BoardType.GROUP) {
+            validateReadable(memberId, parentBoard.getId());
+            return;
+        }
+        if (boardType == BoardType.GROUP && memberId == null) {
+            throw new ForbiddenException(BoardExceptionMessage.BOARD_READ_ACCESS_DENIED.getMessage());
+        }
     }
 
     private List<BoardQueryDto> filterScopedBoards(List<BoardQueryDto> boards, Board parentBoard, int requestedDepth) {
@@ -189,6 +219,13 @@ public class BoardReader {
         String normalizedKeyword = keyword.toLowerCase();
         return boards.stream()
                 .filter(board -> board.name().toLowerCase().contains(normalizedKeyword))
+                .toList();
+    }
+
+    private List<BoardQueryDto> filterReadableBoards(List<BoardQueryDto> boards,
+                                                     Map<Long, BoardGroupQueryDto> groupBoardMap) {
+        return boards.stream()
+                .filter(board -> isReadable(board.boardType(), groupBoardMap.get(board.boardId())))
                 .toList();
     }
 
@@ -268,6 +305,12 @@ public class BoardReader {
             return true;
         }
         return groupBoard != null && groupBoard.isMember();
+    }
+
+    private void validateReadable(BoardType boardType, BoardGroupQueryDto groupBoard) {
+        if (!isReadable(boardType, groupBoard)) {
+            throw new ForbiddenException(BoardExceptionMessage.BOARD_READ_ACCESS_DENIED.getMessage());
+        }
     }
 
     private boolean isWritable(BoardType boardType, boolean verified, BoardGroupQueryDto groupBoard) {

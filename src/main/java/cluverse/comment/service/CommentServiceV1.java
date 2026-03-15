@@ -38,7 +38,7 @@ public class CommentServiceV1 implements CommentService {
     @Override
     @Transactional(readOnly = true)
     public CommentPageResponse getComments(Long memberId, CommentPageRequest request) {
-        postService.validatePostExists(request.postId());
+        postService.validateReadablePost(memberId, request.postId());
         validateParentComment(request.postId(), request.parentCommentId());
 
         CommentPageQueryResult queryResult = commentQueryRepository.findCommentPage(memberId, request);
@@ -51,7 +51,7 @@ public class CommentServiceV1 implements CommentService {
 
     @Override
     public CommentResponse createComment(Long memberId, Long postId, CommentCreateRequest request, String clientIp) {
-        postService.validatePostExists(postId);
+        postService.validateWritablePost(memberId, postId);
         Comment parentComment = resolveParentComment(postId, request.parentCommentId());
         Comment comment = commentWriter.create(memberId, postId, parentComment, request, clientIp);
 

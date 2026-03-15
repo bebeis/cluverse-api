@@ -38,6 +38,14 @@ public class BoardService {
         return boardReader.readBoardHome(memberId, memberService.isVerified(memberId), boardId);
     }
 
+    public void validateReadableBoard(Long memberId, Long boardId) {
+        boardReader.validateReadable(memberId, boardId);
+    }
+
+    public void validateWritableBoard(Long memberId, Long boardId) {
+        boardReader.validateWritable(memberId, memberService.isVerified(memberId), boardId);
+    }
+
     @Transactional
     public BoardAdminResponse createBoard(Long memberId, BoardCreateRequest request) {
         validateAdmin(memberId);

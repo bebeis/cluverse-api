@@ -38,7 +38,7 @@ class PostReactionServiceTest {
 
         // then
         InOrder inOrder = inOrder(postService, postReactionWriter, postMetaService);
-        inOrder.verify(postService).validatePostExists(10L);
+        inOrder.verify(postService).validateReadablePost(1L, 10L);
         inOrder.verify(postReactionWriter).likePost(1L, 10L);
         inOrder.verify(postMetaService).increaseLikeCount(10L);
         verifyNoMoreInteractions(postService, postReactionWriter, postMetaService);
@@ -52,7 +52,7 @@ class PostReactionServiceTest {
 
         // then
         InOrder inOrder = inOrder(postService, postReactionWriter, postMetaService);
-        inOrder.verify(postService).validatePostExists(10L);
+        inOrder.verify(postService).validateReadablePost(1L, 10L);
         inOrder.verify(postReactionWriter).bookmarkPost(1L, 10L);
         inOrder.verify(postMetaService).increaseBookmarkCount(10L);
         verifyNoMoreInteractions(postService, postReactionWriter, postMetaService);
@@ -66,7 +66,7 @@ class PostReactionServiceTest {
 
         // then
         InOrder inOrder = inOrder(postService, postReactionWriter, postMetaService);
-        inOrder.verify(postService).validatePostExists(10L);
+        inOrder.verify(postService).validateReadablePost(1L, 10L);
         inOrder.verify(postReactionWriter).removeBookmark(1L, 10L);
         inOrder.verify(postMetaService).decreaseBookmarkCount(10L);
         verifyNoMoreInteractions(postService, postReactionWriter, postMetaService);

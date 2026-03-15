@@ -41,7 +41,6 @@ public class PostControllerV1 {
     @GetMapping("/{postId}")
     public ApiResponse<PostDetailResponse> readPost(@Login LoginMember loginMember,
                                                     @PathVariable Long postId) {
-        postService.increaseViewCount(postId);
         return ApiResponse.ok(postService.readPost(extractMemberId(loginMember), postId));
     }
 

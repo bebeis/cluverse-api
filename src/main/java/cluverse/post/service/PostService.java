@@ -20,4 +20,8 @@ public interface PostService {
     void deletePost(Long memberId, Long postId);
 
     void validatePostExists(Long postId);
+
+    void validateReadablePost(Long memberId, Long postId);
+
+    void validateWritablePost(Long memberId, Long postId);
 }

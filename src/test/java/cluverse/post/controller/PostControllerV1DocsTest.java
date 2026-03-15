@@ -273,7 +273,6 @@ class PostControllerV1DocsTest extends RestDocsSupport {
 
     @Test
     void 게시글_상세_조회() throws Exception {
-        doNothing().when(postService).increaseViewCount(10L);
         when(postService.readPost(1L, 10L)).thenReturn(createPostDetailResponse());
 
         mockMvc.perform(get("/api/v1/posts/{postId}", 10L)
@@ -310,9 +309,7 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                         )
                 ));
 
-        InOrder inOrder = inOrder(postService);
-        inOrder.verify(postService).increaseViewCount(10L);
-        inOrder.verify(postService).readPost(1L, 10L);
+        verify(postService).readPost(1L, 10L);
     }
 
     @Test

@@ -19,21 +19,21 @@ public class PostReactionService {
     private final PostService postService;
 
     public PostLikeResponse likePost(Long memberId, Long postId) {
-        postService.validatePostExists(postId);
+        postService.validateReadablePost(memberId, postId);
         postReactionWriter.likePost(memberId, postId);
         postMetaService.increaseLikeCount(postId);
         return PostLikeResponse.like(postId);
     }
 
     public PostBookmarkResponse bookmarkPost(Long memberId, Long postId) {
-        postService.validatePostExists(postId);
+        postService.validateReadablePost(memberId, postId);
         postReactionWriter.bookmarkPost(memberId, postId);
         postMetaService.increaseBookmarkCount(postId);
         return PostBookmarkResponse.bookmark(postId);
     }
 
     public PostBookmarkResponse removeBookmark(Long memberId, Long postId) {
-        postService.validatePostExists(postId);
+        postService.validateReadablePost(memberId, postId);
         postReactionWriter.removeBookmark(memberId, postId);
         postMetaService.decreaseBookmarkCount(postId);
         return PostBookmarkResponse.remove(postId);

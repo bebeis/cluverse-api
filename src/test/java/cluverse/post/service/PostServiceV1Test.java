@@ -1,5 +1,6 @@
 package cluverse.post.service;
 
+import cluverse.board.service.BoardService;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
@@ -45,6 +46,9 @@ class PostServiceV1Test {
     @Mock
     private PostQueryRepository postQueryRepository;
 
+    @Mock
+    private BoardService boardService;
+
     @InjectMocks
     private PostServiceV1 postService;
 
@@ -68,6 +72,7 @@ class PostServiceV1Test {
         assertThat(response.hasNext()).isTrue();
         assertThat(response.page()).isEqualTo(1);
         assertThat(response.dateBased()).isFalse();
+        verify(boardService).validateReadableBoard(99L, 3L);
     }
 
     @Test
@@ -91,11 +96,14 @@ class PostServiceV1Test {
         assertThat(response.page()).isNull();
         assertThat(response.dateBased()).isTrue();
         assertThat(response.hasNext()).isFalse();
+        verify(boardService).validateReadableBoard(99L, 3L);
     }
 
     @Test
     void 익명_게시글_상세_조회시_작성자_정보를_가린다() {
         // given
+        Post post = createPost(10L, 3L, 1L, "익명 질문", true);
+        when(postReader.readOrThrow(10L)).thenReturn(post);
         when(postQueryRepository.findPostDetail(2L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
 
         // when
@@ -105,6 +113,8 @@ class PostServiceV1Test {
         assertThat(response.isAnonymous()).isTrue();
         assertThat(response.author().memberId()).isNull();
         assertThat(response.author().nickname()).isEqualTo("익명");
+        verify(boardService).validateReadableBoard(2L, 3L);
+        verify(postWriter).increaseViewCount(10L);
     }
 
     @Test
@@ -150,6 +160,44 @@ class PostServiceV1Test {
 
         // then
         verify(postReader).readOrThrow(10L);
+    }
+
+    @Test
+    void 게시글_작성시_게시판_쓰기_권한을_검증한다() {
+        // given
+        PostCreateRequest request = new PostCreateRequest(
+                3L,
+                "제목",
+                "본문",
+                PostCategory.INFORMATION,
+                List.of("spring"),
+                false,
+                false,
+                true,
+                List.of()
+        );
+        Post post = createPost(10L, 3L, 1L, "제목", false);
+        when(postWriter.create(1L, request, "127.0.0.1")).thenReturn(post);
+        when(postQueryRepository.findPostDetail(1L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
+
+        // when
+        postService.createPost(1L, request, "127.0.0.1");
+
+        // then
+        verify(boardService).validateWritableBoard(1L, 3L);
+    }
+
+    @Test
+    void 게시글_읽기_권한_검증은_게시판_서비스를_통해_수행한다() {
+        // given
+        Post post = createPost(10L, 3L, 1L, "게시글 존재 확인", false);
+        when(postReader.readOrThrow(10L)).thenReturn(post);
+
+        // when
+        postService.validateReadablePost(7L, 10L);
+
+        // then
+        verify(boardService).validateReadableBoard(7L, 3L);
     }
 
     private PostSummaryQueryDto createPostSummaryQueryDto(
