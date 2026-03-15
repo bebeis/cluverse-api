@@ -1,5 +1,6 @@
 package cluverse.group.service.response;
 
+import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupActivityType;
 import cluverse.group.domain.GroupCategory;
 import cluverse.group.domain.GroupStatus;
@@ -25,5 +26,27 @@ public record GroupSummaryResponse(
 ) {
     public GroupSummaryResponse {
         interests = interests == null ? List.of() : List.copyOf(interests);
+    }
+
+    public static GroupSummaryResponse of(Group group,
+                                          boolean recruiting,
+                                          long openRecruitmentCount,
+                                          List<GroupInterestResponse> interests) {
+        return new GroupSummaryResponse(
+                group.getId(),
+                group.getName(),
+                group.getDescription(),
+                group.getCoverImageUrl(),
+                group.getCategory(),
+                group.getActivityType(),
+                group.getRegion(),
+                group.getVisibility(),
+                group.getStatus(),
+                group.getMaxMembers(),
+                group.getMemberCount(),
+                recruiting,
+                openRecruitmentCount,
+                interests
+        );
     }
 }

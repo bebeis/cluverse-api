@@ -1,5 +1,6 @@
 package cluverse.recruitment.service.response;
 
+import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentStatus;
 
 import java.time.LocalDateTime;
@@ -17,5 +18,20 @@ public record RecruitmentSummaryResponse(
 ) {
     public RecruitmentSummaryResponse {
         positions = positions == null ? List.of() : List.copyOf(positions);
+    }
+
+    public static RecruitmentSummaryResponse from(Recruitment recruitment) {
+        return new RecruitmentSummaryResponse(
+                recruitment.getId(),
+                recruitment.getGroupId(),
+                recruitment.getTitle(),
+                recruitment.getPositions().stream()
+                        .map(RecruitmentPositionResponse::from)
+                        .toList(),
+                recruitment.getDeadline(),
+                recruitment.getStatus(),
+                recruitment.getApplicationCount(),
+                recruitment.getCreatedAt()
+        );
     }
 }
