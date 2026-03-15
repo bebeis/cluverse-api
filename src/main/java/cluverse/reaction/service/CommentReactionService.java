@@ -1,18 +1,32 @@
 package cluverse.reaction.service;
 
+import cluverse.comment.service.CommentService;
+import cluverse.comment.service.response.CommentReactionTargetResponse;
+import cluverse.reaction.service.implement.CommentReactionWriter;
 import cluverse.reaction.service.response.CommentLikeResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class CommentReactionService {
 
-    private static final String MESSAGE = "댓글 반응 API는 현재 설계만 완료되었고, 서비스 구현은 아직 추가되지 않았습니다.";
+    private final CommentReactionWriter commentReactionWriter;
+    private final CommentService commentService;
 
     public CommentLikeResponse likeComment(Long memberId, Long commentId) {
-        throw new UnsupportedOperationException(MESSAGE);
+        CommentReactionTargetResponse target = commentService.getReactionTarget(commentId);
+        commentReactionWriter.likeComment(memberId, commentId);
+        commentService.increaseLikeCount(commentId);
+        return CommentLikeResponse.like(target.postId(), target.commentId());
     }
 
     public CommentLikeResponse unlikeComment(Long memberId, Long commentId) {
-        throw new UnsupportedOperationException(MESSAGE);
+        CommentReactionTargetResponse target = commentService.getReactionTarget(commentId);
+        commentReactionWriter.unlikeComment(memberId, commentId);
+        commentService.decreaseLikeCount(commentId);
+        return CommentLikeResponse.unlike(target.postId(), target.commentId());
     }
 }
