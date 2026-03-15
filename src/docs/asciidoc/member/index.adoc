@@ -30,6 +30,53 @@ include::{snippets}/members/get-profile/http-request.adoc[]
 include::{snippets}/members/get-profile/http-response.adoc[]
 include::{snippets}/members/get-profile/response-fields.adoc[]
 
+=== 프로필 수정
+
+==== 요청
+
+include::{snippets}/members/update-profile/http-request.adoc[]
+include::{snippets}/members/update-profile/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/members/update-profile/http-response.adoc[]
+include::{snippets}/members/update-profile/response-fields.adoc[]
+
+=== 내 학과 목록 조회
+
+==== 요청
+
+include::{snippets}/members/get-my-majors/http-request.adoc[]
+
+==== 응답
+
+include::{snippets}/members/get-my-majors/http-response.adoc[]
+include::{snippets}/members/get-my-majors/response-fields.adoc[]
+
+=== 학과 추가
+
+==== 요청
+
+include::{snippets}/members/add-major/http-request.adoc[]
+include::{snippets}/members/add-major/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/members/add-major/http-response.adoc[]
+include::{snippets}/members/add-major/response-fields.adoc[]
+
+=== 학과 삭제
+
+==== 요청
+
+include::{snippets}/members/remove-major/http-request.adoc[]
+include::{snippets}/members/remove-major/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/members/remove-major/http-response.adoc[]
+include::{snippets}/members/remove-major/response-fields.adoc[]
+
 === 차단 목록 조회
 
 ==== 요청
@@ -63,3 +110,63 @@ include::{snippets}/members/add-interest/request-fields.adoc[]
 
 include::{snippets}/members/add-interest/http-response.adoc[]
 include::{snippets}/members/add-interest/response-fields.adoc[]
+
+=== 관심사 삭제
+
+==== 요청
+
+include::{snippets}/members/remove-interest/http-request.adoc[]
+include::{snippets}/members/remove-interest/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/members/remove-interest/http-response.adoc[]
+include::{snippets}/members/remove-interest/response-fields.adoc[]
+
+=== 팔로우
+
+==== 요청
+
+include::{snippets}/members/follow/http-request.adoc[]
+include::{snippets}/members/follow/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/members/follow/http-response.adoc[]
+include::{snippets}/members/follow/response-fields.adoc[]
+
+=== 언팔로우
+
+==== 요청
+
+include::{snippets}/members/unfollow/http-request.adoc[]
+include::{snippets}/members/unfollow/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/members/unfollow/http-response.adoc[]
+include::{snippets}/members/unfollow/response-fields.adoc[]
+
+=== 차단
+
+==== 요청
+
+include::{snippets}/members/block/http-request.adoc[]
+include::{snippets}/members/block/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/members/block/http-response.adoc[]
+include::{snippets}/members/block/response-fields.adoc[]
+
+=== 차단 해제
+
+==== 요청
+
+include::{snippets}/members/unblock/http-request.adoc[]
+include::{snippets}/members/unblock/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/members/unblock/http-response.adoc[]
+include::{snippets}/members/unblock/response-fields.adoc[]

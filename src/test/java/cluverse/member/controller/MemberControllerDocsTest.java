@@ -2,12 +2,17 @@ package cluverse.member.controller;
 
 import cluverse.common.auth.LoginMember;
 import cluverse.docs.RestDocsSupport;
+import cluverse.member.domain.MajorType;
 import cluverse.member.domain.MemberProfileField;
 import cluverse.member.domain.MemberRole;
 import cluverse.member.domain.VerificationStatus;
 import cluverse.member.service.MemberService;
+import cluverse.member.service.request.AddInterestRequest;
+import cluverse.member.service.request.AddMajorRequest;
+import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberInterestResponse;
+import cluverse.member.service.response.MemberMajorResponse;
 import cluverse.member.service.response.MemberProfileResponse;
 import cluverse.member.service.response.MemberProfileSummaryResponse;
 import org.junit.jupiter.api.Test;
@@ -19,14 +24,21 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static cluverse.common.auth.LoginMemberArgumentResolver.SESSION_KEY;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -115,6 +127,143 @@ class MemberControllerDocsTest extends RestDocsSupport {
     }
 
     @Test
+    void 프로필_수정() throws Exception {
+        when(memberService.updateProfile(anyLong(), any(UpdateProfileRequest.class)))
+                .thenReturn(createProfileResponse(1L, true));
+
+        mockMvc.perform(put("/api/v1/members/me/profile")
+                        .session(createSession())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "bio": "안녕하세요, 클루버스입니다.",
+                                    "profileImageUrl": "https://cdn.example.com/profile.png",
+                                    "linkGithub": "https://github.com/luna",
+                                    "linkNotion": "https://notion.so/luna",
+                                    "linkPortfolio": "https://portfolio.example.com",
+                                    "linkInstagram": "https://instagram.com/luna",
+                                    "linkEtc": "https://blog.example.com",
+                                    "isPublic": true,
+                                    "visibleFields": ["BIO", "LINK_GITHUB"]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.memberId").value(1))
+                .andDo(document("members/update-profile",
+                        requestFields(
+                                fieldWithPath("bio").type(JsonFieldType.STRING).description("자기소개 (최대 500자)").optional(),
+                                fieldWithPath("profileImageUrl").type(JsonFieldType.STRING).description("프로필 이미지 URL").optional(),
+                                fieldWithPath("linkGithub").type(JsonFieldType.STRING).description("GitHub 링크").optional(),
+                                fieldWithPath("linkNotion").type(JsonFieldType.STRING).description("Notion 링크").optional(),
+                                fieldWithPath("linkPortfolio").type(JsonFieldType.STRING).description("포트폴리오 링크").optional(),
+                                fieldWithPath("linkInstagram").type(JsonFieldType.STRING).description("Instagram 링크").optional(),
+                                fieldWithPath("linkEtc").type(JsonFieldType.STRING).description("기타 링크").optional(),
+                                fieldWithPath("isPublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 여부"),
+                                fieldWithPath("visibleFields").type(JsonFieldType.ARRAY).description("비공개 프로필일 때 외부에 노출할 필드 목록").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.memberId").type(JsonFieldType.NUMBER).description("회원 ID"),
+                                fieldWithPath("data.nickname").type(JsonFieldType.STRING).description("닉네임"),
+                                fieldWithPath("data.university.universityId").type(JsonFieldType.NUMBER).description("학교 ID"),
+                                fieldWithPath("data.university.universityName").type(JsonFieldType.STRING).description("학교명"),
+                                fieldWithPath("data.university.universityBadgeImageUrl").type(JsonFieldType.STRING).description("학교 배지 이미지 URL"),
+                                fieldWithPath("data.verificationStatus").type(JsonFieldType.STRING).description("학생 인증 상태"),
+                                fieldWithPath("data.bio").type(JsonFieldType.STRING).description("자기소개"),
+                                fieldWithPath("data.profileImageUrl").type(JsonFieldType.STRING).description("프로필 이미지 URL"),
+                                fieldWithPath("data.linkGithub").type(JsonFieldType.STRING).description("GitHub 링크"),
+                                fieldWithPath("data.linkNotion").type(JsonFieldType.STRING).description("Notion 링크"),
+                                fieldWithPath("data.linkPortfolio").type(JsonFieldType.STRING).description("포트폴리오 링크"),
+                                fieldWithPath("data.linkInstagram").type(JsonFieldType.STRING).description("Instagram 링크"),
+                                fieldWithPath("data.linkEtc").type(JsonFieldType.STRING).description("기타 링크"),
+                                fieldWithPath("data.isPublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 여부"),
+                                fieldWithPath("data.visibleFields").type(JsonFieldType.ARRAY).description("외부에 노출할 필드 목록"),
+                                fieldWithPath("data.isFollowing").type(JsonFieldType.BOOLEAN).description("현재 로그인 사용자의 팔로우 여부"),
+                                fieldWithPath("data.isBlocked").type(JsonFieldType.BOOLEAN).description("현재 로그인 사용자의 차단 여부"),
+                                fieldWithPath("data.followerCount").type(JsonFieldType.NUMBER).description("팔로워 수"),
+                                fieldWithPath("data.followingCount").type(JsonFieldType.NUMBER).description("팔로잉 수")
+                        )
+                ));
+    }
+
+    @Test
+    void 내_학과_목록_조회() throws Exception {
+        when(memberService.getMajors(1L)).thenReturn(List.of(
+                new MemberMajorResponse(1L, 100L, MajorType.PRIMARY),
+                new MemberMajorResponse(2L, 200L, MajorType.DOUBLE_MAJOR)
+        ));
+
+        mockMvc.perform(get("/api/v1/members/me/majors")
+                        .session(createSession()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].majorId").value(100))
+                .andDo(document("members/get-my-majors",
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data[].memberMajorId").type(JsonFieldType.NUMBER).description("회원 학과 매핑 ID"),
+                                fieldWithPath("data[].majorId").type(JsonFieldType.NUMBER).description("학과 ID"),
+                                fieldWithPath("data[].majorType").type(JsonFieldType.STRING).description("전공 유형 (`PRIMARY`, `DOUBLE_MAJOR`, `MINOR`)")
+                        )
+                ));
+    }
+
+    @Test
+    void 학과_추가() throws Exception {
+        when(memberService.addMajor(anyLong(), any(AddMajorRequest.class)))
+                .thenReturn(new MemberMajorResponse(3L, 300L, MajorType.MINOR));
+
+        mockMvc.perform(post("/api/v1/members/me/majors")
+                        .session(createSession())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "majorId": 300,
+                                    "majorType": "MINOR"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.majorId").value(300))
+                .andDo(document("members/add-major",
+                        requestFields(
+                                fieldWithPath("majorId").type(JsonFieldType.NUMBER).description("추가할 학과 ID"),
+                                fieldWithPath("majorType").type(JsonFieldType.STRING).description("전공 유형 (`PRIMARY`, `DOUBLE_MAJOR`, `MINOR`)")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.memberMajorId").type(JsonFieldType.NUMBER).description("회원 학과 매핑 ID"),
+                                fieldWithPath("data.majorId").type(JsonFieldType.NUMBER).description("추가된 학과 ID"),
+                                fieldWithPath("data.majorType").type(JsonFieldType.STRING).description("전공 유형")
+                        )
+                ));
+    }
+
+    @Test
+    void 학과_삭제() throws Exception {
+        doNothing().when(memberService).removeMajor(1L, 1L);
+
+        mockMvc.perform(delete("/api/v1/members/me/majors/{majorId}", 1L)
+                        .session(createSession()))
+                .andExpect(status().isOk())
+                .andDo(document("members/remove-major",
+                        pathParameters(
+                                parameterWithName("majorId").description("삭제할 회원 학과 매핑 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.NULL).description("응답 데이터 없음")
+                        )
+                ));
+    }
+
+    @Test
     void 차단_목록_조회() throws Exception {
         when(memberService.getBlockedMembers(1L)).thenReturn(List.of(
                 new BlockedMemberResponse(
@@ -171,7 +320,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 관심사_추가() throws Exception {
-        when(memberService.addInterest(1L, new cluverse.member.service.request.AddInterestRequest(300L)))
+        when(memberService.addInterest(1L, new AddInterestRequest(300L)))
                 .thenReturn(new MemberInterestResponse(300L));
 
         mockMvc.perform(post("/api/v1/members/me/interests")
@@ -193,6 +342,106 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
                                 fieldWithPath("data.interestId").type(JsonFieldType.NUMBER).description("추가된 관심 태그 ID")
+                        )
+                ));
+    }
+
+    @Test
+    void 관심사_삭제() throws Exception {
+        doNothing().when(memberService).removeInterest(1L, 100L);
+
+        mockMvc.perform(delete("/api/v1/members/me/interests/{interestId}", 100L)
+                        .session(createSession()))
+                .andExpect(status().isOk())
+                .andDo(document("members/remove-interest",
+                        pathParameters(
+                                parameterWithName("interestId").description("삭제할 관심 태그 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.NULL).description("응답 데이터 없음")
+                        )
+                ));
+    }
+
+    @Test
+    void 팔로우() throws Exception {
+        doNothing().when(memberService).follow(1L, 2L);
+
+        mockMvc.perform(post("/api/v1/members/{memberId}/follow", 2L)
+                        .session(createSession()))
+                .andExpect(status().isCreated())
+                .andDo(document("members/follow",
+                        pathParameters(
+                                parameterWithName("memberId").description("팔로우할 회원 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.NULL).description("응답 데이터 없음")
+                        )
+                ));
+    }
+
+    @Test
+    void 언팔로우() throws Exception {
+        doNothing().when(memberService).unfollow(1L, 2L);
+
+        mockMvc.perform(delete("/api/v1/members/{memberId}/follow", 2L)
+                        .session(createSession()))
+                .andExpect(status().isOk())
+                .andDo(document("members/unfollow",
+                        pathParameters(
+                                parameterWithName("memberId").description("언팔로우할 회원 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.NULL).description("응답 데이터 없음")
+                        )
+                ));
+    }
+
+    @Test
+    void 차단() throws Exception {
+        doNothing().when(memberService).block(1L, 2L);
+
+        mockMvc.perform(post("/api/v1/members/{memberId}/block", 2L)
+                        .session(createSession()))
+                .andExpect(status().isCreated())
+                .andDo(document("members/block",
+                        pathParameters(
+                                parameterWithName("memberId").description("차단할 회원 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.NULL).description("응답 데이터 없음")
+                        )
+                ));
+    }
+
+    @Test
+    void 차단_해제() throws Exception {
+        doNothing().when(memberService).unblock(1L, 2L);
+
+        mockMvc.perform(delete("/api/v1/members/{memberId}/block", 2L)
+                        .session(createSession()))
+                .andExpect(status().isOk())
+                .andDo(document("members/unblock",
+                        pathParameters(
+                                parameterWithName("memberId").description("차단을 해제할 회원 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.NULL).description("응답 데이터 없음")
                         )
                 ));
     }
