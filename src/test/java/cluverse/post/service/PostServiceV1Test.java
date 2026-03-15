@@ -96,9 +96,6 @@ class PostServiceV1Test {
     @Test
     void 익명_게시글_상세_조회시_작성자_정보를_가린다() {
         // given
-        Post anonymousPost = createPost(10L, 3L, 1L, "익명 질문", true);
-
-        when(postReader.readForUpdateOrThrow(10L)).thenReturn(anonymousPost);
         when(postQueryRepository.findPostDetail(2L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
 
         // when
@@ -108,7 +105,18 @@ class PostServiceV1Test {
         assertThat(response.isAnonymous()).isTrue();
         assertThat(response.author().memberId()).isNull();
         assertThat(response.author().nickname()).isEqualTo("익명");
-        verify(postWriter).increaseViewCount(anonymousPost);
+    }
+
+    @Test
+    void 게시글_조회수_증가는_작성기에게_위임한다() {
+        // given
+        doNothing().when(postWriter).increaseViewCount(10L);
+
+        // when
+        postService.increaseViewCount(10L);
+
+        // then
+        verify(postWriter).increaseViewCount(10L);
     }
 
     @Test

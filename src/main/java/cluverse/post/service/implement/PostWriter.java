@@ -1,9 +1,11 @@
 package cluverse.post.service.implement;
 
+import cluverse.common.exception.NotFoundException;
 import cluverse.post.domain.Post;
+import cluverse.post.exception.PostExceptionMessage;
+import cluverse.post.repository.PostRepository;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostUpdateRequest;
-import cluverse.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,8 +51,9 @@ public class PostWriter {
         post.delete();
     }
 
-    public void increaseViewCount(Post post) {
-        post.increaseViewCount();
+    public void increaseViewCount(Long postId) {
+        int updatedRowCount = postRepository.increaseViewCount(postId);
+        validateUpdated(updatedRowCount);
     }
 
     public void increaseLikeCount(Post post) {
@@ -67,5 +70,11 @@ public class PostWriter {
 
     public void decreaseBookmarkCount(Post post) {
         post.decreaseBookmarkCount();
+    }
+
+    private void validateUpdated(int updatedRowCount) {
+        if (updatedRowCount == 0) {
+            throw new NotFoundException(PostExceptionMessage.POST_NOT_FOUND.getMessage());
+        }
     }
 }

@@ -55,10 +55,14 @@ public class PostServiceV1 implements PostService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PostDetailResponse readPost(Long memberId, Long postId) {
-        Post post = postReader.readForUpdateOrThrow(postId);
-        postWriter.increaseViewCount(post);
         return PostDetailResponse.from(postQueryRepository.findPostDetail(memberId, postId));
+    }
+
+    @Override
+    public void increaseViewCount(Long postId) {
+        postWriter.increaseViewCount(postId);
     }
 
     @Override

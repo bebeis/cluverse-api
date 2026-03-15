@@ -10,6 +10,7 @@ import cluverse.post.service.response.PostDetailResponse;
 import cluverse.post.service.response.PostPageResponse;
 import cluverse.post.service.response.PostSummaryResponse;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -272,6 +273,7 @@ class PostControllerV1DocsTest extends RestDocsSupport {
 
     @Test
     void 게시글_상세_조회() throws Exception {
+        doNothing().when(postService).increaseViewCount(10L);
         when(postService.readPost(1L, 10L)).thenReturn(createPostDetailResponse());
 
         mockMvc.perform(get("/api/v1/posts/{postId}", 10L)
@@ -307,6 +309,10 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                                 fieldWithPath("data.updatedAt").type(JsonFieldType.STRING).description("수정 시각")
                         )
                 ));
+
+        InOrder inOrder = inOrder(postService);
+        inOrder.verify(postService).increaseViewCount(10L);
+        inOrder.verify(postService).readPost(1L, 10L);
     }
 
     @Test

@@ -22,14 +22,6 @@ public class PostReader {
         return post;
     }
 
-    @Transactional
-    public Post readForUpdateOrThrow(Long postId) {
-        Post post = postRepository.findByIdForUpdate(postId)
-                .orElseThrow(() -> new NotFoundException(PostExceptionMessage.POST_NOT_FOUND.getMessage()));
-        validateActive(post);
-        return post;
-    }
-
     private void validateActive(Post post) {
         if (!post.isActive()) {
             throw new NotFoundException(PostExceptionMessage.POST_NOT_FOUND.getMessage());

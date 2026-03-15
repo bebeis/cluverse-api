@@ -13,6 +13,8 @@ public interface PostService {
 
     PostDetailResponse readPost(Long memberId, Long postId);
 
+    void increaseViewCount(Long postId);
+
     PostDetailResponse updatePost(Long memberId, Long postId, PostUpdateRequest request);
 
     void deletePost(Long memberId, Long postId);
