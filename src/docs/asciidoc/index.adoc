@@ -16,4 +16,8 @@ include::university/index.adoc[]
 
 include::post/index.adoc[]
 
+include::comment/index.adoc[]
+
 include::post-reaction/index.adoc[]
+
+include::comment-reaction/index.adoc[]
