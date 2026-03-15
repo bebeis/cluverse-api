@@ -34,6 +34,43 @@ class AuthControllerDocsTest extends RestDocsSupport {
     }
 
     @Test
+    void 회원가입_성공() throws Exception {
+        LoginMember loginMember = new LoginMember(1L, "testuser", MemberRole.MEMBER);
+        when(authService.register(any(), anyString())).thenReturn(loginMember);
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "test@example.com",
+                                    "password": "password123",
+                                    "nickname": "testuser",
+                                    "universityId": 10,
+                                    "agreedTermsIds": [1, 2, 3]
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.memberId").value(1))
+                .andDo(document("auth/register",
+                        requestFields(
+                                fieldWithPath("email").type(JsonFieldType.STRING).description("이메일"),
+                                fieldWithPath("password").type(JsonFieldType.STRING).description("비밀번호"),
+                                fieldWithPath("nickname").type(JsonFieldType.STRING).description("닉네임"),
+                                fieldWithPath("universityId").type(JsonFieldType.NUMBER).description("학교 ID"),
+                                fieldWithPath("agreedTermsIds").type(JsonFieldType.ARRAY).description("동의한 약관 ID 목록")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.memberId").type(JsonFieldType.NUMBER).description("회원 ID"),
+                                fieldWithPath("data.nickname").type(JsonFieldType.STRING).description("닉네임"),
+                                fieldWithPath("data.role").type(JsonFieldType.STRING).description("역할")
+                        )
+                ));
+    }
+
+    @Test
     void 이메일_로그인_성공() throws Exception {
         LoginMember loginMember = new LoginMember(1L, "testuser", MemberRole.MEMBER);
         when(authService.loginWithEmail(anyString(), anyString(), anyString()))

@@ -1,5 +1,17 @@
 == 인증 API
 
+=== 회원가입
+
+==== 요청
+
+include::{snippets}/auth/register/http-request.adoc[]
+include::{snippets}/auth/register/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/auth/register/http-response.adoc[]
+include::{snippets}/auth/register/response-fields.adoc[]
+
 === 이메일 로그인
 
 ==== 요청
@@ -49,6 +61,18 @@ include::{snippets}/auth/logout/response-fields.adoc[]
 
 == OAuth2 API
 
+=== OAuth2 인가 시작
+
+==== 요청
+
+include::{snippets}/oauth2/authorize/http-request.adoc[]
+include::{snippets}/oauth2/authorize/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/oauth2/authorize/http-response.adoc[]
+include::{snippets}/oauth2/authorize/response-headers.adoc[]
+
 === 소셜 로그인 기대 동작 흐름
 
 1. 클라이언트가 OAuth2 인증을 마치고 콜백을 호출하면 서버는 `provider + providerUserId`로 기존 연동 계정을 먼저 조회합니다.
@@ -77,7 +101,9 @@ include::{snippets}/oauth2/authorize-fail/response-fields.adoc[]
 
 include::{snippets}/oauth2/callback/http-request.adoc[]
 include::{snippets}/oauth2/callback/path-parameters.adoc[]
+include::{snippets}/oauth2/callback/query-parameters.adoc[]
 
 ==== 응답
 
 include::{snippets}/oauth2/callback/http-response.adoc[]
+include::{snippets}/oauth2/callback/response-headers.adoc[]

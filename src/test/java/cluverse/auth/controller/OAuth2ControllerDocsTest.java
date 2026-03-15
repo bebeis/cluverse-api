@@ -19,11 +19,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.headers.HeaderDocumentation.responseHeaders;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class OAuth2ControllerDocsTest extends RestDocsSupport {
@@ -38,6 +42,25 @@ class OAuth2ControllerDocsTest extends RestDocsSupport {
         OAuth2Controller controller = new OAuth2Controller(oAuth2ClientManager, authService, loginSessionManager);
         ReflectionTestUtils.setField(controller, "frontendUrl", "http://localhost:3000");
         return controller;
+    }
+
+    @Test
+    void 카카오_인가_시작_성공() throws Exception {
+        when(oAuth2ClientManager.getClient("kakao")).thenReturn(oAuth2Client);
+        when(oAuth2Client.getAuthorizationUrl())
+                .thenReturn("https://kauth.kakao.com/oauth/authorize?client_id=test-client");
+
+        mockMvc.perform(get("/oauth2/{provider}", "kakao"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("https://kauth.kakao.com/oauth/authorize?client_id=test-client"))
+                .andDo(document("oauth2/authorize",
+                        pathParameters(
+                                parameterWithName("provider").description("OAuth2 provider (kakao, google)")
+                        ),
+                        responseHeaders(
+                                headerWithName("Location").description("OAuth2 인증 페이지 redirect URL")
+                        )
+                ));
     }
 
     @Test
@@ -73,9 +96,16 @@ class OAuth2ControllerDocsTest extends RestDocsSupport {
         mockMvc.perform(get("/oauth2/{provider}/callback", "kakao")
                         .param("code", "auth-code"))
                 .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("http://localhost:3000"))
                 .andDo(document("oauth2/callback",
                         pathParameters(
                                 parameterWithName("provider").description("OAuth2 provider (kakao, google)")
+                        ),
+                        queryParameters(
+                                parameterWithName("code").description("OAuth2 provider가 발급한 인가 코드")
+                        ),
+                        responseHeaders(
+                                headerWithName("Location").description("로그인 완료 후 redirect 되는 프론트엔드 URL")
                         )
                 ));
     }

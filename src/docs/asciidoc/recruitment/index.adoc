@@ -1,0 +1,177 @@
+== 모집/지원 API
+
+=== 모집글 목록 조회
+
+==== 요청
+
+include::{snippets}/recruitments/get-recruitment-list/http-request.adoc[]
+include::{snippets}/recruitments/get-recruitment-list/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitments/get-recruitment-list/http-response.adoc[]
+include::{snippets}/recruitments/get-recruitment-list/response-fields.adoc[]
+
+=== 모집글 생성
+
+==== 요청
+
+include::{snippets}/recruitments/create/http-request.adoc[]
+include::{snippets}/recruitments/create/query-parameters.adoc[]
+include::{snippets}/recruitments/create/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitments/create/http-response.adoc[]
+include::{snippets}/recruitments/create/response-fields.adoc[]
+
+=== 모집글 상세 조회
+
+==== 요청
+
+include::{snippets}/recruitments/get-recruitment/http-request.adoc[]
+include::{snippets}/recruitments/get-recruitment/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitments/get-recruitment/http-response.adoc[]
+include::{snippets}/recruitments/get-recruitment/response-fields.adoc[]
+
+=== 모집글 수정
+
+==== 요청
+
+include::{snippets}/recruitments/update-recruitment/http-request.adoc[]
+include::{snippets}/recruitments/update-recruitment/path-parameters.adoc[]
+include::{snippets}/recruitments/update-recruitment/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitments/update-recruitment/http-response.adoc[]
+include::{snippets}/recruitments/update-recruitment/response-fields.adoc[]
+
+=== 모집글 상태 변경
+
+==== 요청
+
+include::{snippets}/recruitments/update-recruitment-status/http-request.adoc[]
+include::{snippets}/recruitments/update-recruitment-status/path-parameters.adoc[]
+include::{snippets}/recruitments/update-recruitment-status/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitments/update-recruitment-status/http-response.adoc[]
+include::{snippets}/recruitments/update-recruitment-status/response-fields.adoc[]
+
+=== 모집글 삭제
+
+==== 요청
+
+include::{snippets}/recruitments/delete-recruitment/http-request.adoc[]
+include::{snippets}/recruitments/delete-recruitment/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitments/delete-recruitment/http-response.adoc[]
+include::{snippets}/recruitments/delete-recruitment/response-fields.adoc[]
+
+=== 내 지원서 목록 조회
+
+==== 요청
+
+include::{snippets}/recruitment-applications/get-my-applications/http-request.adoc[]
+include::{snippets}/recruitment-applications/get-my-applications/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitment-applications/get-my-applications/http-response.adoc[]
+include::{snippets}/recruitment-applications/get-my-applications/response-fields.adoc[]
+
+=== 모집글 지원서 목록 조회
+
+==== 요청
+
+include::{snippets}/recruitment-applications/get-recruitment-applications/http-request.adoc[]
+include::{snippets}/recruitment-applications/get-recruitment-applications/path-parameters.adoc[]
+include::{snippets}/recruitment-applications/get-recruitment-applications/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitment-applications/get-recruitment-applications/http-response.adoc[]
+include::{snippets}/recruitment-applications/get-recruitment-applications/response-fields.adoc[]
+
+=== 지원서 제출
+
+==== 요청
+
+include::{snippets}/recruitment-applications/create/http-request.adoc[]
+include::{snippets}/recruitment-applications/create/path-parameters.adoc[]
+include::{snippets}/recruitment-applications/create/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitment-applications/create/http-response.adoc[]
+include::{snippets}/recruitment-applications/create/response-fields.adoc[]
+
+=== 지원서 상세 조회
+
+==== 요청
+
+include::{snippets}/recruitment-applications/get-application/http-request.adoc[]
+include::{snippets}/recruitment-applications/get-application/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitment-applications/get-application/http-response.adoc[]
+include::{snippets}/recruitment-applications/get-application/response-fields.adoc[]
+
+=== 지원서 상태 변경
+
+==== 요청
+
+include::{snippets}/recruitment-applications/update-application-status/http-request.adoc[]
+include::{snippets}/recruitment-applications/update-application-status/path-parameters.adoc[]
+include::{snippets}/recruitment-applications/update-application-status/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitment-applications/update-application-status/http-response.adoc[]
+include::{snippets}/recruitment-applications/update-application-status/response-fields.adoc[]
+
+=== 지원서 취소
+
+==== 요청
+
+include::{snippets}/recruitment-applications/cancel-application/http-request.adoc[]
+include::{snippets}/recruitment-applications/cancel-application/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitment-applications/cancel-application/http-response.adoc[]
+include::{snippets}/recruitment-applications/cancel-application/response-fields.adoc[]
+
+=== 지원 채팅 메시지 목록 조회
+
+==== 요청
+
+include::{snippets}/recruitment-applications/get-messages/http-request.adoc[]
+include::{snippets}/recruitment-applications/get-messages/path-parameters.adoc[]
+include::{snippets}/recruitment-applications/get-messages/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitment-applications/get-messages/http-response.adoc[]
+include::{snippets}/recruitment-applications/get-messages/response-fields.adoc[]
+
+=== 지원 채팅 메시지 전송
+
+==== 요청
+
+include::{snippets}/recruitment-applications/create-message/http-request.adoc[]
+include::{snippets}/recruitment-applications/create-message/path-parameters.adoc[]
+include::{snippets}/recruitment-applications/create-message/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/recruitment-applications/create-message/http-response.adoc[]
+include::{snippets}/recruitment-applications/create-message/response-fields.adoc[]
