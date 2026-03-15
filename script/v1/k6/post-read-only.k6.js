@@ -11,12 +11,15 @@ import {Counter, Rate, Trend} from 'k6/metrics';
 //   -e MAX_PAGE=500 \
 //   -e RATE=200 \
 //   -e DURATION=2m \
+//   -e START_RATE=20 \
+//   -e WARMUP_STEPS=3 \
+//   -e WARMUP_STEP_DURATION=20s \
 //   -e PRE_ALLOCATED_VUS=300 \
 //   -e MAX_VUS=300 \
 //   script/v1/k6/post-read-only.k6.js
 //
 // 반영된 실제 트래픽 패턴 (읽기 전용):
-//   - 목록 조회 85% / 상세 조회 15%
+//   - 상세 조회 70% / 목록 조회 30%
 //   - 목록 조회 중: 페이지 기반 85% / 날짜 기반 15%
 //   - 상세 조회: 인기 게시판(board_id=2001001) post 80%, 일반 게시판 post 20%
 //   - 상세 조회 인기 게시글 편중: view_count 높은 쪽 bias (post_id 후반부 집중)
@@ -36,12 +39,15 @@ const DATE_READ_RATIO   = Number(__ENV.DATE_READ_RATIO   || 0.15);
 const SIZE              = 10;
 const RATE              = Number(__ENV.RATE              || 50);
 const DURATION          = __ENV.DURATION                 || '1m';
+const START_RATE        = Number(__ENV.START_RATE        || Math.max(1, Math.floor(RATE * 0.1)));
+const WARMUP_STEPS      = Number(__ENV.WARMUP_STEPS      || 3);
+const WARMUP_STEP_DURATION = __ENV.WARMUP_STEP_DURATION  || '20s';
 const PRE_ALLOCATED_VUS = Number(__ENV.PRE_ALLOCATED_VUS || 50);
 const MAX_VUS           = Number(__ENV.MAX_VUS           || Math.max(PRE_ALLOCATED_VUS * 2, 100));
 const THINK_TIME        = Number(__ENV.THINK_TIME        || 0);
 
-// 목록 85% / 상세 15%
-const DETAIL_RATIO = 0.15;
+// 상세 70% / 목록 30%
+const DETAIL_RATIO = Number(__ENV.DETAIL_RATIO || 0.7);
 
 // 상세 조회: 인기 게시판 80% / 일반 게시판 20%
 const POPULAR_DETAIL_RATIO = Number(__ENV.POPULAR_DETAIL_RATIO || 0.8);
@@ -76,14 +82,32 @@ const BOARD_TOTAL_WEIGHT = BOARD_CUMULATIVE[BOARD_CUMULATIVE.length - 1].cum;
 // 정렬: LATEST 80%, VIEW_COUNT 20%
 const SORT_LATEST_RATIO = 0.8;
 
+function buildStages() {
+    const normalizedStartRate = Math.max(1, Math.min(START_RATE, RATE));
+    const normalizedWarmupSteps = Math.max(1, Math.floor(WARMUP_STEPS));
+    const stages = [];
+
+    for (let step = 1; step <= normalizedWarmupSteps; step++) {
+        const progress = step / normalizedWarmupSteps;
+        const targetRate = Math.max(
+            normalizedStartRate,
+            Math.round(normalizedStartRate + (RATE - normalizedStartRate) * progress),
+        );
+        stages.push({target: targetRate, duration: WARMUP_STEP_DURATION});
+    }
+
+    stages.push({target: RATE, duration: DURATION});
+    return stages;
+}
+
 export const options = {
     scenarios: {
         post_read_only: {
-            executor: 'constant-arrival-rate',
+            executor: 'ramping-arrival-rate',
             exec: 'postReadOnlyScenario',
-            rate: RATE,
+            startRate: Math.max(1, Math.min(START_RATE, RATE)),
             timeUnit: '1s',
-            duration: DURATION,
+            stages: buildStages(),
             preAllocatedVUs: PRE_ALLOCATED_VUS,
             maxVUs: MAX_VUS,
         },
@@ -245,10 +269,10 @@ function readPostDetail() {
 
 // ── 메인 시나리오 ────────────────────────────────────────────
 //
-// 확률 분기:
-//   [0, 0.15)                        → readPostDetail      (15%)
-//   [0.15, 0.15 + 0.85*0.15)        → readPostListByDate  (≈12.75%)
-//   나머지                           → readPostList        (≈72.25%)
+// 기본 확률 분기:
+//   [0, DETAIL_RATIO)                                         → readPostDetail
+//   [DETAIL_RATIO, DETAIL_RATIO + (1 - DETAIL_RATIO) * 0.15)  → readPostListByDate
+//   나머지                                                    → readPostList
 
 export function postReadOnlyScenario() {
     const r = Math.random();
