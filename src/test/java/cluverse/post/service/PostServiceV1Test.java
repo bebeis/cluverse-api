@@ -141,13 +141,14 @@ class PostServiceV1Test {
 
     @Test
     void 게시글_좋아요_수_증가는_작성기에게_위임한다() {
-        Post post = createPost(10L, 3L, 1L, "좋아요 테스트", false);
-        when(postReader.readOrThrow(10L)).thenReturn(post);
-        doNothing().when(postWriter).increaseLikeCount(post);
+        // given
+        doNothing().when(postWriter).increaseLikeCount(10L);
 
+        // when
         postService.increaseLikeCount(10L);
 
-        verify(postWriter).increaseLikeCount(post);
+        // then
+        verify(postWriter).increaseLikeCount(10L);
     }
 
     private PostSummaryQueryDto createPostSummaryQueryDto(

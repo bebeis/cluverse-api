@@ -82,22 +82,22 @@ public class PostServiceV1 implements PostService {
 
     @Override
     public void increaseLikeCount(Long postId) {
-        postWriter.increaseLikeCount(postReader.readOrThrow(postId));
+        postWriter.increaseLikeCount(postId);
     }
 
     @Override
     public void decreaseLikeCount(Long postId) {
-        postWriter.decreaseLikeCount(postReader.readOrThrow(postId));
+        postWriter.decreaseLikeCount(postId);
     }
 
     @Override
     public void increaseBookmarkCount(Long postId) {
-        postWriter.increaseBookmarkCount(postReader.readOrThrow(postId));
+        postWriter.increaseBookmarkCount(postId);
     }
 
     @Override
     public void decreaseBookmarkCount(Long postId) {
-        postWriter.decreaseBookmarkCount(postReader.readOrThrow(postId));
+        postWriter.decreaseBookmarkCount(postId);
     }
 
     private void validateAuthor(Long memberId, Post post) {
