@@ -1,0 +1,37 @@
+== 보드 API
+
+=== 보드 디렉토리 조회
+
+==== 요청
+
+include::{snippets}/boards/get-directory/http-request.adoc[]
+include::{snippets}/boards/get-directory/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/boards/get-directory/http-response.adoc[]
+include::{snippets}/boards/get-directory/response-fields.adoc[]
+
+=== 보드 상세 조회
+
+==== 요청
+
+include::{snippets}/boards/get-detail/http-request.adoc[]
+include::{snippets}/boards/get-detail/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/boards/get-detail/http-response.adoc[]
+include::{snippets}/boards/get-detail/response-fields.adoc[]
+
+=== 보드 홈 조회
+
+==== 요청
+
+include::{snippets}/boards/get-home/http-request.adoc[]
+include::{snippets}/boards/get-home/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/boards/get-home/http-response.adoc[]
+include::{snippets}/boards/get-home/response-fields.adoc[]
