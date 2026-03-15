@@ -5,18 +5,38 @@ import {Counter, Rate, Trend} from 'k6/metrics';
 // Example:
 // k6 run \
 //   -e BASE_URL=http://localhost:8080 \
-//   -e POST_ID=3000001 \
 //   -e RATE=100 \
 //   -e DURATION=2m \
 //   script/v1/k6/post-detail-read.k6.js
+//
+// 반영된 실제 트래픽 패턴:
+//   - 인기 게시판(board_id=2001001) post 위주 80%, 일반 게시판 post 20%
+//   - 인기 게시글 편중: view_count가 높은 게시글 (post_id 기준 bias)
+//   - 인기 게시판 post: post_id 5000001~6000000 (1M개), view_count 5000~154999
+//   - 일반 게시판 post: post_id 3000001~5000000 (2M개), view_count 0~19999
+//
+// Seed 데이터 기반:
+//   - 인기 게시판: POPULAR_POST_START=5000001, POPULAR_POST_END=6000000
+//   - 일반 게시판: NORMAL_POST_START=3000001, NORMAL_POST_END=5000000
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
-const POST_ID = Number(__ENV.POST_ID || 3000001);
-const RATE = Number(__ENV.RATE || 50);
-const DURATION = __ENV.DURATION || '1m';
-const PRE_ALLOCATED_VUS = Number(__ENV.PRE_ALLOCATED_VUS || 50);
-const MAX_VUS = Number(__ENV.MAX_VUS || Math.max(PRE_ALLOCATED_VUS * 2, 100));
-const THINK_TIME = Number(__ENV.THINK_TIME || 0);
+const BASE_URL             = __ENV.BASE_URL              || 'http://localhost:8080';
+const RATE                 = Number(__ENV.RATE            || 50);
+const DURATION             = __ENV.DURATION               || '1m';
+const PRE_ALLOCATED_VUS    = Number(__ENV.PRE_ALLOCATED_VUS || 50);
+const MAX_VUS              = Number(__ENV.MAX_VUS          || Math.max(PRE_ALLOCATED_VUS * 2, 100));
+const THINK_TIME           = Number(__ENV.THINK_TIME       || 0);
+
+// 인기 게시판 post 범위 (05a seed)
+const POPULAR_POST_START   = Number(__ENV.POPULAR_POST_START || 5000001);
+const POPULAR_POST_END     = Number(__ENV.POPULAR_POST_END   || 6000000);
+// 일반 게시판 post 범위 (05 seed)
+const NORMAL_POST_START    = Number(__ENV.NORMAL_POST_START  || 3000001);
+const NORMAL_POST_END      = Number(__ENV.NORMAL_POST_END    || 5000000);
+
+// 인기 게시판 트래픽 비율 (80%)
+const POPULAR_BOARD_RATIO  = Number(__ENV.POPULAR_BOARD_RATIO || 0.8);
+// 인기 게시글 편중 bias (높을수록 후반부 post_id에 집중)
+const POST_BIAS            = Number(__ENV.POST_BIAS || 3);
 
 export const options = {
     scenarios: {
@@ -39,12 +59,31 @@ export const options = {
     summaryTrendStats: ['avg', 'min', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
 };
 
-const postDetailDuration = new Trend('post_detail_duration', true);
+const postDetailDuration    = new Trend('post_detail_duration', true);
 const postDetailSuccessRate = new Rate('post_detail_success_rate');
-const postDetailRequests = new Counter('post_detail_requests');
+const postDetailRequests    = new Counter('post_detail_requests');
 
-function buildDetailUrl() {
-    return `${BASE_URL}/api/v1/posts/${POST_ID}`;
+// 인기 게시글 편중 post_id 선택
+// view_count = 5000 + MOD((post_id - POPULAR_POST_START) * 29, 150000)
+// view_count가 높을수록 인기 → post_id 후반부에 집중 (bias 반영)
+function pickPopularPostId() {
+    const range = POPULAR_POST_END - POPULAR_POST_START + 1;
+    const bias = POST_BIAS > 0 ? POST_BIAS : 3;
+    // Math.pow(random, 1/bias): bias가 클수록 후반부(view_count 높은 쪽)에 집중
+    const offset = Math.floor(Math.pow(Math.random(), 1 / bias) * range);
+    return POPULAR_POST_START + Math.min(offset, range - 1);
+}
+
+// 일반 게시판은 균등 분산
+function pickNormalPostId() {
+    const range = NORMAL_POST_END - NORMAL_POST_START + 1;
+    return NORMAL_POST_START + Math.floor(Math.random() * range);
+}
+
+function pickPostId() {
+    return Math.random() < POPULAR_BOARD_RATIO
+        ? pickPopularPostId()
+        : pickNormalPostId();
 }
 
 function hasPostId(response) {
@@ -57,11 +96,11 @@ function hasPostId(response) {
 }
 
 export function readPostDetailScenario() {
-    const response = http.get(buildDetailUrl(), {
-        tags: {
-            name: 'post_detail_read',
-        },
-    });
+    const postId = pickPostId();
+    const response = http.get(
+        `${BASE_URL}/api/v1/posts/${postId}`,
+        {tags: {name: 'post_detail_read'}},
+    );
 
     postDetailDuration.add(response.timings.duration);
 
@@ -74,7 +113,7 @@ export function readPostDetailScenario() {
     postDetailRequests.add(1);
 
     if (!ok) {
-        console.error(`post detail failed: status=${response.status}, body=${response.body}`);
+        console.error(`post detail failed: status=${response.status}, postId=${postId}, body=${response.body}`);
     }
 
     if (THINK_TIME > 0) {
