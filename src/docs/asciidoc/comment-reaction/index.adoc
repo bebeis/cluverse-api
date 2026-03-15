@@ -1,0 +1,25 @@
+== 댓글 반응 API
+
+=== 댓글 좋아요
+
+==== 요청
+
+include::{snippets}/comment-reactions/like-comment/http-request.adoc[]
+include::{snippets}/comment-reactions/like-comment/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/comment-reactions/like-comment/http-response.adoc[]
+include::{snippets}/comment-reactions/like-comment/response-fields.adoc[]
+
+=== 댓글 좋아요 취소
+
+==== 요청
+
+include::{snippets}/comment-reactions/unlike-comment/http-request.adoc[]
+include::{snippets}/comment-reactions/unlike-comment/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/comment-reactions/unlike-comment/http-response.adoc[]
+include::{snippets}/comment-reactions/unlike-comment/response-fields.adoc[]
