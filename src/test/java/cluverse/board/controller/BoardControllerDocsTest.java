@@ -2,6 +2,7 @@ package cluverse.board.controller;
 
 import cluverse.board.domain.BoardType;
 import cluverse.board.service.BoardService;
+import cluverse.board.service.response.BoardAdminResponse;
 import cluverse.board.service.response.BoardBreadcrumbResponse;
 import cluverse.board.service.response.BoardDetailResponse;
 import cluverse.board.service.response.BoardDirectoryResponse;
@@ -27,11 +28,17 @@ import java.util.List;
 import static cluverse.common.auth.LoginMemberArgumentResolver.SESSION_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
@@ -128,6 +135,51 @@ class BoardControllerDocsTest extends RestDocsSupport {
     }
 
     @Test
+    void 게시판_생성() throws Exception {
+        when(boardService.createBoard(eq(1L), any())).thenReturn(createBoardAdminResponse());
+
+        mockMvc.perform(post("/api/v1/boards")
+                        .session(createAdminSession())
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                    "boardType": "DEPARTMENT",
+                                    "name": "컴퓨터공학",
+                                    "description": "전국 컴퓨터공학 메인 게시판",
+                                    "displayOrder": 1,
+                                    "isActive": true
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.boardId").value(101))
+                .andDo(document("boards/create",
+                        requestFields(
+                                fieldWithPath("boardType").type(JsonFieldType.STRING).description("게시판 타입 (`DEPARTMENT`, `INTEREST`)"),
+                                fieldWithPath("name").type(JsonFieldType.STRING).description("게시판명"),
+                                fieldWithPath("description").type(JsonFieldType.STRING).description("게시판 설명").optional(),
+                                fieldWithPath("parentBoardId").type(JsonFieldType.NUMBER).description("상위 게시판 ID").optional(),
+                                fieldWithPath("displayOrder").type(JsonFieldType.NUMBER).description("노출 순서").optional(),
+                                fieldWithPath("isActive").type(JsonFieldType.BOOLEAN).description("활성 여부").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.boardId").type(JsonFieldType.NUMBER).description("게시판 ID"),
+                                fieldWithPath("data.boardType").type(JsonFieldType.STRING).description("게시판 타입"),
+                                fieldWithPath("data.name").type(JsonFieldType.STRING).description("게시판명"),
+                                fieldWithPath("data.description").type(JsonFieldType.STRING).description("게시판 설명").optional(),
+                                fieldWithPath("data.parentBoardId").type(JsonFieldType.NULL).description("상위 게시판 ID").optional(),
+                                fieldWithPath("data.depth").type(JsonFieldType.NUMBER).description("게시판 depth"),
+                                fieldWithPath("data.displayOrder").type(JsonFieldType.NUMBER).description("노출 순서"),
+                                fieldWithPath("data.isActive").type(JsonFieldType.BOOLEAN).description("활성 여부"),
+                                fieldWithPath("data.createdAt").type(JsonFieldType.STRING).description("생성 일시"),
+                                fieldWithPath("data.updatedAt").type(JsonFieldType.STRING).description("수정 일시")
+                        )
+                ));
+    }
+
+    @Test
     void 보드_상세_조회() throws Exception {
         when(boardService.getBoard(anyLong(), anyLong())).thenReturn(createBoardDetailResponse());
 
@@ -190,6 +242,62 @@ class BoardControllerDocsTest extends RestDocsSupport {
     }
 
     @Test
+    void 게시판_수정() throws Exception {
+        when(boardService.updateBoard(eq(1L), eq(101L), any())).thenReturn(new BoardAdminResponse(
+                101L,
+                BoardType.DEPARTMENT,
+                "컴퓨터공학",
+                "설명을 수정한 게시판",
+                null,
+                0,
+                3,
+                true,
+                java.time.LocalDateTime.of(2026, 3, 16, 11, 0),
+                java.time.LocalDateTime.of(2026, 3, 16, 12, 0)
+        ));
+
+        mockMvc.perform(put("/api/v1/boards/{boardId}", 101L)
+                        .session(createAdminSession())
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                    "name": "컴퓨터공학",
+                                    "description": "설명을 수정한 게시판",
+                                    "displayOrder": 3,
+                                    "isActive": true
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.displayOrder").value(3))
+                .andDo(document("boards/update",
+                        pathParameters(
+                                parameterWithName("boardId").description("수정할 게시판 ID")
+                        ),
+                        requestFields(
+                                fieldWithPath("name").type(JsonFieldType.STRING).description("게시판명"),
+                                fieldWithPath("description").type(JsonFieldType.STRING).description("게시판 설명").optional(),
+                                fieldWithPath("displayOrder").type(JsonFieldType.NUMBER).description("노출 순서").optional(),
+                                fieldWithPath("isActive").type(JsonFieldType.BOOLEAN).description("활성 여부").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.boardId").type(JsonFieldType.NUMBER).description("게시판 ID"),
+                                fieldWithPath("data.boardType").type(JsonFieldType.STRING).description("게시판 타입"),
+                                fieldWithPath("data.name").type(JsonFieldType.STRING).description("게시판명"),
+                                fieldWithPath("data.description").type(JsonFieldType.STRING).description("게시판 설명").optional(),
+                                fieldWithPath("data.parentBoardId").type(JsonFieldType.NULL).description("상위 게시판 ID").optional(),
+                                fieldWithPath("data.depth").type(JsonFieldType.NUMBER).description("게시판 depth"),
+                                fieldWithPath("data.displayOrder").type(JsonFieldType.NUMBER).description("노출 순서"),
+                                fieldWithPath("data.isActive").type(JsonFieldType.BOOLEAN).description("활성 여부"),
+                                fieldWithPath("data.createdAt").type(JsonFieldType.STRING).description("생성 일시"),
+                                fieldWithPath("data.updatedAt").type(JsonFieldType.STRING).description("수정 일시")
+                        )
+                ));
+    }
+
+    @Test
     void 보드_홈_조회() throws Exception {
         when(boardService.getBoardHome(anyLong(), anyLong())).thenReturn(createBoardHomeResponse());
 
@@ -234,10 +342,51 @@ class BoardControllerDocsTest extends RestDocsSupport {
                 ));
     }
 
+    @Test
+    void 게시판_삭제() throws Exception {
+        mockMvc.perform(delete("/api/v1/boards/{boardId}", 101L)
+                        .session(createAdminSession()))
+                .andExpect(status().isOk())
+                .andDo(document("boards/delete",
+                        pathParameters(
+                                parameterWithName("boardId").description("삭제할 게시판 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.NULL).description("응답 데이터 없음")
+                        )
+                ));
+
+        verify(boardService).deleteBoard(1L, 101L);
+    }
+
     private MockHttpSession createMemberSession() {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute(SESSION_KEY, new LoginMember(1L, "luna", MemberRole.MEMBER));
         return session;
+    }
+
+    private MockHttpSession createAdminSession() {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(SESSION_KEY, new LoginMember(1L, "admin", MemberRole.ADMIN));
+        return session;
+    }
+
+    private BoardAdminResponse createBoardAdminResponse() {
+        return new BoardAdminResponse(
+                101L,
+                BoardType.DEPARTMENT,
+                "컴퓨터공학",
+                "전국 컴퓨터공학 메인 게시판",
+                null,
+                0,
+                1,
+                true,
+                java.time.LocalDateTime.of(2026, 3, 16, 11, 0),
+                java.time.LocalDateTime.of(2026, 3, 16, 11, 0)
+        );
     }
 
     private BoardDetailResponse createBoardDetailResponse() {

@@ -104,6 +104,14 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
+    public boolean isVerified(Long memberId) {
+        if (memberId == null) {
+            return false;
+        }
+        return memberReader.readOrThrow(memberId).isVerified();
+    }
+
+    @Transactional(readOnly = true)
     public List<BlockedMemberResponse> getBlockedMembers(Long blockerId) {
         return memberReader.readBlockedMembers(blockerId);
     }

@@ -3,6 +3,7 @@ package cluverse.board.domain;
 import cluverse.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -38,16 +39,53 @@ public class Board extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean isActive;
 
-    private Board(BoardType boardType, String name, String description) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private Board(BoardType boardType,
+                  String name,
+                  String description,
+                  Long parentId,
+                  int depth,
+                  int displayOrder,
+                  boolean isActive) {
         this.boardType = boardType;
         this.name = name;
         this.description = description;
-        this.depth = 0;
-        this.displayOrder = 0;
-        this.isActive = true;
+        this.parentId = parentId;
+        this.depth = depth;
+        this.displayOrder = displayOrder;
+        this.isActive = isActive;
+    }
+
+    public static Board create(BoardType boardType,
+                               String name,
+                               String description,
+                               Long parentId,
+                               int depth,
+                               int displayOrder,
+                               boolean isActive) {
+        return Board.builder()
+                .boardType(boardType)
+                .name(name)
+                .description(description)
+                .parentId(parentId)
+                .depth(depth)
+                .displayOrder(displayOrder)
+                .isActive(isActive)
+                .build();
     }
 
     public static Board createGroupBoard(String name, String description) {
-        return new Board(BoardType.GROUP, name, description);
+        return create(BoardType.GROUP, name, description, null, 0, 0, true);
+    }
+
+    public void update(String name, String description, int displayOrder, boolean isActive) {
+        this.name = name;
+        this.description = description;
+        this.displayOrder = displayOrder;
+        this.isActive = isActive;
+    }
+
+    public void deactivate() {
+        this.isActive = false;
     }
 }

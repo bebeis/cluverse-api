@@ -1,5 +1,42 @@
 == 보드 API
 
+=== 게시판 생성
+
+==== 요청
+
+include::{snippets}/boards/create/http-request.adoc[]
+include::{snippets}/boards/create/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/boards/create/http-response.adoc[]
+include::{snippets}/boards/create/response-fields.adoc[]
+
+=== 게시판 수정
+
+==== 요청
+
+include::{snippets}/boards/update/http-request.adoc[]
+include::{snippets}/boards/update/path-parameters.adoc[]
+include::{snippets}/boards/update/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/boards/update/http-response.adoc[]
+include::{snippets}/boards/update/response-fields.adoc[]
+
+=== 게시판 삭제
+
+==== 요청
+
+include::{snippets}/boards/delete/http-request.adoc[]
+include::{snippets}/boards/delete/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/boards/delete/http-response.adoc[]
+include::{snippets}/boards/delete/response-fields.adoc[]
+
 === 보드 디렉토리 조회
 
 ==== 요청
