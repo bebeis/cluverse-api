@@ -95,13 +95,16 @@ class PostServiceV1Test {
 
     @Test
     void 익명_게시글_상세_조회시_작성자_정보를_가린다() {
+        // given
         Post anonymousPost = createPost(10L, 3L, 1L, "익명 질문", true);
 
-        when(postReader.readOrThrow(10L)).thenReturn(anonymousPost);
+        when(postReader.readForUpdateOrThrow(10L)).thenReturn(anonymousPost);
         when(postQueryRepository.findPostDetail(2L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
 
+        // when
         PostDetailResponse response = postService.readPost(2L, 10L);
 
+        // then
         assertThat(response.isAnonymous()).isTrue();
         assertThat(response.author().memberId()).isNull();
         assertThat(response.author().nickname()).isEqualTo("익명");

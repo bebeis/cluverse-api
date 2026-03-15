@@ -56,7 +56,7 @@ public class PostServiceV1 implements PostService {
 
     @Override
     public PostDetailResponse readPost(Long memberId, Long postId) {
-        Post post = postReader.readOrThrow(postId);
+        Post post = postReader.readForUpdateOrThrow(postId);
         postWriter.increaseViewCount(post);
         return PostDetailResponse.from(postQueryRepository.findPostDetail(memberId, postId));
     }
