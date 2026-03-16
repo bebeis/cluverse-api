@@ -1,5 +1,6 @@
 package cluverse.feed.service.response;
 
+import cluverse.feed.repository.dto.FeedPostQueryDto;
 import cluverse.post.domain.PostCategory;
 
 import java.time.LocalDateTime;
@@ -29,5 +30,36 @@ public record FeedPostSummaryResponse(
 ) {
     public FeedPostSummaryResponse {
         tags = tags == null ? List.of() : List.copyOf(tags);
+    }
+
+    public static FeedPostSummaryResponse from(FeedPostQueryDto post) {
+        return new FeedPostSummaryResponse(
+                post.postId(),
+                FeedBoardResponse.from(post),
+                post.category(),
+                post.title(),
+                post.contentPreview(),
+                post.tags(),
+                post.thumbnailImageUrl(),
+                post.isAnonymous(),
+                post.isPinned(),
+                post.isExternalVisible(),
+                post.isMine(),
+                post.liked(),
+                post.bookmarked(),
+                post.hiddenByBlock(),
+                post.viewCount(),
+                post.likeCount(),
+                post.commentCount(),
+                post.bookmarkCount(),
+                FeedAuthorResponse.visibleOf(
+                        post.isAnonymous(),
+                        post.isMine(),
+                        post.authorMemberId(),
+                        post.authorNickname(),
+                        post.authorProfileImageUrl()
+                ),
+                post.createdAt()
+        );
     }
 }
