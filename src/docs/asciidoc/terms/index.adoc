@@ -1,0 +1,12 @@
+== 약관 API
+
+=== 약관 목록 조회
+
+==== 요청
+
+include::{snippets}/terms/get-list/http-request.adoc[]
+
+==== 응답
+
+include::{snippets}/terms/get-list/http-response.adoc[]
+include::{snippets}/terms/get-list/response-fields.adoc[]

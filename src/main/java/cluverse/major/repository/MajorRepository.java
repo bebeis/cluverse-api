@@ -9,4 +9,8 @@ public interface MajorRepository extends JpaRepository<Major, Long> {
 
     List<Major> findAllByParentIdIsNull();
     List<Major> findAllByParentId(Long parentId);
+
+    List<Major> findAllByIsActiveTrueAndParentIdIsNullOrderByDisplayOrderAscNameAsc();
+
+    List<Major> findAllByIsActiveTrueAndParentIdOrderByDisplayOrderAscNameAsc(Long parentId);
 }

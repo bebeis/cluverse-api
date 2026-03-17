@@ -19,7 +19,15 @@ public class WebMvcConfig implements WebMvcConfigurer {
     private static final List<String> PUBLIC_GET_PATH_PATTERNS = List.of(
             "/api/v1/posts",
             "/api/v1/posts/*",
-            "/api/v1/comments"
+            "/api/v1/comments",
+            "/api/v1/universities",
+            "/api/v1/universities/*",
+            "/api/v1/boards",
+            "/api/v1/boards/*",
+            "/api/v1/boards/*/home",
+            "/api/v1/majors",
+            "/api/v1/interests",
+            "/api/v1/terms"
     );
 
     @Override
@@ -43,8 +51,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/v1/auth/login",
                         "/api/v1/auth/logout",
                         "/api/v1/auth/oauth/token",
-                        "/api/v1/universities",
-                        "/api/v1/universities/*",
                         "/oauth2/**",
                         "/actuator/**"
                 );

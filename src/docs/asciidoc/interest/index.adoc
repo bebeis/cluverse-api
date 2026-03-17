@@ -1,0 +1,12 @@
+== 관심사 API
+
+=== 관심사 목록 조회
+
+==== 요청
+
+include::{snippets}/interests/get-list/http-request.adoc[]
+
+==== 응답
+
+include::{snippets}/interests/get-list/http-response.adoc[]
+include::{snippets}/interests/get-list/response-fields.adoc[]

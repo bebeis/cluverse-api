@@ -15,7 +15,15 @@ class AuthInterceptorTest {
 
     private final AuthInterceptor authInterceptor = new AuthInterceptor(List.of(
             "/api/v1/posts",
-            "/api/v1/posts/*"
+            "/api/v1/posts/*",
+            "/api/v1/universities",
+            "/api/v1/universities/*",
+            "/api/v1/boards",
+            "/api/v1/boards/*",
+            "/api/v1/boards/*/home",
+            "/api/v1/majors",
+            "/api/v1/interests",
+            "/api/v1/terms"
     ));
 
     @Test
@@ -37,6 +45,46 @@ class AuthInterceptorTest {
     @Test
     void 비회원은_게시글을_작성할_수_없다() {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/posts");
+
+        assertThatThrownBy(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
+                .isInstanceOf(UnauthorizedException.class);
+    }
+
+    @Test
+    void 비회원도_약관을_조회할_수_있다() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/terms");
+
+        assertThatCode(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void 비회원도_관심사를_조회할_수_있다() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/interests");
+
+        assertThatCode(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void 비회원도_전공을_조회할_수_있다() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/majors");
+
+        assertThatCode(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void 비회원도_보드_홈을_조회할_수_있다() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/boards/1/home");
+
+        assertThatCode(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void 비회원은_대학교를_생성할_수_없다() {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/universities");
 
         assertThatThrownBy(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
                 .isInstanceOf(UnauthorizedException.class);

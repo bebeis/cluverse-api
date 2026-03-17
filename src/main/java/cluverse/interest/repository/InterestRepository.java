@@ -8,4 +8,6 @@ import java.util.List;
 public interface InterestRepository extends JpaRepository<Interest, Long> {
 
     List<Interest> findAllByIsActiveTrue();
+
+    List<Interest> findAllByIsActiveTrueOrderByDisplayOrderAscNameAsc();
 }

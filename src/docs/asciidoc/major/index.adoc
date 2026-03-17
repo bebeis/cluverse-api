@@ -1,0 +1,13 @@
+== 전공 API
+
+=== 전공 목록 조회
+
+==== 요청
+
+include::{snippets}/majors/get-list/http-request.adoc[]
+include::{snippets}/majors/get-list/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/majors/get-list/http-response.adoc[]
+include::{snippets}/majors/get-list/response-fields.adoc[]
