@@ -13,6 +13,7 @@ import java.util.List;
 public class AuthInterceptor implements HandlerInterceptor {
 
     private static final String GET_METHOD = "GET";
+    private static final String OPTIONS_METHOD = "OPTIONS";
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final List<String> publicGetPathPatterns;
@@ -32,7 +33,11 @@ public class AuthInterceptor implements HandlerInterceptor {
     }
 
     private boolean isPublicGetRequest(HttpServletRequest request) {
-        if (!GET_METHOD.equals(request.getMethod())) {
+        String method = request.getMethod();
+        if (OPTIONS_METHOD.equals(method)) {
+            return true;
+        }
+        if (!GET_METHOD.equals(method)) {
             return false;
         }
 
