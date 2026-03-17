@@ -20,6 +20,7 @@ class AuthInterceptorTest {
                     "/api/v1/universities",
                     "/api/v1/universities/*",
                     "/api/v1/groups",
+                    "/api/v1/groups/",
                     "/api/v1/groups/*",
                     "/api/v1/boards",
                     "/api/v1/boards/*",
@@ -100,6 +101,14 @@ class AuthInterceptorTest {
     @Test
     void 비회원도_그룹_상세를_조회할_수_있다() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/groups/1");
+
+        assertThatCode(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void 비회원도_슬래시가_붙은_그룹_목록을_조회할_수_있다() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/groups/");
 
         assertThatCode(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
                 .doesNotThrowAnyException();

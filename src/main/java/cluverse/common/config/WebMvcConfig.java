@@ -23,6 +23,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
             "/api/v1/universities",
             "/api/v1/universities/*",
             "/api/v1/groups",
+            "/api/v1/groups/",
             "/api/v1/groups/*",
             "/api/v1/boards",
             "/api/v1/boards/*",
