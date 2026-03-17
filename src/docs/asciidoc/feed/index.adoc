@@ -1,0 +1,37 @@
+== 피드 API
+
+=== 홈 피드 조회
+
+==== 요청
+
+include::{snippets}/feeds/get-home-feed/http-request.adoc[]
+include::{snippets}/feeds/get-home-feed/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/feeds/get-home-feed/http-response.adoc[]
+include::{snippets}/feeds/get-home-feed/response-fields.adoc[]
+
+=== 팔로잉 피드 조회
+
+==== 요청
+
+include::{snippets}/feeds/get-following-feed/http-request.adoc[]
+include::{snippets}/feeds/get-following-feed/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/feeds/get-following-feed/http-response.adoc[]
+include::{snippets}/feeds/get-following-feed/response-fields.adoc[]
+
+=== 트렌딩 게시글 조회
+
+==== 요청
+
+include::{snippets}/posts/get-trending-posts/http-request.adoc[]
+include::{snippets}/posts/get-trending-posts/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/get-trending-posts/http-response.adoc[]
+include::{snippets}/posts/get-trending-posts/response-fields.adoc[]

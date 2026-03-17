@@ -18,6 +18,8 @@ include::group/index.adoc[]
 
 include::board/index.adoc[]
 
+include::feed/index.adoc[]
+
 include::post/index.adoc[]
 
 include::comment/index.adoc[]
