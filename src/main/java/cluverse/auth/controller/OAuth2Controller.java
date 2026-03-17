@@ -4,8 +4,6 @@ import cluverse.auth.client.OAuth2Client;
 import cluverse.auth.client.OAuth2ClientManager;
 import cluverse.auth.client.OAuthUserInfo;
 import cluverse.auth.service.AuthService;
-import cluverse.common.auth.LoginMember;
-import cluverse.common.auth.LoginSessionManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +23,6 @@ public class OAuth2Controller {
 
     private final OAuth2ClientManager oAuth2ClientManager;
     private final AuthService authService;
-    private final LoginSessionManager loginSessionManager;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -44,10 +41,7 @@ public class OAuth2Controller {
         OAuth2Client client = oAuth2ClientManager.getClient(provider);
         OAuthUserInfo userInfo = client.getUserInfo(code);
 
-        LoginMember loginMember = authService.loginWithOAuth(userInfo, client.provider(), request.getRemoteAddr());
-        loginSessionManager.createSession(request, loginMember);
-        response.setHeader("Access-Control-Allow-Origin", frontendUrl);
-        response.setHeader("Access-Control-Allow-Credentials", "true");
-        response.sendRedirect(frontendUrl);
+        String oauthToken = authService.loginWithOAuthAndCreateToken(userInfo, client.provider(), request.getRemoteAddr());
+        response.sendRedirect(frontendUrl + "?oauth_token=" + oauthToken);
     }
 }

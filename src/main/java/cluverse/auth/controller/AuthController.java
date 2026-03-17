@@ -38,6 +38,14 @@ public class AuthController {
         return ApiResponse.ok(loginMember);
     }
 
+    @PostMapping("/oauth/token")
+    public ApiResponse<LoginMember> exchangeOAuthToken(@RequestParam String token,
+                                                       HttpServletRequest httpRequest) {
+        LoginMember loginMember = authService.exchangeOAuthToken(token);
+        loginSessionManager.createSession(httpRequest, loginMember);
+        return ApiResponse.ok(loginMember);
+    }
+
     @PostMapping("/logout")
     public ApiResponse<Void> logout(HttpServletRequest request) {
         loginSessionManager.invalidateSession(request);
