@@ -46,6 +46,8 @@ public class OAuth2Controller {
 
         LoginMember loginMember = authService.loginWithOAuth(userInfo, client.provider(), request.getRemoteAddr());
         loginSessionManager.createSession(request, loginMember);
+        response.setHeader("Access-Control-Allow-Origin", frontendUrl);
+        response.setHeader("Access-Control-Allow-Credentials", "true");
         response.sendRedirect(frontendUrl);
     }
 }
