@@ -6,6 +6,7 @@ import cluverse.common.auth.LoginMemberArgumentResolver;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -20,6 +21,18 @@ public class WebMvcConfig implements WebMvcConfigurer {
             "/api/v1/posts/*",
             "/api/v1/comments"
     );
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins(
+                        "https://cluverse-web.vercel.app",
+                        "http://localhost:3000"
+                )
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
+    }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
