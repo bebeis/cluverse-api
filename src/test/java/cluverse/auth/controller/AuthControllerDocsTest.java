@@ -9,7 +9,6 @@ import cluverse.member.domain.MemberRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -20,6 +19,8 @@ import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuild
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -170,6 +171,52 @@ class AuthControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
                                 fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.NULL).description("데이터 없음")
+                        )
+                ));
+    }
+
+    @Test
+    void OAuth_토큰_교환_성공() throws Exception {
+        LoginMember loginMember = new LoginMember(1L, "kakaouser", MemberRole.MEMBER);
+        when(authService.exchangeOAuthToken("valid-token")).thenReturn(loginMember);
+
+        mockMvc.perform(post("/api/v1/auth/oauth/token")
+                        .param("token", "valid-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.memberId").value(1))
+                .andDo(document("auth/oauth-token",
+                        queryParameters(
+                                parameterWithName("token").description("소셜 로그인 콜백에서 전달받은 임시 OAuth 토큰")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.memberId").type(JsonFieldType.NUMBER).description("회원 ID"),
+                                fieldWithPath("data.nickname").type(JsonFieldType.STRING).description("닉네임"),
+                                fieldWithPath("data.role").type(JsonFieldType.STRING).description("역할")
+                        )
+                ));
+    }
+
+    @Test
+    void OAuth_토큰_교환_실패_유효하지_않은_토큰() throws Exception {
+        when(authService.exchangeOAuthToken("invalid-token"))
+                .thenThrow(new UnauthorizedException("유효하지 않거나 만료된 OAuth 인증 토큰입니다."));
+
+        mockMvc.perform(post("/api/v1/auth/oauth/token")
+                        .param("token", "invalid-token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(401))
+                .andDo(document("auth/oauth-token-fail",
+                        queryParameters(
+                                parameterWithName("token").description("소셜 로그인 콜백에서 전달받은 임시 OAuth 토큰")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("에러 메시지"),
                                 fieldWithPath("data").type(JsonFieldType.NULL).description("데이터 없음")
                         )
                 ));

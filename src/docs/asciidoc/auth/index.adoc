@@ -97,6 +97,9 @@ include::{snippets}/oauth2/authorize-fail/response-fields.adoc[]
 
 === 카카오 콜백
 
+소셜 로그인 인증 완료 후 프론트엔드로 리다이렉트합니다. +
+Location 헤더의 URL에 `oauth_token` 쿼리파라미터가 포함되어 있으며, 프론트엔드는 이 토큰으로 <<oauth-token-exchange, OAuth 토큰 교환 API>>를 호출해야 합니다.
+
 ==== 요청
 
 include::{snippets}/oauth2/callback/http-request.adoc[]
@@ -107,3 +110,31 @@ include::{snippets}/oauth2/callback/query-parameters.adoc[]
 
 include::{snippets}/oauth2/callback/http-response.adoc[]
 include::{snippets}/oauth2/callback/response-headers.adoc[]
+
+[[oauth-token-exchange]]
+=== OAuth 토큰 교환
+
+소셜 로그인 콜백에서 받은 임시 토큰으로 세션을 생성합니다. +
+토큰은 5분간 유효하며 1회만 사용 가능합니다.
+
+==== 요청
+
+include::{snippets}/auth/oauth-token/http-request.adoc[]
+include::{snippets}/auth/oauth-token/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/auth/oauth-token/http-response.adoc[]
+include::{snippets}/auth/oauth-token/response-fields.adoc[]
+
+=== OAuth 토큰 교환 실패 - 유효하지 않은 토큰
+
+==== 요청
+
+include::{snippets}/auth/oauth-token-fail/http-request.adoc[]
+include::{snippets}/auth/oauth-token-fail/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/auth/oauth-token-fail/http-response.adoc[]
+include::{snippets}/auth/oauth-token-fail/response-fields.adoc[]

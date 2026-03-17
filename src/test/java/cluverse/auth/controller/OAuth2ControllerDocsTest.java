@@ -5,11 +5,8 @@ import cluverse.auth.client.OAuth2ClientManager;
 import cluverse.auth.client.OAuthUserInfo;
 import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.auth.service.AuthService;
-import cluverse.common.auth.LoginMember;
-import cluverse.common.auth.LoginSessionManager;
 import cluverse.common.exception.BadRequestException;
 import cluverse.docs.RestDocsSupport;
-import cluverse.member.domain.MemberRole;
 import cluverse.member.domain.OAuthProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -35,11 +32,10 @@ class OAuth2ControllerDocsTest extends RestDocsSupport {
     private final OAuth2ClientManager oAuth2ClientManager = mock(OAuth2ClientManager.class);
     private final OAuth2Client oAuth2Client = mock(OAuth2Client.class);
     private final AuthService authService = mock(AuthService.class);
-    private final LoginSessionManager loginSessionManager = mock(LoginSessionManager.class);
 
     @Override
     protected Object initController() {
-        OAuth2Controller controller = new OAuth2Controller(oAuth2ClientManager, authService, loginSessionManager);
+        OAuth2Controller controller = new OAuth2Controller(oAuth2ClientManager, authService);
         ReflectionTestUtils.setField(controller, "frontendUrl", "http://localhost:3000");
         return controller;
     }
@@ -90,13 +86,13 @@ class OAuth2ControllerDocsTest extends RestDocsSupport {
         when(oAuth2ClientManager.getClient("kakao")).thenReturn(oAuth2Client);
         when(oAuth2Client.getUserInfo("auth-code")).thenReturn(userInfo);
         when(oAuth2Client.provider()).thenReturn(OAuthProvider.KAKAO);
-        when(authService.loginWithOAuth(userInfo, OAuthProvider.KAKAO, "127.0.0.1"))
-                .thenReturn(new LoginMember(1L, "kakaouser", MemberRole.MEMBER));
+        when(authService.loginWithOAuthAndCreateToken(userInfo, OAuthProvider.KAKAO, "127.0.0.1"))
+                .thenReturn("sample-oauth-token");
 
         mockMvc.perform(get("/oauth2/{provider}/callback", "kakao")
                         .param("code", "auth-code"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("http://localhost:3000"))
+                .andExpect(redirectedUrl("http://localhost:3000?oauth_token=sample-oauth-token"))
                 .andDo(document("oauth2/callback",
                         pathParameters(
                                 parameterWithName("provider").description("OAuth2 provider (kakao, google)")
@@ -105,7 +101,7 @@ class OAuth2ControllerDocsTest extends RestDocsSupport {
                                 parameterWithName("code").description("OAuth2 provider가 발급한 인가 코드")
                         ),
                         responseHeaders(
-                                headerWithName("Location").description("로그인 완료 후 redirect 되는 프론트엔드 URL")
+                                headerWithName("Location").description("로그인 완료 후 redirect 되는 프론트엔드 URL (oauth_token 쿼리파라미터 포함)")
                         )
                 ));
     }

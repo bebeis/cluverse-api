@@ -19,7 +19,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
     private static final List<String> PUBLIC_GET_PATH_PATTERNS = List.of(
             "/api/v1/posts",
             "/api/v1/posts/*",
-            "/api/v1/comments"
+            "/api/v1/comments",
+            "/api/v1/universities",
+            "/api/v1/universities/*"
     );
 
     @Override
