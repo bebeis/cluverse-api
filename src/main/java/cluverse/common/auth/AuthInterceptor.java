@@ -17,9 +17,11 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final List<String> publicGetPathPatterns;
+    private final List<String> protectedGetPathPatterns;
 
-    public AuthInterceptor(List<String> publicGetPathPatterns) {
+    public AuthInterceptor(List<String> publicGetPathPatterns, List<String> protectedGetPathPatterns) {
         this.publicGetPathPatterns = publicGetPathPatterns;
+        this.protectedGetPathPatterns = protectedGetPathPatterns;
     }
 
     @Override
@@ -42,6 +44,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         String requestUri = request.getRequestURI();
+        if (protectedGetPathPatterns.stream().anyMatch(pattern -> pathMatcher.match(pattern, requestUri))) {
+            return false;
+        }
         return publicGetPathPatterns.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, requestUri));
     }

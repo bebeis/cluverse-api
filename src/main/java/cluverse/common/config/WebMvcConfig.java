@@ -22,12 +22,18 @@ public class WebMvcConfig implements WebMvcConfigurer {
             "/api/v1/comments",
             "/api/v1/universities",
             "/api/v1/universities/*",
+            "/api/v1/groups",
+            "/api/v1/groups/*",
             "/api/v1/boards",
             "/api/v1/boards/*",
             "/api/v1/boards/*/home",
             "/api/v1/majors",
             "/api/v1/interests",
             "/api/v1/terms"
+    );
+
+    private static final List<String> PROTECTED_GET_PATH_PATTERNS = List.of(
+            "/api/v1/groups/me"
     );
 
     @Override
@@ -44,7 +50,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new AuthInterceptor(PUBLIC_GET_PATH_PATTERNS))
+        registry.addInterceptor(new AuthInterceptor(PUBLIC_GET_PATH_PATTERNS, PROTECTED_GET_PATH_PATTERNS))
                 .addPathPatterns("/api/v1/**")
                 .excludePathPatterns(
                         "/api/v1/auth/register",

@@ -1,8 +1,10 @@
 package cluverse.group.controller;
 
+import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.common.exception.UnauthorizedException;
 import cluverse.group.service.GroupService;
 import cluverse.group.service.request.GroupCreateRequest;
 import cluverse.group.service.request.GroupMemberUpdateRequest;
@@ -39,7 +41,7 @@ public class GroupController {
 
     @GetMapping("/me")
     public ApiResponse<List<MyGroupSummaryResponse>> getMyGroups(@Login LoginMember loginMember) {
-        return ApiResponse.ok(groupService.getMyGroups(loginMember.memberId()));
+        return ApiResponse.ok(groupService.getMyGroups(requireLoginMember(loginMember).memberId()));
     }
 
     @PostMapping
@@ -149,5 +151,12 @@ public class GroupController {
 
     private Long extractMemberId(LoginMember loginMember) {
         return loginMember == null ? null : loginMember.memberId();
+    }
+
+    private LoginMember requireLoginMember(LoginMember loginMember) {
+        if (loginMember == null) {
+            throw new UnauthorizedException(AuthExceptionMessage.UNAUTHORIZED.getMessage());
+        }
+        return loginMember;
     }
 }
