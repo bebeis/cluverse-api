@@ -182,7 +182,7 @@ class AuthControllerDocsTest extends RestDocsSupport {
         when(authService.exchangeOAuthToken("valid-token")).thenReturn(loginMember);
 
         mockMvc.perform(post("/api/v1/auth/oauth/token")
-                        .param("token", "valid-token"))
+                        .queryParam("token", "valid-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.memberId").value(1))
                 .andDo(document("auth/oauth-token",
@@ -206,7 +206,7 @@ class AuthControllerDocsTest extends RestDocsSupport {
                 .thenThrow(new UnauthorizedException("유효하지 않거나 만료된 OAuth 인증 토큰입니다."));
 
         mockMvc.perform(post("/api/v1/auth/oauth/token")
-                        .param("token", "invalid-token"))
+                        .queryParam("token", "invalid-token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(401))
                 .andDo(document("auth/oauth-token-fail",

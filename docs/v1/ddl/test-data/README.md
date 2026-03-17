@@ -25,6 +25,7 @@ MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
 - `06_comment_seed.sql`
 - `07_follow_seed.sql`
 - `08_block_seed.sql`
+- `09_realistic_korean_seed.sql` - 실제 한국 대학/관심사/모임 분위기의 소규모 샘플 데이터
 
 ## 실행 순서
 
@@ -37,6 +38,8 @@ MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
 7. `06_comment_seed.sql`
 8. `07_follow_seed.sql`
 9. `08_block_seed.sql`
+
+실서비스형 샘플이 필요하면 대량 데이터 스크립트 대신 `09_realistic_korean_seed.sql`만 단독 실행해도 됩니다.
 
 ## 의존성
 
@@ -69,6 +72,7 @@ MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
 - `popular.board`: `2001001`
 - `popular.post`: `5000001` ~ `6000000`
 - `comment`: `6000001` ~ `9000000`
+- `realistic sample`: 별도 범위 사용 (`91001` ~ `980021`)
 
 ## 보조 데이터
 
