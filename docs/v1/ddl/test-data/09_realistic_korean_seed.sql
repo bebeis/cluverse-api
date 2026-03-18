@@ -5,7 +5,7 @@
 -- 주의:
 --   - 학교명과 학교 메일 도메인은 실제 정보를 사용합니다.
 --   - 회원, 모임, 게시글, 지원서는 모두 가상의 샘플 데이터입니다.
---   - 같은 파일을 재실행해도 동일 범위만 지우고 다시 넣도록 구성했습니다.
+--   - 같은 파일을 재실행해도 삽입 대상 테이블을 모두 비우고 다시 넣도록 구성했습니다.
 -- ============================================================
 
 SET @SEED_NOW = '2026-03-17 20:00:00';
@@ -37,127 +37,49 @@ SET @POST_END_ID = 970018;
 SET @COMMENT_START_ID = 980001;
 SET @COMMENT_END_ID = 980021;
 
-DELETE FROM application_chat_message
-WHERE recruitment_application_id BETWEEN @APPLICATION_START_ID AND @APPLICATION_END_ID;
+SET FOREIGN_KEY_CHECKS = 0;
 
-DELETE FROM form_item_answer
-WHERE recruitment_application_id BETWEEN @APPLICATION_START_ID AND @APPLICATION_END_ID;
+TRUNCATE TABLE application_chat_message;
+TRUNCATE TABLE form_item_answer;
+TRUNCATE TABLE application_status_history;
+TRUNCATE TABLE recruitment_application;
+TRUNCATE TABLE form_item;
+TRUNCATE TABLE recruitment;
+TRUNCATE TABLE calendar_item;
+TRUNCATE TABLE group_member_history;
+TRUNCATE TABLE group_member;
+TRUNCATE TABLE group_interest;
+TRUNCATE TABLE group_role;
+TRUNCATE TABLE `group`;
+TRUNCATE TABLE follow;
+TRUNCATE TABLE comment_like;
+TRUNCATE TABLE comment;
+TRUNCATE TABLE post_like;
+TRUNCATE TABLE bookmark;
+TRUNCATE TABLE post_tag;
+TRUNCATE TABLE post_image;
+TRUNCATE TABLE post_like_count;
+TRUNCATE TABLE post_comment_count;
+TRUNCATE TABLE post_bookmark_count;
+TRUNCATE TABLE post;
+TRUNCATE TABLE member_interests;
+TRUNCATE TABLE interest_major_relation;
+TRUNCATE TABLE interests;
+TRUNCATE TABLE member_major;
+TRUNCATE TABLE major;
+TRUNCATE TABLE board;
+TRUNCATE TABLE notification_setting;
+TRUNCATE TABLE member_terms_agreement;
+TRUNCATE TABLE member_credential;
+TRUNCATE TABLE social_account;
+TRUNCATE TABLE member_status_history;
+TRUNCATE TABLE member_profile;
+TRUNCATE TABLE member_auth;
+TRUNCATE TABLE member;
+TRUNCATE TABLE terms;
+TRUNCATE TABLE university;
 
-DELETE FROM application_status_history
-WHERE recruitment_application_id BETWEEN @APPLICATION_START_ID AND @APPLICATION_END_ID;
-
-DELETE FROM recruitment_application
-WHERE recruitment_application_id BETWEEN @APPLICATION_START_ID AND @APPLICATION_END_ID;
-
-DELETE FROM form_item
-WHERE recruitment_id BETWEEN @RECRUITMENT_START_ID AND @RECRUITMENT_END_ID;
-
-DELETE FROM recruitment
-WHERE recruitment_id BETWEEN @RECRUITMENT_START_ID AND @RECRUITMENT_END_ID;
-
-DELETE FROM calendar_item
-WHERE group_id BETWEEN @GROUP_START_ID AND @GROUP_END_ID;
-
-DELETE FROM group_member_history
-WHERE group_id BETWEEN @GROUP_START_ID AND @GROUP_END_ID;
-
-DELETE FROM group_member
-WHERE group_id BETWEEN @GROUP_START_ID AND @GROUP_END_ID;
-
-DELETE FROM group_role
-WHERE group_role_id BETWEEN @ROLE_START_ID AND @ROLE_END_ID
-   OR group_id BETWEEN @GROUP_START_ID AND @GROUP_END_ID;
-
-DELETE FROM group_interest
-WHERE group_id BETWEEN @GROUP_START_ID AND @GROUP_END_ID;
-
-DELETE FROM `group`
-WHERE group_id BETWEEN @GROUP_START_ID AND @GROUP_END_ID;
-
-DELETE FROM follow
-WHERE follower_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID
-   OR following_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID;
-
-DELETE FROM comment_like
-WHERE comment_id BETWEEN @COMMENT_START_ID AND @COMMENT_END_ID;
-
-DELETE FROM comment
-WHERE comment_id BETWEEN @COMMENT_START_ID AND @COMMENT_END_ID;
-
-DELETE FROM post_like
-WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID;
-
-DELETE FROM bookmark
-WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID;
-
-DELETE FROM post_tag
-WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID;
-
-DELETE FROM post_image
-WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID;
-
-DELETE FROM post_like_count
-WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID;
-
-DELETE FROM post_comment_count
-WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID;
-
-DELETE FROM post_bookmark_count
-WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID;
-
-DELETE FROM post
-WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID;
-
-DELETE FROM member_interests
-WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID
-   OR interest_id BETWEEN @INTEREST_START_ID AND @INTEREST_END_ID;
-
-DELETE FROM interest_major_relation
-WHERE interest_id BETWEEN @INTEREST_START_ID AND @INTEREST_END_ID;
-
-DELETE FROM interests
-WHERE interest_id BETWEEN @INTEREST_START_ID AND @INTEREST_END_ID;
-
-DELETE FROM member_major
-WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID
-   OR major_id BETWEEN @MAJOR_START_ID AND @MAJOR_END_ID;
-
-DELETE FROM major
-WHERE major_id BETWEEN @MAJOR_START_ID AND @MAJOR_END_ID;
-
-DELETE FROM board
-WHERE board_id BETWEEN @BOARD_START_ID AND @BOARD_END_ID;
-
-DELETE FROM notification_setting
-WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID;
-
-DELETE FROM member_terms_agreement
-WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID
-   OR terms_id BETWEEN @TERMS_START_ID AND @TERMS_END_ID;
-
-DELETE FROM member_credential
-WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID;
-
-DELETE FROM social_account
-WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID;
-
-DELETE FROM member_status_history
-WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID;
-
-DELETE FROM member_profile
-WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID;
-
-DELETE FROM member_auth
-WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID;
-
-DELETE FROM member
-WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID;
-
-DELETE FROM terms
-WHERE terms_id BETWEEN @TERMS_START_ID AND @TERMS_END_ID;
-
-DELETE FROM university
-WHERE university_id BETWEEN @UNIVERSITY_START_ID AND @UNIVERSITY_END_ID;
+SET FOREIGN_KEY_CHECKS = 1;
 
 INSERT INTO university (
     university_id,
@@ -169,18 +91,18 @@ INSERT INTO university (
     created_at,
     updated_at
 ) VALUES
-    (91001, '서울대학교', 'snu.ac.kr', 'https://cdn.cluverse.local/university/snu.png', '서울특별시 관악구 관악로 1', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
-    (91002, '고려대학교', 'korea.ac.kr', 'https://cdn.cluverse.local/university/korea.png', '서울특별시 성북구 안암로 145', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
-    (91003, '연세대학교', 'yonsei.ac.kr', 'https://cdn.cluverse.local/university/yonsei.png', '서울특별시 서대문구 연세로 50', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
-    (91004, '성균관대학교', 'skku.edu', 'https://cdn.cluverse.local/university/skku.png', '서울특별시 종로구 성균관로 25-2', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
-    (91005, '한양대학교', 'hanyang.ac.kr', 'https://cdn.cluverse.local/university/hanyang.png', '서울특별시 성동구 왕십리로 222', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
-    (91006, '경희대학교', 'khu.ac.kr', 'https://cdn.cluverse.local/university/khu.png', '서울특별시 동대문구 경희대로 26', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
-    (91007, '중앙대학교', 'cau.ac.kr', 'https://cdn.cluverse.local/university/cau.png', '서울특별시 동작구 흑석로 84', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
-    (91008, '서강대학교', 'sogang.ac.kr', 'https://cdn.cluverse.local/university/sogang.png', '서울특별시 마포구 백범로 35', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
-    (91009, '부산대학교', 'pusan.ac.kr', 'https://cdn.cluverse.local/university/pusan.png', '부산광역시 금정구 부산대학로63번길 2', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
-    (91010, 'KAIST', 'kaist.ac.kr', 'https://cdn.cluverse.local/university/kaist.png', '대전광역시 유성구 대학로 291', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
-    (91011, 'POSTECH', 'postech.ac.kr', 'https://cdn.cluverse.local/university/postech.png', '경상북도 포항시 남구 청암로 77', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
-    (91012, '홍익대학교', 'hongik.ac.kr', 'https://cdn.cluverse.local/university/hongik.png', '서울특별시 마포구 와우산로 94', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW);
+    (91001, '서울대학교', 'snu.ac.kr', 'https://picsum.photos/seed/univ-snu/200/200', '서울특별시 관악구 관악로 1', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
+    (91002, '고려대학교', 'korea.ac.kr', 'https://picsum.photos/seed/univ-korea/200/200', '서울특별시 성북구 안암로 145', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
+    (91003, '연세대학교', 'yonsei.ac.kr', 'https://picsum.photos/seed/univ-yonsei/200/200', '서울특별시 서대문구 연세로 50', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
+    (91004, '성균관대학교', 'skku.edu', 'https://picsum.photos/seed/univ-skku/200/200', '서울특별시 종로구 성균관로 25-2', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
+    (91005, '한양대학교', 'hanyang.ac.kr', 'https://picsum.photos/seed/univ-hanyang/200/200', '서울특별시 성동구 왕십리로 222', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
+    (91006, '경희대학교', 'khu.ac.kr', 'https://picsum.photos/seed/univ-khu/200/200', '서울특별시 동대문구 경희대로 26', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
+    (91007, '중앙대학교', 'cau.ac.kr', 'https://picsum.photos/seed/univ-cau/200/200', '서울특별시 동작구 흑석로 84', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
+    (91008, '서강대학교', 'sogang.ac.kr', 'https://picsum.photos/seed/univ-sogang/200/200', '서울특별시 마포구 백범로 35', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
+    (91009, '부산대학교', 'pusan.ac.kr', 'https://picsum.photos/seed/univ-pusan/200/200', '부산광역시 금정구 부산대학로63번길 2', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
+    (91010, 'KAIST', 'kaist.ac.kr', 'https://picsum.photos/seed/univ-kaist/200/200', '대전광역시 유성구 대학로 291', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
+    (91011, 'POSTECH', 'postech.ac.kr', 'https://picsum.photos/seed/univ-postech/200/200', '경상북도 포항시 남구 청암로 77', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW),
+    (91012, '홍익대학교', 'hongik.ac.kr', 'https://picsum.photos/seed/univ-hongik/200/200', '서울특별시 마포구 와우산로 94', TRUE, DATE_SUB(@SEED_NOW, INTERVAL 180 DAY), @SEED_NOW);
 
 INSERT INTO terms (
     terms_id,

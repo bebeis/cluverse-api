@@ -193,7 +193,7 @@ CREATE TABLE member_major (
 
 
 -- 2.4 interests (관심 태그 마스터) — board 상속 (board_id 보유)
-CREATE TABLE interests (
+CREATE TABLE interest (
     interest_id   BIGINT      NOT NULL AUTO_INCREMENT,
     board_id      BIGINT      NOT NULL                         COMMENT '1:1 → board.board_id',
     name          VARCHAR(50) NOT NULL,
@@ -204,7 +204,7 @@ CREATE TABLE interests (
     created_at    DATETIME    NOT NULL DEFAULT NOW(),
     updated_at    DATETIME    NOT NULL DEFAULT NOW() ON UPDATE NOW(),
     PRIMARY KEY (interest_id),
-    UNIQUE KEY uk_interests_board (board_id)
+    UNIQUE KEY uk_interest_board (board_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='관심 태그 마스터';
 
