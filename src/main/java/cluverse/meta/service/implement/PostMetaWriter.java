@@ -7,7 +7,10 @@ import cluverse.meta.repository.PostBookmarkCountRepository;
 import cluverse.meta.repository.PostCommentCountRepository;
 import cluverse.meta.repository.PostLikeCountRepository;
 import cluverse.meta.repository.PostViewCountRepository;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +34,16 @@ public class PostMetaWriter {
     }
 
     public void increaseViewCountV2(Long postId) {
-        postViewCountV2Writer.increaseCount(postId);
+        try {
+            postViewCountV2Writer.increaseCount(postId);
+        } catch (ObjectOptimisticLockingFailureException
+                 | OptimisticLockException
+                 | DataIntegrityViolationException exception) {
+            throw new IllegalStateException(
+                    MetaExceptionMessage.POST_VIEW_COUNT_V2_INCREASE_FAILED.getMessage(),
+                    exception
+            );
+        }
     }
 
     public void increaseLikeCount(Long postId) {

@@ -1,6 +1,7 @@
 package cluverse.meta.service.implement;
 
 import cluverse.meta.domain.PostViewCountV2;
+import cluverse.common.config.RetryConfig;
 import cluverse.meta.repository.PostViewCountV2Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(PostViewCountV2Writer.class)
+@Import({
+        RetryConfig.class,
+        PostViewCountV2Writer.class,
+        PostViewCountV2TransactionWriter.class
+})
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class PostViewCountV2WriterTest {
 
