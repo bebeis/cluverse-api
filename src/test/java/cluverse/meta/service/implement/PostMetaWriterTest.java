@@ -34,6 +34,9 @@ class PostMetaWriterTest {
     @Mock
     private PostViewCountRepository postViewCountRepository;
 
+    @Mock
+    private PostViewCountV2Writer postViewCountV2Writer;
+
     @InjectMocks
     private PostMetaWriter postMetaWriter;
 
@@ -51,6 +54,13 @@ class PostMetaWriterTest {
         postMetaWriter.increaseViewCount(10L);
 
         verify(postViewCountRepository).increaseCount(10L);
+    }
+
+    @Test
+    void 게시글_조회수_V2는_낙관적_락_작성기에_위임한다() {
+        postMetaWriter.increaseViewCountV2(10L);
+
+        verify(postViewCountV2Writer).increaseCount(10L);
     }
 
     @Test

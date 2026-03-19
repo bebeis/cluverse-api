@@ -20,6 +20,10 @@ public class PostMetaService {
         postMetaWriter.increaseViewCount(postId);
     }
 
+    public void increaseViewCountV2(Long postId) {
+        postMetaWriter.increaseViewCountV2(postId);
+    }
+
     public void increaseLikeCount(Long postId) {
         postMetaWriter.increaseLikeCount(postId);
     }

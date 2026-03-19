@@ -33,6 +33,13 @@ class PostMetaServiceTest {
     }
 
     @Test
+    void 게시글_조회수_V2_증가를_작성기에_위임한다() {
+        postMetaService.increaseViewCountV2(10L);
+
+        verify(postMetaWriter).increaseViewCountV2(10L);
+    }
+
+    @Test
     void 게시글_좋아요_수_증가를_작성기에_위임한다() {
         postMetaService.increaseLikeCount(10L);
 

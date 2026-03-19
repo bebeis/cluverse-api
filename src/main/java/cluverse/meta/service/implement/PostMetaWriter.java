@@ -20,6 +20,7 @@ public class PostMetaWriter {
     private final PostBookmarkCountRepository postBookmarkCountRepository;
     private final PostCommentCountRepository postCommentCountRepository;
     private final PostViewCountRepository postViewCountRepository;
+    private final PostViewCountV2Writer postViewCountV2Writer;
 
     public void createViewCount(Long postId) {
         postViewCountRepository.save(PostViewCount.of(postId, 0));
@@ -27,6 +28,10 @@ public class PostMetaWriter {
 
     public void increaseViewCount(Long postId) {
         postViewCountRepository.increaseCount(postId);
+    }
+
+    public void increaseViewCountV2(Long postId) {
+        postViewCountV2Writer.increaseCount(postId);
     }
 
     public void increaseLikeCount(Long postId) {
