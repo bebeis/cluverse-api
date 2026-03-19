@@ -1,19 +1,13 @@
 package cluverse.feed.repository;
 
 import cluverse.board.domain.BoardType;
-import cluverse.board.domain.QBoard;
 import cluverse.feed.repository.dto.FeedPageQueryResult;
 import cluverse.feed.repository.dto.FeedPostQueryDto;
 import cluverse.feed.service.request.FollowingFeedScope;
 import cluverse.feed.service.request.HomeFeedFilter;
-import cluverse.meta.domain.QPostBookmarkCount;
-import cluverse.meta.domain.QPostCommentCount;
-import cluverse.meta.domain.QPostLikeCount;
-import cluverse.meta.domain.QPostViewCount;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.domain.PostStatus;
 import cluverse.post.domain.QPostImage;
-import cluverse.post.domain.QPost;
 import cluverse.member.domain.MemberStatus;
 import cluverse.reaction.domain.QPostBookmark;
 import cluverse.reaction.domain.QPostLike;
@@ -41,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static cluverse.board.domain.QBoard.board;
 import static cluverse.group.domain.QGroup.group;
 import static cluverse.group.domain.QGroupMember.groupMember;
 import static cluverse.interest.domain.QInterest.interest;
@@ -50,6 +45,10 @@ import static cluverse.member.domain.QFollow.follow;
 import static cluverse.member.domain.QMember.member;
 import static cluverse.member.domain.QMemberMajor.memberMajor;
 import static cluverse.member.domain.QMemberProfile.memberProfile;
+import static cluverse.meta.domain.QPostBookmarkCount.postBookmarkCount;
+import static cluverse.meta.domain.QPostCommentCount.postCommentCount;
+import static cluverse.meta.domain.QPostLikeCount.postLikeCount;
+import static cluverse.meta.domain.QPostViewCount.postViewCount;
 import static cluverse.post.domain.QPost.post;
 
 @Repository
@@ -59,7 +58,6 @@ public class FeedQueryRepository {
     private static final long UNKNOWN_MEMBER_ID = -1L;
     private static final String CURSOR_DELIMITER = "|";
     private static final int CONTENT_PREVIEW_LENGTH = 120;
-    private static final QBoard board = QBoard.board;
     private static final QPostImage THUMBNAIL_IMAGE = new QPostImage("thumbnailImage");
     private static final QPostLike MEMBER_POST_LIKE = new QPostLike("memberPostLike");
     private static final QPostBookmark MEMBER_POST_BOOKMARK = new QPostBookmark("memberPostBookmark");
@@ -73,10 +71,6 @@ public class FeedQueryRepository {
     private static final NumberPath<Long> BOOKMARK_COUNT = Expressions.numberPath(Long.class, "bookmarkCount");
     private static final NumberPath<Long> VIEW_COUNT = Expressions.numberPath(Long.class, "viewCount");
     private static final NumberPath<Long> TRENDING_SCORE = Expressions.numberPath(Long.class, "trendingScore");
-    private static final QPostLikeCount postLikeCount = QPostLikeCount.postLikeCount;
-    private static final QPostCommentCount postCommentCount = QPostCommentCount.postCommentCount;
-    private static final QPostBookmarkCount postBookmarkCount = QPostBookmarkCount.postBookmarkCount;
-    private static final QPostViewCount postViewCount = QPostViewCount.postViewCount;
 
     private final JPAQueryFactory queryFactory;
 

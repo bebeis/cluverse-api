@@ -1,11 +1,9 @@
 package cluverse.board.repository;
 
 import cluverse.board.domain.BoardType;
-import cluverse.board.domain.QBoard;
 import cluverse.board.repository.dto.BoardGroupQueryDto;
 import cluverse.board.repository.dto.BoardQueryDto;
-import cluverse.group.domain.QGroup;
-import cluverse.group.domain.QGroupMember;
+import cluverse.board.domain.QBoard;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
@@ -18,14 +16,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static cluverse.board.domain.QBoard.board;
+import static cluverse.group.domain.QGroup.group;
+import static cluverse.group.domain.QGroupMember.groupMember;
+
 @Repository
 @RequiredArgsConstructor
 public class BoardQueryRepository {
 
-    private static final QBoard board = QBoard.board;
     private static final QBoard childBoard = new QBoard("childBoard");
-    private static final QGroup group = QGroup.group;
-    private static final QGroupMember groupMember = QGroupMember.groupMember;
     private static final long UNKNOWN_MEMBER_ID = -1L;
 
     private final JPAQueryFactory queryFactory;

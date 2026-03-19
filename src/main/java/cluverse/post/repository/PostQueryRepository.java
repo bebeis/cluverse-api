@@ -1,10 +1,6 @@
 package cluverse.post.repository;
 
 import cluverse.common.exception.NotFoundException;
-import cluverse.meta.domain.QPostBookmarkCount;
-import cluverse.meta.domain.QPostCommentCount;
-import cluverse.meta.domain.QPostLikeCount;
-import cluverse.meta.domain.QPostViewCount;
 import cluverse.post.domain.PostStatus;
 import cluverse.post.domain.QPostImage;
 import cluverse.post.exception.PostExceptionMessage;
@@ -37,6 +33,10 @@ import java.util.Map;
 
 import static cluverse.member.domain.QMember.member;
 import static cluverse.member.domain.QMemberProfile.memberProfile;
+import static cluverse.meta.domain.QPostBookmarkCount.postBookmarkCount;
+import static cluverse.meta.domain.QPostCommentCount.postCommentCount;
+import static cluverse.meta.domain.QPostLikeCount.postLikeCount;
+import static cluverse.meta.domain.QPostViewCount.postViewCount;
 import static cluverse.post.domain.QPost.post;
 import static cluverse.post.domain.QPostImage.postImage;
 
@@ -53,10 +53,6 @@ public class PostQueryRepository {
     private static final NumberPath<Long> BOOKMARK_COUNT = Expressions.numberPath(Long.class, "bookmarkCount");
     private static final NumberPath<Long> VIEW_COUNT = Expressions.numberPath(Long.class, "viewCount");
     private static final int CONTENT_PREVIEW_LENGTH = 120;
-    private static final QPostLikeCount postLikeCount = QPostLikeCount.postLikeCount;
-    private static final QPostCommentCount postCommentCount = QPostCommentCount.postCommentCount;
-    private static final QPostBookmarkCount postBookmarkCount = QPostBookmarkCount.postBookmarkCount;
-    private static final QPostViewCount postViewCount = QPostViewCount.postViewCount;
 
     private final JPAQueryFactory queryFactory;
 
