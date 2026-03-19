@@ -105,7 +105,7 @@ public class CommentQueryRepository {
                         c.updated_at,
                         c.created_at AS root_created_at,
                         c.comment_id AS root_comment_id,
-                        CAST(LPAD(CAST(c.comment_id AS VARCHAR), 20, '0') AS VARCHAR(512)) AS sort_path
+                        CAST(LPAD(CAST(c.comment_id AS CHAR), 20, '0') AS CHAR(512)) AS sort_path
                     FROM comment c
                     WHERE c.comment_id IN (:rootCommentIds)
 
@@ -126,7 +126,7 @@ public class CommentQueryRepository {
                         child.updated_at,
                         tree.root_created_at,
                         tree.root_comment_id,
-                        CONCAT(tree.sort_path, '/', LPAD(CAST(child.comment_id AS VARCHAR), 20, '0')) AS sort_path
+                        CONCAT(tree.sort_path, '/', LPAD(CAST(child.comment_id AS CHAR), 20, '0')) AS sort_path
                     FROM comment child
                     JOIN comment_tree tree ON child.parent_id = tree.comment_id
                     WHERE child.depth <= :maxDepth
