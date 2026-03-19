@@ -12,6 +12,14 @@ public class PostMetaService {
 
     private final PostMetaWriter postMetaWriter;
 
+    public void createViewCount(Long postId) {
+        postMetaWriter.createViewCount(postId);
+    }
+
+    public void increaseViewCount(Long postId) {
+        postMetaWriter.increaseViewCount(postId);
+    }
+
     public void increaseLikeCount(Long postId) {
         postMetaWriter.increaseLikeCount(postId);
     }

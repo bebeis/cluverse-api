@@ -10,6 +10,9 @@
 -- Includes:
 --   - board (popular board only)
 --   - post
+--   - post_view_count
+--   - post_like_count (synthetic)
+--   - post_bookmark_count (synthetic)
 --   - post_tag (sparse)
 --   - post_image (sparse)
 -- ============================================================
@@ -23,6 +26,18 @@ DELETE FROM post_tag
 WHERE post_id BETWEEN @POPULAR_POST_START_ID AND @POPULAR_POST_END_ID;
 
 DELETE FROM post_image
+WHERE post_id BETWEEN @POPULAR_POST_START_ID AND @POPULAR_POST_END_ID;
+
+DELETE FROM post_view_count
+WHERE post_id BETWEEN @POPULAR_POST_START_ID AND @POPULAR_POST_END_ID;
+
+DELETE FROM post_like_count
+WHERE post_id BETWEEN @POPULAR_POST_START_ID AND @POPULAR_POST_END_ID;
+
+DELETE FROM post_comment_count
+WHERE post_id BETWEEN @POPULAR_POST_START_ID AND @POPULAR_POST_END_ID;
+
+DELETE FROM post_bookmark_count
 WHERE post_id BETWEEN @POPULAR_POST_START_ID AND @POPULAR_POST_END_ID;
 
 DELETE FROM post
@@ -105,10 +120,6 @@ BEGIN
             is_pinned,
             is_external_visible,
             status,
-            view_count,
-            like_count,
-            comment_count,
-            bookmark_count,
             deleted_at,
             client_ip,
             created_at,
@@ -146,10 +157,6 @@ BEGIN
                 WHEN MOD(v_offset + seq + 1, 1200) = 0 THEN 'BLINDED'
                 ELSE 'ACTIVE'
             END AS status,
-            5000 + MOD((v_offset + seq + 1) * 29, 150000) AS view_count,
-            100 + MOD((v_offset + seq + 1) * 11, 5000) AS like_count,
-            0 AS comment_count,
-            30 + MOD((v_offset + seq + 1) * 5, 1500) AS bookmark_count,
             CASE
                 WHEN MOD(v_offset + seq + 1, 5000) = 0 THEN DATE_SUB(NOW(), INTERVAL MOD(v_offset + seq, 30) DAY)
                 ELSE NULL
@@ -175,6 +182,48 @@ CALL seed_popular_board_posts() $$
 DROP PROCEDURE seed_popular_board_posts $$
 
 DELIMITER ;
+
+INSERT INTO post_view_count (
+    post_id,
+    view_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    5000 + MOD((post_id - @POPULAR_POST_START_ID + 1) * 29, 150000) AS view_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @POPULAR_POST_START_ID AND @POPULAR_POST_END_ID;
+
+INSERT INTO post_like_count (
+    post_id,
+    like_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    100 + MOD((post_id - @POPULAR_POST_START_ID + 1) * 11, 5000) AS like_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @POPULAR_POST_START_ID AND @POPULAR_POST_END_ID;
+
+INSERT INTO post_bookmark_count (
+    post_id,
+    bookmark_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    30 + MOD((post_id - @POPULAR_POST_START_ID + 1) * 5, 1500) AS bookmark_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @POPULAR_POST_START_ID AND @POPULAR_POST_END_ID;
 
 INSERT INTO post_tag (
     post_id,

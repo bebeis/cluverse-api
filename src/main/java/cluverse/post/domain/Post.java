@@ -61,7 +61,6 @@ public class Post extends BaseTimeEntity {
     @Builder.Default
     private boolean isExternalVisible = true;
 
-    private int viewCount;
     private LocalDateTime deletedAt;
     private String clientIp;
 
@@ -100,10 +99,6 @@ public class Post extends BaseTimeEntity {
     public void delete() {
         this.status = PostStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
-    }
-
-    public void increaseViewCount() {
-        this.viewCount++;
     }
 
     public boolean isAuthor(Long memberId) {

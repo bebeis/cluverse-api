@@ -1,8 +1,6 @@
 package cluverse.post.service.implement;
 
-import cluverse.common.exception.NotFoundException;
 import cluverse.post.domain.Post;
-import cluverse.post.exception.PostExceptionMessage;
 import cluverse.post.repository.PostRepository;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostUpdateRequest;
@@ -49,16 +47,5 @@ public class PostWriter {
 
     public void delete(Post post) {
         post.delete();
-    }
-
-    public void increaseViewCount(Long postId) {
-        int updatedRowCount = postRepository.increaseViewCount(postId);
-        validateUpdated(updatedRowCount);
-    }
-
-    private void validateUpdated(int updatedRowCount) {
-        if (updatedRowCount == 0) {
-            throw new NotFoundException(PostExceptionMessage.POST_NOT_FOUND.getMessage());
-        }
     }
 }

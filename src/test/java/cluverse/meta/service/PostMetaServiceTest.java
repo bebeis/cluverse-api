@@ -19,6 +19,20 @@ class PostMetaServiceTest {
     private PostMetaService postMetaService;
 
     @Test
+    void 게시글_조회수_레코드_생성을_작성기에_위임한다() {
+        postMetaService.createViewCount(10L);
+
+        verify(postMetaWriter).createViewCount(10L);
+    }
+
+    @Test
+    void 게시글_조회수_증가를_작성기에_위임한다() {
+        postMetaService.increaseViewCount(10L);
+
+        verify(postMetaWriter).increaseViewCount(10L);
+    }
+
+    @Test
     void 게시글_좋아요_수_증가를_작성기에_위임한다() {
         postMetaService.increaseLikeCount(10L);
 

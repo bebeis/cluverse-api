@@ -261,7 +261,6 @@ CREATE TABLE post (
     is_pinned           BOOLEAN      NOT NULL DEFAULT FALSE,
     is_external_visible BOOLEAN      NOT NULL DEFAULT TRUE     COMMENT '외부 공개 여부 (그룹 게시판용)',
     status              VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE / BLINDED / DELETED',
-    view_count          INT          NOT NULL DEFAULT 0,
     deleted_at          DATETIME     NULL,
     client_ip           VARCHAR(45)  NULL                      COMMENT '작성자 IP (분쟁/법적 대응)',
     created_at          DATETIME     NOT NULL DEFAULT NOW(),
@@ -272,9 +271,6 @@ CREATE TABLE post (
 
 CREATE INDEX idx_post_board_status_created_id
     ON post (board_id, status, created_at DESC, post_id DESC);
-
-CREATE INDEX idx_post_board_status_view_id
-    ON post (board_id, status, view_count DESC, post_id DESC);
 
 CREATE INDEX idx_post_board_category_status_created_id
     ON post (board_id, category, status, created_at DESC, post_id DESC);
@@ -326,7 +322,17 @@ CREATE INDEX idx_comment_post_status_created
 CREATE INDEX idx_comment_member_id
     ON comment (member_id);
 
--- 3.7 post_like_count (게시글 좋아요 수)
+-- 3.7 post_view_count (게시글 조회수)
+CREATE TABLE post_view_count (
+    post_id      BIGINT   NOT NULL                             COMMENT '→ post.post_id',
+    view_count   INT      NOT NULL DEFAULT 0,
+    created_at   DATETIME NOT NULL DEFAULT NOW(),
+    updated_at   DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+    PRIMARY KEY (post_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='게시글 조회수';
+
+-- 3.8 post_like_count (게시글 좋아요 수)
 CREATE TABLE post_like_count (
     post_id      BIGINT   NOT NULL                             COMMENT '→ post.post_id',
     like_count   INT      NOT NULL DEFAULT 0,
@@ -336,7 +342,7 @@ CREATE TABLE post_like_count (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='게시글 좋아요 수';
 
--- 3.8 post_comment_count (게시글 댓글 수)
+-- 3.9 post_comment_count (게시글 댓글 수)
 CREATE TABLE post_comment_count (
     post_id        BIGINT   NOT NULL                          COMMENT '→ post.post_id',
     comment_count  INT      NOT NULL DEFAULT 0,
@@ -346,7 +352,7 @@ CREATE TABLE post_comment_count (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='게시글 댓글 수';
 
--- 3.9 post_bookmark_count (게시글 북마크 수)
+-- 3.10 post_bookmark_count (게시글 북마크 수)
 CREATE TABLE post_bookmark_count (
     post_id          BIGINT   NOT NULL                        COMMENT '→ post.post_id',
     bookmark_count   INT      NOT NULL DEFAULT 0,
@@ -356,7 +362,7 @@ CREATE TABLE post_bookmark_count (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='게시글 북마크 수';
 
--- 3.10 post_like (게시글 좋아요)
+-- 3.11 post_like (게시글 좋아요)
 CREATE TABLE post_like (
     post_like_id BIGINT   NOT NULL AUTO_INCREMENT,
     post_id      BIGINT   NOT NULL                             COMMENT '→ post.post_id',

@@ -9,6 +9,7 @@ import cluverse.feed.service.request.HomeFeedFilter;
 import cluverse.meta.domain.QPostBookmarkCount;
 import cluverse.meta.domain.QPostCommentCount;
 import cluverse.meta.domain.QPostLikeCount;
+import cluverse.meta.domain.QPostViewCount;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.domain.PostStatus;
 import cluverse.post.domain.QPostImage;
@@ -70,10 +71,12 @@ public class FeedQueryRepository {
     private static final NumberPath<Long> LIKE_COUNT = Expressions.numberPath(Long.class, "likeCount");
     private static final NumberPath<Long> COMMENT_COUNT = Expressions.numberPath(Long.class, "commentCount");
     private static final NumberPath<Long> BOOKMARK_COUNT = Expressions.numberPath(Long.class, "bookmarkCount");
+    private static final NumberPath<Long> VIEW_COUNT = Expressions.numberPath(Long.class, "viewCount");
     private static final NumberPath<Long> TRENDING_SCORE = Expressions.numberPath(Long.class, "trendingScore");
     private static final QPostLikeCount postLikeCount = QPostLikeCount.postLikeCount;
     private static final QPostCommentCount postCommentCount = QPostCommentCount.postCommentCount;
     private static final QPostBookmarkCount postBookmarkCount = QPostBookmarkCount.postBookmarkCount;
+    private static final QPostViewCount postViewCount = QPostViewCount.postViewCount;
 
     private final JPAQueryFactory queryFactory;
 
@@ -189,6 +192,7 @@ public class FeedQueryRepository {
                 .leftJoin(postLikeCount).on(postLikeCount.postId.eq(post.id))
                 .leftJoin(postCommentCount).on(postCommentCount.postId.eq(post.id))
                 .leftJoin(postBookmarkCount).on(postBookmarkCount.postId.eq(post.id))
+                .leftJoin(postViewCount).on(postViewCount.postId.eq(post.id))
                 .where(
                         basePostCondition(blockedMemberIds, readableGroupBoardIds),
                         categoryEq(category),
@@ -291,7 +295,7 @@ public class FeedQueryRepository {
                         likedExpression,
                         bookmarkedExpression,
                         Expressions.asBoolean(false),
-                        post.viewCount.longValue(),
+                        ExpressionUtils.as(postViewCount.viewCount.coalesce(0).longValue(), VIEW_COUNT),
                         ExpressionUtils.as(postLikeCount.likeCount.coalesce(0).longValue(), LIKE_COUNT),
                         ExpressionUtils.as(postCommentCount.commentCount.coalesce(0).longValue(), COMMENT_COUNT),
                         ExpressionUtils.as(postBookmarkCount.bookmarkCount.coalesce(0).longValue(), BOOKMARK_COUNT),
@@ -312,6 +316,7 @@ public class FeedQueryRepository {
                 .leftJoin(postLikeCount).on(postLikeCount.postId.eq(post.id))
                 .leftJoin(postCommentCount).on(postCommentCount.postId.eq(post.id))
                 .leftJoin(postBookmarkCount).on(postBookmarkCount.postId.eq(post.id))
+                .leftJoin(postViewCount).on(postViewCount.postId.eq(post.id))
                 .leftJoin(MEMBER_POST_LIKE).on(
                         MEMBER_POST_LIKE.postId.eq(post.id),
                         MEMBER_POST_LIKE.memberId.eq(resolveMemberId(memberId))
@@ -361,7 +366,7 @@ public class FeedQueryRepository {
                 booleanValue(row.get(LIKED)),
                 booleanValue(row.get(BOOKMARKED)),
                 false,
-                numberValue(row.get(post.viewCount.longValue())),
+                numberValue(row.get(VIEW_COUNT)),
                 numberValue(row.get(LIKE_COUNT)),
                 numberValue(row.get(COMMENT_COUNT)),
                 numberValue(row.get(BOOKMARK_COUNT)),
@@ -552,7 +557,7 @@ public class FeedQueryRepository {
         return postLikeCount.likeCount.coalesce(0).longValue().multiply(5L)
                 .add(postCommentCount.commentCount.coalesce(0).longValue().multiply(4L))
                 .add(postBookmarkCount.bookmarkCount.coalesce(0).longValue().multiply(3L))
-                .add(post.viewCount.longValue());
+                .add(postViewCount.viewCount.coalesce(0).longValue());
     }
 
     private String encodeLatestCursor(LocalDateTime createdAt, Long postId) {

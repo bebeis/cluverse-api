@@ -32,6 +32,22 @@ DELETE FROM post_image
 WHERE post_id BETWEEN @POPULAR_POST_START AND @POPULAR_POST_END
    OR post_id BETWEEN @SECONDARY_POST_START AND @SECONDARY_POST_END;
 
+DELETE FROM post_view_count
+WHERE post_id BETWEEN @POPULAR_POST_START AND @POPULAR_POST_END
+   OR post_id BETWEEN @SECONDARY_POST_START AND @SECONDARY_POST_END;
+
+DELETE FROM post_like_count
+WHERE post_id BETWEEN @POPULAR_POST_START AND @POPULAR_POST_END
+   OR post_id BETWEEN @SECONDARY_POST_START AND @SECONDARY_POST_END;
+
+DELETE FROM post_comment_count
+WHERE post_id BETWEEN @POPULAR_POST_START AND @POPULAR_POST_END
+   OR post_id BETWEEN @SECONDARY_POST_START AND @SECONDARY_POST_END;
+
+DELETE FROM post_bookmark_count
+WHERE post_id BETWEEN @POPULAR_POST_START AND @POPULAR_POST_END
+   OR post_id BETWEEN @SECONDARY_POST_START AND @SECONDARY_POST_END;
+
 DELETE FROM post
 WHERE post_id BETWEEN @POPULAR_POST_START AND @POPULAR_POST_END
    OR post_id BETWEEN @SECONDARY_POST_START AND @SECONDARY_POST_END;
@@ -114,7 +130,6 @@ BEGIN
         INSERT INTO post (
             post_id, board_id, member_id, title, content, category,
             is_anonymous, is_pinned, is_external_visible, status,
-            view_count, like_count, comment_count, bookmark_count,
             deleted_at, client_ip, created_at, updated_at
         )
         SELECT
@@ -143,10 +158,6 @@ BEGIN
                 WHEN MOD(v_offset + seq + 1, 1200) = 0 THEN 'BLINDED'
                 ELSE 'ACTIVE'
             END,
-            5000 + MOD((v_offset + seq + 1) * 29, 150000),
-            100  + MOD((v_offset + seq + 1) * 11, 5000),
-            0,
-            30   + MOD((v_offset + seq + 1) * 5, 1500),
             CASE
                 WHEN MOD(v_offset + seq + 1, 5000) = 0
                 THEN DATE_SUB(NOW(), INTERVAL MOD(v_offset + seq, 30) DAY)
@@ -184,7 +195,6 @@ BEGIN
         INSERT INTO post (
             post_id, board_id, member_id, title, content, category,
             is_anonymous, is_pinned, is_external_visible, status,
-            view_count, like_count, comment_count, bookmark_count,
             deleted_at, client_ip, created_at, updated_at
         )
         SELECT
@@ -213,10 +223,6 @@ BEGIN
                 WHEN MOD(v_offset + seq + 1, 1200) = 0 THEN 'BLINDED'
                 ELSE 'ACTIVE'
             END,
-            1000 + MOD((v_offset + seq + 1) * 17, 50000),
-            10   + MOD((v_offset + seq + 1) * 7,  2000),
-            0,
-            5    + MOD((v_offset + seq + 1) * 3,  500),
             CASE
                 WHEN MOD(v_offset + seq + 1, 5000) = 0
                 THEN DATE_SUB(NOW(), INTERVAL MOD(v_offset + seq, 30) DAY)
@@ -240,6 +246,90 @@ CALL seed_secondary_posts_2m() $$
 DROP PROCEDURE seed_secondary_posts_2m $$
 
 DELIMITER ;
+
+INSERT INTO post_view_count (
+    post_id,
+    view_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    5000 + MOD((post_id - @POPULAR_POST_START + 1) * 29, 150000) AS view_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @POPULAR_POST_START AND @POPULAR_POST_END;
+
+INSERT INTO post_view_count (
+    post_id,
+    view_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    1000 + MOD((post_id - @SECONDARY_POST_START + 1) * 17, 50000) AS view_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @SECONDARY_POST_START AND @SECONDARY_POST_END;
+
+INSERT INTO post_like_count (
+    post_id,
+    like_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    100 + MOD((post_id - @POPULAR_POST_START + 1) * 11, 5000) AS like_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @POPULAR_POST_START AND @POPULAR_POST_END;
+
+INSERT INTO post_like_count (
+    post_id,
+    like_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    10 + MOD((post_id - @SECONDARY_POST_START + 1) * 7, 2000) AS like_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @SECONDARY_POST_START AND @SECONDARY_POST_END;
+
+INSERT INTO post_bookmark_count (
+    post_id,
+    bookmark_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    30 + MOD((post_id - @POPULAR_POST_START + 1) * 5, 1500) AS bookmark_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @POPULAR_POST_START AND @POPULAR_POST_END;
+
+INSERT INTO post_bookmark_count (
+    post_id,
+    bookmark_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    5 + MOD((post_id - @SECONDARY_POST_START + 1) * 3, 500) AS bookmark_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @SECONDARY_POST_START AND @SECONDARY_POST_END;
 
 -- ------------------------------------------------------------
 -- post_tag (sparse: 1/4)

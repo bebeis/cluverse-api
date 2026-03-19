@@ -4,6 +4,7 @@ import cluverse.common.exception.NotFoundException;
 import cluverse.meta.domain.QPostBookmarkCount;
 import cluverse.meta.domain.QPostCommentCount;
 import cluverse.meta.domain.QPostLikeCount;
+import cluverse.meta.domain.QPostViewCount;
 import cluverse.post.domain.PostStatus;
 import cluverse.post.domain.QPostImage;
 import cluverse.post.exception.PostExceptionMessage;
@@ -50,10 +51,12 @@ public class PostQueryRepository {
     private static final NumberPath<Long> LIKE_COUNT = Expressions.numberPath(Long.class, "likeCount");
     private static final NumberPath<Long> COMMENT_COUNT = Expressions.numberPath(Long.class, "commentCount");
     private static final NumberPath<Long> BOOKMARK_COUNT = Expressions.numberPath(Long.class, "bookmarkCount");
+    private static final NumberPath<Long> VIEW_COUNT = Expressions.numberPath(Long.class, "viewCount");
     private static final int CONTENT_PREVIEW_LENGTH = 120;
     private static final QPostLikeCount postLikeCount = QPostLikeCount.postLikeCount;
     private static final QPostCommentCount postCommentCount = QPostCommentCount.postCommentCount;
     private static final QPostBookmarkCount postBookmarkCount = QPostBookmarkCount.postBookmarkCount;
+    private static final QPostViewCount postViewCount = QPostViewCount.postViewCount;
 
     private final JPAQueryFactory queryFactory;
 
@@ -63,6 +66,7 @@ public class PostQueryRepository {
 
         List<Long> postIds = queryFactory.select(post.id)
                 .from(post)
+                .leftJoin(postViewCount).on(postViewCount.postId.eq(post.id))
                 .where(
                         post.status.eq(PostStatus.ACTIVE),
                         boardIdEq(request.boardId()),
@@ -120,7 +124,7 @@ public class PostQueryRepository {
                         post.isPinned,
                         post.isExternalVisible,
                         isMineExpression,
-                        post.viewCount.longValue(),
+                        ExpressionUtils.as(postViewCount.viewCount.coalesce(0).longValue(), VIEW_COUNT),
                         ExpressionUtils.as(postLikeCount.likeCount.coalesce(0).longValue(), LIKE_COUNT),
                         ExpressionUtils.as(postCommentCount.commentCount.coalesce(0).longValue(), COMMENT_COUNT),
                         ExpressionUtils.as(postBookmarkCount.bookmarkCount.coalesce(0).longValue(), BOOKMARK_COUNT),
@@ -136,6 +140,7 @@ public class PostQueryRepository {
                 .leftJoin(postLikeCount).on(postLikeCount.postId.eq(post.id))
                 .leftJoin(postCommentCount).on(postCommentCount.postId.eq(post.id))
                 .leftJoin(postBookmarkCount).on(postBookmarkCount.postId.eq(post.id))
+                .leftJoin(postViewCount).on(postViewCount.postId.eq(post.id))
                 .join(member).on(member.id.eq(post.memberId))
                 .leftJoin(memberProfile).on(memberProfile.memberId.eq(member.id))
                 .where(
@@ -163,7 +168,7 @@ public class PostQueryRepository {
 
     private OrderSpecifier<?>[] resolveOrderSpecifiers(PostSortType sortType) {
         return switch (sortType) {
-            case VIEW_COUNT -> new OrderSpecifier<?>[]{post.viewCount.desc(), post.id.desc()};
+            case VIEW_COUNT -> new OrderSpecifier<?>[]{postViewCount.viewCount.coalesce(0).desc(), post.id.desc()};
             case LATEST -> new OrderSpecifier<?>[]{post.createdAt.desc(), post.id.desc()};
         };
     }
@@ -189,7 +194,7 @@ public class PostQueryRepository {
                         post.isPinned,
                         post.isExternalVisible,
                         isMineExpression,
-                        post.viewCount.longValue(),
+                        ExpressionUtils.as(postViewCount.viewCount.coalesce(0).longValue(), VIEW_COUNT),
                         ExpressionUtils.as(postLikeCount.likeCount.coalesce(0).longValue(), LIKE_COUNT),
                         ExpressionUtils.as(postCommentCount.commentCount.coalesce(0).longValue(), COMMENT_COUNT),
                         ExpressionUtils.as(postBookmarkCount.bookmarkCount.coalesce(0).longValue(), BOOKMARK_COUNT),
@@ -207,6 +212,7 @@ public class PostQueryRepository {
                 .leftJoin(postLikeCount).on(postLikeCount.postId.eq(post.id))
                 .leftJoin(postCommentCount).on(postCommentCount.postId.eq(post.id))
                 .leftJoin(postBookmarkCount).on(postBookmarkCount.postId.eq(post.id))
+                .leftJoin(postViewCount).on(postViewCount.postId.eq(post.id))
                 .join(member).on(member.id.eq(post.memberId))
                 .leftJoin(memberProfile).on(memberProfile.memberId.eq(member.id))
                 .where(post.id.in(postIds))
@@ -244,7 +250,7 @@ public class PostQueryRepository {
                 booleanValue(row.get(post.isPinned)),
                 booleanValue(row.get(post.isExternalVisible)),
                 booleanValue(row.get(IS_MINE)),
-                numberValue(row.get(post.viewCount.longValue())),
+                numberValue(row.get(VIEW_COUNT)),
                 numberValue(row.get(LIKE_COUNT)),
                 numberValue(row.get(COMMENT_COUNT)),
                 numberValue(row.get(BOOKMARK_COUNT)),
@@ -284,7 +290,7 @@ public class PostQueryRepository {
                 booleanValue(firstRow.get(post.isPinned)),
                 booleanValue(firstRow.get(post.isExternalVisible)),
                 booleanValue(firstRow.get(IS_MINE)),
-                numberValue(firstRow.get(post.viewCount.longValue())),
+                numberValue(firstRow.get(VIEW_COUNT)),
                 numberValue(firstRow.get(LIKE_COUNT)),
                 numberValue(firstRow.get(COMMENT_COUNT)),
                 numberValue(firstRow.get(BOOKMARK_COUNT)),

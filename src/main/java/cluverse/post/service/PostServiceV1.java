@@ -2,6 +2,7 @@ package cluverse.post.service;
 
 import cluverse.board.service.BoardService;
 import cluverse.common.exception.ForbiddenException;
+import cluverse.meta.service.PostMetaService;
 import cluverse.post.domain.Post;
 import cluverse.post.exception.PostExceptionMessage;
 import cluverse.post.repository.PostQueryRepository;
@@ -29,6 +30,7 @@ public class PostServiceV1 implements PostService {
     private final PostWriter postWriter;
     private final PostQueryRepository postQueryRepository;
     private final BoardService boardService;
+    private final PostMetaService postMetaService;
 
     @Override
     @Transactional(readOnly = true)
@@ -56,6 +58,7 @@ public class PostServiceV1 implements PostService {
     public PostDetailResponse createPost(Long memberId, PostCreateRequest request, String clientIp) {
         boardService.validateWritableBoard(memberId, request.boardId());
         Post post = postWriter.create(memberId, request, clientIp);
+        postMetaService.createViewCount(post.getId());
         return PostDetailResponse.from(postQueryRepository.findPostDetail(memberId, post.getId()));
     }
 
@@ -63,13 +66,14 @@ public class PostServiceV1 implements PostService {
     public PostDetailResponse readPost(Long memberId, Long postId) {
         Post post = postReader.readOrThrow(postId);
         boardService.validateReadableBoard(memberId, post.getBoardId());
-        postWriter.increaseViewCount(postId);
+        postMetaService.increaseViewCount(postId);
         return PostDetailResponse.from(postQueryRepository.findPostDetail(memberId, postId));
     }
 
     @Override
     public void increaseViewCount(Long postId) {
-        postWriter.increaseViewCount(postId);
+        postReader.readOrThrow(postId);
+        postMetaService.increaseViewCount(postId);
     }
 
     @Override

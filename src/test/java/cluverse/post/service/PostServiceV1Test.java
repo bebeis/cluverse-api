@@ -2,6 +2,7 @@ package cluverse.post.service;
 
 import cluverse.board.service.BoardService;
 import cluverse.common.exception.ForbiddenException;
+import cluverse.meta.service.PostMetaService;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.repository.PostQueryRepository;
@@ -48,6 +49,9 @@ class PostServiceV1Test {
 
     @Mock
     private BoardService boardService;
+
+    @Mock
+    private PostMetaService postMetaService;
 
     @InjectMocks
     private PostServiceV1 postService;
@@ -114,19 +118,21 @@ class PostServiceV1Test {
         assertThat(response.author().memberId()).isNull();
         assertThat(response.author().nickname()).isEqualTo("익명");
         verify(boardService).validateReadableBoard(2L, 3L);
-        verify(postWriter).increaseViewCount(10L);
+        verify(postMetaService).increaseViewCount(10L);
     }
 
     @Test
-    void 게시글_조회수_증가는_작성기에게_위임한다() {
+    void 게시글_조회수_증가는_meta_서비스에게_위임한다() {
         // given
-        doNothing().when(postWriter).increaseViewCount(10L);
+        Post post = createPost(10L, 3L, 1L, "조회수 증가 대상", false);
+        when(postReader.readOrThrow(10L)).thenReturn(post);
 
         // when
         postService.increaseViewCount(10L);
 
         // then
-        verify(postWriter).increaseViewCount(10L);
+        verify(postReader).readOrThrow(10L);
+        verify(postMetaService).increaseViewCount(10L);
     }
 
     @Test
@@ -185,6 +191,7 @@ class PostServiceV1Test {
 
         // then
         verify(boardService).validateWritableBoard(1L, 3L);
+        verify(postMetaService).createViewCount(10L);
     }
 
     @Test

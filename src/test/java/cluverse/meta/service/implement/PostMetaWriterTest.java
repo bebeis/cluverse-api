@@ -2,9 +2,11 @@ package cluverse.meta.service.implement;
 
 import cluverse.meta.domain.PostBookmarkCount;
 import cluverse.meta.domain.PostCommentCount;
+import cluverse.meta.domain.PostViewCount;
 import cluverse.meta.repository.PostBookmarkCountRepository;
 import cluverse.meta.repository.PostCommentCountRepository;
 import cluverse.meta.repository.PostLikeCountRepository;
+import cluverse.meta.repository.PostViewCountRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,8 +31,27 @@ class PostMetaWriterTest {
     @Mock
     private PostCommentCountRepository postCommentCountRepository;
 
+    @Mock
+    private PostViewCountRepository postViewCountRepository;
+
     @InjectMocks
     private PostMetaWriter postMetaWriter;
+
+    @Test
+    void 게시글_생성시_조회수_레코드를_생성한다() {
+        postMetaWriter.createViewCount(10L);
+
+        verify(postViewCountRepository).save(argThat(postViewCount ->
+                postViewCount.getPostId().equals(10L) && postViewCount.getViewCount() == 0
+        ));
+    }
+
+    @Test
+    void 게시글_조회수는_분리된_테이블에서_증가시킨다() {
+        postMetaWriter.increaseViewCount(10L);
+
+        verify(postViewCountRepository).increaseCount(10L);
+    }
 
     @Test
     void 게시글_좋아요_수는_upsert로_증가시킨다() {

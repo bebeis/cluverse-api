@@ -1,4 +1,4 @@
--- 게시글 좋아요/댓글/북마크 수 분리 마이그레이션
+-- 게시글 조회수/좋아요/댓글/북마크 수 분리 마이그레이션
 -- 대상: 이미 운영 중인 MySQL DB
 -- 주의:
 -- 1. 애플리케이션 배포와 같은 타이밍에 적용해야 합니다.
@@ -14,6 +14,15 @@ CREATE TABLE IF NOT EXISTS post_like_count (
     PRIMARY KEY (post_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='게시글 좋아요 수';
+
+CREATE TABLE IF NOT EXISTS post_view_count (
+    post_id      BIGINT   NOT NULL COMMENT '→ post.post_id',
+    view_count   INT      NOT NULL DEFAULT 0,
+    created_at   DATETIME NOT NULL DEFAULT NOW(),
+    updated_at   DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+    PRIMARY KEY (post_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='게시글 조회수';
 
 CREATE TABLE IF NOT EXISTS post_comment_count (
     post_id        BIGINT   NOT NULL COMMENT '→ post.post_id',
@@ -34,6 +43,13 @@ CREATE TABLE IF NOT EXISTS post_bookmark_count (
   COMMENT='게시글 북마크 수';
 
 -- -- 2. 기존 post 테이블의 집계값 이관
+-- INSERT INTO post_view_count (post_id, view_count, created_at, updated_at)
+-- SELECT post_id, view_count, NOW(), NOW()
+-- FROM post
+-- ON DUPLICATE KEY UPDATE
+--     view_count = VALUES(view_count),
+--     updated_at = NOW();
+
 -- INSERT INTO post_like_count (post_id, like_count, created_at, updated_at)
 -- SELECT post_id, like_count, NOW(), NOW()
 -- FROM post
@@ -59,6 +75,8 @@ CREATE TABLE IF NOT EXISTS post_bookmark_count (
 --     updated_at = NOW();
 
 -- 3. 검증 쿼리 예시
+-- SELECT COUNT(*) FROM post;
+-- SELECT COUNT(*) FROM post_view_count;
 -- SELECT COUNT(*) FROM post WHERE like_count > 0;
 -- SELECT COUNT(*) FROM post_like_count;
 -- SELECT COUNT(*) FROM post WHERE comment_count > 0;
@@ -68,6 +86,7 @@ CREATE TABLE IF NOT EXISTS post_bookmark_count (
 
 -- 4. 애플리케이션이 새 테이블을 사용하도록 배포한 뒤 기존 컬럼 제거
 ALTER TABLE post
+    DROP COLUMN view_count,
     DROP COLUMN like_count,
     DROP COLUMN comment_count,
     DROP COLUMN bookmark_count;

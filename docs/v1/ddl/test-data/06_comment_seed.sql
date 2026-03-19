@@ -5,7 +5,7 @@
 --   - Run after 05_post_seed.sql
 -- Includes:
 --   - comment
---   - updates post.comment_count
+--   - updates post_comment_count
 --   - updates comment.reply_count
 -- ============================================================
 
@@ -15,8 +15,7 @@ SET @COMMENT_END_ID = @COMMENT_START_ID + @COMMENT_COUNT - 1;
 SET @POST_START_ID = 3000001;
 SET @POST_END_ID = 5000000;
 
-UPDATE post
-SET comment_count = 0
+DELETE FROM post_comment_count
 WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID;
 
 DELETE FROM comment
@@ -148,18 +147,20 @@ JOIN (
 SET parent_comment.reply_count = child_comment_count.reply_count
 WHERE parent_comment.comment_id BETWEEN @COMMENT_START_ID AND @COMMENT_END_ID;
 
-UPDATE post seeded_post
-JOIN (
-    SELECT
-        post_id,
-        COUNT(*) AS comment_count
-    FROM comment
-    WHERE comment_id BETWEEN @COMMENT_START_ID AND @COMMENT_END_ID
-    GROUP BY post_id
-) comment_count_summary
-    ON comment_count_summary.post_id = seeded_post.post_id
-SET seeded_post.comment_count = comment_count_summary.comment_count
-WHERE seeded_post.post_id BETWEEN @POST_START_ID AND @POST_END_ID;
+INSERT INTO post_comment_count (
+    post_id,
+    comment_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    COUNT(*) AS comment_count,
+    NOW() AS created_at,
+    NOW() AS updated_at
+FROM comment
+WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID
+GROUP BY post_id;
 
 ALTER TABLE comment AUTO_INCREMENT = 9000001;
 

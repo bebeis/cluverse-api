@@ -23,9 +23,11 @@ import cluverse.member.repository.MemberRepository;
 import cluverse.meta.domain.PostBookmarkCount;
 import cluverse.meta.domain.PostCommentCount;
 import cluverse.meta.domain.PostLikeCount;
+import cluverse.meta.domain.PostViewCount;
 import cluverse.meta.repository.PostBookmarkCountRepository;
 import cluverse.meta.repository.PostCommentCountRepository;
 import cluverse.meta.repository.PostLikeCountRepository;
+import cluverse.meta.repository.PostViewCountRepository;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.repository.PostRepository;
@@ -88,6 +90,9 @@ class FeedQueryRepositoryTest {
 
     @Autowired
     private PostBookmarkCountRepository postBookmarkCountRepository;
+
+    @Autowired
+    private PostViewCountRepository postViewCountRepository;
 
     @Test
     void 홈_피드는_구독_보드와_같은_학교_작성글을_조회하고_차단한_작성자는_제외한다() {
@@ -244,8 +249,8 @@ class FeedQueryRepositoryTest {
                 LocalDateTime.now().minusHours(4)
         ));
 
-        saveCounts(highestScorePost.getId(), 10, 5, 2);
-        saveCounts(middleScorePost.getId(), 5, 1, 1);
+        saveCounts(highestScorePost.getId(), 10, 10, 5, 2);
+        saveCounts(middleScorePost.getId(), 10, 5, 1, 1);
 
         // when
         FeedPageQueryResult result = feedQueryRepository.findTrendingFeed(
@@ -296,12 +301,12 @@ class FeedQueryRepositoryTest {
                 true,
                 "127.0.0.1"
         );
-        ReflectionTestUtils.setField(post, "viewCount", 10);
         setAuditFields(post, createdAt);
         return post;
     }
 
-    private void saveCounts(Long postId, int likeCount, int commentCount, int bookmarkCount) {
+    private void saveCounts(Long postId, int viewCount, int likeCount, int commentCount, int bookmarkCount) {
+        postViewCountRepository.save(PostViewCount.of(postId, viewCount));
         postLikeCountRepository.save(PostLikeCount.of(postId, likeCount));
         postCommentCountRepository.save(PostCommentCount.of(postId, commentCount));
         postBookmarkCountRepository.save(PostBookmarkCount.of(postId, bookmarkCount));
