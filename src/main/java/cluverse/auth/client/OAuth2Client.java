@@ -8,7 +8,5 @@ public interface OAuth2Client {
 
     OAuthProvider provider();
 
-    String getAuthorizationUrl();
-
     OAuthUserInfo getUserInfo(String code);
 }

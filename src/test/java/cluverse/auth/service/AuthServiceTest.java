@@ -31,9 +31,6 @@ class AuthServiceTest {
     @Mock
     private AuthWriter authWriter;
 
-    @Mock
-    private OAuthTokenStore oAuthTokenStore;
-
     @InjectMocks
     private AuthService authService;
 
@@ -63,11 +60,10 @@ class AuthServiceTest {
         when(member.getId()).thenReturn(1L);
         when(member.getNickname()).thenReturn("testuser");
         when(member.getRole()).thenReturn(MemberRole.MEMBER);
-        when(oAuthTokenStore.save(any(LoginMember.class))).thenReturn("test-token");
 
-        String result = authService.loginWithOAuthAndCreateToken(userInfo, OAuthProvider.KAKAO, "127.0.0.1");
+        LoginMember result = authService.loginWithOAuth(userInfo, OAuthProvider.KAKAO, "127.0.0.1");
 
-        assertThat(result).isEqualTo("test-token");
+        assertThat(result.memberId()).isEqualTo(1L);
         verify(authWriter).updateLastLogin(member, "127.0.0.1");
         verify(authWriter, never()).registerBySocial(any(), any());
     }
@@ -83,11 +79,10 @@ class AuthServiceTest {
         when(newMember.getId()).thenReturn(2L);
         when(newMember.getNickname()).thenReturn("newuser");
         when(newMember.getRole()).thenReturn(MemberRole.MEMBER);
-        when(oAuthTokenStore.save(any(LoginMember.class))).thenReturn("new-token");
 
-        String result = authService.loginWithOAuthAndCreateToken(userInfo, OAuthProvider.GOOGLE, "127.0.0.1");
+        LoginMember result = authService.loginWithOAuth(userInfo, OAuthProvider.GOOGLE, "127.0.0.1");
 
-        assertThat(result).isEqualTo("new-token");
+        assertThat(result.memberId()).isEqualTo(2L);
         verify(authWriter).registerBySocial(userInfo, OAuthProvider.GOOGLE);
     }
 }

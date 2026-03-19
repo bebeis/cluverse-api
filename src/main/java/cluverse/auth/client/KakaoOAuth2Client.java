@@ -11,7 +11,6 @@ import org.springframework.web.client.RestClient;
 @Component
 public class KakaoOAuth2Client implements OAuth2Client {
 
-    private static final String AUTH_URL = "https://kauth.kakao.com/oauth/authorize";
     private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
 
@@ -30,14 +29,6 @@ public class KakaoOAuth2Client implements OAuth2Client {
     @Override
     public OAuthProvider provider() {
         return OAuthProvider.KAKAO;
-    }
-
-    @Override
-    public String getAuthorizationUrl() {
-        return AUTH_URL
-                + "?client_id=" + properties.clientId()
-                + "&redirect_uri=" + properties.redirectUri()
-                + "&response_type=code";
     }
 
     @Override

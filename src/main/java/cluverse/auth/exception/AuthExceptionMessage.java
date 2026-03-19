@@ -14,8 +14,7 @@ public enum AuthExceptionMessage {
     NICKNAME_ALREADY_EXISTS("이미 사용 중인 닉네임입니다."),
     SOCIAL_NICKNAME_GENERATION_FAILED("소셜 회원 닉네임 생성에 실패했습니다."),
     UNIVERSITY_NOT_FOUND("존재하지 않는 학교입니다."),
-    REQUIRED_TERMS_NOT_AGREED("필수 약관에 동의해주세요."),
-    INVALID_OAUTH_TOKEN("유효하지 않거나 만료된 OAuth 인증 토큰입니다.");
+    REQUIRED_TERMS_NOT_AGREED("필수 약관에 동의해주세요.");
 
     private final String message;
 }

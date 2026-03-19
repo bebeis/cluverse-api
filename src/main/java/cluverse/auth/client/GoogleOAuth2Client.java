@@ -11,7 +11,6 @@ import org.springframework.web.client.RestClient;
 @Component
 public class GoogleOAuth2Client implements OAuth2Client {
 
-    private static final String AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
     private static final String TOKEN_URL = "https://oauth2.googleapis.com/token";
     private static final String USER_INFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
 
@@ -30,15 +29,6 @@ public class GoogleOAuth2Client implements OAuth2Client {
     @Override
     public OAuthProvider provider() {
         return OAuthProvider.GOOGLE;
-    }
-
-    @Override
-    public String getAuthorizationUrl() {
-        return AUTH_URL
-                + "?client_id=" + properties.clientId()
-                + "&redirect_uri=" + properties.redirectUri()
-                + "&response_type=code"
-                + "&scope=email profile";
     }
 
     @Override

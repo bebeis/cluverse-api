@@ -1,11 +1,16 @@
 package cluverse.auth.controller;
 
+import cluverse.auth.client.OAuth2Client;
+import cluverse.auth.client.OAuth2ClientManager;
+import cluverse.auth.client.OAuthUserInfo;
 import cluverse.auth.service.AuthService;
 import cluverse.common.auth.LoginMember;
 import cluverse.common.auth.LoginSessionManager;
+import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.UnauthorizedException;
 import cluverse.docs.RestDocsSupport;
 import cluverse.member.domain.MemberRole;
+import cluverse.member.domain.OAuthProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -20,7 +25,7 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWit
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,10 +33,12 @@ class AuthControllerDocsTest extends RestDocsSupport {
 
     private final AuthService authService = mock(AuthService.class);
     private final LoginSessionManager loginSessionManager = mock(LoginSessionManager.class);
+    private final OAuth2ClientManager oAuth2ClientManager = mock(OAuth2ClientManager.class);
+    private final OAuth2Client oAuth2Client = mock(OAuth2Client.class);
 
     @Override
     protected Object initController() {
-        return new AuthController(authService, loginSessionManager);
+        return new AuthController(authService, loginSessionManager, oAuth2ClientManager);
     }
 
     @Test
@@ -177,17 +184,32 @@ class AuthControllerDocsTest extends RestDocsSupport {
     }
 
     @Test
-    void OAuth_토큰_교환_성공() throws Exception {
+    void 소셜_로그인_성공() throws Exception {
+        OAuthUserInfo userInfo = new OAuthUserInfo("kakao-id", "kakao@example.com", "kakaouser");
         LoginMember loginMember = new LoginMember(1L, "kakaouser", MemberRole.MEMBER);
-        when(authService.exchangeOAuthToken("valid-token")).thenReturn(loginMember);
 
-        mockMvc.perform(post("/api/v1/auth/oauth/token")
-                        .queryParam("token", "valid-token"))
+        when(oAuth2ClientManager.getClient("kakao")).thenReturn(oAuth2Client);
+        when(oAuth2Client.getUserInfo("auth-code")).thenReturn(userInfo);
+        when(oAuth2Client.provider()).thenReturn(OAuthProvider.KAKAO);
+        when(authService.loginWithOAuth(userInfo, OAuthProvider.KAKAO, "127.0.0.1"))
+                .thenReturn(loginMember);
+
+        mockMvc.perform(post("/api/v1/auth/oauth/{provider}", "kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "code": "auth-code"
+                                }
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.memberId").value(1))
-                .andDo(document("auth/oauth-token",
-                        queryParameters(
-                                parameterWithName("token").description("소셜 로그인 콜백에서 전달받은 임시 OAuth 토큰")
+                .andExpect(jsonPath("$.data.nickname").value("kakaouser"))
+                .andDo(document("auth/oauth-login",
+                        pathParameters(
+                                parameterWithName("provider").description("OAuth2 provider (kakao, google)")
+                        ),
+                        requestFields(
+                                fieldWithPath("code").type(JsonFieldType.STRING).description("OAuth2 인가 코드 (프론트엔드에서 인가 서버로부터 받은 code)")
                         ),
                         responseFields(
                                 fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
@@ -201,17 +223,25 @@ class AuthControllerDocsTest extends RestDocsSupport {
     }
 
     @Test
-    void OAuth_토큰_교환_실패_유효하지_않은_토큰() throws Exception {
-        when(authService.exchangeOAuthToken("invalid-token"))
-                .thenThrow(new UnauthorizedException("유효하지 않거나 만료된 OAuth 인증 토큰입니다."));
+    void 소셜_로그인_실패_지원하지_않는_provider() throws Exception {
+        when(oAuth2ClientManager.getClient("unknown"))
+                .thenThrow(new BadRequestException("지원하지 않는 OAuth2 provider입니다."));
 
-        mockMvc.perform(post("/api/v1/auth/oauth/token")
-                        .queryParam("token", "invalid-token"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value(401))
-                .andDo(document("auth/oauth-token-fail",
-                        queryParameters(
-                                parameterWithName("token").description("소셜 로그인 콜백에서 전달받은 임시 OAuth 토큰")
+        mockMvc.perform(post("/api/v1/auth/oauth/{provider}", "unknown")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "code": "auth-code"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andDo(document("auth/oauth-login-fail",
+                        pathParameters(
+                                parameterWithName("provider").description("OAuth2 provider (kakao, google)")
+                        ),
+                        requestFields(
+                                fieldWithPath("code").type(JsonFieldType.STRING).description("OAuth2 인가 코드")
                         ),
                         responseFields(
                                 fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),

@@ -1,8 +1,12 @@
 package cluverse.auth.controller;
 
+import cluverse.auth.client.OAuth2Client;
+import cluverse.auth.client.OAuth2ClientManager;
+import cluverse.auth.client.OAuthUserInfo;
 import cluverse.auth.service.AuthService;
 import cluverse.auth.service.request.LoginRequest;
 import cluverse.auth.service.request.MemberRegisterRequest;
+import cluverse.auth.service.request.OAuthLoginRequest;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.LoginMember;
 import cluverse.common.auth.LoginSessionManager;
@@ -19,6 +23,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final LoginSessionManager loginSessionManager;
+    private final OAuth2ClientManager oAuth2ClientManager;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -38,10 +43,13 @@ public class AuthController {
         return ApiResponse.ok(loginMember);
     }
 
-    @PostMapping("/oauth/token")
-    public ApiResponse<LoginMember> exchangeOAuthToken(@RequestParam String token,
-                                                       HttpServletRequest httpRequest) {
-        LoginMember loginMember = authService.exchangeOAuthToken(token);
+    @PostMapping("/oauth/{provider}")
+    public ApiResponse<LoginMember> oauthLogin(@PathVariable String provider,
+                                               @RequestBody @Valid OAuthLoginRequest request,
+                                               HttpServletRequest httpRequest) {
+        OAuth2Client client = oAuth2ClientManager.getClient(provider);
+        OAuthUserInfo userInfo = client.getUserInfo(request.code());
+        LoginMember loginMember = authService.loginWithOAuth(userInfo, client.provider(), httpRequest.getRemoteAddr());
         loginSessionManager.createSession(httpRequest, loginMember);
         return ApiResponse.ok(loginMember);
     }

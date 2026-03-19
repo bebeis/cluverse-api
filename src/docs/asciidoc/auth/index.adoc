@@ -59,82 +59,42 @@ include::{snippets}/auth/logout/http-request.adoc[]
 include::{snippets}/auth/logout/http-response.adoc[]
 include::{snippets}/auth/logout/response-fields.adoc[]
 
-== OAuth2 API
-
-=== OAuth2 인가 시작
-
-==== 요청
-
-include::{snippets}/oauth2/authorize/http-request.adoc[]
-include::{snippets}/oauth2/authorize/path-parameters.adoc[]
-
-==== 응답
-
-include::{snippets}/oauth2/authorize/http-response.adoc[]
-include::{snippets}/oauth2/authorize/response-headers.adoc[]
+== OAuth2 소셜 로그인 API
 
 === 소셜 로그인 기대 동작 흐름
 
-1. 클라이언트가 OAuth2 인증을 마치고 콜백을 호출하면 서버는 `provider + providerUserId`로 기존 연동 계정을 먼저 조회합니다.
-2. 이미 연동된 소셜 계정이 있으면 해당 `member`로 로그인합니다.
-3. 연동된 소셜 계정이 없고, 동일한 이메일을 사용하는 기존 회원이 있으면 신규 회원을 만들지 않고 그 `member`에 소셜 계정을 연결합니다.
-4. 동일한 이메일 회원도 없으면 신규 소셜 회원을 생성합니다.
-5. 신규 소셜 회원 생성 시 닉네임 후보가 기존 회원과 충돌하면 다른 suffix로 재시도합니다.
-6. 닉네임 충돌은 서버 내부에서 흡수하며, 단순 unique 충돌 때문에 소셜 가입이 실패하지 않아야 합니다.
-7. 하나의 `member`에는 여러 개의 `social_account`가 연결될 수 있습니다.
+1. 프론트엔드가 직접 OAuth2 인가 서버(카카오, 구글)로 리다이렉트합니다. (redirect_uri는 프론트엔드 URL)
+2. 사용자가 인증을 마치면 인가 서버가 프론트엔드로 인가 코드(`code`)를 전달합니다.
+3. 프론트엔드가 받은 인가 코드를 `POST /api/v1/auth/oauth/{provider}` API로 전달합니다.
+4. 서버는 `provider + providerUserId`로 기존 연동 계정을 먼저 조회합니다.
+5. 이미 연동된 소셜 계정이 있으면 해당 `member`로 로그인합니다.
+6. 연동된 소셜 계정이 없고, 동일한 이메일을 사용하는 기존 회원이 있으면 신규 회원을 만들지 않고 그 `member`에 소셜 계정을 연결합니다.
+7. 동일한 이메일 회원도 없으면 신규 소셜 회원을 생성합니다.
+8. 신규 소셜 회원 생성 시 닉네임 후보가 기존 회원과 충돌하면 다른 suffix로 재시도합니다.
+9. 하나의 `member`에는 여러 개의 `social_account`가 연결될 수 있습니다.
 
-=== 지원하지 않는 provider 인증 실패
-
-==== 요청
-
-include::{snippets}/oauth2/authorize-fail/http-request.adoc[]
-include::{snippets}/oauth2/authorize-fail/path-parameters.adoc[]
-
-==== 응답
-
-include::{snippets}/oauth2/authorize-fail/http-response.adoc[]
-include::{snippets}/oauth2/authorize-fail/response-fields.adoc[]
-
-=== 카카오 콜백
-
-소셜 로그인 인증 완료 후 프론트엔드로 리다이렉트합니다. +
-Location 헤더의 URL에 `oauth_token` 쿼리파라미터가 포함되어 있으며, 프론트엔드는 이 토큰으로 <<oauth-token-exchange, OAuth 토큰 교환 API>>를 호출해야 합니다.
+=== 소셜 로그인
 
 ==== 요청
 
-include::{snippets}/oauth2/callback/http-request.adoc[]
-include::{snippets}/oauth2/callback/path-parameters.adoc[]
-include::{snippets}/oauth2/callback/query-parameters.adoc[]
+include::{snippets}/auth/oauth-login/http-request.adoc[]
+include::{snippets}/auth/oauth-login/path-parameters.adoc[]
+include::{snippets}/auth/oauth-login/request-fields.adoc[]
 
 ==== 응답
 
-include::{snippets}/oauth2/callback/http-response.adoc[]
-include::{snippets}/oauth2/callback/response-headers.adoc[]
+include::{snippets}/auth/oauth-login/http-response.adoc[]
+include::{snippets}/auth/oauth-login/response-fields.adoc[]
 
-[[oauth-token-exchange]]
-=== OAuth 토큰 교환
-
-소셜 로그인 콜백에서 받은 임시 토큰으로 세션을 생성합니다. +
-토큰은 5분간 유효하며 1회만 사용 가능합니다.
+=== 소셜 로그인 실패 - 지원하지 않는 provider
 
 ==== 요청
 
-include::{snippets}/auth/oauth-token/http-request.adoc[]
-include::{snippets}/auth/oauth-token/query-parameters.adoc[]
+include::{snippets}/auth/oauth-login-fail/http-request.adoc[]
+include::{snippets}/auth/oauth-login-fail/path-parameters.adoc[]
+include::{snippets}/auth/oauth-login-fail/request-fields.adoc[]
 
 ==== 응답
 
-include::{snippets}/auth/oauth-token/http-response.adoc[]
-include::{snippets}/auth/oauth-token/response-fields.adoc[]
-
-=== OAuth 토큰 교환 실패 - 유효하지 않은 토큰
-
-==== 요청
-
-include::{snippets}/auth/oauth-token-fail/http-request.adoc[]
-include::{snippets}/auth/oauth-token-fail/query-parameters.adoc[]
-
-==== 응답
-
-include::{snippets}/auth/oauth-token-fail/http-response.adoc[]
-include::{snippets}/auth/oauth-token-fail/response-fields.adoc[]
+include::{snippets}/auth/oauth-login-fail/http-response.adoc[]
+include::{snippets}/auth/oauth-login-fail/response-fields.adoc[]

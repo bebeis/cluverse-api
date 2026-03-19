@@ -57,8 +57,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/v1/auth/register",
                         "/api/v1/auth/login",
                         "/api/v1/auth/logout",
-                        "/api/v1/auth/oauth/token",
-                        "/oauth2/**",
+                        "/api/v1/auth/oauth/**",
                         "/actuator/**"
                 );
     }
