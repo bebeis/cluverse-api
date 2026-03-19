@@ -1,4 +1,5 @@
 server:
+  forward-headers-strategy: native
   tomcat:
     threads:
       max: 400
@@ -8,7 +9,8 @@ server:
       timeout: 1800s               # 슬라이딩 세션 - 요청마다 갱신
       cookie:
         http-only: true
-        same-site: lax
+        same-site: none
+        secure: true
 
 spring:
   datasource:
@@ -59,7 +61,7 @@ aws:
   region: ap-northeast-2
 
 app:
-  frontend-url: http://localhost:3000
+  frontend-url: ${FRONTEND_URL:https://cluverse-web.vercel.app}
 
 oauth2:
   kakao:
