@@ -5,6 +5,7 @@ import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
 import cluverse.post.service.PostService;
 import cluverse.post.service.request.PostCreateRequest;
+import cluverse.post.service.request.PostKeywordSearchRequest;
 import cluverse.post.service.request.PostSearchRequest;
 import cluverse.post.service.request.PostUpdateRequest;
 import cluverse.post.service.response.PostDetailResponse;
@@ -26,6 +27,12 @@ public class PostControllerV1 {
     public ApiResponse<PostPageResponse> getPostList(@Login LoginMember loginMember,
                                                      @Valid @ModelAttribute PostSearchRequest request) {
         return ApiResponse.ok(postService.getPosts(extractMemberId(loginMember), request));
+    }
+
+    @GetMapping("/search")
+    public ApiResponse<PostPageResponse> searchPosts(@Login LoginMember loginMember,
+                                                     @Valid @ModelAttribute PostKeywordSearchRequest request) {
+        return ApiResponse.ok(postService.searchPosts(extractMemberId(loginMember), request));
     }
 
     @PostMapping

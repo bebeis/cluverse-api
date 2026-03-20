@@ -7,6 +7,7 @@ import cluverse.post.exception.PostExceptionMessage;
 import cluverse.post.repository.dto.PostDetailQueryDto;
 import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
+import cluverse.post.service.request.PostKeywordSearchRequest;
 import cluverse.post.service.request.PostSearchRequest;
 import cluverse.post.service.request.PostSortType;
 import com.querydsl.core.Tuple;
@@ -105,6 +106,30 @@ public class PostQueryRepository {
         return new PostPageQueryResult(readPostSummaries(memberId, postIds), hasNext);
     }
 
+    public PostPageQueryResult findPostPageByKeyword(Long memberId, PostKeywordSearchRequest request) {
+        int size = request.sizeOrDefault();
+        long offset = (long) (request.pageOrDefault() - 1) * size;
+
+        List<Long> postIds = queryFactory.selectDistinct(post.id)
+                .from(post)
+                .leftJoin(postViewCount).on(postViewCount.postId.eq(post.id))
+                .where(
+                        post.status.eq(PostStatus.ACTIVE),
+                        boardIdEq(request.boardId()),
+                        keywordContains(request.keyword())
+                )
+                .orderBy(post.createdAt.desc(), post.id.desc())
+                .offset(offset)
+                .limit(size + 1L)
+                .fetch();
+
+        boolean hasNext = postIds.size() > size;
+        if (hasNext) {
+            postIds = postIds.subList(0, size);
+        }
+        return new PostPageQueryResult(readPostSummaries(memberId, postIds), hasNext);
+    }
+
     public PostDetailQueryDto findPostDetail(Long memberId, Long postId) {
         Expression<Boolean> isMineExpression = isMineExpression(memberId);
 
@@ -165,6 +190,12 @@ public class PostQueryRepository {
 
     private BooleanExpression categoryEq(cluverse.post.domain.PostCategory category) {
         return category == null ? null : post.category.eq(category);
+    }
+
+    private BooleanExpression keywordContains(String keyword) {
+        return post.title.containsIgnoreCase(keyword)
+                .or(post.content.containsIgnoreCase(keyword))
+                .or(post.tags.any().containsIgnoreCase(keyword));
     }
 
     private OrderSpecifier<?>[] resolveOrderSpecifiers(PostSortType sortType) {

@@ -10,6 +10,7 @@ import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.service.implement.PostReader;
 import cluverse.post.service.implement.PostWriter;
 import cluverse.post.service.request.PostCreateRequest;
+import cluverse.post.service.request.PostKeywordSearchRequest;
 import cluverse.post.service.request.PostSearchRequest;
 import cluverse.post.service.request.PostUpdateRequest;
 import cluverse.post.service.response.PostDetailResponse;
@@ -51,6 +52,25 @@ public class PostServiceV1 implements PostService {
                 request.sizeOrDefault(),
                 queryResult.hasNext(),
                 request.isDateBased()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PostPageResponse searchPosts(Long memberId, PostKeywordSearchRequest request) {
+        boardService.validateReadableBoard(memberId, request.boardId());
+
+        PostPageQueryResult queryResult = postQueryRepository.findPostPageByKeyword(memberId, request);
+        List<PostSummaryResponse> responses = queryResult.posts().stream()
+                .map(PostSummaryResponse::from)
+                .toList();
+
+        return new PostPageResponse(
+                responses,
+                request.pageOrDefault(),
+                request.sizeOrDefault(),
+                queryResult.hasNext(),
+                false
         );
     }
 

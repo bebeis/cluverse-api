@@ -13,6 +13,7 @@ import cluverse.post.repository.dto.PostSummaryQueryDto;
 import cluverse.post.service.implement.PostReader;
 import cluverse.post.service.implement.PostWriter;
 import cluverse.post.service.request.PostCreateRequest;
+import cluverse.post.service.request.PostKeywordSearchRequest;
 import cluverse.post.service.request.PostSearchRequest;
 import cluverse.post.service.request.PostSortType;
 import cluverse.post.service.request.PostUpdateRequest;
@@ -101,6 +102,26 @@ class PostServiceV1Test {
         assertThat(response.page()).isNull();
         assertThat(response.dateBased()).isTrue();
         assertThat(response.hasNext()).isFalse();
+        verify(boardService).validateReadableBoard(99L, 3L);
+    }
+
+    @Test
+    void 게시글_검색시_검색_결과를_응답으로_조립한다() {
+        // given
+        PostKeywordSearchRequest request = new PostKeywordSearchRequest(3L, "스프링", 1, 20);
+        when(postQueryRepository.findPostPageByKeyword(99L, request)).thenReturn(new PostPageQueryResult(
+                List.of(createPostSummaryQueryDto(10L, 20L, false)),
+                true
+        ));
+
+        // when
+        PostPageResponse response = postService.searchPosts(99L, request);
+
+        // then
+        assertThat(response.posts()).extracting("postId").containsExactly(10L);
+        assertThat(response.page()).isEqualTo(1);
+        assertThat(response.hasNext()).isTrue();
+        assertThat(response.dateBased()).isFalse();
         verify(boardService).validateReadableBoard(99L, 3L);
     }
 

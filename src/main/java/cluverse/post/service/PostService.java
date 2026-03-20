@@ -1,6 +1,7 @@
 package cluverse.post.service;
 
 import cluverse.post.service.request.PostCreateRequest;
+import cluverse.post.service.request.PostKeywordSearchRequest;
 import cluverse.post.service.request.PostSearchRequest;
 import cluverse.post.service.request.PostUpdateRequest;
 import cluverse.post.service.response.PostDetailResponse;
@@ -8,6 +9,8 @@ import cluverse.post.service.response.PostPageResponse;
 public interface PostService {
 
     PostPageResponse getPosts(Long memberId, PostSearchRequest request);
+
+    PostPageResponse searchPosts(Long memberId, PostKeywordSearchRequest request);
 
     PostDetailResponse createPost(Long memberId, PostCreateRequest request, String clientIp);
 
