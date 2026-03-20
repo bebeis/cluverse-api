@@ -4,14 +4,10 @@ import cluverse.common.exception.NotFoundException;
 import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupStatus;
 import cluverse.group.exception.GroupExceptionMessage;
+import cluverse.group.repository.GroupQueryRepository;
 import cluverse.group.repository.GroupRepository;
+import cluverse.group.repository.dto.GroupMemberSummaryQueryDto;
 import cluverse.group.service.request.GroupSearchRequest;
-import cluverse.interest.domain.Interest;
-import cluverse.interest.repository.InterestRepository;
-import cluverse.member.domain.Member;
-import cluverse.member.repository.MemberRepository;
-import cluverse.recruitment.domain.RecruitmentStatus;
-import cluverse.recruitment.repository.RecruitmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -29,9 +25,7 @@ import java.util.stream.Collectors;
 public class GroupReader {
 
     private final GroupRepository groupRepository;
-    private final RecruitmentRepository recruitmentRepository;
-    private final MemberRepository memberRepository;
-    private final InterestRepository interestRepository;
+    private final GroupQueryRepository groupQueryRepository;
 
     public Group readOrThrow(Long groupId) {
         return groupRepository.findById(groupId)
@@ -53,7 +47,6 @@ public class GroupReader {
                 .filter(group -> request.activityType() == null || group.getActivityType() == request.activityType())
                 .filter(group -> request.region() == null || request.region().equalsIgnoreCase(group.getRegion()))
                 .filter(group -> request.visibility() == null || group.getVisibility() == request.visibility())
-                .filter(group -> !Boolean.TRUE.equals(request.recruitableOnly()) || countOpenRecruitments(group.getId()) > 0)
                 .toList();
     }
 
@@ -64,22 +57,25 @@ public class GroupReader {
     }
 
     public long countOpenRecruitments(Long groupId) {
-        return recruitmentRepository.countByGroupIdAndStatusAndDeletedAtIsNull(groupId, RecruitmentStatus.OPEN);
+        return countOpenRecruitments(List.of(groupId)).getOrDefault(groupId, 0L);
     }
 
     public Map<Long, Long> countOpenRecruitments(Collection<Long> groupIds) {
+        if (groupIds == null || groupIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> countMap = groupQueryRepository.countOpenRecruitments(groupIds);
         return groupIds.stream()
                 .distinct()
-                .collect(Collectors.toMap(Function.identity(), this::countOpenRecruitments));
+                .collect(Collectors.toMap(Function.identity(), groupId -> countMap.getOrDefault(groupId, 0L)));
     }
 
-    public Map<Long, Member> readMemberMap(Collection<Long> memberIds) {
-        return memberRepository.findAllById(memberIds).stream()
-                .collect(Collectors.toMap(Member::getId, Function.identity()));
+    public Map<Long, GroupMemberSummaryQueryDto> readMemberSummaryMap(Collection<Long> memberIds) {
+        return groupQueryRepository.readMemberSummaryMap(memberIds);
     }
 
-    public Map<Long, Interest> readInterestMap(Collection<Long> interestIds) {
-        return interestRepository.findAllById(interestIds).stream()
-                .collect(Collectors.toMap(Interest::getId, Function.identity()));
+    public Map<Long, String> readInterestNameMap(Collection<Long> interestIds) {
+        return groupQueryRepository.readInterestNameMap(interestIds);
     }
 }

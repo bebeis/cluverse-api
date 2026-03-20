@@ -7,6 +7,7 @@ import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupInterest;
 import cluverse.group.domain.GroupRole;
 import cluverse.group.exception.GroupExceptionMessage;
+import cluverse.group.repository.dto.GroupMemberSummaryQueryDto;
 import cluverse.group.service.implement.GroupReader;
 import cluverse.group.service.implement.GroupWriter;
 import cluverse.group.service.request.GroupCreateRequest;
@@ -23,9 +24,6 @@ import cluverse.group.service.response.GroupPageResponse;
 import cluverse.group.service.response.GroupRoleResponse;
 import cluverse.group.service.response.GroupSummaryResponse;
 import cluverse.group.service.response.MyGroupSummaryResponse;
-import cluverse.interest.domain.Interest;
-import cluverse.member.domain.Member;
-import cluverse.member.domain.MemberProfile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,25 +43,35 @@ public class GroupService {
     @Transactional(readOnly = true)
     public GroupPageResponse getGroups(Long memberId, GroupSearchRequest request) {
         List<Group> groups = groupReader.readGroups(request);
-        List<GroupSummaryResponse> pageItems = paginate(groups, request.pageOrDefault(), request.sizeOrDefault()).stream()
-                .map(this::toSummaryResponse)
+        Map<Long, Long> openRecruitmentCountMap = groupReader.countOpenRecruitments(
+                groups.stream().map(Group::getId).toList()
+        );
+        List<Group> filteredGroups = filterRecruitableGroups(groups, request, openRecruitmentCountMap);
+        List<Group> pagedGroups = paginate(filteredGroups, request.pageOrDefault(), request.sizeOrDefault());
+        Map<Long, String> interestNameMap = groupReader.readInterestNameMap(extractInterestIds(pagedGroups));
+        List<GroupSummaryResponse> pageItems = pagedGroups.stream()
+                .map(group -> toSummaryResponse(group, openRecruitmentCountMap, interestNameMap))
                 .toList();
 
         return new GroupPageResponse(
                 pageItems,
                 request.pageOrDefault(),
                 request.sizeOrDefault(),
-                groups.size() > request.pageOrDefault() * request.sizeOrDefault()
+                filteredGroups.size() > request.pageOrDefault() * request.sizeOrDefault()
         );
     }
 
     @Transactional(readOnly = true)
     public List<MyGroupSummaryResponse> getMyGroups(Long memberId) {
-        return groupReader.readMyGroups(memberId).stream()
+        List<Group> groups = groupReader.readMyGroups(memberId);
+        Map<Long, Long> openRecruitmentCountMap = groupReader.countOpenRecruitments(
+                groups.stream().map(Group::getId).toList()
+        );
+        return groups.stream()
                 .map(group -> MyGroupSummaryResponse.of(
                         group,
                         group.getMember(memberId).getRole(),
-                        groupReader.countOpenRecruitments(group.getId())
+                        openRecruitmentCountMap.getOrDefault(group.getId(), 0L)
                 ))
                 .toList();
     }
@@ -169,18 +177,30 @@ public class GroupService {
     }
 
     private GroupSummaryResponse toSummaryResponse(Group group) {
-        long openRecruitmentCount = groupReader.countOpenRecruitments(group.getId());
+        return toSummaryResponse(
+                group,
+                groupReader.countOpenRecruitments(List.of(group.getId())),
+                groupReader.readInterestNameMap(extractInterestIds(List.of(group)))
+        );
+    }
+
+    private GroupSummaryResponse toSummaryResponse(Group group,
+                                                   Map<Long, Long> openRecruitmentCountMap,
+                                                   Map<Long, String> interestNameMap) {
+        long openRecruitmentCount = openRecruitmentCountMap.getOrDefault(group.getId(), 0L);
         return GroupSummaryResponse.of(
                 group,
                 openRecruitmentCount > 0,
                 openRecruitmentCount,
-                toInterestResponses(group)
+                toInterestResponses(group, interestNameMap)
         );
     }
 
     private GroupDetailResponse toDetailResponse(Long memberId, Group group) {
-        Map<Long, Member> memberMap = groupReader.readMemberMap(List.of(group.getOwnerId()));
-        Member owner = memberMap.get(group.getOwnerId());
+        Map<Long, GroupMemberSummaryQueryDto> memberMap = groupReader.readMemberSummaryMap(List.of(group.getOwnerId()));
+        GroupMemberSummaryQueryDto owner = memberMap.get(group.getOwnerId());
+        Map<Long, Long> openRecruitmentCountMap = groupReader.countOpenRecruitments(List.of(group.getId()));
+        Map<Long, String> interestNameMap = groupReader.readInterestNameMap(extractInterestIds(List.of(group)));
 
         return new GroupDetailResponse(
                 group.getId(),
@@ -194,13 +214,13 @@ public class GroupService {
                 group.getVisibility(),
                 group.getStatus(),
                 group.getOwnerId(),
-                owner == null ? null : owner.getNickname(),
+                owner == null ? null : owner.nickname(),
                 group.getMaxMembers(),
                 group.getMemberCount(),
                 memberId != null && group.hasMember(memberId),
                 memberId != null && group.hasMember(memberId) ? group.getMember(memberId).getRole() : null,
-                groupReader.countOpenRecruitments(group.getId()),
-                toInterestResponses(group),
+                openRecruitmentCountMap.getOrDefault(group.getId(), 0L),
+                toInterestResponses(group, interestNameMap),
                 toRoleResponses(group),
                 group.getCreatedAt(),
                 group.getUpdatedAt()
@@ -211,20 +231,19 @@ public class GroupService {
         List<Long> memberIds = group.getMembers().stream()
                 .map(member -> member.getMemberId())
                 .toList();
-        Map<Long, Member> memberMap = groupReader.readMemberMap(memberIds);
+        Map<Long, GroupMemberSummaryQueryDto> memberMap = groupReader.readMemberSummaryMap(memberIds);
 
         return group.getMembers().stream()
                 .map(member -> {
-                    Member foundMember = memberMap.get(member.getMemberId());
-                    MemberProfile profile = foundMember == null ? null : foundMember.getProfile();
+                    GroupMemberSummaryQueryDto foundMember = memberMap.get(member.getMemberId());
                     GroupRole customTitle = group.getRoles().stream()
                             .filter(role -> role.getId().equals(member.getCustomTitleId()))
                             .findFirst()
                             .orElse(null);
                     return new GroupMemberResponse(
                             member.getMemberId(),
-                            foundMember == null ? null : foundMember.getNickname(),
-                            profile == null ? null : profile.getProfileImageUrl(),
+                            foundMember == null ? null : foundMember.nickname(),
+                            foundMember == null ? null : foundMember.profileImageUrl(),
                             member.getRole(),
                             member.getCustomTitleId(),
                             customTitle == null ? null : customTitle.getTitle(),
@@ -235,16 +254,11 @@ public class GroupService {
                 .toList();
     }
 
-    private List<GroupInterestResponse> toInterestResponses(Group group) {
-        Map<Long, Interest> interestMap = groupReader.readInterestMap(
-                group.getInterests().stream().map(GroupInterest::getInterestId).toList()
-        );
+    private List<GroupInterestResponse> toInterestResponses(Group group, Map<Long, String> interestNameMap) {
         return group.getInterests().stream()
                 .map(interest -> GroupInterestResponse.of(
                         interest,
-                        interestMap.containsKey(interest.getInterestId())
-                                ? interestMap.get(interest.getInterestId()).getName()
-                                : null
+                        interestNameMap.get(interest.getInterestId())
                 ))
                 .toList();
     }
@@ -263,6 +277,25 @@ public class GroupService {
         int fromIndex = Math.min((page - 1) * size, items.size());
         int toIndex = Math.min(fromIndex + size, items.size());
         return items.subList(fromIndex, toIndex);
+    }
+
+    private List<Group> filterRecruitableGroups(List<Group> groups,
+                                                GroupSearchRequest request,
+                                                Map<Long, Long> openRecruitmentCountMap) {
+        if (!Boolean.TRUE.equals(request.recruitableOnly())) {
+            return groups;
+        }
+        return groups.stream()
+                .filter(group -> openRecruitmentCountMap.getOrDefault(group.getId(), 0L) > 0)
+                .toList();
+    }
+
+    private List<Long> extractInterestIds(List<Group> groups) {
+        return groups.stream()
+                .flatMap(group -> group.getInterests().stream())
+                .map(GroupInterest::getInterestId)
+                .distinct()
+                .toList();
     }
 
     private void validateManager(Long memberId, Group group) {
