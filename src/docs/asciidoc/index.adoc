@@ -22,6 +22,8 @@ include::interest/index.adoc[]
 
 include::terms/index.adoc[]
 
+include::event/index.adoc[]
+
 include::group/index.adoc[]
 
 include::board/index.adoc[]

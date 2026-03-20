@@ -1,0 +1,15 @@
+=== 행사 API
+
+==== 행사 목록 조회
+include::{snippets}/events/get-list/http-request.adoc[]
+include::{snippets}/events/get-list/query-parameters.adoc[]
+
+include::{snippets}/events/get-list/http-response.adoc[]
+include::{snippets}/events/get-list/response-fields.adoc[]
+
+==== 행사 상세 조회
+include::{snippets}/events/get-detail/http-request.adoc[]
+include::{snippets}/events/get-detail/path-parameters.adoc[]
+
+include::{snippets}/events/get-detail/http-response.adoc[]
+include::{snippets}/events/get-detail/response-fields.adoc[]
