@@ -92,7 +92,6 @@ include::{snippets}/recruitment-applications/get-my-applications/response-fields
 ==== 요청
 
 include::{snippets}/recruitment-applications/get-recruitment-applications/http-request.adoc[]
-include::{snippets}/recruitment-applications/get-recruitment-applications/path-parameters.adoc[]
 include::{snippets}/recruitment-applications/get-recruitment-applications/query-parameters.adoc[]
 
 ==== 응답
@@ -105,7 +104,7 @@ include::{snippets}/recruitment-applications/get-recruitment-applications/respon
 ==== 요청
 
 include::{snippets}/recruitment-applications/create/http-request.adoc[]
-include::{snippets}/recruitment-applications/create/path-parameters.adoc[]
+include::{snippets}/recruitment-applications/create/query-parameters.adoc[]
 include::{snippets}/recruitment-applications/create/request-fields.adoc[]
 
 ==== 응답

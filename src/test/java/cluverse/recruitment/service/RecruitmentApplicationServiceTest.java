@@ -5,7 +5,9 @@ import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupActivityType;
 import cluverse.group.domain.GroupCategory;
 import cluverse.group.domain.GroupVisibility;
+import cluverse.group.service.GroupService;
 import cluverse.member.domain.Member;
+import cluverse.member.service.MemberService;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
 import cluverse.recruitment.domain.RecruitmentApplicationStatus;
@@ -40,6 +42,12 @@ class RecruitmentApplicationServiceTest {
     @Mock
     private RecruitmentApplicationWriter recruitmentApplicationWriter;
 
+    @Mock
+    private GroupService groupService;
+
+    @Mock
+    private MemberService memberService;
+
     @InjectMocks
     private RecruitmentApplicationService recruitmentApplicationService;
 
@@ -54,6 +62,7 @@ class RecruitmentApplicationServiceTest {
         );
         when(recruitmentApplicationReader.readRecruitmentOrThrow(10L)).thenReturn(recruitment);
         when(recruitmentApplicationReader.existsByRecruitmentAndApplicant(10L, 200L)).thenReturn(true);
+        when(groupService.readGroupOrThrow(1L)).thenReturn(createGroup(1L, 100L));
 
         // when, then
         assertThatThrownBy(() -> recruitmentApplicationService.createApplication(200L, 10L, request, "127.0.0.1"))
@@ -76,9 +85,8 @@ class RecruitmentApplicationServiceTest {
 
         when(recruitmentApplicationReader.readOrThrow(30L)).thenReturn(application);
         when(recruitmentApplicationReader.readRecruitmentOrThrow(10L)).thenReturn(recruitment);
-        when(recruitmentApplicationReader.readGroupOrThrow(1L)).thenReturn(group);
-        when(recruitmentApplicationReader.readRecruitmentMap(List.of(10L))).thenReturn(Map.of(10L, recruitment));
-        when(recruitmentApplicationReader.readMemberMap(List.of(200L, 100L))).thenReturn(Map.of(
+        when(groupService.readGroupOrThrow(1L)).thenReturn(group);
+        when(memberService.readMemberMap(List.of(200L, 100L))).thenReturn(Map.of(
                 200L, applicant,
                 100L, manager
         ));
@@ -90,7 +98,6 @@ class RecruitmentApplicationServiceTest {
         // when
         RecruitmentApplicationDetailResponse result = recruitmentApplicationService.updateApplicationStatus(
                 100L,
-                10L,
                 30L,
                 request,
                 "127.0.0.1"

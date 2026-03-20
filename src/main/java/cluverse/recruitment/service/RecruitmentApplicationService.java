@@ -3,11 +3,12 @@ package cluverse.recruitment.service;
 import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.group.domain.Group;
+import cluverse.group.service.GroupService;
 import cluverse.member.domain.Member;
 import cluverse.member.domain.MemberProfile;
+import cluverse.member.service.MemberService;
 import cluverse.recruitment.domain.ApplicationChatMessage;
 import cluverse.recruitment.domain.FormItem;
-import cluverse.recruitment.domain.FormItemAnswer;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
 import cluverse.recruitment.domain.RecruitmentApplicationStatus;
@@ -40,14 +41,17 @@ public class RecruitmentApplicationService {
 
     private final RecruitmentApplicationReader recruitmentApplicationReader;
     private final RecruitmentApplicationWriter recruitmentApplicationWriter;
+    private final GroupService groupService;
+    private final MemberService memberService;
 
     @Transactional(readOnly = true)
     public RecruitmentApplicationPageResponse getMyApplications(Long memberId,
                                                                RecruitmentApplicationSearchRequest request) {
         List<RecruitmentApplication> applications = recruitmentApplicationReader.readMyApplications(memberId, request);
-        List<RecruitmentApplicationSummaryResponse> pageItems = paginate(
+        List<RecruitmentApplication> pagedApplications = paginate(
                 applications, request.pageOrDefault(), request.sizeOrDefault()
-        ).stream().map(this::toSummaryResponse).toList();
+        );
+        List<RecruitmentApplicationSummaryResponse> pageItems = toSummaryResponses(pagedApplications);
         return new RecruitmentApplicationPageResponse(
                 pageItems,
                 request.pageOrDefault(),
@@ -63,9 +67,10 @@ public class RecruitmentApplicationService {
         Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(recruitmentId);
         validateManager(memberId, recruitment.getGroupId());
         List<RecruitmentApplication> applications = recruitmentApplicationReader.readApplications(recruitmentId, request);
-        List<RecruitmentApplicationSummaryResponse> pageItems = paginate(
+        List<RecruitmentApplication> pagedApplications = paginate(
                 applications, request.pageOrDefault(), request.sizeOrDefault()
-        ).stream().map(this::toSummaryResponse).toList();
+        );
+        List<RecruitmentApplicationSummaryResponse> pageItems = toSummaryResponses(pagedApplications);
         return new RecruitmentApplicationPageResponse(
                 pageItems,
                 request.pageOrDefault(),
@@ -79,28 +84,25 @@ public class RecruitmentApplicationService {
                                                                   RecruitmentApplicationCreateRequest request,
                                                                   String clientIp) {
         Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(recruitmentId);
-        Group group = recruitmentApplicationReader.readGroupOrThrow(recruitment.getGroupId());
+        Group group = groupService.readGroupOrThrow(recruitment.getGroupId());
         validateApplicationCreatable(memberId, recruitmentId, recruitment, group);
         RecruitmentApplication application = recruitmentApplicationWriter.create(recruitment, memberId, request, clientIp);
         return toDetailResponse(application);
     }
 
     @Transactional(readOnly = true)
-    public RecruitmentApplicationDetailResponse getApplication(Long memberId, Long recruitmentId, Long applicationId) {
+    public RecruitmentApplicationDetailResponse getApplication(Long memberId, Long applicationId) {
         RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
-        validateApplicationOwnership(recruitmentId, application);
         validateParticipantOrManager(memberId, application);
         return toDetailResponse(application);
     }
 
     public RecruitmentApplicationDetailResponse updateApplicationStatus(Long memberId,
-                                                                        Long recruitmentId,
                                                                         Long applicationId,
                                                                         RecruitmentApplicationStatusUpdateRequest request,
                                                                         String clientIp) {
         RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
-        validateApplicationOwnership(recruitmentId, application);
-        Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(recruitmentId);
+        Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(application.getRecruitmentId());
         validateManager(memberId, recruitment.getGroupId());
         validateApplicationStatusChangeable(application);
         recruitmentApplicationWriter.updateStatus(application, request, memberId, clientIp);
@@ -108,9 +110,8 @@ public class RecruitmentApplicationService {
         return toDetailResponse(application);
     }
 
-    public void cancelApplication(Long memberId, Long recruitmentId, Long applicationId, String clientIp) {
+    public void cancelApplication(Long memberId, Long applicationId, String clientIp) {
         RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
-        validateApplicationOwnership(recruitmentId, application);
         validateApplicant(memberId, application);
         recruitmentApplicationWriter.cancel(application, memberId, clientIp);
     }
@@ -121,15 +122,20 @@ public class RecruitmentApplicationService {
                                                           ApplicationChatMessageSearchRequest request) {
         RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
         validateParticipantOrManager(memberId, application);
-        List<ApplicationChatMessage> messages = application.getMessages();
-        List<ApplicationChatMessageResponse> pageItems = paginateMessages(messages, request).stream()
-                .map(message -> toMessageResponse(memberId, message))
+        List<ApplicationChatMessage> filteredMessages = filterMessages(application.getMessages(), request.beforeMessageId());
+        List<ApplicationChatMessage> pageMessages = paginateMessages(filteredMessages, request.limitOrDefault());
+        Map<Long, Member> senderMap = memberService.readMemberMap(pageMessages.stream()
+                .map(ApplicationChatMessage::getSenderId)
+                .distinct()
+                .toList());
+        List<ApplicationChatMessageResponse> pageItems = pageMessages.stream()
+                .map(message -> toMessageResponse(memberId, message, senderMap))
                 .toList();
         return new ApplicationChatMessagePageResponse(
                 pageItems,
                 request.beforeMessageId(),
                 request.limitOrDefault(),
-                messages.size() > pageItems.size()
+                filteredMessages.size() > pageItems.size()
         );
     }
 
@@ -140,14 +146,37 @@ public class RecruitmentApplicationService {
         RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
         validateParticipantOrManager(memberId, application);
         recruitmentApplicationWriter.createMessage(application, memberId, request, clientIp);
-        return toMessageResponse(memberId, application.getMessages().getLast());
+        return toMessageResponse(
+                memberId,
+                application.getMessages().getLast(),
+                memberService.readMemberMap(List.of(memberId))
+        );
     }
 
-    private RecruitmentApplicationSummaryResponse toSummaryResponse(RecruitmentApplication application) {
-        Recruitment recruitment = recruitmentApplicationReader.readRecruitmentMap(List.of(application.getRecruitmentId()))
-                .get(application.getRecruitmentId());
-        Member applicant = recruitmentApplicationReader.readMemberMap(List.of(application.getApplicantId()))
-                .get(application.getApplicantId());
+    private List<RecruitmentApplicationSummaryResponse> toSummaryResponses(List<RecruitmentApplication> applications) {
+        if (applications.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Recruitment> recruitmentMap = recruitmentApplicationReader.readRecruitmentMap(applications.stream()
+                .map(RecruitmentApplication::getRecruitmentId)
+                .distinct()
+                .toList());
+        Map<Long, Member> memberMap = memberService.readMemberMap(applications.stream()
+                .map(RecruitmentApplication::getApplicantId)
+                .distinct()
+                .toList());
+
+        return applications.stream()
+                .map(application -> toSummaryResponse(application, recruitmentMap, memberMap))
+                .toList();
+    }
+
+    private RecruitmentApplicationSummaryResponse toSummaryResponse(RecruitmentApplication application,
+                                                                    Map<Long, Recruitment> recruitmentMap,
+                                                                    Map<Long, Member> memberMap) {
+        Recruitment recruitment = recruitmentMap.get(application.getRecruitmentId());
+        Member applicant = memberMap.get(application.getApplicantId());
         MemberProfile profile = applicant == null ? null : applicant.getProfile();
 
         return new RecruitmentApplicationSummaryResponse(
@@ -167,11 +196,11 @@ public class RecruitmentApplicationService {
     }
 
     private RecruitmentApplicationDetailResponse toDetailResponse(RecruitmentApplication application) {
-        Recruitment recruitment = recruitmentApplicationReader.readRecruitmentMap(List.of(application.getRecruitmentId()))
-                .get(application.getRecruitmentId());
-        Map<Long, Member> memberMap = recruitmentApplicationReader.readMemberMap(
+        Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(application.getRecruitmentId());
+        Map<Long, Member> memberMap = memberService.readMemberMap(
                 java.util.stream.Stream.of(application.getApplicantId(), application.getReviewedBy())
                         .filter(Objects::nonNull)
+                        .distinct()
                         .toList()
         );
         Member applicant = memberMap.get(application.getApplicantId());
@@ -214,8 +243,10 @@ public class RecruitmentApplicationService {
                 .toList();
     }
 
-    private ApplicationChatMessageResponse toMessageResponse(Long memberId, ApplicationChatMessage message) {
-        Member sender = recruitmentApplicationReader.readMemberMap(List.of(message.getSenderId())).get(message.getSenderId());
+    private ApplicationChatMessageResponse toMessageResponse(Long memberId,
+                                                             ApplicationChatMessage message,
+                                                             Map<Long, Member> senderMap) {
+        Member sender = senderMap.get(message.getSenderId());
         MemberProfile profile = sender == null ? null : sender.getProfile();
         return new ApplicationChatMessageResponse(
                 message.getId(),
@@ -236,20 +267,22 @@ public class RecruitmentApplicationService {
         return items.subList(fromIndex, toIndex);
     }
 
-    private List<ApplicationChatMessage> paginateMessages(List<ApplicationChatMessage> messages,
-                                                          ApplicationChatMessageSearchRequest request) {
-        List<ApplicationChatMessage> filtered = messages;
-        if (request.beforeMessageId() != null) {
-            filtered = messages.stream()
-                    .filter(message -> message.getId() < request.beforeMessageId())
-                    .toList();
+    private List<ApplicationChatMessage> filterMessages(List<ApplicationChatMessage> messages, Long beforeMessageId) {
+        if (beforeMessageId == null) {
+            return messages;
         }
-        int toIndex = Math.min(request.limitOrDefault(), filtered.size());
-        return filtered.subList(0, toIndex);
+        return messages.stream()
+                .filter(message -> message.getId() < beforeMessageId)
+                .toList();
+    }
+
+    private List<ApplicationChatMessage> paginateMessages(List<ApplicationChatMessage> messages, int limit) {
+        int toIndex = Math.min(limit, messages.size());
+        return messages.subList(0, toIndex);
     }
 
     private void validateManager(Long memberId, Long groupId) {
-        Group group = recruitmentApplicationReader.readGroupOrThrow(groupId);
+        Group group = groupService.readGroupOrThrow(groupId);
         if (!group.isManager(memberId)) {
             throw new ForbiddenException(RecruitmentExceptionMessage.RECRUITMENT_ACCESS_DENIED.getMessage());
         }
@@ -260,17 +293,11 @@ public class RecruitmentApplicationService {
             return;
         }
         Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(application.getRecruitmentId());
-        Group group = recruitmentApplicationReader.readGroupOrThrow(recruitment.getGroupId());
+        Group group = groupService.readGroupOrThrow(recruitment.getGroupId());
         if (group.isManager(memberId)) {
             return;
         }
         throw new ForbiddenException(RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_ACCESS_DENIED.getMessage());
-    }
-
-    private void validateApplicationOwnership(Long recruitmentId, RecruitmentApplication application) {
-        if (!application.getRecruitmentId().equals(recruitmentId)) {
-            throw new BadRequestException(RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_NOT_FOUND.getMessage());
-        }
     }
 
     private void validateApplicationCreatable(Long memberId,
@@ -313,7 +340,7 @@ public class RecruitmentApplicationService {
             return;
         }
 
-        Group group = recruitmentApplicationReader.readGroupOrThrow(recruitment.getGroupId());
+        Group group = groupService.readGroupOrThrow(recruitment.getGroupId());
         if (!group.hasMember(application.getApplicantId())) {
             group.addMember(application.getApplicantId());
         }

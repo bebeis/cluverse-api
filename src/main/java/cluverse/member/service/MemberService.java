@@ -16,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -114,6 +116,11 @@ public class MemberService {
     @Transactional(readOnly = true)
     public List<BlockedMemberResponse> getBlockedMembers(Long blockerId) {
         return memberReader.readBlockedMembers(blockerId);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, Member> readMemberMap(Collection<Long> memberIds) {
+        return memberReader.readMemberMap(memberIds);
     }
 
     private MemberProfileResponse buildProfileResponse(Long viewerId, Member member) {

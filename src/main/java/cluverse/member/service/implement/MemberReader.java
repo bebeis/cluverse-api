@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,6 +130,14 @@ public class MemberReader {
     public Member readOrThrow(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.MEMBER_NOT_FOUND.getMessage()));
+    }
+
+    public Map<Long, Member> readMemberMap(Collection<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        return memberRepository.findAllById(memberIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Member::getId, member -> member));
     }
 
     public MemberProfileSummaryResponse readUniversitySummary(Long universityId) {

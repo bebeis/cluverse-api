@@ -68,6 +68,11 @@ public class GroupService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public Group readGroupOrThrow(Long groupId) {
+        return groupReader.readOrThrow(groupId);
+    }
+
     public GroupDetailResponse createGroup(Long memberId, GroupCreateRequest request) {
         Board board = boardService.createGroupBoard(request.name(), request.description());
         Group group = groupWriter.create(memberId, board.getId(), request);

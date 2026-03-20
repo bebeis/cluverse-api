@@ -20,12 +20,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/api/v1/recruitment-applications")
 @RequiredArgsConstructor
 public class RecruitmentApplicationController {
 
     private final RecruitmentApplicationService recruitmentApplicationService;
 
-    @GetMapping("/api/v1/recruitment-applications/me")
+    @GetMapping("/me")
     public ApiResponse<RecruitmentApplicationPageResponse> getMyApplications(
             @Login LoginMember loginMember,
             @Valid @ModelAttribute RecruitmentApplicationSearchRequest request
@@ -33,10 +34,10 @@ public class RecruitmentApplicationController {
         return ApiResponse.ok(recruitmentApplicationService.getMyApplications(loginMember.memberId(), request));
     }
 
-    @GetMapping("/api/v1/recruitments/{recruitmentId}/applications")
+    @GetMapping
     public ApiResponse<RecruitmentApplicationPageResponse> getApplications(
             @Login LoginMember loginMember,
-            @PathVariable Long recruitmentId,
+            @RequestParam Long recruitmentId,
             @Valid @ModelAttribute RecruitmentApplicationSearchRequest request
     ) {
         return ApiResponse.ok(
@@ -44,11 +45,11 @@ public class RecruitmentApplicationController {
         );
     }
 
-    @PostMapping("/api/v1/recruitments/{recruitmentId}/applications")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<RecruitmentApplicationDetailResponse> createApplication(
             @Login LoginMember loginMember,
-            @PathVariable Long recruitmentId,
+            @RequestParam Long recruitmentId,
             @RequestBody @Valid RecruitmentApplicationCreateRequest request,
             HttpServletRequest httpRequest
     ) {
@@ -62,21 +63,17 @@ public class RecruitmentApplicationController {
         );
     }
 
-    @GetMapping("/api/v1/recruitments/{recruitmentId}/applications/{applicationId}")
+    @GetMapping("/{applicationId}")
     public ApiResponse<RecruitmentApplicationDetailResponse> getApplication(
             @Login LoginMember loginMember,
-            @PathVariable Long recruitmentId,
             @PathVariable Long applicationId
     ) {
-        return ApiResponse.ok(
-                recruitmentApplicationService.getApplication(loginMember.memberId(), recruitmentId, applicationId)
-        );
+        return ApiResponse.ok(recruitmentApplicationService.getApplication(loginMember.memberId(), applicationId));
     }
 
-    @PatchMapping("/api/v1/recruitments/{recruitmentId}/applications/{applicationId}/status")
+    @PatchMapping("/{applicationId}/status")
     public ApiResponse<RecruitmentApplicationDetailResponse> updateApplicationStatus(
             @Login LoginMember loginMember,
-            @PathVariable Long recruitmentId,
             @PathVariable Long applicationId,
             @RequestBody @Valid RecruitmentApplicationStatusUpdateRequest request,
             HttpServletRequest httpRequest
@@ -84,7 +81,6 @@ public class RecruitmentApplicationController {
         return ApiResponse.ok(
                 recruitmentApplicationService.updateApplicationStatus(
                         loginMember.memberId(),
-                        recruitmentId,
                         applicationId,
                         request,
                         httpRequest.getRemoteAddr()
@@ -92,28 +88,26 @@ public class RecruitmentApplicationController {
         );
     }
 
-    @DeleteMapping("/api/v1/recruitments/{recruitmentId}/applications/{applicationId}")
+    @DeleteMapping("/{applicationId}")
     public ApiResponse<Void> cancelApplication(@Login LoginMember loginMember,
-                                               @PathVariable Long recruitmentId,
                                                @PathVariable Long applicationId,
                                                HttpServletRequest httpRequest) {
         recruitmentApplicationService.cancelApplication(
                 loginMember.memberId(),
-                recruitmentId,
                 applicationId,
                 httpRequest.getRemoteAddr()
         );
         return ApiResponse.ok();
     }
 
-    @GetMapping("/api/v1/recruitment-applications/{applicationId}/messages")
+    @GetMapping("/{applicationId}/messages")
     public ApiResponse<ApplicationChatMessagePageResponse> getMessages(@Login LoginMember loginMember,
                                                                        @PathVariable Long applicationId,
                                                                        @Valid @ModelAttribute ApplicationChatMessageSearchRequest request) {
         return ApiResponse.ok(recruitmentApplicationService.getMessages(loginMember.memberId(), applicationId, request));
     }
 
-    @PostMapping("/api/v1/recruitment-applications/{applicationId}/messages")
+    @PostMapping("/{applicationId}/messages")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ApplicationChatMessageResponse> createMessage(@Login LoginMember loginMember,
                                                                      @PathVariable Long applicationId,
