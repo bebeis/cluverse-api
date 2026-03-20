@@ -19,7 +19,7 @@ public class NotificationPreference {
     @Column(nullable = false)
     private boolean comments = true;
 
-    @Column(nullable = false)
+    @Column(name = "group_notifications", nullable = false)
     private boolean groups = true;
 
     @Column(nullable = false)
