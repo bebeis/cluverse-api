@@ -91,18 +91,17 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
                 ));
 
         // when, then
-        mockMvc.perform(get("/api/v1/recruitments/{recruitmentId}/applications", 10L)
+        mockMvc.perform(get("/api/v1/recruitment-applications")
                         .session(createMemberSession())
+                        .queryParam("recruitmentId", "10")
                         .queryParam("status", "IN_REVIEW")
                         .queryParam("page", "1")
                         .queryParam("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.applications[0].applicationId").value(30))
                 .andDo(document("recruitment-applications/get-recruitment-applications",
-                        pathParameters(
-                                parameterWithName("recruitmentId").description("지원서를 조회할 모집글 ID")
-                        ),
                         queryParameters(
+                                parameterWithName("recruitmentId").description("지원서를 조회할 모집글 ID"),
                                 parameterWithName("status").description("지원 상태").optional(),
                                 parameterWithName("page").description("페이지 번호").optional(),
                                 parameterWithName("size").description("페이지 크기").optional()
@@ -118,8 +117,9 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
                 .thenReturn(createApplicationDetailResponse());
 
         // when, then
-        mockMvc.perform(post("/api/v1/recruitments/{recruitmentId}/applications", 10L)
+        mockMvc.perform(post("/api/v1/recruitment-applications")
                         .session(createMemberSession())
+                        .queryParam("recruitmentId", "10")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -140,7 +140,7 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.applicationId").value(30))
                 .andDo(document("recruitment-applications/create",
-                        pathParameters(
+                        queryParameters(
                                 parameterWithName("recruitmentId").description("지원할 모집글 ID")
                         ),
                         requestFields(
@@ -157,16 +157,15 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
     @Test
     void 지원서_상세_조회() throws Exception {
         // given
-        when(recruitmentApplicationService.getApplication(1L, 10L, 30L)).thenReturn(createReviewedApplicationDetailResponse());
+        when(recruitmentApplicationService.getApplication(1L, 30L)).thenReturn(createReviewedApplicationDetailResponse());
 
         // when, then
-        mockMvc.perform(get("/api/v1/recruitments/{recruitmentId}/applications/{applicationId}", 10L, 30L)
+        mockMvc.perform(get("/api/v1/recruitment-applications/{applicationId}", 30L)
                         .session(createMemberSession()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.applicationId").value(30))
                 .andDo(document("recruitment-applications/get-application",
                         pathParameters(
-                                parameterWithName("recruitmentId").description("모집글 ID"),
                                 parameterWithName("applicationId").description("조회할 지원서 ID")
                         ),
                         responseFields(applicationDetailResponseFields())
@@ -178,14 +177,13 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
         // given
         when(recruitmentApplicationService.updateApplicationStatus(
                 eq(1L),
-                eq(10L),
                 eq(30L),
                 any(RecruitmentApplicationStatusUpdateRequest.class),
                 eq("127.0.0.1")
         )).thenReturn(createApprovedApplicationDetailResponse());
 
         // when, then
-        mockMvc.perform(patch("/api/v1/recruitments/{recruitmentId}/applications/{applicationId}/status", 10L, 30L)
+        mockMvc.perform(patch("/api/v1/recruitment-applications/{applicationId}/status", 30L)
                         .session(createMemberSession())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -202,7 +200,6 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
                 .andExpect(jsonPath("$.data.status").value("APPROVED"))
                 .andDo(document("recruitment-applications/update-application-status",
                         pathParameters(
-                                parameterWithName("recruitmentId").description("모집글 ID"),
                                 parameterWithName("applicationId").description("상태를 변경할 지원서 ID")
                         ),
                         requestFields(
@@ -216,10 +213,10 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
     @Test
     void 지원서_취소() throws Exception {
         // given
-        doNothing().when(recruitmentApplicationService).cancelApplication(1L, 10L, 30L, "127.0.0.1");
+        doNothing().when(recruitmentApplicationService).cancelApplication(1L, 30L, "127.0.0.1");
 
         // when, then
-        mockMvc.perform(delete("/api/v1/recruitments/{recruitmentId}/applications/{applicationId}", 10L, 30L)
+        mockMvc.perform(delete("/api/v1/recruitment-applications/{applicationId}", 30L)
                         .session(createMemberSession())
                         .with(request -> {
                             request.setRemoteAddr("127.0.0.1");
@@ -228,7 +225,6 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
                 .andExpect(status().isOk())
                 .andDo(document("recruitment-applications/cancel-application",
                         pathParameters(
-                                parameterWithName("recruitmentId").description("모집글 ID"),
                                 parameterWithName("applicationId").description("취소할 지원서 ID")
                         ),
                         responseFields(voidResponseFields())

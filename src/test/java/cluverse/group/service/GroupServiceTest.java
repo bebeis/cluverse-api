@@ -8,12 +8,12 @@ import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupActivityType;
 import cluverse.group.domain.GroupCategory;
 import cluverse.group.domain.GroupVisibility;
+import cluverse.group.repository.dto.GroupMemberSummaryQueryDto;
 import cluverse.group.service.implement.GroupReader;
 import cluverse.group.service.implement.GroupWriter;
 import cluverse.group.service.request.GroupCreateRequest;
 import cluverse.group.service.request.GroupUpdateRequest;
 import cluverse.group.service.response.GroupDetailResponse;
-import cluverse.member.domain.Member;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -63,14 +63,14 @@ class GroupServiceTest {
         );
         Group group = createGroup(1L, 11L, 100L);
         Board board = createBoard(11L, "AI 프로젝트");
-        Member owner = createMember(100L, "luna");
+        GroupMemberSummaryQueryDto owner = createMemberSummary(100L, "luna");
 
         when(boardService.createGroupBoard("AI 프로젝트", "함께 만드는 AI 프로젝트 그룹")).thenReturn(board);
         when(groupWriter.create(100L, 11L, request)).thenReturn(group);
         when(groupReader.readActiveOrThrow(1L)).thenReturn(group);
-        when(groupReader.readMemberMap(List.of(100L))).thenReturn(Map.of(100L, owner));
-        when(groupReader.readInterestMap(List.of(1L, 2L))).thenReturn(Map.of());
-        when(groupReader.countOpenRecruitments(1L)).thenReturn(0L);
+        when(groupReader.readMemberSummaryMap(List.of(100L))).thenReturn(Map.of(100L, owner));
+        when(groupReader.readInterestNameMap(List.of(1L, 2L))).thenReturn(Map.of());
+        when(groupReader.countOpenRecruitments(List.of(1L))).thenReturn(Map.of(1L, 0L));
 
         // when
         GroupDetailResponse result = groupService.createGroup(100L, request);
@@ -123,12 +123,12 @@ class GroupServiceTest {
                 20,
                 List.of(1L)
         );
-        Member owner = createMember(100L, "luna");
+        GroupMemberSummaryQueryDto owner = createMemberSummary(100L, "luna");
 
         when(groupReader.readActiveOrThrow(1L)).thenReturn(group);
-        when(groupReader.readMemberMap(List.of(100L))).thenReturn(Map.of(100L, owner));
-        when(groupReader.readInterestMap(List.of(1L))).thenReturn(Map.of());
-        when(groupReader.countOpenRecruitments(1L)).thenReturn(0L);
+        when(groupReader.readMemberSummaryMap(List.of(100L))).thenReturn(Map.of(100L, owner));
+        when(groupReader.readInterestNameMap(List.of(1L))).thenReturn(Map.of());
+        when(groupReader.countOpenRecruitments(List.of(1L))).thenReturn(Map.of(1L, 0L));
         doAnswer(invocation -> {
             Group targetGroup = invocation.getArgument(0);
             GroupUpdateRequest updateRequest = invocation.getArgument(1);
@@ -197,9 +197,7 @@ class GroupServiceTest {
         return board;
     }
 
-    private Member createMember(Long memberId, String nickname) {
-        Member member = Member.createSocialMember(nickname);
-        ReflectionTestUtils.setField(member, "id", memberId);
-        return member;
+    private GroupMemberSummaryQueryDto createMemberSummary(Long memberId, String nickname) {
+        return new GroupMemberSummaryQueryDto(memberId, nickname, null);
     }
 }
