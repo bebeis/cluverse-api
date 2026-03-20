@@ -11,6 +11,7 @@ import cluverse.member.service.MemberService;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
 import cluverse.recruitment.domain.RecruitmentApplicationStatus;
+import cluverse.recruitment.repository.RecruitmentApplicationQueryRepository;
 import cluverse.recruitment.service.implement.RecruitmentApplicationReader;
 import cluverse.recruitment.service.implement.RecruitmentApplicationWriter;
 import cluverse.recruitment.service.request.RecruitmentApplicationCreateRequest;
@@ -47,6 +48,9 @@ class RecruitmentApplicationServiceTest {
 
     @Mock
     private MemberService memberService;
+
+    @Mock
+    private RecruitmentApplicationQueryRepository recruitmentApplicationQueryRepository;
 
     @InjectMocks
     private RecruitmentApplicationService recruitmentApplicationService;

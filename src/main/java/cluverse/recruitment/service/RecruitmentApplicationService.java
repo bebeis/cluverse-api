@@ -4,15 +4,15 @@ import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.group.domain.Group;
 import cluverse.group.service.GroupService;
-import cluverse.member.domain.Member;
-import cluverse.member.domain.MemberProfile;
 import cluverse.member.service.MemberService;
-import cluverse.recruitment.domain.ApplicationChatMessage;
 import cluverse.recruitment.domain.FormItem;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
 import cluverse.recruitment.domain.RecruitmentApplicationStatus;
 import cluverse.recruitment.exception.RecruitmentExceptionMessage;
+import cluverse.recruitment.repository.RecruitmentApplicationQueryRepository;
+import cluverse.recruitment.repository.dto.ApplicationChatMessageQueryDto;
+import cluverse.recruitment.repository.dto.RecruitmentApplicationSummaryQueryDto;
 import cluverse.recruitment.service.implement.RecruitmentApplicationReader;
 import cluverse.recruitment.service.implement.RecruitmentApplicationWriter;
 import cluverse.recruitment.service.request.ApplicationChatMessageCreateRequest;
@@ -32,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -41,22 +40,30 @@ public class RecruitmentApplicationService {
 
     private final RecruitmentApplicationReader recruitmentApplicationReader;
     private final RecruitmentApplicationWriter recruitmentApplicationWriter;
+    private final RecruitmentApplicationQueryRepository recruitmentApplicationQueryRepository;
     private final GroupService groupService;
     private final MemberService memberService;
 
     @Transactional(readOnly = true)
     public RecruitmentApplicationPageResponse getMyApplications(Long memberId,
                                                                RecruitmentApplicationSearchRequest request) {
-        List<RecruitmentApplication> applications = recruitmentApplicationReader.readMyApplications(memberId, request);
-        List<RecruitmentApplication> pagedApplications = paginate(
-                applications, request.pageOrDefault(), request.sizeOrDefault()
-        );
-        List<RecruitmentApplicationSummaryResponse> pageItems = toSummaryResponses(pagedApplications);
+        List<RecruitmentApplicationSummaryQueryDto> queriedApplications =
+                recruitmentApplicationQueryRepository.findMyApplicationSummaries(
+                        memberId,
+                        request.status(),
+                        request.pageOrDefault(),
+                        request.sizeOrDefault()
+                );
+        List<RecruitmentApplicationSummaryResponse> pageItems = trimToPage(
+                queriedApplications, request.sizeOrDefault()
+        ).stream()
+                .map(this::toSummaryResponse)
+                .toList();
         return new RecruitmentApplicationPageResponse(
                 pageItems,
                 request.pageOrDefault(),
                 request.sizeOrDefault(),
-                applications.size() > request.pageOrDefault() * request.sizeOrDefault()
+                queriedApplications.size() > request.sizeOrDefault()
         );
     }
 
@@ -66,16 +73,23 @@ public class RecruitmentApplicationService {
                                                               RecruitmentApplicationSearchRequest request) {
         Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(recruitmentId);
         validateManager(memberId, recruitment.getGroupId());
-        List<RecruitmentApplication> applications = recruitmentApplicationReader.readApplications(recruitmentId, request);
-        List<RecruitmentApplication> pagedApplications = paginate(
-                applications, request.pageOrDefault(), request.sizeOrDefault()
-        );
-        List<RecruitmentApplicationSummaryResponse> pageItems = toSummaryResponses(pagedApplications);
+        List<RecruitmentApplicationSummaryQueryDto> queriedApplications =
+                recruitmentApplicationQueryRepository.findRecruitmentApplicationSummaries(
+                        recruitmentId,
+                        request.status(),
+                        request.pageOrDefault(),
+                        request.sizeOrDefault()
+                );
+        List<RecruitmentApplicationSummaryResponse> pageItems = trimToPage(
+                queriedApplications, request.sizeOrDefault()
+        ).stream()
+                .map(this::toSummaryResponse)
+                .toList();
         return new RecruitmentApplicationPageResponse(
                 pageItems,
                 request.pageOrDefault(),
                 request.sizeOrDefault(),
-                applications.size() > request.pageOrDefault() * request.sizeOrDefault()
+                queriedApplications.size() > request.sizeOrDefault()
         );
     }
 
@@ -122,20 +136,22 @@ public class RecruitmentApplicationService {
                                                           ApplicationChatMessageSearchRequest request) {
         RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
         validateParticipantOrManager(memberId, application);
-        List<ApplicationChatMessage> filteredMessages = filterMessages(application.getMessages(), request.beforeMessageId());
-        List<ApplicationChatMessage> pageMessages = paginateMessages(filteredMessages, request.limitOrDefault());
-        Map<Long, Member> senderMap = memberService.readMemberMap(pageMessages.stream()
-                .map(ApplicationChatMessage::getSenderId)
-                .distinct()
-                .toList());
-        List<ApplicationChatMessageResponse> pageItems = pageMessages.stream()
-                .map(message -> toMessageResponse(memberId, message, senderMap))
+        List<ApplicationChatMessageQueryDto> queriedMessages =
+                recruitmentApplicationQueryRepository.findApplicationMessages(
+                        applicationId,
+                        request.beforeMessageId(),
+                        request.limitOrDefault()
+                );
+        List<ApplicationChatMessageResponse> pageItems = trimToPage(
+                queriedMessages, request.limitOrDefault()
+        ).stream()
+                .map(message -> toMessageResponse(memberId, message))
                 .toList();
         return new ApplicationChatMessagePageResponse(
                 pageItems,
                 request.beforeMessageId(),
                 request.limitOrDefault(),
-                filteredMessages.size() > pageItems.size()
+                queriedMessages.size() > request.limitOrDefault()
         );
     }
 
@@ -146,66 +162,39 @@ public class RecruitmentApplicationService {
         RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
         validateParticipantOrManager(memberId, application);
         recruitmentApplicationWriter.createMessage(application, memberId, request, clientIp);
-        return toMessageResponse(
-                memberId,
-                application.getMessages().getLast(),
-                memberService.readMemberMap(List.of(memberId))
-        );
+        ApplicationChatMessageQueryDto message =
+                recruitmentApplicationQueryRepository.findApplicationMessages(applicationId, null, 1).getFirst();
+        return toMessageResponse(memberId, message);
     }
 
-    private List<RecruitmentApplicationSummaryResponse> toSummaryResponses(List<RecruitmentApplication> applications) {
-        if (applications.isEmpty()) {
-            return List.of();
-        }
-
-        Map<Long, Recruitment> recruitmentMap = recruitmentApplicationReader.readRecruitmentMap(applications.stream()
-                .map(RecruitmentApplication::getRecruitmentId)
-                .distinct()
-                .toList());
-        Map<Long, Member> memberMap = memberService.readMemberMap(applications.stream()
-                .map(RecruitmentApplication::getApplicantId)
-                .distinct()
-                .toList());
-
-        return applications.stream()
-                .map(application -> toSummaryResponse(application, recruitmentMap, memberMap))
-                .toList();
-    }
-
-    private RecruitmentApplicationSummaryResponse toSummaryResponse(RecruitmentApplication application,
-                                                                    Map<Long, Recruitment> recruitmentMap,
-                                                                    Map<Long, Member> memberMap) {
-        Recruitment recruitment = recruitmentMap.get(application.getRecruitmentId());
-        Member applicant = memberMap.get(application.getApplicantId());
-        MemberProfile profile = applicant == null ? null : applicant.getProfile();
-
+    private RecruitmentApplicationSummaryResponse toSummaryResponse(RecruitmentApplicationSummaryQueryDto application) {
         return new RecruitmentApplicationSummaryResponse(
-                application.getId(),
-                application.getRecruitmentId(),
-                recruitment == null ? null : recruitment.getGroupId(),
-                recruitment == null ? null : recruitment.getTitle(),
-                application.getApplicantId(),
-                applicant == null ? null : applicant.getNickname(),
-                profile == null ? null : profile.getProfileImageUrl(),
-                application.getPosition(),
-                application.getPortfolioUrl(),
-                application.getStatus(),
-                application.getCreatedAt(),
-                application.getReviewedAt()
+                application.applicationId(),
+                application.recruitmentId(),
+                application.groupId(),
+                application.recruitmentTitle(),
+                application.applicantId(),
+                application.applicantNickname(),
+                application.applicantProfileImageUrl(),
+                application.position(),
+                application.portfolioUrl(),
+                application.status(),
+                application.createdAt(),
+                application.reviewedAt()
         );
     }
 
     private RecruitmentApplicationDetailResponse toDetailResponse(RecruitmentApplication application) {
         Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(application.getRecruitmentId());
-        Map<Long, Member> memberMap = memberService.readMemberMap(
+        Map<Long, cluverse.member.domain.Member> memberMap = memberService.readMemberMap(
                 java.util.stream.Stream.of(application.getApplicantId(), application.getReviewedBy())
-                        .filter(Objects::nonNull)
+                        .filter(java.util.Objects::nonNull)
                         .distinct()
                         .toList()
         );
-        Member applicant = memberMap.get(application.getApplicantId());
-        Member reviewer = memberMap.get(application.getReviewedBy());
-        MemberProfile profile = applicant == null ? null : applicant.getProfile();
+        cluverse.member.domain.Member applicant = memberMap.get(application.getApplicantId());
+        cluverse.member.domain.Member reviewer = memberMap.get(application.getReviewedBy());
+        cluverse.member.domain.MemberProfile profile = applicant == null ? null : applicant.getProfile();
 
         return new RecruitmentApplicationDetailResponse(
                 application.getId(),
@@ -244,41 +233,22 @@ public class RecruitmentApplicationService {
     }
 
     private ApplicationChatMessageResponse toMessageResponse(Long memberId,
-                                                             ApplicationChatMessage message,
-                                                             Map<Long, Member> senderMap) {
-        Member sender = senderMap.get(message.getSenderId());
-        MemberProfile profile = sender == null ? null : sender.getProfile();
+                                                             ApplicationChatMessageQueryDto message) {
         return new ApplicationChatMessageResponse(
-                message.getId(),
-                message.getApplication().getId(),
-                message.getSenderId(),
-                sender == null ? null : sender.getNickname(),
-                profile == null ? null : profile.getProfileImageUrl(),
-                message.getContent(),
-                memberId != null && memberId.equals(message.getSenderId()),
+                message.applicationChatMessageId(),
+                message.applicationId(),
+                message.senderId(),
+                message.senderNickname(),
+                message.senderProfileImageUrl(),
+                message.content(),
+                memberId != null && memberId.equals(message.senderId()),
                 message.isRead(),
-                message.getCreatedAt()
+                message.createdAt()
         );
     }
 
-    private List<RecruitmentApplication> paginate(List<RecruitmentApplication> items, int page, int size) {
-        int fromIndex = Math.min((page - 1) * size, items.size());
-        int toIndex = Math.min(fromIndex + size, items.size());
-        return items.subList(fromIndex, toIndex);
-    }
-
-    private List<ApplicationChatMessage> filterMessages(List<ApplicationChatMessage> messages, Long beforeMessageId) {
-        if (beforeMessageId == null) {
-            return messages;
-        }
-        return messages.stream()
-                .filter(message -> message.getId() < beforeMessageId)
-                .toList();
-    }
-
-    private List<ApplicationChatMessage> paginateMessages(List<ApplicationChatMessage> messages, int limit) {
-        int toIndex = Math.min(limit, messages.size());
-        return messages.subList(0, toIndex);
+    private <T> List<T> trimToPage(List<T> items, int size) {
+        return items.size() > size ? items.subList(0, size) : items;
     }
 
     private void validateManager(Long memberId, Long groupId) {
