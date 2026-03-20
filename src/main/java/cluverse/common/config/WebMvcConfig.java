@@ -30,7 +30,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
             "/api/v1/boards/*/home",
             "/api/v1/majors",
             "/api/v1/interests",
-            "/api/v1/terms"
+            "/api/v1/terms",
+            "/api/v1/members/nickname/availability"
     );
 
     private static final List<String> PROTECTED_GET_PATH_PATTERNS = List.of(

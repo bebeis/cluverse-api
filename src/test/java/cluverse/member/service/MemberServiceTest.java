@@ -12,11 +12,13 @@ import cluverse.member.domain.MemberStatus;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.member.service.implement.MemberWriter;
 import cluverse.member.service.request.AddInterestRequest;
+import cluverse.member.service.request.MemberNicknameUpdateRequest;
 import cluverse.member.service.request.MemberPasswordUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
+import cluverse.member.service.response.MemberNicknameAvailabilityResponse;
 import cluverse.member.service.response.MemberProfileResponse;
 import cluverse.member.service.response.MemberProfileSummaryResponse;
 import org.junit.jupiter.api.Test;
@@ -263,6 +265,46 @@ class MemberServiceTest {
         assertThat(result.entranceYear()).isEqualTo(2022);
         assertThat(result.postCount()).isZero();
         verify(memberWriter).updateProfile(member, request);
+    }
+
+    @Test
+    void 닉네임_수정시_서비스가_수정후_응답을_다시_조립한다() {
+        Member member = createMember(1L, "luna", 10L);
+        MemberNicknameUpdateRequest request = new MemberNicknameUpdateRequest("nova");
+        MemberProfileSummaryResponse university = new MemberProfileSummaryResponse(
+                10L,
+                "클루대",
+                "https://cdn.example.com/badge.png"
+        );
+
+        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(memberReader.readUniversitySummary(10L)).thenReturn(university);
+        when(memberReader.countFollowers(1L)).thenReturn(3L);
+        when(memberReader.countFollowings(1L)).thenReturn(4L);
+        when(memberReader.countPosts(1L)).thenReturn(5L);
+        doAnswer(invocation -> {
+            Member target = invocation.getArgument(0);
+            String nickname = invocation.getArgument(1);
+            target.updateNickname(nickname);
+            return null;
+        }).when(memberWriter).updateNickname(any(Member.class), any(String.class));
+
+        MemberProfileResponse result = memberService.updateNickname(1L, request);
+
+        assertThat(result.nickname()).isEqualTo("nova");
+        assertThat(result.followerCount()).isEqualTo(3L);
+        verify(memberWriter).updateNickname(member, "nova");
+    }
+
+    @Test
+    void 닉네임_중복_확인은_사용_가능_여부를_반환한다() {
+        when(memberReader.existsByNickname("luna")).thenReturn(true);
+
+        MemberNicknameAvailabilityResponse result = memberService.checkNicknameAvailability("luna");
+
+        assertThat(result.nickname()).isEqualTo("luna");
+        assertThat(result.available()).isFalse();
+        verify(memberReader).existsByNickname("luna");
     }
 
     @Test

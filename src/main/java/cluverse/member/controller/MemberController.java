@@ -8,6 +8,8 @@ import cluverse.member.service.MemberPostService;
 import cluverse.member.service.MemberProfileImageService;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
+import cluverse.member.service.request.MemberNicknameCheckRequest;
+import cluverse.member.service.request.MemberNicknameUpdateRequest;
 import cluverse.member.service.request.MemberPasswordUpdateRequest;
 import cluverse.member.service.request.MemberPostPageRequest;
 import cluverse.member.service.request.MemberProfileImagePresignedUrlRequest;
@@ -18,6 +20,7 @@ import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberMajorResponse;
+import cluverse.member.service.response.MemberNicknameAvailabilityResponse;
 import cluverse.member.service.response.MemberProfileResponse;
 import cluverse.member.service.response.MemberProfileImagePresignedUrlResponse;
 import cluverse.post.service.response.PostPageResponse;
@@ -49,10 +52,23 @@ public class MemberController {
         return ApiResponse.ok(memberService.getProfile(loginMember.memberId(), memberId));
     }
 
+    @GetMapping("/nickname/availability")
+    public ApiResponse<MemberNicknameAvailabilityResponse> checkNicknameAvailability(
+            @Valid @ModelAttribute MemberNicknameCheckRequest request
+    ) {
+        return ApiResponse.ok(memberService.checkNicknameAvailability(request.nickname()));
+    }
+
     @PutMapping("/me/profile")
     public ApiResponse<MemberProfileResponse> updateProfile(@Login LoginMember loginMember,
                                                              @RequestBody @Valid UpdateProfileRequest request) {
         return ApiResponse.ok(memberService.updateProfile(loginMember.memberId(), request));
+    }
+
+    @PatchMapping("/me/nickname")
+    public ApiResponse<MemberProfileResponse> updateNickname(@Login LoginMember loginMember,
+                                                             @RequestBody @Valid MemberNicknameUpdateRequest request) {
+        return ApiResponse.ok(memberService.updateNickname(loginMember.memberId(), request));
     }
 
     @PutMapping("/me/university")

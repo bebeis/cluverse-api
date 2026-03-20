@@ -12,12 +12,14 @@ import cluverse.member.service.MemberService;
 import cluverse.member.service.MemberUniversityService;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
+import cluverse.member.service.request.MemberNicknameUpdateRequest;
 import cluverse.member.service.request.MemberPasswordUpdateRequest;
 import cluverse.member.service.request.MemberUniversityUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
+import cluverse.member.service.response.MemberNicknameAvailabilityResponse;
 import cluverse.member.service.response.MemberMajorResponse;
 import cluverse.member.service.response.MemberProfileImagePresignedUrlResponse;
 import cluverse.member.service.response.MemberProfileResponse;
@@ -182,6 +184,78 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("linkEtc").type(JsonFieldType.STRING).description("기타 링크").optional(),
                                 fieldWithPath("isPublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 여부"),
                                 fieldWithPath("visibleFields").type(JsonFieldType.ARRAY).description("비공개 프로필일 때 외부에 노출할 필드 목록").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.memberId").type(JsonFieldType.NUMBER).description("회원 ID"),
+                                fieldWithPath("data.nickname").type(JsonFieldType.STRING).description("닉네임"),
+                                fieldWithPath("data.university.universityId").type(JsonFieldType.NUMBER).description("학교 ID"),
+                                fieldWithPath("data.university.universityName").type(JsonFieldType.STRING).description("학교명"),
+                                fieldWithPath("data.university.universityBadgeImageUrl").type(JsonFieldType.STRING).description("학교 배지 이미지 URL"),
+                                fieldWithPath("data.verificationStatus").type(JsonFieldType.STRING).description("학생 인증 상태"),
+                                fieldWithPath("data.bio").type(JsonFieldType.STRING).description("자기소개"),
+                                fieldWithPath("data.entranceYear").type(JsonFieldType.NUMBER).description("입학년도").optional(),
+                                fieldWithPath("data.profileImageUrl").type(JsonFieldType.STRING).description("프로필 이미지 URL"),
+                                fieldWithPath("data.linkGithub").type(JsonFieldType.STRING).description("GitHub 링크"),
+                                fieldWithPath("data.linkNotion").type(JsonFieldType.STRING).description("Notion 링크"),
+                                fieldWithPath("data.linkPortfolio").type(JsonFieldType.STRING).description("포트폴리오 링크"),
+                                fieldWithPath("data.linkInstagram").type(JsonFieldType.STRING).description("Instagram 링크"),
+                                fieldWithPath("data.linkEtc").type(JsonFieldType.STRING).description("기타 링크"),
+                                fieldWithPath("data.isPublic").type(JsonFieldType.BOOLEAN).description("프로필 전체 공개 여부"),
+                                fieldWithPath("data.visibleFields").type(JsonFieldType.ARRAY).description("외부에 노출할 필드 목록"),
+                                fieldWithPath("data.isFollowing").type(JsonFieldType.BOOLEAN).description("현재 로그인 사용자의 팔로우 여부"),
+                                fieldWithPath("data.isBlocked").type(JsonFieldType.BOOLEAN).description("현재 로그인 사용자의 차단 여부"),
+                                fieldWithPath("data.followerCount").type(JsonFieldType.NUMBER).description("팔로워 수"),
+                                fieldWithPath("data.followingCount").type(JsonFieldType.NUMBER).description("팔로잉 수"),
+                                fieldWithPath("data.postCount").type(JsonFieldType.NUMBER).description("작성한 게시글 수")
+                        )
+                ));
+    }
+
+    @Test
+    void 닉네임_중복_확인() throws Exception {
+        when(memberService.checkNicknameAvailability("luna"))
+                .thenReturn(new MemberNicknameAvailabilityResponse("luna", false));
+
+        mockMvc.perform(get("/api/v1/members/nickname/availability")
+                        .queryParam("nickname", "luna"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.nickname").value("luna"))
+                .andExpect(jsonPath("$.data.available").value(false))
+                .andDo(document("members/check-nickname-availability",
+                        queryParameters(
+                                parameterWithName("nickname").description("중복 확인할 닉네임")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.nickname").type(JsonFieldType.STRING).description("확인한 닉네임"),
+                                fieldWithPath("data.available").type(JsonFieldType.BOOLEAN).description("사용 가능 여부")
+                        )
+                ));
+    }
+
+    @Test
+    void 닉네임_수정() throws Exception {
+        when(memberService.updateNickname(anyLong(), any(MemberNicknameUpdateRequest.class)))
+                .thenReturn(createProfileResponse(1L, true));
+
+        mockMvc.perform(patch("/api/v1/members/me/nickname")
+                        .session(createSession())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "nickname": "nova"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.memberId").value(1))
+                .andDo(document("members/update-nickname",
+                        requestFields(
+                                fieldWithPath("nickname").type(JsonFieldType.STRING).description("변경할 닉네임")
                         ),
                         responseFields(
                                 fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),

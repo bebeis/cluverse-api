@@ -11,11 +11,13 @@ import cluverse.member.service.implement.MemberReader;
 import cluverse.member.service.implement.MemberWriter;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
+import cluverse.member.service.request.MemberNicknameUpdateRequest;
 import cluverse.member.service.request.MemberPasswordUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
+import cluverse.member.service.response.MemberNicknameAvailabilityResponse;
 import cluverse.member.service.response.MemberMajorResponse;
 import cluverse.member.service.response.MemberProfileResponse;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +48,17 @@ public class MemberService {
         Member member = memberReader.readOrThrow(memberId);
         memberWriter.updateProfile(member, request);
         return buildProfileResponse(memberId, member);
+    }
+
+    public MemberProfileResponse updateNickname(Long memberId, MemberNicknameUpdateRequest request) {
+        Member member = memberReader.readOrThrow(memberId);
+        memberWriter.updateNickname(member, request.nickname());
+        return buildProfileResponse(memberId, member);
+    }
+
+    @Transactional(readOnly = true)
+    public MemberNicknameAvailabilityResponse checkNicknameAvailability(String nickname) {
+        return new MemberNicknameAvailabilityResponse(nickname, !memberReader.existsByNickname(nickname));
     }
 
     public MemberProfileResponse updateUniversity(Long memberId, Long universityId) {

@@ -47,6 +47,14 @@ public class MemberWriter {
         );
     }
 
+    public void updateNickname(Member member, String nickname) {
+        if (member.getNickname().equals(nickname)) {
+            return;
+        }
+        validateNicknameNotDuplicated(nickname);
+        member.updateNickname(nickname);
+    }
+
     public void updateUniversity(Member member, Long universityId) {
         member.assignUniversity(universityId);
     }
@@ -144,6 +152,12 @@ public class MemberWriter {
     private void validateInterestExists(Long interestId) {
         if (!interestRepository.existsById(interestId)) {
             throw new NotFoundException(MemberExceptionMessage.INTEREST_NOT_FOUND.getMessage());
+        }
+    }
+
+    private void validateNicknameNotDuplicated(String nickname) {
+        if (memberRepository.existsByNickname(nickname)) {
+            throw new BadRequestException(MemberExceptionMessage.NICKNAME_ALREADY_EXISTS.getMessage());
         }
     }
 }

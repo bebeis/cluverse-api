@@ -118,6 +118,15 @@ class MemberReaderTest {
         assertThat(result).isSameAs(member);
     }
 
+    @Test
+    void 닉네임_존재_여부를_확인할_수_있다() {
+        when(memberRepository.existsByNickname("luna")).thenReturn(true);
+
+        boolean result = memberReader.existsByNickname("luna");
+
+        assertThat(result).isTrue();
+    }
+
     private Member createMember(Long memberId, String nickname, Long universityId) {
         Member member = Member.create(nickname, universityId);
         ReflectionTestUtils.setField(member, "id", memberId);

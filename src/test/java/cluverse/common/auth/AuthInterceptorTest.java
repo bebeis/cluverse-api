@@ -27,7 +27,8 @@ class AuthInterceptorTest {
                     "/api/v1/boards/*/home",
                     "/api/v1/majors",
                     "/api/v1/interests",
-                    "/api/v1/terms"
+                    "/api/v1/terms",
+                    "/api/v1/members/nickname/availability"
             ),
             List.of(
                     "/api/v1/groups/me"
@@ -77,6 +78,14 @@ class AuthInterceptorTest {
     @Test
     void 비회원도_전공을_조회할_수_있다() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/majors");
+
+        assertThatCode(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void 비회원도_닉네임_중복_확인을_할_수_있다() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/members/nickname/availability");
 
         assertThatCode(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
                 .doesNotThrowAnyException();

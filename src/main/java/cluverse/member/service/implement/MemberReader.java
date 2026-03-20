@@ -153,6 +153,10 @@ public class MemberReader {
                 .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.MEMBER_NOT_FOUND.getMessage()));
     }
 
+    public boolean existsByNickname(String nickname) {
+        return memberRepository.existsByNickname(nickname);
+    }
+
     public Map<Long, Member> readMemberMap(Collection<Long> memberIds) {
         if (memberIds == null || memberIds.isEmpty()) {
             return Map.of();
