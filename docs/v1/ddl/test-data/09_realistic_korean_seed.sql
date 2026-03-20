@@ -36,6 +36,14 @@ SET @POST_START_ID = 970001;
 SET @POST_END_ID = 970018;
 SET @COMMENT_START_ID = 980001;
 SET @COMMENT_END_ID = 980021;
+SET @FRONT_NOTIFICATION_START_ID = 990001;
+SET @FRONT_NOTIFICATION_END_ID = 990008;
+SET @FRONT_REPORT_START_ID = 991001;
+SET @FRONT_REPORT_END_ID = 991003;
+SET @FRONT_CALENDAR_EVENT_START_ID = 992001;
+SET @FRONT_CALENDAR_EVENT_END_ID = 992008;
+SET @FRONT_CAMPUS_EVENT_START_ID = 993001;
+SET @FRONT_CAMPUS_EVENT_END_ID = 993004;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -45,7 +53,11 @@ TRUNCATE TABLE application_status_history;
 TRUNCATE TABLE recruitment_application;
 TRUNCATE TABLE form_item;
 TRUNCATE TABLE recruitment;
+TRUNCATE TABLE calendar_event;
+TRUNCATE TABLE campus_event;
 TRUNCATE TABLE calendar_item;
+TRUNCATE TABLE member_report_evidence_image;
+TRUNCATE TABLE member_report;
 TRUNCATE TABLE group_member_history;
 TRUNCATE TABLE group_member;
 TRUNCATE TABLE group_interest;
@@ -69,6 +81,8 @@ TRUNCATE TABLE interest;
 TRUNCATE TABLE member_major;
 TRUNCATE TABLE major;
 TRUNCATE TABLE board;
+TRUNCATE TABLE notification_preference;
+TRUNCATE TABLE notification;
 TRUNCATE TABLE notification_setting;
 TRUNCATE TABLE member_terms_agreement;
 TRUNCATE TABLE member_credential;
@@ -195,6 +209,7 @@ INSERT INTO member_auth (
 INSERT INTO member_profile (
     member_id,
     bio,
+    entrance_year,
     profile_image_url,
     link_github,
     link_notion,
@@ -206,30 +221,30 @@ INSERT INTO member_profile (
     created_at,
     updated_at
 ) VALUES
-    (920001, '서울대 컴공. Spring와 모임 운영에 관심이 많고 해커톤 팀빌딩을 자주 합니다.', 'https://i.pravatar.cc/150?u=920001', 'https://github.com/minjun-dev-demo', 'https://www.notion.so/cluverse/minjun-dev', 'https://picsum.photos/seed/portfolio-minjun/800/600', NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'portfolio', TRUE, 'instagram', FALSE), DATE_SUB(@SEED_NOW, INTERVAL 140 DAY), @SEED_NOW),
-    (920002, '연세대 경영. PM 세션과 사이드프로젝트를 자주 열고 운영합니다.', 'https://i.pravatar.cc/150?u=920002', NULL, 'https://www.notion.so/cluverse/seoyeon-pm', NULL, 'https://instagram.com/seoyeon.pm.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', FALSE, 'portfolio', FALSE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 132 DAY), @SEED_NOW),
-    (920003, '고려대 전자전기. 임베디드와 회로 설계를 좋아합니다.', 'https://i.pravatar.cc/150?u=920003', 'https://github.com/dohyeon-circuit-demo', NULL, NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 128 DAY), @SEED_NOW),
-    (920004, '중앙대 심리. 사용자 리서치와 인터뷰 정리에 강점이 있습니다.', 'https://i.pravatar.cc/150?u=920004', NULL, 'https://www.notion.so/cluverse/haeun-mind', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 121 DAY), @SEED_NOW),
-    (920005, 'KAIST AI. 창업 아이디어 검증과 데이터 기반 제품 설계를 좋아합니다.', 'https://i.pravatar.cc/150?u=920005', 'https://github.com/jiwoo-startup-demo', 'https://www.notion.so/cluverse/jiwoo-startup', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 119 DAY), @SEED_NOW),
-    (920006, '한양대 소프트웨어. 밴드 보컬과 웹 개발을 같이 하고 있습니다.', 'https://i.pravatar.cc/150?u=920006', 'https://github.com/yejun-band-demo', NULL, NULL, 'https://instagram.com/yejun.band.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 116 DAY), @SEED_NOW),
-    (920007, '경희대 스포츠과학. 풋살 번개와 교내 리그 정보에 빠릅니다.', 'https://i.pravatar.cc/150?u=920007', NULL, NULL, NULL, 'https://instagram.com/yunseo.futsal.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 112 DAY), @SEED_NOW),
-    (920008, 'POSTECH AI. 논문 읽기 모임과 데이터 파이프라인에 관심이 큽니다.', 'https://i.pravatar.cc/150?u=920008', 'https://github.com/hyunwoo-data-demo', 'https://www.notion.so/cluverse/hyunwoo-data', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 108 DAY), @SEED_NOW),
-    (920009, '성균관대 경제. 마케팅과 포지셔닝 정리를 자주 도와줍니다.', 'https://i.pravatar.cc/150?u=920009', NULL, 'https://www.notion.so/cluverse/chaewon-brand', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 104 DAY), @SEED_NOW),
-    (920010, '홍대 디자인. UX와 브랜딩, 포트폴리오 피드백을 자주 합니다.', 'https://i.pravatar.cc/150?u=920010', NULL, NULL, 'https://picsum.photos/seed/portfolio-sua/800/600', 'https://instagram.com/sua.ux.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'portfolio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 99 DAY), @SEED_NOW),
-    (920011, '서강대 경제. 러닝 크루 운영하면서 주말 번개를 자주 엽니다.', 'https://i.pravatar.cc/150?u=920011', NULL, NULL, NULL, 'https://instagram.com/taeyun.run.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 95 DAY), @SEED_NOW),
-    (920012, '홍대 미디어. 드로잉과 전시 후기 글을 자주 올립니다.', 'https://i.pravatar.cc/150?u=920012', NULL, 'https://www.notion.so/cluverse/minji-art', 'https://picsum.photos/seed/portfolio-minji/800/600', 'https://instagram.com/minji.art.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'portfolio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 92 DAY), @SEED_NOW),
-    (920013, '부산대 소프트웨어. 백엔드 스터디 정리 글을 꾸준히 올립니다.', 'https://i.pravatar.cc/150?u=920013', 'https://github.com/gaeul-backend-demo', NULL, NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 88 DAY), @SEED_NOW),
-    (920014, '서울대 컴공. 프론트엔드와 커뮤니티 운영 모더레이션을 맡고 있습니다.', 'https://i.pravatar.cc/150?u=920014', 'https://github.com/junho-front-demo', 'https://www.notion.so/cluverse/junho-front', 'https://picsum.photos/seed/portfolio-junho/800/600', NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'portfolio', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 84 DAY), @SEED_NOW),
-    (920015, '고려대 경영. 브랜딩, 카피라이팅, 행사 포스터 작업을 즐깁니다.', 'https://i.pravatar.cc/150?u=920015', NULL, NULL, 'https://picsum.photos/seed/portfolio-yuna/800/600', 'https://instagram.com/yuna.branding.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'portfolio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 80 DAY), @SEED_NOW),
-    (920016, '연세대 AI. 모델 실험 기록을 잘 남기고, 프론트에도 관심이 있습니다.', 'https://i.pravatar.cc/150?u=920016', 'https://github.com/siwoo-ai-demo', 'https://www.notion.so/cluverse/siwoo-ai', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 75 DAY), @SEED_NOW),
-    (920017, '성균관대 심리. 독서모임과 진로 관련 글을 즐겨 읽습니다.', 'https://i.pravatar.cc/150?u=920017', NULL, NULL, NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 71 DAY), @SEED_NOW),
-    (920018, '한양대 전자전기. 드럼 연주와 오디오 장비에 관심이 많습니다.', 'https://i.pravatar.cc/150?u=920018', NULL, NULL, NULL, 'https://instagram.com/jaehyun.drum.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 69 DAY), @SEED_NOW),
-    (920019, '경희대 스포츠과학. 풋살 크루장으로 경기 일정 조율을 맡고 있습니다.', 'https://i.pravatar.cc/150?u=920019', NULL, NULL, NULL, 'https://instagram.com/dain.ball.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 66 DAY), @SEED_NOW),
-    (920020, '중앙대 경제. 취업스터디와 금융권 인턴 정보에 관심이 많습니다.', 'https://i.pravatar.cc/150?u=920020', NULL, 'https://www.notion.so/cluverse/rowoon-econ', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 62 DAY), @SEED_NOW),
-    (920021, '서강대 미디어. 오프라인 영어회화 번개 위주로 활동합니다.', 'https://i.pravatar.cc/150?u=920021', NULL, NULL, NULL, 'https://instagram.com/bora.english.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 58 DAY), @SEED_NOW),
-    (920022, '홍대 미디어. 영상 촬영과 편집 파이프라인 정리에 익숙합니다.', 'https://i.pravatar.cc/150?u=920022', NULL, 'https://www.notion.so/cluverse/hangyeol-media', 'https://picsum.photos/seed/portfolio-hangyeol/800/600', NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'portfolio', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 54 DAY), @SEED_NOW),
-    (920023, 'KAIST 전자전기. 로봇과 AI 시스템 연동 쪽을 주로 다룹니다.', 'https://i.pravatar.cc/150?u=920023', 'https://github.com/jiho-robot-demo', NULL, NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 50 DAY), @SEED_NOW),
-    (920024, '클루버스 운영 관리자. 인증 검수와 커뮤니티 운영 정책을 관리합니다.', 'https://i.pravatar.cc/150?u=920024', NULL, NULL, NULL, NULL, 'https://picsum.photos/seed/ops-admin/800/600', TRUE, JSON_OBJECT('bio', TRUE, 'etc', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 200 DAY), @SEED_NOW);
+    (920001, '서울대 컴공. Spring와 모임 운영에 관심이 많고 해커톤 팀빌딩을 자주 합니다.', 2021, 'https://i.pravatar.cc/150?u=920001', 'https://github.com/minjun-dev-demo', 'https://www.notion.so/cluverse/minjun-dev', 'https://picsum.photos/seed/portfolio-minjun/800/600', NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'portfolio', TRUE, 'instagram', FALSE), DATE_SUB(@SEED_NOW, INTERVAL 140 DAY), @SEED_NOW),
+    (920002, '연세대 경영. PM 세션과 사이드프로젝트를 자주 열고 운영합니다.', 2021, 'https://i.pravatar.cc/150?u=920002', NULL, 'https://www.notion.so/cluverse/seoyeon-pm', NULL, 'https://instagram.com/seoyeon.pm.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', FALSE, 'portfolio', FALSE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 132 DAY), @SEED_NOW),
+    (920003, '고려대 전자전기. 임베디드와 회로 설계를 좋아합니다.', 2020, 'https://i.pravatar.cc/150?u=920003', 'https://github.com/dohyeon-circuit-demo', NULL, NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 128 DAY), @SEED_NOW),
+    (920004, '중앙대 심리. 사용자 리서치와 인터뷰 정리에 강점이 있습니다.', 2022, 'https://i.pravatar.cc/150?u=920004', NULL, 'https://www.notion.so/cluverse/haeun-mind', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 121 DAY), @SEED_NOW),
+    (920005, 'KAIST AI. 창업 아이디어 검증과 데이터 기반 제품 설계를 좋아합니다.', 2021, 'https://i.pravatar.cc/150?u=920005', 'https://github.com/jiwoo-startup-demo', 'https://www.notion.so/cluverse/jiwoo-startup', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 119 DAY), @SEED_NOW),
+    (920006, '한양대 소프트웨어. 밴드 보컬과 웹 개발을 같이 하고 있습니다.', 2020, 'https://i.pravatar.cc/150?u=920006', 'https://github.com/yejun-band-demo', NULL, NULL, 'https://instagram.com/yejun.band.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 116 DAY), @SEED_NOW),
+    (920007, '경희대 스포츠과학. 풋살 번개와 교내 리그 정보에 빠릅니다.', 2022, 'https://i.pravatar.cc/150?u=920007', NULL, NULL, NULL, 'https://instagram.com/yunseo.futsal.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 112 DAY), @SEED_NOW),
+    (920008, 'POSTECH AI. 논문 읽기 모임과 데이터 파이프라인에 관심이 큽니다.', 2021, 'https://i.pravatar.cc/150?u=920008', 'https://github.com/hyunwoo-data-demo', 'https://www.notion.so/cluverse/hyunwoo-data', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 108 DAY), @SEED_NOW),
+    (920009, '성균관대 경제. 마케팅과 포지셔닝 정리를 자주 도와줍니다.', 2021, 'https://i.pravatar.cc/150?u=920009', NULL, 'https://www.notion.so/cluverse/chaewon-brand', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 104 DAY), @SEED_NOW),
+    (920010, '홍대 디자인. UX와 브랜딩, 포트폴리오 피드백을 자주 합니다.', 2022, 'https://i.pravatar.cc/150?u=920010', NULL, NULL, 'https://picsum.photos/seed/portfolio-sua/800/600', 'https://instagram.com/sua.ux.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'portfolio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 99 DAY), @SEED_NOW),
+    (920011, '서강대 경제. 러닝 크루 운영하면서 주말 번개를 자주 엽니다.', 2023, 'https://i.pravatar.cc/150?u=920011', NULL, NULL, NULL, 'https://instagram.com/taeyun.run.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 95 DAY), @SEED_NOW),
+    (920012, '홍대 미디어. 드로잉과 전시 후기 글을 자주 올립니다.', 2022, 'https://i.pravatar.cc/150?u=920012', NULL, 'https://www.notion.so/cluverse/minji-art', 'https://picsum.photos/seed/portfolio-minji/800/600', 'https://instagram.com/minji.art.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'portfolio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 92 DAY), @SEED_NOW),
+    (920013, '부산대 소프트웨어. 백엔드 스터디 정리 글을 꾸준히 올립니다.', 2020, 'https://i.pravatar.cc/150?u=920013', 'https://github.com/gaeul-backend-demo', NULL, NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 88 DAY), @SEED_NOW),
+    (920014, '서울대 컴공. 프론트엔드와 커뮤니티 운영 모더레이션을 맡고 있습니다.', 2020, 'https://i.pravatar.cc/150?u=920014', 'https://github.com/junho-front-demo', 'https://www.notion.so/cluverse/junho-front', 'https://picsum.photos/seed/portfolio-junho/800/600', NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'portfolio', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 84 DAY), @SEED_NOW),
+    (920015, '고려대 경영. 브랜딩, 카피라이팅, 행사 포스터 작업을 즐깁니다.', 2021, 'https://i.pravatar.cc/150?u=920015', NULL, NULL, 'https://picsum.photos/seed/portfolio-yuna/800/600', 'https://instagram.com/yuna.branding.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'portfolio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 80 DAY), @SEED_NOW),
+    (920016, '연세대 AI. 모델 실험 기록을 잘 남기고, 프론트에도 관심이 있습니다.', 2023, 'https://i.pravatar.cc/150?u=920016', 'https://github.com/siwoo-ai-demo', 'https://www.notion.so/cluverse/siwoo-ai', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 75 DAY), @SEED_NOW),
+    (920017, '성균관대 심리. 독서모임과 진로 관련 글을 즐겨 읽습니다.', 2024, 'https://i.pravatar.cc/150?u=920017', NULL, NULL, NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 71 DAY), @SEED_NOW),
+    (920018, '한양대 전자전기. 드럼 연주와 오디오 장비에 관심이 많습니다.', 2021, 'https://i.pravatar.cc/150?u=920018', NULL, NULL, NULL, 'https://instagram.com/jaehyun.drum.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 69 DAY), @SEED_NOW),
+    (920019, '경희대 스포츠과학. 풋살 크루장으로 경기 일정 조율을 맡고 있습니다.', 2022, 'https://i.pravatar.cc/150?u=920019', NULL, NULL, NULL, 'https://instagram.com/dain.ball.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 66 DAY), @SEED_NOW),
+    (920020, '중앙대 경제. 취업스터디와 금융권 인턴 정보에 관심이 많습니다.', 2021, 'https://i.pravatar.cc/150?u=920020', NULL, 'https://www.notion.so/cluverse/rowoon-econ', NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 62 DAY), @SEED_NOW),
+    (920021, '서강대 미디어. 오프라인 영어회화 번개 위주로 활동합니다.', 2024, 'https://i.pravatar.cc/150?u=920021', NULL, NULL, NULL, 'https://instagram.com/bora.english.demo', NULL, TRUE, JSON_OBJECT('bio', TRUE, 'instagram', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 58 DAY), @SEED_NOW),
+    (920022, '홍대 미디어. 영상 촬영과 편집 파이프라인 정리에 익숙합니다.', 2022, 'https://i.pravatar.cc/150?u=920022', NULL, 'https://www.notion.so/cluverse/hangyeol-media', 'https://picsum.photos/seed/portfolio-hangyeol/800/600', NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'portfolio', TRUE, 'notion', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 54 DAY), @SEED_NOW),
+    (920023, 'KAIST 전자전기. 로봇과 AI 시스템 연동 쪽을 주로 다룹니다.', 2021, 'https://i.pravatar.cc/150?u=920023', 'https://github.com/jiho-robot-demo', NULL, NULL, NULL, NULL, TRUE, JSON_OBJECT('bio', TRUE, 'github', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 50 DAY), @SEED_NOW),
+    (920024, '클루버스 운영 관리자. 인증 검수와 커뮤니티 운영 정책을 관리합니다.', 2017, 'https://i.pravatar.cc/150?u=920024', NULL, NULL, NULL, NULL, 'https://picsum.photos/seed/ops-admin/800/600', TRUE, JSON_OBJECT('bio', TRUE, 'etc', TRUE), DATE_SUB(@SEED_NOW, INTERVAL 200 DAY), @SEED_NOW);
 
 INSERT INTO social_account (
     member_id,
@@ -357,6 +372,77 @@ SELECT
     @SEED_NOW
 FROM member
 WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID;
+
+INSERT INTO notification_preference (
+    member_id,
+    comments,
+    group_notifications,
+    announcements,
+    follows,
+    marketing
+)
+SELECT
+    member_id,
+    TRUE,
+    TRUE,
+    CASE
+        WHEN member_id IN (920001, 920002, 920008, 920014, 920024) THEN TRUE
+        ELSE FALSE
+    END,
+    CASE
+        WHEN member_id IN (920001, 920006, 920010, 920019, 920024) THEN TRUE
+        ELSE FALSE
+    END,
+    CASE
+        WHEN member_id IN (920002, 920005, 920010, 920015) THEN TRUE
+        ELSE FALSE
+    END
+FROM member
+WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID;
+
+INSERT INTO notification (
+    notification_id,
+    member_id,
+    type,
+    title,
+    content,
+    excerpt,
+    is_read,
+    target_url,
+    created_at,
+    updated_at
+) VALUES
+    (990001, 920001, 'COMMENT', '새 댓글이 달렸습니다', '개발자 라운지 모집 글에 새 댓글이 달렸습니다.', '백엔드 포지션이면 Java/Spring 기준인가요?', FALSE, '/post/970001', DATE_SUB(@SEED_NOW, INTERVAL 11 DAY), @SEED_NOW),
+    (990002, 920006, 'GROUP_ANNOUNCEMENT', '모임 공지가 등록되었습니다', '안암 밴드클럽에 새 공지가 등록되었습니다.', '다음 합주곡 후보 받습니다', TRUE, '/post/970013', DATE_SUB(@SEED_NOW, INTERVAL 4 DAY), @SEED_NOW),
+    (990003, 920010, 'FOLLOW', '새 팔로워가 생겼습니다', '유나브랜딩님이 회원님을 팔로우하기 시작했습니다.', '브랜딩/포트폴리오 글을 자주 보고 있어요.', FALSE, '/members/920015/profile', DATE_SUB(@SEED_NOW, INTERVAL 3 DAY), @SEED_NOW),
+    (990004, 920008, 'FOLLOWING_POST', '팔로우한 사용자의 새 글', '시우AI님이 새 게시글을 작성했습니다.', 'MLOps 세미나 같이 갈 사람', FALSE, '/post/970018', DATE_SUB(@SEED_NOW, INTERVAL 2 DAY), @SEED_NOW),
+    (990005, 920002, 'GROUP_APPROVED', '모임 지원이 승인되었습니다', '캠퍼스 프로덕트 랩 지원이 승인되었습니다.', '스프린트 미팅부터 바로 참여 가능합니다.', TRUE, '/group/960004', DATE_SUB(@SEED_NOW, INTERVAL 15 DAY), @SEED_NOW),
+    (990006, 920016, 'REPLY', '댓글에 답글이 달렸습니다', '작성한 댓글에 답글이 달렸습니다.', '네, 대신 질문 하나씩 준비해오면 좋겠습니다.', FALSE, '/post/970008', DATE_SUB(@SEED_NOW, INTERVAL 7 DAY), @SEED_NOW),
+    (990007, 920019, 'GROUP_REJECTED', '모임 지원 결과를 확인해주세요', '대학연합 풋살 크루 지원이 보류되었습니다.', '다음 정기 모집 때 다시 지원 부탁드립니다.', TRUE, '/group/960006', DATE_SUB(@SEED_NOW, INTERVAL 22 DAY), @SEED_NOW),
+    (990008, 920024, 'COMMENT', '운영 공지 글에 댓글이 달렸습니다', '운영 공지 글에 새 댓글이 달렸습니다.', '세션 자료 감사합니다. 이번 주는 인증 파트 먼저 보겠습니다.', FALSE, '/post/970005', DATE_SUB(@SEED_NOW, INTERVAL 8 DAY), @SEED_NOW);
+
+INSERT INTO member_report (
+    member_report_id,
+    reporter_id,
+    target_type,
+    target_id,
+    reason_code,
+    detail,
+    status,
+    created_at,
+    updated_at
+) VALUES
+    (991001, 920014, 'POST', 970016, 'SPAM', '동일한 영어회화 모집 글이 외부 오픈채팅 링크와 함께 여러 번 반복 등록된 것처럼 보여 확인 요청드립니다.', 'IN_REVIEW', DATE_SUB(@SEED_NOW, INTERVAL 5 DAY), @SEED_NOW),
+    (991002, 920012, 'MEMBER', 920021, 'ABUSE', '오프라인 번개 안내 과정에서 과한 표현이 있었다는 제보를 받아 신고합니다. 대화 맥락 확인 부탁드립니다.', 'RECEIVED', DATE_SUB(@SEED_NOW, INTERVAL 2 DAY), @SEED_NOW),
+    (991003, 920024, 'GROUP', 960006, 'ETC', '풋살 크루 모집 소개 문구에 외부 참가자 제한 여부가 불명확해서 운영 기준 점검 차원에서 등록했습니다.', 'RESOLVED', DATE_SUB(@SEED_NOW, INTERVAL 12 DAY), @SEED_NOW);
+
+INSERT INTO member_report_evidence_image (
+    member_report_id,
+    image_url
+) VALUES
+    (991001, 'https://picsum.photos/seed/report-991001-1/1200/800'),
+    (991001, 'https://picsum.photos/seed/report-991001-2/1200/800'),
+    (991002, 'https://picsum.photos/seed/report-991002-1/1200/800');
 
 INSERT INTO board (
     board_id,
@@ -1153,6 +1239,46 @@ INSERT INTO calendar_item (
     (960006, 920019, '주말 풋살 매치', '4:4 자체전 후 포지션 로테이션', '2026-03-22 09:00:00', '2026-03-22 11:00:00', FALSE, '잠실 풋살장 C코트', NULL, DATE_SUB(@SEED_NOW, INTERVAL 2 DAY), @SEED_NOW),
     (960008, 920008, '논문 읽기 정기 세션', 'Transformer 구조 요약 발표', '2026-03-24 21:00:00', '2026-03-24 22:30:00', FALSE, 'Discord Online', NULL, DATE_SUB(@SEED_NOW, INTERVAL 2 DAY), @SEED_NOW);
 
+INSERT INTO calendar_event (
+    calendar_event_id,
+    member_id,
+    title,
+    description,
+    category,
+    start_at,
+    end_at,
+    location,
+    all_day,
+    visibility,
+    created_at,
+    updated_at
+) VALUES
+    (992001, 920001, '서울대 개발자 라운지 코드리뷰', '백엔드/프론트 합동 코드리뷰와 다음 스프린트 이슈 정리', 'GROUP', '2026-03-20 19:30:00', '2026-03-20 21:30:00', '서울대 301동 라운지', FALSE, 'MEMBERS', DATE_SUB(@SEED_NOW, INTERVAL 2 DAY), @SEED_NOW),
+    (992002, 920002, '사용자 인터뷰 리캡 작성', '이번 주 인터뷰 4건 요약과 JTBD 초안 정리', 'PERSONAL', '2026-03-21 14:00:00', '2026-03-21 16:00:00', '연세대 중앙도서관 스터디룸', FALSE, 'PRIVATE', DATE_SUB(@SEED_NOW, INTERVAL 3 DAY), @SEED_NOW),
+    (992003, 920006, '안암 밴드클럽 정기 합주', '학기말 공연 후보곡 3곡 리허설', 'GROUP', '2026-03-21 18:30:00', '2026-03-21 21:00:00', '안암 합주실 B', FALSE, 'MEMBERS', DATE_SUB(@SEED_NOW, INTERVAL 2 DAY), @SEED_NOW),
+    (992004, 920011, '한강 러닝 10km', '여의도 코스 야간 러닝', 'GROUP', '2026-03-22 20:00:00', '2026-03-22 21:20:00', '여의나루역 2번 출구', FALSE, 'PUBLIC', DATE_SUB(@SEED_NOW, INTERVAL 2 DAY), @SEED_NOW),
+    (992005, 920016, 'MLOps 세미나 참석', '코엑스 세미나 참석 후 메모 정리 예정', 'SCHOOL', '2026-03-26 10:00:00', '2026-03-26 17:30:00', '코엑스 컨퍼런스룸 E', FALSE, 'PUBLIC', DATE_SUB(@SEED_NOW, INTERVAL 1 DAY), @SEED_NOW),
+    (992006, 920024, '운영 정책 점검', '신고 처리 기준과 알림 노출 정책 검토', 'PERSONAL', '2026-03-24 09:30:00', '2026-03-24 11:00:00', '클루버스 운영 콘솔', FALSE, 'PRIVATE', DATE_SUB(@SEED_NOW, INTERVAL 1 DAY), @SEED_NOW),
+    (992007, 920019, '잠실 풋살 정기전', '주전/교체 인원 섞어서 4:4 자체전 진행', 'GROUP', '2026-03-22 09:00:00', '2026-03-22 11:00:00', '잠실 풋살장 C코트', FALSE, 'MEMBERS', DATE_SUB(@SEED_NOW, INTERVAL 2 DAY), @SEED_NOW),
+    (992008, 920024, '봄 학기 인증 점검일', '학교 이메일 인증 적체 여부와 반려 사유 템플릿 점검', 'SCHOOL', '2026-03-25 00:00:00', '2026-03-25 23:59:00', '운영센터', TRUE, 'PUBLIC', DATE_SUB(@SEED_NOW, INTERVAL 4 DAY), @SEED_NOW);
+
+INSERT INTO campus_event (
+    campus_event_id,
+    title,
+    host,
+    start_date,
+    end_date,
+    location,
+    thumbnail_image_url,
+    summary,
+    created_at,
+    updated_at
+) VALUES
+    (993001, '서울권 대학연합 해커톤 설명회', '클루버스 X 서울대 개발자 라운지', '2026-03-27', '2026-03-27', '서울대학교 해동학술문화관', 'https://picsum.photos/seed/campus-event-993001/1200/800', '해커톤 일정, 팀 빌딩 방식, 지원 트랙을 소개하는 오프라인 설명회입니다.', DATE_SUB(@SEED_NOW, INTERVAL 6 DAY), @SEED_NOW),
+    (993002, '연세 창업 아이디어 피칭 나이트', '연세대학교 창업지원단', '2026-03-28', '2026-03-28', '연세대학교 백양누리', 'https://picsum.photos/seed/campus-event-993002/1200/800', '예비 창업팀과 PM, 디자이너, 개발자가 함께 참여하는 아이디어 피칭 행사입니다.', DATE_SUB(@SEED_NOW, INTERVAL 5 DAY), @SEED_NOW),
+    (993003, '홍대 봄 축제 미디어 아트 전시', '홍익대학교 미디어커뮤니케이션학과', '2026-04-02', '2026-04-05', '홍문관 갤러리홀', 'https://picsum.photos/seed/campus-event-993003/1200/800', '학생 영상/미디어아트 작품과 라이브 세션이 함께 열리는 봄 학기 전시 행사입니다.', DATE_SUB(@SEED_NOW, INTERVAL 4 DAY), @SEED_NOW),
+    (993004, '대학연합 러닝 크루 오픈런', '한강 러닝 메이트', '2026-03-30', '2026-03-30', '여의도 한강공원 이벤트 광장', 'https://picsum.photos/seed/campus-event-993004/1200/800', '서울권 대학생 러너들이 함께하는 오픈런 행사로, 초급/중급 페이스 그룹이 나뉘어 운영됩니다.', DATE_SUB(@SEED_NOW, INTERVAL 3 DAY), @SEED_NOW);
+
 ALTER TABLE university AUTO_INCREMENT = 91013;
 ALTER TABLE member AUTO_INCREMENT = 920025;
 ALTER TABLE board AUTO_INCREMENT = 930041;
@@ -1165,3 +1291,7 @@ ALTER TABLE form_item AUTO_INCREMENT = 963010;
 ALTER TABLE recruitment_application AUTO_INCREMENT = 964007;
 ALTER TABLE post AUTO_INCREMENT = 970019;
 ALTER TABLE comment AUTO_INCREMENT = 980022;
+ALTER TABLE notification AUTO_INCREMENT = 990009;
+ALTER TABLE member_report AUTO_INCREMENT = 991004;
+ALTER TABLE calendar_event AUTO_INCREMENT = 992009;
+ALTER TABLE campus_event AUTO_INCREMENT = 993005;
