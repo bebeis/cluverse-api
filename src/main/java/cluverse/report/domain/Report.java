@@ -11,13 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "member_report")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Report extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "report_id")
+    @Column(name = "member_report_id")
     private Long id;
 
     @Column(nullable = false)
@@ -38,7 +39,7 @@ public class Report extends BaseTimeEntity {
     private String detail;
 
     @ElementCollection
-    @CollectionTable(name = "report_evidence_image", joinColumns = @JoinColumn(name = "report_id"))
+    @CollectionTable(name = "member_report_evidence_image", joinColumns = @JoinColumn(name = "member_report_id"))
     @Column(name = "image_url")
     private List<String> evidenceImageUrls = new ArrayList<>();
 
