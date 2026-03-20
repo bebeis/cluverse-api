@@ -10,6 +10,7 @@ import cluverse.member.service.request.MemberUniversityUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.MemberService;
 import cluverse.member.service.response.BlockedMemberResponse;
+import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberMajorResponse;
 import cluverse.member.service.response.MemberProfileResponse;
@@ -78,6 +79,16 @@ public class MemberController {
     @GetMapping("/me/blocks")
     public ApiResponse<List<BlockedMemberResponse>> getMyBlocks(@Login LoginMember loginMember) {
         return ApiResponse.ok(memberService.getBlockedMembers(loginMember.memberId()));
+    }
+
+    @GetMapping("/{memberId}/followers")
+    public ApiResponse<List<MemberFollowResponse>> getFollowers(@PathVariable Long memberId) {
+        return ApiResponse.ok(memberService.getFollowers(memberId));
+    }
+
+    @GetMapping("/{memberId}/following")
+    public ApiResponse<List<MemberFollowResponse>> getFollowings(@PathVariable Long memberId) {
+        return ApiResponse.ok(memberService.getFollowings(memberId));
     }
 
     @PostMapping("/me/interests")

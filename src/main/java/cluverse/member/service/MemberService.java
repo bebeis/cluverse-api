@@ -9,6 +9,7 @@ import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
+import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberMajorResponse;
 import cluverse.member.service.response.MemberProfileResponse;
@@ -122,6 +123,18 @@ public class MemberService {
     @Transactional(readOnly = true)
     public List<BlockedMemberResponse> getBlockedMembers(Long blockerId) {
         return memberReader.readBlockedMembers(blockerId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MemberFollowResponse> getFollowers(Long memberId) {
+        memberReader.readOrThrow(memberId);
+        return memberReader.readFollowers(memberId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MemberFollowResponse> getFollowings(Long memberId) {
+        memberReader.readOrThrow(memberId);
+        return memberReader.readFollowings(memberId);
     }
 
     @Transactional(readOnly = true)

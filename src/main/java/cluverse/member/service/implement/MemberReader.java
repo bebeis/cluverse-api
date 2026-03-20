@@ -8,6 +8,7 @@ import cluverse.member.repository.FollowRepository;
 import cluverse.member.repository.MemberQueryRepository;
 import cluverse.member.repository.MemberRepository;
 import cluverse.member.service.response.BlockedMemberResponse;
+import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberMajorResponse;
 import cluverse.member.service.response.MemberProfileSummaryResponse;
@@ -123,6 +124,26 @@ public class MemberReader {
                         result.universityBadgeImageUrl(),
                         result.profileImageUrl(),
                         result.blockedAt()
+                ))
+                .toList();
+    }
+
+    public List<MemberFollowResponse> readFollowers(Long memberId) {
+        return memberQueryRepository.findFollowers(memberId).stream()
+                .map(result -> new MemberFollowResponse(
+                        result.memberId(),
+                        result.nickname(),
+                        result.profileImageUrl()
+                ))
+                .toList();
+    }
+
+    public List<MemberFollowResponse> readFollowings(Long memberId) {
+        return memberQueryRepository.findFollowings(memberId).stream()
+                .map(result -> new MemberFollowResponse(
+                        result.memberId(),
+                        result.nickname(),
+                        result.profileImageUrl()
                 ))
                 .toList();
     }

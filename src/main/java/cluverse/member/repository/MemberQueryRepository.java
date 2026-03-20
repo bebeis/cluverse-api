@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static cluverse.member.domain.QBlock.block;
+import static cluverse.member.domain.QFollow.follow;
 import static cluverse.member.domain.QMember.member;
 import static cluverse.member.domain.QMemberAuth.memberAuth;
 import static cluverse.member.domain.QMemberMajor.memberMajor;
@@ -148,6 +149,50 @@ public class MemberQueryRepository {
                 .toList();
     }
 
+    public List<MemberFollowDto> findFollowers(Long memberId) {
+        return queryFactory
+                .select(
+                        member.id,
+                        member.nickname,
+                        memberProfile.profileImageUrl
+                )
+                .from(follow)
+                .join(member).on(member.id.eq(follow.followerId))
+                .leftJoin(memberProfile).on(memberProfile.memberId.eq(member.id))
+                .where(follow.followingId.eq(memberId))
+                .orderBy(follow.createdAt.desc(), follow.id.desc())
+                .fetch()
+                .stream()
+                .map(tuple -> new MemberFollowDto(
+                        tuple.get(member.id),
+                        tuple.get(member.nickname),
+                        tuple.get(memberProfile.profileImageUrl)
+                ))
+                .toList();
+    }
+
+    public List<MemberFollowDto> findFollowings(Long memberId) {
+        return queryFactory
+                .select(
+                        member.id,
+                        member.nickname,
+                        memberProfile.profileImageUrl
+                )
+                .from(follow)
+                .join(member).on(member.id.eq(follow.followingId))
+                .leftJoin(memberProfile).on(memberProfile.memberId.eq(member.id))
+                .where(follow.followerId.eq(memberId))
+                .orderBy(follow.createdAt.desc(), follow.id.desc())
+                .fetch()
+                .stream()
+                .map(tuple -> new MemberFollowDto(
+                        tuple.get(member.id),
+                        tuple.get(member.nickname),
+                        tuple.get(memberProfile.profileImageUrl)
+                ))
+                .toList();
+    }
+
     public List<MemberInterestDetailDto> findInterestDetailsByInterestIds(List<Long> interestIds) {
         if (interestIds == null || interestIds.isEmpty()) {
             return List.of();
@@ -226,6 +271,13 @@ public class MemberQueryRepository {
             String universityBadgeImageUrl,
             String profileImageUrl,
             LocalDateTime blockedAt
+    ) {
+    }
+
+    public record MemberFollowDto(
+            Long memberId,
+            String nickname,
+            String profileImageUrl
     ) {
     }
 }

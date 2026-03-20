@@ -13,6 +13,7 @@ import cluverse.member.service.request.AddMajorRequest;
 import cluverse.member.service.request.MemberUniversityUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
+import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberMajorResponse;
 import cluverse.member.service.response.MemberProfileResponse;
@@ -357,6 +358,56 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data[].universityBadgeImageUrl").type(JsonFieldType.STRING).description("차단한 회원 학교 배지 이미지 URL"),
                                 fieldWithPath("data[].profileImageUrl").type(JsonFieldType.STRING).description("차단한 회원 프로필 이미지 URL"),
                                 fieldWithPath("data[].blockedAt").type(JsonFieldType.STRING).description("차단 시각")
+                        )
+                ));
+    }
+
+    @Test
+    void 팔로워_목록_조회() throws Exception {
+        when(memberService.getFollowers(2L)).thenReturn(List.of(
+                new MemberFollowResponse(3L, "nova", "https://cdn.example.com/nova.png")
+        ));
+
+        mockMvc.perform(get("/api/v1/members/{memberId}/followers", 2L)
+                        .session(createSession()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].memberId").value(3))
+                .andDo(document("members/get-followers",
+                        pathParameters(
+                                parameterWithName("memberId").description("조회할 회원 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data[].memberId").type(JsonFieldType.NUMBER).description("팔로워 회원 ID"),
+                                fieldWithPath("data[].nickname").type(JsonFieldType.STRING).description("팔로워 닉네임"),
+                                fieldWithPath("data[].profileImageUrl").type(JsonFieldType.STRING).description("팔로워 프로필 이미지 URL").optional()
+                        )
+                ));
+    }
+
+    @Test
+    void 팔로잉_목록_조회() throws Exception {
+        when(memberService.getFollowings(2L)).thenReturn(List.of(
+                new MemberFollowResponse(4L, "sol", "https://cdn.example.com/sol.png")
+        ));
+
+        mockMvc.perform(get("/api/v1/members/{memberId}/following", 2L)
+                        .session(createSession()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].memberId").value(4))
+                .andDo(document("members/get-followings",
+                        pathParameters(
+                                parameterWithName("memberId").description("조회할 회원 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data[].memberId").type(JsonFieldType.NUMBER).description("팔로잉 회원 ID"),
+                                fieldWithPath("data[].nickname").type(JsonFieldType.STRING).description("팔로잉 닉네임"),
+                                fieldWithPath("data[].profileImageUrl").type(JsonFieldType.STRING).description("팔로잉 프로필 이미지 URL").optional()
                         )
                 ));
     }

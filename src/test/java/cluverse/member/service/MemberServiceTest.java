@@ -10,6 +10,7 @@ import cluverse.member.service.implement.MemberWriter;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
+import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberProfileResponse;
 import cluverse.member.service.response.MemberProfileSummaryResponse;
@@ -151,6 +152,40 @@ class MemberServiceTest {
 
         assertThat(result).isEqualTo(responses);
         verify(memberReader).readBlockedMembers(1L);
+    }
+
+    @Test
+    void 팔로워_목록_조회는_reader에_위임한다() {
+        Member member = createMember(1L, "luna", 10L);
+        List<MemberFollowResponse> responses = List.of(
+                new MemberFollowResponse(2L, "nova", "https://cdn.example.com/nova.png")
+        );
+
+        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(memberReader.readFollowers(1L)).thenReturn(responses);
+
+        List<MemberFollowResponse> result = memberService.getFollowers(1L);
+
+        assertThat(result).isEqualTo(responses);
+        verify(memberReader).readOrThrow(1L);
+        verify(memberReader).readFollowers(1L);
+    }
+
+    @Test
+    void 팔로잉_목록_조회는_reader에_위임한다() {
+        Member member = createMember(1L, "luna", 10L);
+        List<MemberFollowResponse> responses = List.of(
+                new MemberFollowResponse(3L, "sol", "https://cdn.example.com/sol.png")
+        );
+
+        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(memberReader.readFollowings(1L)).thenReturn(responses);
+
+        List<MemberFollowResponse> result = memberService.getFollowings(1L);
+
+        assertThat(result).isEqualTo(responses);
+        verify(memberReader).readOrThrow(1L);
+        verify(memberReader).readFollowings(1L);
     }
 
     @Test
