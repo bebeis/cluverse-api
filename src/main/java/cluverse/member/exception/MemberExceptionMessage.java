@@ -21,7 +21,9 @@ public enum MemberExceptionMessage {
     MAJOR_ALREADY_REGISTERED("이미 등록된 학과입니다."),
     INTEREST_ALREADY_REGISTERED("이미 등록된 관심 태그입니다."),
     PRIMARY_MAJOR_REQUIRED("주전공은 반드시 1개 있어야 합니다."),
-    INVALID_PROFILE_VISIBLE_FIELD("유효하지 않은 프로필 공개 필드입니다.");
+    INVALID_PROFILE_VISIBLE_FIELD("유효하지 않은 프로필 공개 필드입니다."),
+    INVALID_PASSWORD("현재 비밀번호가 올바르지 않습니다."),
+    PASSWORD_CHANGE_NOT_ALLOWED("비밀번호를 변경할 수 없는 계정입니다.");
 
     private final String message;
 }

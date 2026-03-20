@@ -130,6 +130,27 @@ public class PostQueryRepository {
         return new PostPageQueryResult(readPostSummaries(memberId, postIds), hasNext);
     }
 
+    public PostPageQueryResult findPostPageByAuthor(Long viewerId, Long authorId, int page, int size) {
+        long offset = (long) (page - 1) * size;
+
+        List<Long> postIds = queryFactory.select(post.id)
+                .from(post)
+                .where(
+                        post.status.eq(PostStatus.ACTIVE),
+                        post.memberId.eq(authorId)
+                )
+                .orderBy(post.createdAt.desc(), post.id.desc())
+                .offset(offset)
+                .limit(size + 1L)
+                .fetch();
+
+        boolean hasNext = postIds.size() > size;
+        if (hasNext) {
+            postIds = postIds.subList(0, size);
+        }
+        return new PostPageQueryResult(readPostSummaries(viewerId, postIds), hasNext);
+    }
+
     public PostDetailQueryDto findPostDetail(Long memberId, Long postId) {
         Expression<Boolean> isMineExpression = isMineExpression(memberId);
 

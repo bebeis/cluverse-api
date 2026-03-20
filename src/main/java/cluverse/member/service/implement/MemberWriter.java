@@ -51,6 +51,14 @@ public class MemberWriter {
         member.assignUniversity(universityId);
     }
 
+    public void updatePassword(Member member, String passwordHash) {
+        member.getMemberAuth().changePassword(passwordHash);
+    }
+
+    public void delete(Member member) {
+        member.delete();
+    }
+
     public MemberMajor addMajor(Member member, AddMajorRequest request) {
         validateMajorExists(request.majorId());
         member.addMajor(request.majorId(), request.majorType());

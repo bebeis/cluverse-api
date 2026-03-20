@@ -6,18 +6,26 @@ import cluverse.member.domain.MajorType;
 import cluverse.member.domain.MemberProfileField;
 import cluverse.member.domain.MemberRole;
 import cluverse.member.domain.VerificationStatus;
+import cluverse.member.service.MemberPostService;
+import cluverse.member.service.MemberProfileImageService;
 import cluverse.member.service.MemberService;
 import cluverse.member.service.MemberUniversityService;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
+import cluverse.member.service.request.MemberPasswordUpdateRequest;
 import cluverse.member.service.request.MemberUniversityUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberMajorResponse;
+import cluverse.member.service.response.MemberProfileImagePresignedUrlResponse;
 import cluverse.member.service.response.MemberProfileResponse;
 import cluverse.member.service.response.MemberProfileSummaryResponse;
+import cluverse.post.domain.PostCategory;
+import cluverse.post.service.response.PostAuthorResponse;
+import cluverse.post.service.response.PostPageResponse;
+import cluverse.post.service.response.PostSummaryResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
@@ -35,6 +43,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
@@ -42,6 +51,7 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.requestF
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -49,10 +59,12 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     private final MemberService memberService = mock(MemberService.class);
     private final MemberUniversityService memberUniversityService = mock(MemberUniversityService.class);
+    private final MemberPostService memberPostService = mock(MemberPostService.class);
+    private final MemberProfileImageService memberProfileImageService = mock(MemberProfileImageService.class);
 
     @Override
     protected Object initController() {
-        return new MemberController(memberService, memberUniversityService);
+        return new MemberController(memberService, memberUniversityService, memberPostService, memberProfileImageService);
     }
 
     @Test
@@ -245,6 +257,161 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.followerCount").type(JsonFieldType.NUMBER).description("팔로워 수"),
                                 fieldWithPath("data.followingCount").type(JsonFieldType.NUMBER).description("팔로잉 수"),
                                 fieldWithPath("data.postCount").type(JsonFieldType.NUMBER).description("작성한 게시글 수")
+                        )
+                ));
+    }
+
+    @Test
+    void 내_게시글_목록_조회() throws Exception {
+        when(memberPostService.getMyPosts(anyLong(), any())).thenReturn(new PostPageResponse(
+                List.of(
+                        new PostSummaryResponse(
+                                10L,
+                                3L,
+                                PostCategory.INFORMATION,
+                                "스프링 스터디 모집합니다",
+                                "주 1회 온라인으로 진행할 예정입니다.",
+                                List.of("spring", "backend"),
+                                "https://cdn.example.com/posts/10-thumb.png",
+                                false,
+                                false,
+                                true,
+                                120L,
+                                15L,
+                                4L,
+                                8L,
+                                new PostAuthorResponse(1L, "luna", "https://cdn.example.com/profile.png"),
+                                LocalDateTime.of(2026, 3, 13, 10, 0)
+                        )
+                ),
+                1,
+                20,
+                true,
+                false
+        ));
+
+        mockMvc.perform(get("/api/v1/members/me/posts")
+                        .session(createSession())
+                        .queryParam("page", "1")
+                        .queryParam("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.posts[0].postId").value(10))
+                .andDo(document("members/get-my-posts",
+                        queryParameters(
+                                parameterWithName("page").description("페이지 번호").optional(),
+                                parameterWithName("size").description("페이지 크기").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.posts").type(JsonFieldType.ARRAY).description("내 게시글 목록"),
+                                fieldWithPath("data.posts[].postId").type(JsonFieldType.NUMBER).description("게시글 ID"),
+                                fieldWithPath("data.posts[].boardId").type(JsonFieldType.NUMBER).description("게시판 ID"),
+                                fieldWithPath("data.posts[].category").type(JsonFieldType.STRING).description("게시글 카테고리"),
+                                fieldWithPath("data.posts[].title").type(JsonFieldType.STRING).description("게시글 제목"),
+                                fieldWithPath("data.posts[].contentPreview").type(JsonFieldType.STRING).description("게시글 본문 미리보기"),
+                                fieldWithPath("data.posts[].tags").type(JsonFieldType.ARRAY).description("태그 목록"),
+                                fieldWithPath("data.posts[].thumbnailImageUrl").type(JsonFieldType.STRING).description("썸네일 이미지 URL").optional(),
+                                fieldWithPath("data.posts[].isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 여부"),
+                                fieldWithPath("data.posts[].isPinned").type(JsonFieldType.BOOLEAN).description("상단 고정 여부"),
+                                fieldWithPath("data.posts[].isExternalVisible").type(JsonFieldType.BOOLEAN).description("외부 공개 여부"),
+                                fieldWithPath("data.posts[].viewCount").type(JsonFieldType.NUMBER).description("조회수"),
+                                fieldWithPath("data.posts[].likeCount").type(JsonFieldType.NUMBER).description("좋아요 수"),
+                                fieldWithPath("data.posts[].commentCount").type(JsonFieldType.NUMBER).description("댓글 수"),
+                                fieldWithPath("data.posts[].bookmarkCount").type(JsonFieldType.NUMBER).description("북마크 수"),
+                                fieldWithPath("data.posts[].author.memberId").type(JsonFieldType.NUMBER).description("작성자 회원 ID"),
+                                fieldWithPath("data.posts[].author.nickname").type(JsonFieldType.STRING).description("작성자 닉네임"),
+                                fieldWithPath("data.posts[].author.profileImageUrl").type(JsonFieldType.STRING).description("작성자 프로필 이미지 URL").optional(),
+                                fieldWithPath("data.posts[].createdAt").type(JsonFieldType.STRING).description("작성 시각"),
+                                fieldWithPath("data.page").type(JsonFieldType.NUMBER).description("현재 페이지"),
+                                fieldWithPath("data.size").type(JsonFieldType.NUMBER).description("페이지 크기"),
+                                fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부"),
+                                fieldWithPath("data.dateBased").type(JsonFieldType.BOOLEAN).description("날짜 기반 조회 여부 (false)")
+                        )
+                ));
+    }
+
+    @Test
+    void 비밀번호_수정() throws Exception {
+        doNothing().when(memberService).updatePassword(anyLong(), any(MemberPasswordUpdateRequest.class));
+
+        mockMvc.perform(patch("/api/v1/members/me/password")
+                        .session(createSession())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "currentPassword": "old-password",
+                                    "newPassword": "new-password"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andDo(document("members/update-password",
+                        requestFields(
+                                fieldWithPath("currentPassword").type(JsonFieldType.STRING).description("현재 비밀번호"),
+                                fieldWithPath("newPassword").type(JsonFieldType.STRING).description("새 비밀번호")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.NULL).description("응답 데이터 없음")
+                        )
+                ));
+    }
+
+    @Test
+    void 프로필_이미지_presigned_url_발급() throws Exception {
+        when(memberProfileImageService.createPresignedUrl(anyLong(), any())).thenReturn(
+                new MemberProfileImagePresignedUrlResponse(
+                        "members/1/profile/2026/03/20/test.png",
+                        "https://upload.example.com/profile.png",
+                        "https://cdn.example.com/profile.png",
+                        LocalDateTime.of(2026, 3, 20, 12, 10)
+                )
+        );
+
+        mockMvc.perform(post("/api/v1/members/me/profile-image/presigned-url")
+                        .session(createSession())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "originalFileName": "profile.png",
+                                    "contentType": "image/png"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.fileKey").exists())
+                .andDo(document("members/create-profile-image-presigned-url",
+                        requestFields(
+                                fieldWithPath("originalFileName").type(JsonFieldType.STRING).description("원본 파일명"),
+                                fieldWithPath("contentType").type(JsonFieldType.STRING).description("이미지 콘텐츠 타입")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.fileKey").type(JsonFieldType.STRING).description("업로드할 파일 키"),
+                                fieldWithPath("data.uploadUrl").type(JsonFieldType.STRING).description("Presigned 업로드 URL"),
+                                fieldWithPath("data.imageUrl").type(JsonFieldType.STRING).description("업로드 후 접근 가능한 이미지 URL"),
+                                fieldWithPath("data.expiresAt").type(JsonFieldType.STRING).description("업로드 URL 만료 시각")
+                        )
+                ));
+    }
+
+    @Test
+    void 회원_탈퇴() throws Exception {
+        doNothing().when(memberService).deleteMember(1L);
+
+        mockMvc.perform(delete("/api/v1/members/me")
+                        .session(createSession()))
+                .andExpect(status().isOk())
+                .andDo(document("members/delete-member",
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.NULL).description("응답 데이터 없음")
                         )
                 ));
     }

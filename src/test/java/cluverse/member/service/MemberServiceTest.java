@@ -1,13 +1,18 @@
 package cluverse.member.service;
 
 import cluverse.auth.exception.AuthExceptionMessage;
+import cluverse.common.config.PasswordConfig;
+import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.UnauthorizedException;
 import cluverse.member.domain.Member;
+import cluverse.member.domain.MemberAuth;
 import cluverse.member.domain.MemberProfile;
 import cluverse.member.domain.MemberProfileField;
+import cluverse.member.domain.MemberStatus;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.member.service.implement.MemberWriter;
 import cluverse.member.service.request.AddInterestRequest;
+import cluverse.member.service.request.MemberPasswordUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberFollowResponse;
@@ -39,6 +44,9 @@ class MemberServiceTest {
 
     @Mock
     private MemberWriter memberWriter;
+
+    @Mock
+    private PasswordConfig passwordConfig;
 
     @InjectMocks
     private MemberService memberService;
@@ -285,6 +293,58 @@ class MemberServiceTest {
         assertThat(result.university().universityId()).isEqualTo(10L);
         assertThat(result.university().universityName()).isEqualTo("클루대");
         verify(memberWriter).updateUniversity(member, 10L);
+    }
+
+    @Test
+    void 비밀번호_수정시_현재_비밀번호를_검증한_후_변경한다() {
+        // given
+        Member member = createMember(1L, "luna", 10L);
+        member.initMemberAuth("luna@example.com", "encoded-old-password");
+        MemberPasswordUpdateRequest request = new MemberPasswordUpdateRequest("old-password", "new-password");
+
+        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(passwordConfig.matches("old-password", "encoded-old-password")).thenReturn(true);
+        when(passwordConfig.encode("new-password")).thenReturn("encoded-new-password");
+
+        // when
+        memberService.updatePassword(1L, request);
+
+        // then
+        verify(memberWriter).updatePassword(member, "encoded-new-password");
+    }
+
+    @Test
+    void 현재_비밀번호가_틀리면_비밀번호를_변경할_수_없다() {
+        // given
+        Member member = createMember(1L, "luna", 10L);
+        member.initMemberAuth("luna@example.com", "encoded-old-password");
+        MemberPasswordUpdateRequest request = new MemberPasswordUpdateRequest("wrong-password", "new-password");
+
+        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(passwordConfig.matches("wrong-password", "encoded-old-password")).thenReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.updatePassword(1L, request))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void 회원_탈퇴시_삭제_상태로_변경한다() {
+        // given
+        Member member = createMember(1L, "luna", 10L);
+        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        doAnswer(invocation -> {
+            Member target = invocation.getArgument(0);
+            target.delete();
+            return null;
+        }).when(memberWriter).delete(any(Member.class));
+
+        // when
+        memberService.deleteMember(1L);
+
+        // then
+        assertThat(member.getStatus()).isEqualTo(MemberStatus.DELETED);
+        verify(memberWriter).delete(member);
     }
 
     @Test

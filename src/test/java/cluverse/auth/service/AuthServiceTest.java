@@ -1,10 +1,12 @@
 package cluverse.auth.service;
 
 import cluverse.auth.client.OAuthUserInfo;
+import cluverse.common.exception.UnauthorizedException;
 import cluverse.auth.service.implement.AuthReader;
 import cluverse.auth.service.implement.AuthWriter;
 import cluverse.common.auth.LoginMember;
 import cluverse.member.domain.Member;
+import cluverse.member.domain.MemberStatus;
 import cluverse.member.domain.MemberRole;
 import cluverse.member.domain.OAuthProvider;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -42,6 +45,7 @@ class AuthServiceTest {
         when(member.getId()).thenReturn(1L);
         when(member.getNickname()).thenReturn("testuser");
         when(member.getRole()).thenReturn(MemberRole.MEMBER);
+        when(member.isActive()).thenReturn(true);
 
         LoginMember result = authService.loginWithEmail("test@example.com", "password123", "127.0.0.1");
 
@@ -60,6 +64,7 @@ class AuthServiceTest {
         when(member.getId()).thenReturn(1L);
         when(member.getNickname()).thenReturn("testuser");
         when(member.getRole()).thenReturn(MemberRole.MEMBER);
+        when(member.isActive()).thenReturn(true);
 
         LoginMember result = authService.loginWithOAuth(userInfo, OAuthProvider.KAKAO, "127.0.0.1");
 
@@ -79,10 +84,22 @@ class AuthServiceTest {
         when(newMember.getId()).thenReturn(2L);
         when(newMember.getNickname()).thenReturn("newuser");
         when(newMember.getRole()).thenReturn(MemberRole.MEMBER);
+        when(newMember.isActive()).thenReturn(true);
 
         LoginMember result = authService.loginWithOAuth(userInfo, OAuthProvider.GOOGLE, "127.0.0.1");
 
         assertThat(result.memberId()).isEqualTo(2L);
         verify(authWriter).registerBySocial(userInfo, OAuthProvider.GOOGLE);
+    }
+
+    @Test
+    void 탈퇴한_회원은_로그인할_수_없다() {
+        Member member = mock(Member.class);
+
+        when(authReader.readByEmailAndPassword("test@example.com", "password123")).thenReturn(member);
+        when(member.isActive()).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.loginWithEmail("test@example.com", "password123", "127.0.0.1"))
+                .isInstanceOf(UnauthorizedException.class);
     }
 }

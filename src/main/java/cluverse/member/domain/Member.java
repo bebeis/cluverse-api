@@ -150,6 +150,10 @@ public class Member extends BaseTimeEntity {
         this.universityId = Objects.requireNonNull(universityId);
     }
 
+    public void delete() {
+        this.status = MemberStatus.DELETED;
+    }
+
     public boolean hasUniversity() {
         return this.universityId != null;
     }

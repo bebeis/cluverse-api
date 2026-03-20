@@ -37,4 +37,8 @@ public class MemberAuth extends BaseTimeEntity {
     public static MemberAuth ofSocial(Member member, String email) {
         return new MemberAuth(member, email, null);
     }
+
+    public void changePassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
 }

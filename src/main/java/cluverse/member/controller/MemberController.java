@@ -4,8 +4,13 @@ import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
 import cluverse.member.service.MemberUniversityService;
+import cluverse.member.service.MemberPostService;
+import cluverse.member.service.MemberProfileImageService;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
+import cluverse.member.service.request.MemberPasswordUpdateRequest;
+import cluverse.member.service.request.MemberPostPageRequest;
+import cluverse.member.service.request.MemberProfileImagePresignedUrlRequest;
 import cluverse.member.service.request.MemberUniversityUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.MemberService;
@@ -14,6 +19,8 @@ import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberMajorResponse;
 import cluverse.member.service.response.MemberProfileResponse;
+import cluverse.member.service.response.MemberProfileImagePresignedUrlResponse;
+import cluverse.post.service.response.PostPageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,6 +35,8 @@ public class MemberController {
 
     private final MemberService memberService;
     private final MemberUniversityService memberUniversityService;
+    private final MemberPostService memberPostService;
+    private final MemberProfileImageService memberProfileImageService;
 
     @GetMapping("/me/profile")
     public ApiResponse<MemberProfileResponse> getMyProfile(@Login LoginMember loginMember) {
@@ -50,6 +59,33 @@ public class MemberController {
     public ApiResponse<MemberProfileResponse> updateUniversity(@Login LoginMember loginMember,
                                                                @RequestBody @Valid MemberUniversityUpdateRequest request) {
         return ApiResponse.ok(memberUniversityService.updateUniversity(loginMember.memberId(), request));
+    }
+
+    @GetMapping("/me/posts")
+    public ApiResponse<PostPageResponse> getMyPosts(@Login LoginMember loginMember,
+                                                    @Valid @ModelAttribute MemberPostPageRequest request) {
+        return ApiResponse.ok(memberPostService.getMyPosts(loginMember.memberId(), request));
+    }
+
+    @PatchMapping("/me/password")
+    public ApiResponse<Void> updatePassword(@Login LoginMember loginMember,
+                                            @RequestBody @Valid MemberPasswordUpdateRequest request) {
+        memberService.updatePassword(loginMember.memberId(), request);
+        return ApiResponse.ok();
+    }
+
+    @PostMapping("/me/profile-image/presigned-url")
+    public ApiResponse<MemberProfileImagePresignedUrlResponse> createProfileImagePresignedUrl(
+            @Login LoginMember loginMember,
+            @RequestBody @Valid MemberProfileImagePresignedUrlRequest request
+    ) {
+        return ApiResponse.ok(memberProfileImageService.createPresignedUrl(loginMember.memberId(), request));
+    }
+
+    @DeleteMapping("/me")
+    public ApiResponse<Void> deleteMember(@Login LoginMember loginMember) {
+        memberService.deleteMember(loginMember.memberId());
+        return ApiResponse.ok();
     }
 
     @GetMapping("/me/majors")

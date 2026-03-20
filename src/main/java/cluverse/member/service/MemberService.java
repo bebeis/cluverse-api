@@ -1,12 +1,17 @@
 package cluverse.member.service;
 
 import cluverse.auth.exception.AuthExceptionMessage;
+import cluverse.common.config.PasswordConfig;
+import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.UnauthorizedException;
 import cluverse.member.domain.Member;
+import cluverse.member.domain.MemberAuth;
+import cluverse.member.exception.MemberExceptionMessage;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.member.service.implement.MemberWriter;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
+import cluverse.member.service.request.MemberPasswordUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberFollowResponse;
@@ -28,6 +33,7 @@ public class MemberService {
 
     private final MemberReader memberReader;
     private final MemberWriter memberWriter;
+    private final PasswordConfig passwordConfig;
 
     @Transactional(readOnly = true)
     public MemberProfileResponse getProfile(Long viewerId, Long targetMemberId) {
@@ -46,6 +52,18 @@ public class MemberService {
         Member member = memberReader.readOrThrow(memberId);
         memberWriter.updateUniversity(member, universityId);
         return buildProfileResponse(memberId, member);
+    }
+
+    public void updatePassword(Long memberId, MemberPasswordUpdateRequest request) {
+        Member member = memberReader.readOrThrow(memberId);
+        MemberAuth memberAuth = validatePasswordChangable(member);
+        validateCurrentPassword(memberAuth, request.currentPassword());
+        memberWriter.updatePassword(member, passwordConfig.encode(request.newPassword()));
+    }
+
+    public void deleteMember(Long memberId) {
+        Member member = memberReader.readOrThrow(memberId);
+        memberWriter.delete(member);
     }
 
     @Transactional(readOnly = true)
@@ -160,6 +178,20 @@ public class MemberService {
     private void validateViewerId(Long viewerId) {
         if (viewerId == null) {
             throw new UnauthorizedException(AuthExceptionMessage.UNAUTHORIZED.getMessage());
+        }
+    }
+
+    private MemberAuth validatePasswordChangable(Member member) {
+        MemberAuth memberAuth = member.getMemberAuth();
+        if (memberAuth == null || memberAuth.getPasswordHash() == null) {
+            throw new BadRequestException(MemberExceptionMessage.PASSWORD_CHANGE_NOT_ALLOWED.getMessage());
+        }
+        return memberAuth;
+    }
+
+    private void validateCurrentPassword(MemberAuth memberAuth, String currentPassword) {
+        if (!passwordConfig.matches(currentPassword, memberAuth.getPasswordHash())) {
+            throw new BadRequestException(MemberExceptionMessage.INVALID_PASSWORD.getMessage());
         }
     }
 }
