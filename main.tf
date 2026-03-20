@@ -251,15 +251,15 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 # Spring Boot API 인스턴스 1 (AZ: ap-northeast-2a)
 # ============================================================
 resource "aws_instance" "app_1" {
-  ami           = "ami-0e9bfdb247cc8de84"  # Ubuntu 22.04 LTS AMI
+  ami           = "ami-0e9bfdb247cc8de84" # Ubuntu 22.04 LTS AMI
   instance_type = "t3.micro"
   subnet_id     = aws_subnet.public_1.id
 
   monitoring = true
 
   vpc_security_group_ids = [aws_security_group.ec2.id]
-  key_name              = "cluverse-key"
-  iam_instance_profile  = aws_iam_instance_profile.ec2_profile.name
+  key_name               = "cluverse-key"
+  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 
   root_block_device {
     volume_size = 30
@@ -342,15 +342,15 @@ resource "aws_instance" "app_1" {
 # Spring Boot API 인스턴스 2 (AZ: ap-northeast-2c)
 # ============================================================
 resource "aws_instance" "app_2" {
-  ami           = "ami-0e9bfdb247cc8de84"  # Ubuntu 22.04 LTS AMI
+  ami           = "ami-0e9bfdb247cc8de84" # Ubuntu 22.04 LTS AMI
   instance_type = "t3.micro"
   subnet_id     = aws_subnet.public_2.id
 
   monitoring = true
 
   vpc_security_group_ids = [aws_security_group.ec2.id]
-  key_name              = "cluverse-key"
-  iam_instance_profile  = aws_iam_instance_profile.ec2_profile.name
+  key_name               = "cluverse-key"
+  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 
   root_block_device {
     volume_size = 30
@@ -433,15 +433,15 @@ resource "aws_instance" "app_2" {
 # Nginx 로드밸런서 인스턴스 (AZ: ap-northeast-2a)
 # ============================================================
 resource "aws_instance" "nginx" {
-  ami           = "ami-0e9bfdb247cc8de84"  # Ubuntu 22.04 LTS AMI
+  ami           = "ami-0e9bfdb247cc8de84" # Ubuntu 22.04 LTS AMI
   instance_type = "t3.micro"
   subnet_id     = aws_subnet.public_1.id
 
   monitoring = true
 
   vpc_security_group_ids = [aws_security_group.nginx.id]
-  key_name              = "cluverse-key"
-  iam_instance_profile  = aws_iam_instance_profile.ec2_profile.name
+  key_name               = "cluverse-key"
+  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 
   root_block_device {
     volume_size = 20
@@ -698,9 +698,41 @@ resource "aws_s3_bucket_public_access_block" "images" {
   bucket = aws_s3_bucket.images.id
 
   block_public_acls       = true
-  block_public_policy     = true
+  block_public_policy     = false
   ignore_public_acls      = true
-  restrict_public_buckets = true
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_cors_configuration" "images" {
+  bucket = aws_s3_bucket.images.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "HEAD", "PUT"]
+    allowed_origins = var.s3_allowed_origins
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3000
+  }
+}
+
+resource "aws_s3_bucket_policy" "images_public_read" {
+  bucket = aws_s3_bucket.images.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowPublicReadForUploadedImages"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource = [
+          "${aws_s3_bucket.images.arn}/posts/*",
+          "${aws_s3_bucket.images.arn}/members/*"
+        ]
+      }
+    ]
+  })
 }
 
 # EC2 IAM 역할에 S3 접근 정책 추가
@@ -802,12 +834,12 @@ resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
 
 # RDS 인스턴스
 resource "aws_db_instance" "cluverse" {
-  identifier         = "cluverse-db"
-  engine             = "mysql"
-  engine_version     = "8.0"
-  instance_class     = "db.t3.micro"
-  allocated_storage  = 20
-  storage_type       = "gp2"
+  identifier        = "cluverse-db"
+  engine            = "mysql"
+  engine_version    = "8.0"
+  instance_class    = "db.t3.micro"
+  allocated_storage = 20
+  storage_type      = "gp2"
 
   db_name  = "cluverse"
   username = "cluverse_user"
