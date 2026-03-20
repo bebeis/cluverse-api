@@ -65,6 +65,7 @@ class AuthWriterTest {
         assertThat(result.getNickname()).startsWith("newuser_");
         assertThat(result.getNickname()).hasSizeLessThanOrEqualTo(50);
         assertThat(result.getUniversityId()).isNull();
+        assertThat(result.isVerified()).isTrue();
         assertThat(result.getMemberAuth().getEmail()).isEqualTo("new@example.com");
         assertThat(result.getSocialAccounts()).hasSize(1);
         verify(memberRepository).existsByNickname(anyString());
