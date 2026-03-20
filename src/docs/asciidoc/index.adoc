@@ -40,4 +40,6 @@ include::comment-reaction/index.adoc[]
 
 include::report/index.adoc[]
 
+include::notification/index.adoc[]
+
 include::recruitment/index.adoc[]
