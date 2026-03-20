@@ -3,6 +3,7 @@ package cluverse.comment.controller;
 import cluverse.comment.service.CommentService;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.comment.service.request.CommentPageRequest;
+import cluverse.comment.service.request.CommentUpdateRequest;
 import cluverse.comment.service.response.CommentDeleteResponse;
 import cluverse.comment.service.response.CommentPageResponse;
 import cluverse.comment.service.response.CommentResponse;
@@ -37,6 +38,13 @@ public class CommentController {
         return ApiResponse.created(
                 commentService.createComment(loginMember.memberId(), postId, request, httpRequest.getRemoteAddr())
         );
+    }
+
+    @PutMapping("/{commentId}")
+    public ApiResponse<CommentResponse> updateComment(@Login LoginMember loginMember,
+                                                      @PathVariable Long commentId,
+                                                      @RequestBody @Valid CommentUpdateRequest request) {
+        return ApiResponse.ok(commentService.updateComment(loginMember.memberId(), commentId, request));
     }
 
     @DeleteMapping("/{commentId}")

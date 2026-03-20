@@ -37,6 +37,19 @@ include::{snippets}/comments/create-comment/request-fields.adoc[]
 include::{snippets}/comments/create-comment/http-response.adoc[]
 include::{snippets}/comments/create-comment/response-fields.adoc[]
 
+=== 댓글 수정
+
+==== 요청
+
+include::{snippets}/comments/update-comment/http-request.adoc[]
+include::{snippets}/comments/update-comment/path-parameters.adoc[]
+include::{snippets}/comments/update-comment/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/comments/update-comment/http-response.adoc[]
+include::{snippets}/comments/update-comment/response-fields.adoc[]
+
 === 댓글 삭제
 
 ==== 요청

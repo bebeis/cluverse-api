@@ -9,6 +9,7 @@ public enum CommentExceptionMessage {
 
     COMMENT_NOT_FOUND("존재하지 않는 댓글입니다."),
     COMMENT_ACCESS_DENIED("댓글 삭제 권한이 없습니다."),
+    COMMENT_UPDATE_ACCESS_DENIED("댓글 수정 권한이 없습니다."),
     COMMENT_MAX_DEPTH_EXCEEDED("댓글은 최대 5 depth까지 작성할 수 있습니다."),
     COMMENT_PARENT_POST_MISMATCH("부모 댓글이 요청한 게시글에 속하지 않습니다."),
     COMMENT_REPLY_NOT_ALLOWED("삭제되었거나 숨김 처리된 댓글에는 답글을 작성할 수 없습니다."),

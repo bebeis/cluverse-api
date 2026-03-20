@@ -9,6 +9,7 @@ import cluverse.comment.service.implement.CommentReader;
 import cluverse.comment.service.implement.CommentWriter;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.comment.service.request.CommentPageRequest;
+import cluverse.comment.service.request.CommentUpdateRequest;
 import cluverse.comment.service.response.CommentDeleteResponse;
 import cluverse.comment.service.response.CommentPageResponse;
 import cluverse.comment.service.response.CommentReactionTargetResponse;
@@ -65,6 +66,17 @@ public class CommentServiceV1 implements CommentService {
     }
 
     @Override
+    public CommentResponse updateComment(Long memberId, Long commentId, CommentUpdateRequest request) {
+        Comment comment = commentReader.readActiveOrThrow(commentId);
+        validateUpdatePermission(memberId, comment);
+
+        commentWriter.update(comment, request);
+
+        CommentQueryDto commentQueryDto = commentQueryRepository.findComment(memberId, commentId);
+        return CommentResponse.from(commentQueryDto, memberId);
+    }
+
+    @Override
     public CommentDeleteResponse deleteComment(Long memberId, Long commentId) {
         Comment comment = commentReader.readOrThrow(commentId);
         validateDeletePermission(memberId, comment);
@@ -115,6 +127,13 @@ public class CommentServiceV1 implements CommentService {
             return;
         }
         throw new ForbiddenException(CommentExceptionMessage.COMMENT_ACCESS_DENIED.getMessage());
+    }
+
+    private void validateUpdatePermission(Long memberId, Comment comment) {
+        if (comment.isAuthor(memberId)) {
+            return;
+        }
+        throw new ForbiddenException(CommentExceptionMessage.COMMENT_UPDATE_ACCESS_DENIED.getMessage());
     }
 
     private void delete(Comment comment) {

@@ -9,6 +9,7 @@ import cluverse.comment.service.implement.CommentReader;
 import cluverse.comment.service.implement.CommentWriter;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.comment.service.request.CommentPageRequest;
+import cluverse.comment.service.request.CommentUpdateRequest;
 import cluverse.comment.service.response.CommentPageResponse;
 import cluverse.comment.service.response.CommentResponse;
 import cluverse.common.exception.ForbiddenException;
@@ -93,6 +94,34 @@ class CommentServiceV1Test {
         verify(postService).validateWritablePost(1L, 10L);
         verify(commentWriter).increaseReplyCount(100L);
         verify(postMetaService).increaseCommentCount(10L);
+    }
+
+    @Test
+    void 댓글_수정시_수정된_댓글을_응답으로_반환한다() {
+        // given
+        Comment comment = createComment(101L, 10L, 1L, null, 0);
+        CommentUpdateRequest request = new CommentUpdateRequest("수정된 댓글입니다.");
+
+        when(commentReader.readActiveOrThrow(101L)).thenReturn(comment);
+        when(commentQueryRepository.findComment(1L, 101L)).thenReturn(createCommentQueryDto(101L, null, 0, false, false));
+
+        // when
+        CommentResponse response = commentService.updateComment(1L, 101L, request);
+
+        // then
+        assertThat(response.commentId()).isEqualTo(101L);
+        verify(commentWriter).update(comment, request);
+    }
+
+    @Test
+    void 작성자가_아니면_댓글을_수정할_수_없다() {
+        // given
+        Comment comment = createComment(101L, 10L, 2L, null, 0);
+        when(commentReader.readActiveOrThrow(101L)).thenReturn(comment);
+
+        // when & then
+        assertThatThrownBy(() -> commentService.updateComment(1L, 101L, new CommentUpdateRequest("수정")))
+                .isInstanceOf(ForbiddenException.class);
     }
 
     @Test

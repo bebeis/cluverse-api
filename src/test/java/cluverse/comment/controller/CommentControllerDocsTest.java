@@ -27,6 +27,7 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
@@ -212,6 +213,54 @@ class CommentControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.author.memberId").type(JsonFieldType.NULL).description("익명 댓글인 경우 null"),
                                 fieldWithPath("data.author.nickname").type(JsonFieldType.STRING).description("작성자 닉네임"),
                                 fieldWithPath("data.author.profileImageUrl").type(JsonFieldType.NULL).description("익명 댓글인 경우 null"),
+                                fieldWithPath("data.createdAt").type(JsonFieldType.STRING).description("작성 시각"),
+                                fieldWithPath("data.updatedAt").type(JsonFieldType.STRING).description("수정 시각")
+                        )
+                ));
+    }
+
+    @Test
+    void 댓글_수정() throws Exception {
+        when(commentService.updateComment(anyLong(), anyLong(), any())).thenReturn(
+                createCommentResponse(101L, null, 0, false, false)
+        );
+
+        mockMvc.perform(put("/api/v1/comments/{commentId}", 101L)
+                        .session(createSession())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "content": "수정한 댓글입니다."
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.commentId").value(101))
+                .andDo(document("comments/update-comment",
+                        pathParameters(
+                                parameterWithName("commentId").description("수정할 댓글 ID")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(JsonFieldType.STRING).description("수정할 댓글 내용")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data.commentId").type(JsonFieldType.NUMBER).description("댓글 ID"),
+                                fieldWithPath("data.postId").type(JsonFieldType.NUMBER).description("게시글 ID"),
+                                fieldWithPath("data.parentCommentId").type(JsonFieldType.NULL).description("부모 댓글 ID").optional(),
+                                fieldWithPath("data.depth").type(JsonFieldType.NUMBER).description("댓글 depth"),
+                                fieldWithPath("data.content").type(JsonFieldType.STRING).description("수정된 댓글 내용"),
+                                fieldWithPath("data.status").type(JsonFieldType.STRING).description("댓글 상태"),
+                                fieldWithPath("data.isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 여부"),
+                                fieldWithPath("data.isMine").type(JsonFieldType.BOOLEAN).description("내 댓글 여부"),
+                                fieldWithPath("data.likedByMe").type(JsonFieldType.BOOLEAN).description("내가 좋아요한 댓글인지 여부"),
+                                fieldWithPath("data.blockedAuthor").type(JsonFieldType.BOOLEAN).description("차단한 작성자의 댓글인지 여부"),
+                                fieldWithPath("data.likeCount").type(JsonFieldType.NUMBER).description("좋아요 수"),
+                                fieldWithPath("data.replyCount").type(JsonFieldType.NUMBER).description("직계 대댓글 수"),
+                                fieldWithPath("data.author.memberId").type(JsonFieldType.NUMBER).description("작성자 회원 ID").optional(),
+                                fieldWithPath("data.author.nickname").type(JsonFieldType.STRING).description("작성자 닉네임"),
+                                fieldWithPath("data.author.profileImageUrl").type(JsonFieldType.STRING).description("작성자 프로필 이미지 URL").optional(),
                                 fieldWithPath("data.createdAt").type(JsonFieldType.STRING).description("작성 시각"),
                                 fieldWithPath("data.updatedAt").type(JsonFieldType.STRING).description("수정 시각")
                         )

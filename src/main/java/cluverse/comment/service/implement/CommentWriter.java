@@ -4,6 +4,7 @@ import cluverse.comment.domain.Comment;
 import cluverse.comment.exception.CommentExceptionMessage;
 import cluverse.comment.repository.CommentRepository;
 import cluverse.comment.service.request.CommentCreateRequest;
+import cluverse.comment.service.request.CommentUpdateRequest;
 import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,10 @@ public class CommentWriter {
                 clientIp
         );
         return commentRepository.save(comment);
+    }
+
+    public void update(Comment comment, CommentUpdateRequest request) {
+        comment.updateContent(request.content());
     }
 
     public void delete(Comment comment) {

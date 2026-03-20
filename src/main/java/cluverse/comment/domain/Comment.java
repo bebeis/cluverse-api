@@ -76,6 +76,10 @@ public class Comment extends BaseTimeEntity {
         this.deletedAt = LocalDateTime.now();
     }
 
+    public void updateContent(String content) {
+        this.content = content;
+    }
+
     public boolean isAuthor(Long memberId) {
         return this.memberId.equals(memberId);
     }
