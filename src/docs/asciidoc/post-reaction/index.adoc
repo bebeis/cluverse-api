@@ -35,3 +35,15 @@ include::{snippets}/post-reactions/remove-bookmark/path-parameters.adoc[]
 
 include::{snippets}/post-reactions/remove-bookmark/http-response.adoc[]
 include::{snippets}/post-reactions/remove-bookmark/response-fields.adoc[]
+
+=== 북마크한 게시글 목록 조회
+
+==== 요청
+
+include::{snippets}/post-reactions/get-bookmarked-posts/http-request.adoc[]
+include::{snippets}/post-reactions/get-bookmarked-posts/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/post-reactions/get-bookmarked-posts/http-response.adoc[]
+include::{snippets}/post-reactions/get-bookmarked-posts/response-fields.adoc[]
