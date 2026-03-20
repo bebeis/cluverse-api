@@ -226,6 +226,23 @@ class GroupControllerDocsTest extends RestDocsSupport {
     }
 
     @Test
+    void 그룹_삭제() throws Exception {
+        // given
+        doNothing().when(groupService).deleteGroup(1L, 1L);
+
+        // when, then
+        mockMvc.perform(delete("/api/v1/groups/{groupId}", 1L)
+                        .session(createMemberSession()))
+                .andExpect(status().isOk())
+                .andDo(document("groups/delete-group",
+                        pathParameters(
+                                parameterWithName("groupId").description("삭제할 그룹 ID")
+                        ),
+                        responseFields(voidResponseFields())
+                ));
+    }
+
+    @Test
     void 그룹_멤버_목록_조회() throws Exception {
         // given
         when(groupService.getMembers(1L, 1L)).thenReturn(List.of(

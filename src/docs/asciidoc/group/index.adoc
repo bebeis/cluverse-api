@@ -60,6 +60,18 @@ include::{snippets}/groups/update-group/request-fields.adoc[]
 include::{snippets}/groups/update-group/http-response.adoc[]
 include::{snippets}/groups/update-group/response-fields.adoc[]
 
+=== 그룹 삭제
+
+==== 요청
+
+include::{snippets}/groups/delete-group/http-request.adoc[]
+include::{snippets}/groups/delete-group/path-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/groups/delete-group/http-response.adoc[]
+include::{snippets}/groups/delete-group/response-fields.adoc[]
+
 === 그룹 멤버 목록 조회
 
 ==== 요청

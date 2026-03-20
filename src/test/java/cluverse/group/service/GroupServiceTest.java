@@ -1,5 +1,8 @@
 package cluverse.group.service;
 
+import cluverse.board.domain.Board;
+import cluverse.board.domain.BoardType;
+import cluverse.board.service.BoardService;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupActivityType;
@@ -23,11 +26,17 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class GroupServiceTest {
+
+    @Mock
+    private BoardService boardService;
 
     @Mock
     private GroupReader groupReader;
@@ -53,10 +62,12 @@ class GroupServiceTest {
                 List.of(1L, 2L)
         );
         Group group = createGroup(1L, 11L, 100L);
+        Board board = createBoard(11L, "AI 프로젝트");
         Member owner = createMember(100L, "luna");
 
-        when(groupWriter.create(100L, request)).thenReturn(group);
-        when(groupReader.readOrThrow(1L)).thenReturn(group);
+        when(boardService.createGroupBoard("AI 프로젝트", "함께 만드는 AI 프로젝트 그룹")).thenReturn(board);
+        when(groupWriter.create(100L, 11L, request)).thenReturn(group);
+        when(groupReader.readActiveOrThrow(1L)).thenReturn(group);
         when(groupReader.readMemberMap(List.of(100L))).thenReturn(Map.of(100L, owner));
         when(groupReader.readInterestMap(List.of(1L, 2L))).thenReturn(Map.of());
         when(groupReader.countOpenRecruitments(1L)).thenReturn(0L);
@@ -68,8 +79,9 @@ class GroupServiceTest {
         assertThat(result.groupId()).isEqualTo(1L);
         assertThat(result.ownerNickname()).isEqualTo("luna");
         assertThat(result.member()).isTrue();
-        verify(groupWriter).create(100L, request);
-        verify(groupReader).readOrThrow(1L);
+        verify(boardService).createGroupBoard("AI 프로젝트", "함께 만드는 AI 프로젝트 그룹");
+        verify(groupWriter).create(100L, 11L, request);
+        verify(groupReader).readActiveOrThrow(1L);
     }
 
     @Test
@@ -87,12 +99,78 @@ class GroupServiceTest {
                 20,
                 List.of()
         );
-        when(groupReader.readOrThrow(1L)).thenReturn(group);
+        when(groupReader.readActiveOrThrow(1L)).thenReturn(group);
 
         // when, then
         assertThatThrownBy(() -> groupService.updateGroup(200L, 1L, request))
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessage("그룹 관리 권한이 없습니다.");
+        verifyNoMoreInteractions(boardService);
+    }
+
+    @Test
+    void 그룹_수정시_연결된_보드_이름과_설명도_함께_갱신한다() {
+        // given
+        Group group = createGroup(1L, 11L, 100L);
+        GroupUpdateRequest request = new GroupUpdateRequest(
+                "AI 프로젝트 시즌2",
+                "업데이트된 소개",
+                null,
+                GroupCategory.PROJECT,
+                GroupActivityType.ONLINE,
+                "전국",
+                GroupVisibility.PUBLIC,
+                20,
+                List.of(1L)
+        );
+        Member owner = createMember(100L, "luna");
+
+        when(groupReader.readActiveOrThrow(1L)).thenReturn(group);
+        when(groupReader.readMemberMap(List.of(100L))).thenReturn(Map.of(100L, owner));
+        when(groupReader.readInterestMap(List.of(1L))).thenReturn(Map.of());
+        when(groupReader.countOpenRecruitments(1L)).thenReturn(0L);
+        doAnswer(invocation -> {
+            Group targetGroup = invocation.getArgument(0);
+            GroupUpdateRequest updateRequest = invocation.getArgument(1);
+            targetGroup.update(
+                    updateRequest.name(),
+                    updateRequest.description(),
+                    updateRequest.coverImageUrl(),
+                    updateRequest.category(),
+                    updateRequest.activityType(),
+                    updateRequest.region(),
+                    updateRequest.visibility(),
+                    updateRequest.maxMembers(),
+                    updateRequest.interestIds()
+            );
+            return null;
+        }).when(groupWriter).update(any(Group.class), any(GroupUpdateRequest.class));
+
+        // when
+        GroupDetailResponse result = groupService.updateGroup(100L, 1L, request);
+
+        // then
+        assertThat(result.name()).isEqualTo("AI 프로젝트 시즌2");
+        verify(boardService).updateGroupBoard(11L, "AI 프로젝트 시즌2", "업데이트된 소개");
+    }
+
+    @Test
+    void 그룹_삭제시_그룹은_종료되고_보드도_비활성화한다() {
+        // given
+        Group group = createGroup(1L, 11L, 100L);
+        when(groupReader.readActiveOrThrow(1L)).thenReturn(group);
+        doAnswer(invocation -> {
+            Group targetGroup = invocation.getArgument(0);
+            targetGroup.close();
+            return null;
+        }).when(groupWriter).close(any(Group.class));
+
+        // when
+        groupService.deleteGroup(100L, 1L);
+
+        // then
+        assertThat(group.getStatus()).isEqualTo(cluverse.group.domain.GroupStatus.CLOSED);
+        verify(boardService).deactivateGroupBoard(11L);
     }
 
     private Group createGroup(Long groupId, Long boardId, Long ownerId) {
@@ -111,6 +189,12 @@ class GroupServiceTest {
         );
         ReflectionTestUtils.setField(group, "id", groupId);
         return group;
+    }
+
+    private Board createBoard(Long boardId, String name) {
+        Board board = Board.create(BoardType.GROUP, name, "설명", null, 0, 0, true);
+        ReflectionTestUtils.setField(board, "id", boardId);
+        return board;
     }
 
     private Member createMember(Long memberId, String nickname) {

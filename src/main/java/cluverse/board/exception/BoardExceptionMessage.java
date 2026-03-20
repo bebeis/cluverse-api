@@ -12,6 +12,7 @@ public enum BoardExceptionMessage {
     BOARD_READ_ACCESS_DENIED("게시판 조회 권한이 없습니다."),
     BOARD_WRITE_ACCESS_DENIED("게시판 작성 권한이 없습니다."),
     BOARD_GROUP_TYPE_NOT_SUPPORTED("그룹 게시판은 그룹 도메인에서 관리해야 합니다."),
+    BOARD_GROUP_TYPE_REQUIRED("그룹 게시판만 처리할 수 있습니다."),
     BOARD_PARENT_NOT_FOUND("상위 게시판을 찾을 수 없습니다."),
     BOARD_PARENT_TYPE_MISMATCH("상위 게시판과 동일한 타입의 게시판만 생성할 수 있습니다."),
     BOARD_DEPTH_EXCEEDED("게시판 깊이는 최대 3단계까지 허용됩니다."),

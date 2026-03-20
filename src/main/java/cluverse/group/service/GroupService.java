@@ -1,5 +1,7 @@
 package cluverse.group.service;
 
+import cluverse.board.domain.Board;
+import cluverse.board.service.BoardService;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupInterest;
@@ -36,6 +38,7 @@ import java.util.Map;
 @Transactional
 public class GroupService {
 
+    private final BoardService boardService;
     private final GroupReader groupReader;
     private final GroupWriter groupWriter;
 
@@ -66,25 +69,27 @@ public class GroupService {
     }
 
     public GroupDetailResponse createGroup(Long memberId, GroupCreateRequest request) {
-        Group group = groupWriter.create(memberId, request);
-        return toDetailResponse(memberId, groupReader.readOrThrow(group.getId()));
+        Board board = boardService.createGroupBoard(request.name(), request.description());
+        Group group = groupWriter.create(memberId, board.getId(), request);
+        return toDetailResponse(memberId, groupReader.readActiveOrThrow(group.getId()));
     }
 
     @Transactional(readOnly = true)
     public GroupDetailResponse getGroup(Long memberId, Long groupId) {
-        return toDetailResponse(memberId, groupReader.readOrThrow(groupId));
+        return toDetailResponse(memberId, groupReader.readActiveOrThrow(groupId));
     }
 
     public GroupDetailResponse updateGroup(Long memberId, Long groupId, GroupUpdateRequest request) {
-        Group group = groupReader.readOrThrow(groupId);
+        Group group = groupReader.readActiveOrThrow(groupId);
         validateManager(memberId, group);
         groupWriter.update(group, request);
+        boardService.updateGroupBoard(group.getBoardId(), request.name(), request.description());
         return toDetailResponse(memberId, group);
     }
 
     @Transactional(readOnly = true)
     public List<GroupMemberResponse> getMembers(Long memberId, Long groupId) {
-        Group group = groupReader.readOrThrow(groupId);
+        Group group = groupReader.readActiveOrThrow(groupId);
         validateManager(memberId, group);
         return toMemberResponses(memberId, group);
     }
@@ -94,7 +99,7 @@ public class GroupService {
                                             Long targetMemberId,
                                             GroupMemberUpdateRequest request,
                                             String clientIp) {
-        Group group = groupReader.readOrThrow(groupId);
+        Group group = groupReader.readActiveOrThrow(groupId);
         validateManager(memberId, group);
         groupWriter.updateMember(group, targetMemberId, request);
         return toMemberResponses(memberId, group).stream()
@@ -104,12 +109,12 @@ public class GroupService {
     }
 
     public void leaveGroup(Long memberId, Long groupId, String clientIp) {
-        Group group = groupReader.readOrThrow(groupId);
+        Group group = groupReader.readActiveOrThrow(groupId);
         groupWriter.leave(group, memberId);
     }
 
     public void removeMember(Long memberId, Long groupId, Long targetMemberId, String clientIp) {
-        Group group = groupReader.readOrThrow(groupId);
+        Group group = groupReader.readActiveOrThrow(groupId);
         validateManager(memberId, group);
         groupWriter.removeMember(group, targetMemberId);
     }
@@ -118,7 +123,7 @@ public class GroupService {
                                              Long groupId,
                                              GroupOwnerTransferRequest request,
                                              String clientIp) {
-        Group group = groupReader.readOrThrow(groupId);
+        Group group = groupReader.readActiveOrThrow(groupId);
         validateOwner(memberId, group);
         groupWriter.transferOwner(group, request);
         return toDetailResponse(memberId, group);
@@ -126,29 +131,36 @@ public class GroupService {
 
     @Transactional(readOnly = true)
     public List<GroupRoleResponse> getRoles(Long memberId, Long groupId) {
-        Group group = groupReader.readOrThrow(groupId);
+        Group group = groupReader.readActiveOrThrow(groupId);
         validateManager(memberId, group);
         return toRoleResponses(group);
     }
 
     public GroupRoleResponse createRole(Long memberId, Long groupId, GroupRoleCreateRequest request) {
-        Group group = groupReader.readOrThrow(groupId);
+        Group group = groupReader.readActiveOrThrow(groupId);
         validateManager(memberId, group);
         GroupRole role = groupWriter.createRole(group, request);
         return toRoleResponse(role);
     }
 
     public GroupRoleResponse updateRole(Long memberId, Long groupId, Long roleId, GroupRoleUpdateRequest request) {
-        Group group = groupReader.readOrThrow(groupId);
+        Group group = groupReader.readActiveOrThrow(groupId);
         validateManager(memberId, group);
         GroupRole role = groupWriter.updateRole(group, roleId, request);
         return toRoleResponse(role);
     }
 
     public void deleteRole(Long memberId, Long groupId, Long roleId) {
-        Group group = groupReader.readOrThrow(groupId);
+        Group group = groupReader.readActiveOrThrow(groupId);
         validateManager(memberId, group);
         groupWriter.deleteRole(group, roleId);
+    }
+
+    public void deleteGroup(Long memberId, Long groupId) {
+        Group group = groupReader.readActiveOrThrow(groupId);
+        validateOwner(memberId, group);
+        groupWriter.close(group);
+        boardService.deactivateGroupBoard(group.getBoardId());
     }
 
     private GroupSummaryResponse toSummaryResponse(Group group) {

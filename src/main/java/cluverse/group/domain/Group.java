@@ -211,6 +211,15 @@ public class Group extends BaseTimeEntity {
         this.ownerId = newOwnerMemberId;
     }
 
+    public void assignCustomTitle(Long memberId, Long customTitleId) {
+        validateCustomTitle(customTitleId);
+        findMember(memberId).assignCustomTitle(customTitleId);
+    }
+
+    public void close() {
+        this.status = GroupStatus.CLOSED;
+    }
+
     public boolean isOwner(Long memberId) {
         return ownerId.equals(memberId);
     }

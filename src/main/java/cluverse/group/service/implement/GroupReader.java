@@ -2,6 +2,7 @@ package cluverse.group.service.implement;
 
 import cluverse.common.exception.NotFoundException;
 import cluverse.group.domain.Group;
+import cluverse.group.domain.GroupStatus;
 import cluverse.group.exception.GroupExceptionMessage;
 import cluverse.group.repository.GroupRepository;
 import cluverse.group.service.request.GroupSearchRequest;
@@ -37,8 +38,15 @@ public class GroupReader {
                 .orElseThrow(() -> new NotFoundException(GroupExceptionMessage.GROUP_NOT_FOUND.getMessage()));
     }
 
+    public Group readActiveOrThrow(Long groupId) {
+        return groupRepository.findById(groupId)
+                .filter(group -> group.getStatus() == GroupStatus.ACTIVE)
+                .orElseThrow(() -> new NotFoundException(GroupExceptionMessage.GROUP_NOT_FOUND.getMessage()));
+    }
+
     public List<Group> readGroups(GroupSearchRequest request) {
         return groupRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
+                .filter(group -> group.getStatus() == GroupStatus.ACTIVE)
                 .filter(group -> request.keyword() == null
                         || group.getName().toLowerCase().contains(request.keyword().toLowerCase()))
                 .filter(group -> request.category() == null || group.getCategory() == request.category())
@@ -50,7 +58,9 @@ public class GroupReader {
     }
 
     public List<Group> readMyGroups(Long memberId) {
-        return groupRepository.findAllByMemberId(memberId);
+        return groupRepository.findAllByMemberId(memberId).stream()
+                .filter(group -> group.getStatus() == GroupStatus.ACTIVE)
+                .toList();
     }
 
     public long countOpenRecruitments(Long groupId) {

@@ -21,6 +21,7 @@ import cluverse.board.service.response.GroupBoardSummaryResponse;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.common.exception.NotFoundException;
 import cluverse.group.domain.GroupMemberRole;
+import cluverse.group.domain.GroupStatus;
 import cluverse.group.domain.GroupVisibility;
 import cluverse.post.domain.PostCategory;
 import lombok.RequiredArgsConstructor;
@@ -304,7 +305,7 @@ public class BoardReader {
         if (boardType != BoardType.GROUP) {
             return true;
         }
-        return groupBoard != null && groupBoard.isMember();
+        return isActiveGroupBoard(groupBoard) && groupBoard.isMember();
     }
 
     private void validateReadable(BoardType boardType, BoardGroupQueryDto groupBoard) {
@@ -315,13 +316,13 @@ public class BoardReader {
 
     private boolean isWritable(BoardType boardType, boolean verified, BoardGroupQueryDto groupBoard) {
         if (boardType == BoardType.GROUP) {
-            return groupBoard != null && groupBoard.isMember();
+            return isActiveGroupBoard(groupBoard) && groupBoard.isMember();
         }
         return verified;
     }
 
     private boolean isManageable(BoardType boardType, BoardGroupQueryDto groupBoard) {
-        if (boardType != BoardType.GROUP || groupBoard == null) {
+        if (boardType != BoardType.GROUP || !isActiveGroupBoard(groupBoard)) {
             return false;
         }
         return groupBoard.myRole() == GroupMemberRole.OWNER || groupBoard.myRole() == GroupMemberRole.ADMIN;
@@ -335,7 +336,11 @@ public class BoardReader {
         if (boardType != BoardType.GROUP) {
             return true;
         }
-        return groupBoard != null && groupBoard.visibility() == GroupVisibility.PUBLIC;
+        return isActiveGroupBoard(groupBoard) && groupBoard.visibility() == GroupVisibility.PUBLIC;
+    }
+
+    private boolean isActiveGroupBoard(BoardGroupQueryDto groupBoard) {
+        return groupBoard != null && groupBoard.status() == GroupStatus.ACTIVE;
     }
 
     private BoardPostingPolicyResponse createPostingPolicy(BoardType boardType) {

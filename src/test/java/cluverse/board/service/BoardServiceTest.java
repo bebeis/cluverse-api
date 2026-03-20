@@ -118,6 +118,48 @@ class BoardServiceTest {
                 .hasMessage("게시판 관리 권한이 없습니다.");
     }
 
+    @Test
+    void 그룹_서비스는_그룹_게시판을_생성할_수_있다() {
+        // given
+        Board board = createBoard(201L, BoardType.GROUP, "AI 프로젝트");
+        when(boardWriter.createGroupBoard("AI 프로젝트", "그룹 소개")).thenReturn(board);
+
+        // when
+        Board result = boardService.createGroupBoard("AI 프로젝트", "그룹 소개");
+
+        // then
+        assertThat(result.getId()).isEqualTo(201L);
+        verify(boardWriter).createGroupBoard("AI 프로젝트", "그룹 소개");
+    }
+
+    @Test
+    void 그룹_서비스는_그룹_게시판_메타데이터를_수정할_수_있다() {
+        // given
+        Board board = createBoard(201L, BoardType.GROUP, "AI 프로젝트");
+        when(boardReader.readOrThrow(201L)).thenReturn(board);
+
+        // when
+        boardService.updateGroupBoard(201L, "AI 프로젝트 시즌2", "새 소개");
+
+        // then
+        verify(boardReader).readOrThrow(201L);
+        verify(boardWriter).updateGroupBoard(board, "AI 프로젝트 시즌2", "새 소개");
+    }
+
+    @Test
+    void 그룹_서비스는_그룹_게시판을_비활성화할_수_있다() {
+        // given
+        Board board = createBoard(201L, BoardType.GROUP, "AI 프로젝트");
+        when(boardReader.readOrThrow(201L)).thenReturn(board);
+
+        // when
+        boardService.deactivateGroupBoard(201L);
+
+        // then
+        verify(boardReader).readOrThrow(201L);
+        verify(boardWriter).deactivateGroupBoard(board);
+    }
+
     private Board createBoard(Long boardId, BoardType boardType, String name) {
         Board board = Board.create(boardType, name, "설명", null, 0, 1, true);
         ReflectionTestUtils.setField(board, "id", boardId);

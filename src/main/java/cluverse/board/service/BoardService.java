@@ -47,6 +47,23 @@ public class BoardService {
     }
 
     @Transactional
+    public Board createGroupBoard(String name, String description) {
+        return boardWriter.createGroupBoard(name, description);
+    }
+
+    @Transactional
+    public void updateGroupBoard(Long boardId, String name, String description) {
+        Board board = boardReader.readOrThrow(boardId);
+        boardWriter.updateGroupBoard(board, name, description);
+    }
+
+    @Transactional
+    public void deactivateGroupBoard(Long boardId) {
+        Board board = boardReader.readOrThrow(boardId);
+        boardWriter.deactivateGroupBoard(board);
+    }
+
+    @Transactional
     public BoardAdminResponse createBoard(Long memberId, BoardCreateRequest request) {
         validateAdmin(memberId);
         Board board = boardWriter.create(request);

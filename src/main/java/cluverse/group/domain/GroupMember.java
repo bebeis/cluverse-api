@@ -67,6 +67,10 @@ public class GroupMember extends BaseTimeEntity {
         this.customTitleId = null;
     }
 
+    public void assignCustomTitle(Long customTitleId) {
+        this.customTitleId = customTitleId;
+    }
+
     public boolean isOwner() {
         return role == GroupMemberRole.OWNER;
     }

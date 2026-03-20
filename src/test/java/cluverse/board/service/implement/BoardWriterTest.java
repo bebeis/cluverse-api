@@ -100,4 +100,30 @@ class BoardWriterTest {
         assertThat(board.getDisplayOrder()).isEqualTo(3);
         assertThat(board.isActive()).isFalse();
     }
+
+    @Test
+    void 그룹_게시판_메타데이터를_수정한다() {
+        // given
+        Board board = Board.create(BoardType.GROUP, "AI 프로젝트", "설명", null, 0, 0, true);
+
+        // when
+        boardWriter.updateGroupBoard(board, "AI 프로젝트 시즌2", "새 소개");
+
+        // then
+        assertThat(board.getName()).isEqualTo("AI 프로젝트 시즌2");
+        assertThat(board.getDescription()).isEqualTo("새 소개");
+        assertThat(board.isActive()).isTrue();
+    }
+
+    @Test
+    void 그룹_게시판은_비활성화할_수_있다() {
+        // given
+        Board board = Board.create(BoardType.GROUP, "AI 프로젝트", "설명", null, 0, 0, true);
+
+        // when
+        boardWriter.deactivateGroupBoard(board);
+
+        // then
+        assertThat(board.isActive()).isFalse();
+    }
 }

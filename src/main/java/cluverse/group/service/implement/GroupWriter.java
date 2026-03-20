@@ -1,7 +1,5 @@
 package cluverse.group.service.implement;
 
-import cluverse.board.domain.Board;
-import cluverse.board.repository.BoardRepository;
 import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupRole;
 import cluverse.group.repository.GroupRepository;
@@ -20,13 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class GroupWriter {
 
-    private final GroupRepository groupRepository;
-    private final BoardRepository boardRepository;
+    private static final String DEFAULT_MANAGER_ROLE_TITLE = "운영진";
+    private static final String DEFAULT_MEMBER_ROLE_TITLE = "멤버";
+    private static final int DEFAULT_MANAGER_ROLE_ORDER = 1;
+    private static final int DEFAULT_MEMBER_ROLE_ORDER = 2;
 
-    public Group create(Long memberId, GroupCreateRequest request) {
-        Board board = boardRepository.save(Board.createGroupBoard(request.name(), request.description()));
+    private final GroupRepository groupRepository;
+
+    public Group create(Long memberId, Long boardId, GroupCreateRequest request) {
         Group group = Group.create(
-                board.getId(),
+                boardId,
                 request.name(),
                 request.description(),
                 request.coverImageUrl(),
@@ -38,7 +39,9 @@ public class GroupWriter {
                 request.maxMembers(),
                 request.interestIds()
         );
-        return groupRepository.save(group);
+        Group savedGroup = groupRepository.save(group);
+        initializeDefaultRoles(savedGroup, memberId);
+        return savedGroup;
     }
 
     public void update(Group group, GroupUpdateRequest request) {
@@ -85,5 +88,16 @@ public class GroupWriter {
 
     public void deleteRole(Group group, Long roleId) {
         group.deleteRole(roleId);
+    }
+
+    public void close(Group group) {
+        group.close();
+    }
+
+    private void initializeDefaultRoles(Group group, Long ownerId) {
+        GroupRole managerRole = group.addRole(DEFAULT_MANAGER_ROLE_TITLE, DEFAULT_MANAGER_ROLE_ORDER);
+        group.addRole(DEFAULT_MEMBER_ROLE_TITLE, DEFAULT_MEMBER_ROLE_ORDER);
+        groupRepository.flush();
+        group.assignCustomTitle(ownerId, managerRole.getId());
     }
 }

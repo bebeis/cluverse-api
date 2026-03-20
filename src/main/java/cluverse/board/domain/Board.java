@@ -78,6 +78,11 @@ public class Board extends BaseTimeEntity {
         return create(BoardType.GROUP, name, description, null, 0, 0, true);
     }
 
+    public void updateGroupMetadata(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+
     public void update(String name, String description, int displayOrder, boolean isActive) {
         this.name = name;
         this.description = description;

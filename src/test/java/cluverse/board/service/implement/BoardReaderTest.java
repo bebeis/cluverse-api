@@ -96,6 +96,28 @@ class BoardReaderTest {
     }
 
     @Test
+    void 종료된_그룹의_보드는_기존_멤버도_조회할_수_없다() {
+        // given
+        Board board = createBoard(31L, BoardType.GROUP, "AI 프로젝트 게시판", null, 0);
+        when(boardRepository.findById(31L)).thenReturn(Optional.of(board));
+        when(boardQueryRepository.findGroupBoardMap(Set.of(31L), 7L)).thenReturn(Map.of(
+                31L, new BoardGroupQueryDto(
+                        31L,
+                        100L,
+                        "AI 프로젝트",
+                        GroupVisibility.PUBLIC,
+                        GroupStatus.CLOSED,
+                        GroupMemberRole.ADMIN
+                )
+        ));
+
+        // when, then
+        assertThatThrownBy(() -> boardReader.readBoardDetail(7L, true, 31L))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("게시판 조회 권한이 없습니다.");
+    }
+
+    @Test
     void 보드_디렉토리는_부모_기준으로_하위_게시판만_반환한다() {
         // given
         Board parentBoard = createBoard(10L, BoardType.DEPARTMENT, "컴퓨터공학", null, 0);

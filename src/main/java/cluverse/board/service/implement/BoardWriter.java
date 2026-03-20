@@ -41,6 +41,10 @@ public class BoardWriter {
         return boardRepository.save(board);
     }
 
+    public Board createGroupBoard(String name, String description) {
+        return boardRepository.save(Board.createGroupBoard(name, description));
+    }
+
     public void update(Board board, BoardUpdateRequest request) {
         validateMutable(board);
         board.update(
@@ -51,9 +55,19 @@ public class BoardWriter {
         );
     }
 
+    public void updateGroupBoard(Board board, String name, String description) {
+        validateGroupBoard(board);
+        board.updateGroupMetadata(name.trim(), description);
+    }
+
     public void delete(Board board) {
         validateMutable(board);
         validateDeletable(board);
+        board.deactivate();
+    }
+
+    public void deactivateGroupBoard(Board board) {
+        validateGroupBoard(board);
         board.deactivate();
     }
 
@@ -74,6 +88,12 @@ public class BoardWriter {
     private void validateMutable(Board board) {
         if (board.getBoardType() == BoardType.GROUP) {
             throw new BadRequestException(BoardExceptionMessage.BOARD_GROUP_TYPE_NOT_SUPPORTED.getMessage());
+        }
+    }
+
+    private void validateGroupBoard(Board board) {
+        if (board.getBoardType() != BoardType.GROUP) {
+            throw new BadRequestException(BoardExceptionMessage.BOARD_GROUP_TYPE_REQUIRED.getMessage());
         }
     }
 

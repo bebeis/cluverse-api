@@ -64,6 +64,13 @@ public class GroupController {
         return ApiResponse.ok(groupService.updateGroup(loginMember.memberId(), groupId, request));
     }
 
+    @DeleteMapping("/{groupId}")
+    public ApiResponse<Void> deleteGroup(@Login LoginMember loginMember,
+                                         @PathVariable Long groupId) {
+        groupService.deleteGroup(loginMember.memberId(), groupId);
+        return ApiResponse.ok();
+    }
+
     @GetMapping("/{groupId}/members")
     public ApiResponse<List<GroupMemberResponse>> getMembers(@Login LoginMember loginMember,
                                                              @PathVariable Long groupId) {
