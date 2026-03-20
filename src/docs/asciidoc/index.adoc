@@ -38,4 +38,6 @@ include::post-reaction/index.adoc[]
 
 include::comment-reaction/index.adoc[]
 
+include::report/index.adoc[]
+
 include::recruitment/index.adoc[]
