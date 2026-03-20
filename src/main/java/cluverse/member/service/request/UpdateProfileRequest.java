@@ -3,6 +3,7 @@ package cluverse.member.service.request;
 import cluverse.member.domain.MemberProfileField;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
@@ -21,7 +22,8 @@ public record UpdateProfileRequest(
         String linkPortfolio,
         String linkInstagram,
         String linkEtc,
-        boolean isPublic,
+        @NotNull(message = "프로필 전체 공개 여부를 입력해주세요.")
+        Boolean isPublic,
         List<MemberProfileField> visibleFields
 ) {
 }

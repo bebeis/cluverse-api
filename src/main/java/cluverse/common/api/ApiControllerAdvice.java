@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -35,6 +36,14 @@ public class ApiControllerAdvice {
                                                                HttpServletRequest request) {
         logClientException(HttpStatus.BAD_REQUEST, request, e);
         return ApiResponse.badRequest(e.getBindingResult().getAllErrors().getFirst().getDefaultMessage());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Object> httpMessageNotReadableException(HttpMessageNotReadableException e,
+                                                               HttpServletRequest request) {
+        logClientException(HttpStatus.BAD_REQUEST, request, e);
+        return ApiResponse.badRequest("요청 본문 형식이 올바르지 않습니다.");
     }
 
     @ExceptionHandler(BadRequestException.class)

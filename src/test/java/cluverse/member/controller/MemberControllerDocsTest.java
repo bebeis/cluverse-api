@@ -215,6 +215,21 @@ class MemberControllerDocsTest extends RestDocsSupport {
     }
 
     @Test
+    void 프로필_수정시_isPublic이_null이면_400을_반환한다() throws Exception {
+        mockMvc.perform(put("/api/v1/members/me/profile")
+                        .session(createSession())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "bio": "안녕하세요, 클루버스입니다.",
+                                    "isPublic": null
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("프로필 전체 공개 여부를 입력해주세요."));
+    }
+
+    @Test
     void 닉네임_중복_확인() throws Exception {
         when(memberService.checkNicknameAvailability("luna"))
                 .thenReturn(new MemberNicknameAvailabilityResponse("luna", false));
