@@ -6,6 +6,7 @@ import cluverse.member.domain.MemberRole;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.service.PostService;
 import cluverse.post.service.response.PostAuthorResponse;
+import cluverse.post.service.response.PostBoardResponse;
 import cluverse.post.service.response.PostDetailResponse;
 import cluverse.post.service.response.PostPageResponse;
 import cluverse.post.service.response.PostSummaryResponse;
@@ -250,6 +251,10 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
                                 fieldWithPath("data.postId").type(JsonFieldType.NUMBER).description("게시글 ID"),
                                 fieldWithPath("data.boardId").type(JsonFieldType.NUMBER).description("게시판 ID"),
+                                fieldWithPath("data.board.boardId").type(JsonFieldType.NUMBER).description("게시판 ID"),
+                                fieldWithPath("data.board.boardType").type(JsonFieldType.STRING).description("게시판 타입"),
+                                fieldWithPath("data.board.name").type(JsonFieldType.STRING).description("게시판 이름"),
+                                fieldWithPath("data.board.parentBoardId").type(JsonFieldType.NULL).description("상위 게시판 ID").optional(),
                                 fieldWithPath("data.category").type(JsonFieldType.STRING).description("게시글 카테고리"),
                                 fieldWithPath("data.title").type(JsonFieldType.STRING).description("게시글 제목"),
                                 fieldWithPath("data.content").type(JsonFieldType.STRING).description("게시글 본문"),
@@ -289,6 +294,10 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
                                 fieldWithPath("data.postId").type(JsonFieldType.NUMBER).description("게시글 ID"),
                                 fieldWithPath("data.boardId").type(JsonFieldType.NUMBER).description("게시판 ID"),
+                                fieldWithPath("data.board.boardId").type(JsonFieldType.NUMBER).description("게시판 ID"),
+                                fieldWithPath("data.board.boardType").type(JsonFieldType.STRING).description("게시판 타입"),
+                                fieldWithPath("data.board.name").type(JsonFieldType.STRING).description("게시판 이름"),
+                                fieldWithPath("data.board.parentBoardId").type(JsonFieldType.NULL).description("상위 게시판 ID").optional(),
                                 fieldWithPath("data.category").type(JsonFieldType.STRING).description("게시글 카테고리"),
                                 fieldWithPath("data.title").type(JsonFieldType.STRING).description("게시글 제목"),
                                 fieldWithPath("data.content").type(JsonFieldType.STRING).description("게시글 본문"),
@@ -355,6 +364,10 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
                                 fieldWithPath("data.postId").type(JsonFieldType.NUMBER).description("게시글 ID"),
                                 fieldWithPath("data.boardId").type(JsonFieldType.NUMBER).description("게시판 ID"),
+                                fieldWithPath("data.board.boardId").type(JsonFieldType.NUMBER).description("게시판 ID"),
+                                fieldWithPath("data.board.boardType").type(JsonFieldType.STRING).description("게시판 타입"),
+                                fieldWithPath("data.board.name").type(JsonFieldType.STRING).description("게시판 이름"),
+                                fieldWithPath("data.board.parentBoardId").type(JsonFieldType.NULL).description("상위 게시판 ID").optional(),
                                 fieldWithPath("data.category").type(JsonFieldType.STRING).description("게시글 카테고리"),
                                 fieldWithPath("data.title").type(JsonFieldType.STRING).description("게시글 제목"),
                                 fieldWithPath("data.content").type(JsonFieldType.STRING).description("게시글 본문"),
@@ -406,6 +419,7 @@ class PostControllerV1DocsTest extends RestDocsSupport {
         return new PostDetailResponse(
                 10L,
                 3L,
+                new PostBoardResponse(3L, cluverse.board.domain.BoardType.INTEREST, "AI", null),
                 PostCategory.INFORMATION,
                 "스프링 스터디 모집합니다",
                 "주 1회 온라인으로 진행할 예정입니다.",
@@ -431,6 +445,7 @@ class PostControllerV1DocsTest extends RestDocsSupport {
         return new PostDetailResponse(
                 10L,
                 3L,
+                new PostBoardResponse(3L, cluverse.board.domain.BoardType.INTEREST, "AI", null),
                 PostCategory.INFORMATION,
                 "스프링 스터디 모집합니다 [수정]",
                 "오프라인 병행으로 진행합니다.",

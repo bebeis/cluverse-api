@@ -1,5 +1,6 @@
 package cluverse.post.repository.dto;
 
+import cluverse.board.domain.BoardType;
 import cluverse.post.domain.PostCategory;
 
 import java.time.LocalDateTime;
@@ -8,6 +9,9 @@ import java.util.List;
 public record PostDetailQueryDto(
         Long postId,
         Long boardId,
+        BoardType boardType,
+        String boardName,
+        Long parentBoardId,
         PostCategory category,
         String title,
         String content,

@@ -37,6 +37,7 @@ import static cluverse.meta.domain.QPostBookmarkCount.postBookmarkCount;
 import static cluverse.meta.domain.QPostCommentCount.postCommentCount;
 import static cluverse.meta.domain.QPostLikeCount.postLikeCount;
 import static cluverse.meta.domain.QPostViewCount.postViewCount;
+import static cluverse.board.domain.QBoard.board;
 import static cluverse.post.domain.QPost.post;
 import static cluverse.post.domain.QPostImage.postImage;
 
@@ -111,6 +112,9 @@ public class PostQueryRepository {
                 .select(
                         post.id,
                         post.boardId,
+                        board.boardType,
+                        board.name,
+                        board.parentId,
                         post.category,
                         post.title,
                         post.content,
@@ -137,6 +141,7 @@ public class PostQueryRepository {
                 .leftJoin(postCommentCount).on(postCommentCount.postId.eq(post.id))
                 .leftJoin(postBookmarkCount).on(postBookmarkCount.postId.eq(post.id))
                 .leftJoin(postViewCount).on(postViewCount.postId.eq(post.id))
+                .join(board).on(board.id.eq(post.boardId))
                 .join(member).on(member.id.eq(post.memberId))
                 .leftJoin(memberProfile).on(memberProfile.memberId.eq(member.id))
                 .where(
@@ -277,6 +282,9 @@ public class PostQueryRepository {
         return new PostDetailQueryDto(
                 firstRow.get(post.id),
                 firstRow.get(post.boardId),
+                firstRow.get(board.boardType),
+                firstRow.get(board.name),
+                firstRow.get(board.parentId),
                 firstRow.get(post.category),
                 firstRow.get(post.title),
                 firstRow.get(post.content),

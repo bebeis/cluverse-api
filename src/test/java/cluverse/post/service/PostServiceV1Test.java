@@ -1,6 +1,7 @@
 package cluverse.post.service;
 
 import cluverse.board.service.BoardService;
+import cluverse.board.domain.BoardType;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.meta.service.PostMetaService;
 import cluverse.post.domain.Post;
@@ -239,6 +240,9 @@ class PostServiceV1Test {
         return new PostDetailQueryDto(
                 10L,
                 3L,
+                BoardType.INTEREST,
+                "AI",
+                null,
                 PostCategory.INFORMATION,
                 "익명 질문",
                 "본문 내용입니다.",

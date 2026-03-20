@@ -9,6 +9,7 @@ import java.util.List;
 public record PostDetailResponse(
         Long postId,
         Long boardId,
+        PostBoardResponse board,
         PostCategory category,
         String title,
         String content,
@@ -34,6 +35,7 @@ public record PostDetailResponse(
         return new PostDetailResponse(
                 post.postId(),
                 post.boardId(),
+                PostBoardResponse.from(post),
                 post.category(),
                 post.title(),
                 post.content(),
