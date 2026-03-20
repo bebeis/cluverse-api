@@ -11,6 +11,7 @@ import cluverse.post.domain.QPostImage;
 import cluverse.member.domain.MemberStatus;
 import cluverse.reaction.domain.QPostBookmark;
 import cluverse.reaction.domain.QPostLike;
+import cluverse.reaction.service.request.BookmarkedPostSortType;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.ExpressionUtils;
@@ -19,6 +20,7 @@ import com.querydsl.core.types.dsl.BooleanPath;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -61,6 +63,7 @@ public class FeedQueryRepository {
     private static final QPostImage THUMBNAIL_IMAGE = new QPostImage("thumbnailImage");
     private static final QPostLike MEMBER_POST_LIKE = new QPostLike("memberPostLike");
     private static final QPostBookmark MEMBER_POST_BOOKMARK = new QPostBookmark("memberPostBookmark");
+    private static final QPostBookmark POST_BOOKMARK = new QPostBookmark("postBookmark");
     private static final StringPath POST_TAG = Expressions.stringPath("postTag");
     private static final BooleanPath IS_MINE = Expressions.booleanPath("isMine");
     private static final BooleanPath LIKED = Expressions.booleanPath("liked");
@@ -198,6 +201,40 @@ public class FeedQueryRepository {
                 .fetch();
 
         return toTrendingFeedPageQueryResult(memberId, candidateRows, limit);
+    }
+
+    public FeedPageQueryResult findBookmarkedFeedPage(Long memberId,
+                                                      Collection<Long> blockedMemberIds,
+                                                      Collection<Long> readableGroupBoardIds,
+                                                      BookmarkedPostSortType sortType,
+                                                      int page,
+                                                      int size) {
+        long offset = (long) (page - 1) * size;
+
+        List<Tuple> candidateRows = queryFactory
+                .select(post.id, post.createdAt, POST_BOOKMARK.createdAt, POST_BOOKMARK.id)
+                .from(POST_BOOKMARK)
+                .join(post).on(POST_BOOKMARK.postId.eq(post.id))
+                .join(board).on(board.id.eq(post.boardId))
+                .join(member).on(member.id.eq(post.memberId))
+                .where(
+                        POST_BOOKMARK.memberId.eq(memberId),
+                        basePostCondition(blockedMemberIds, readableGroupBoardIds)
+                )
+                .orderBy(resolveBookmarkedOrderSpecifiers(sortType))
+                .offset(offset)
+                .limit(size + 1L)
+                .fetch();
+
+        boolean hasNext = candidateRows.size() > size;
+        if (hasNext) {
+            candidateRows = candidateRows.subList(0, size);
+        }
+
+        List<Long> postIds = candidateRows.stream()
+                .map(row -> row.get(post.id))
+                .toList();
+        return new FeedPageQueryResult(readFeedPosts(memberId, postIds), null, hasNext);
     }
 
     private FeedPageQueryResult findLatestFeed(Long memberId,
@@ -552,6 +589,13 @@ public class FeedQueryRepository {
                 .add(postCommentCount.commentCount.coalesce(0).longValue().multiply(4L))
                 .add(postBookmarkCount.bookmarkCount.coalesce(0).longValue().multiply(3L))
                 .add(postViewCount.viewCount.coalesce(0).longValue());
+    }
+
+    private OrderSpecifier<?>[] resolveBookmarkedOrderSpecifiers(BookmarkedPostSortType sortType) {
+        return switch (sortType) {
+            case LATEST -> new OrderSpecifier<?>[]{post.createdAt.desc(), post.id.desc()};
+            case BOOKMARKED_AT -> new OrderSpecifier<?>[]{POST_BOOKMARK.createdAt.desc(), POST_BOOKMARK.id.desc()};
+        };
     }
 
     private String encodeLatestCursor(LocalDateTime createdAt, Long postId) {
