@@ -113,6 +113,7 @@ class MemberQueryRepositoryTest {
         MemberProfile profile = MemberProfile.create(blocked);
         profile.update(
                 "소개",
+                2024,
                 "https://cdn.example.com/profile.png",
                 null,
                 null,

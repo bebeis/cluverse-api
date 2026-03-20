@@ -48,6 +48,7 @@ class MemberServiceTest {
         MemberProfile profile = MemberProfile.create(member);
         profile.update(
                 "소개",
+                2024,
                 "https://cdn.example.com/profile.png",
                 "https://github.com/luna",
                 "https://notion.so/luna",
@@ -68,21 +69,25 @@ class MemberServiceTest {
         when(memberReader.readUniversitySummary(10L)).thenReturn(university);
         when(memberReader.countFollowers(1L)).thenReturn(12L);
         when(memberReader.countFollowings(1L)).thenReturn(7L);
+        when(memberReader.countPosts(1L)).thenReturn(34L);
 
         MemberProfileResponse result = memberService.getProfile(1L, 1L);
 
         assertThat(result.nickname()).isEqualTo("luna");
         assertThat(result.university().universityName()).isEqualTo("클루대");
         assertThat(result.bio()).isEqualTo("소개");
+        assertThat(result.entranceYear()).isEqualTo(2024);
         assertThat(result.profileImageUrl()).isEqualTo("https://cdn.example.com/profile.png");
         assertThat(result.isFollowing()).isFalse();
         assertThat(result.isBlocked()).isFalse();
         assertThat(result.followerCount()).isEqualTo(12L);
         assertThat(result.followingCount()).isEqualTo(7L);
+        assertThat(result.postCount()).isEqualTo(34L);
         verify(memberReader).readOrThrow(1L);
         verify(memberReader).readUniversitySummary(10L);
         verify(memberReader).countFollowers(1L);
         verify(memberReader).countFollowings(1L);
+        verify(memberReader).countPosts(1L);
         verify(memberReader, never()).isFollowing(1L, 1L);
         verify(memberReader, never()).isBlocked(1L, 1L);
     }
@@ -93,6 +98,7 @@ class MemberServiceTest {
         MemberProfile profile = MemberProfile.create(member);
         profile.update(
                 "소개",
+                2023,
                 "https://cdn.example.com/profile.png",
                 "https://github.com/target",
                 "https://notion.so/target",
@@ -100,7 +106,7 @@ class MemberServiceTest {
                 null,
                 null,
                 false,
-                List.of(MemberProfileField.UNIVERSITY, MemberProfileField.BIO)
+                List.of(MemberProfileField.UNIVERSITY, MemberProfileField.ENTRANCE_YEAR, MemberProfileField.BIO)
         );
         member.initProfile(profile);
         MemberProfileSummaryResponse university = new MemberProfileSummaryResponse(
@@ -115,19 +121,23 @@ class MemberServiceTest {
         when(memberReader.isBlocked(2L, 1L)).thenReturn(false);
         when(memberReader.countFollowers(1L)).thenReturn(3L);
         when(memberReader.countFollowings(1L)).thenReturn(4L);
+        when(memberReader.countPosts(1L)).thenReturn(11L);
 
         MemberProfileResponse result = memberService.getProfile(2L, 1L);
 
         assertThat(result.university().universityName()).isEqualTo("클루대");
         assertThat(result.bio()).isEqualTo("소개");
+        assertThat(result.entranceYear()).isEqualTo(2023);
         assertThat(result.profileImageUrl()).isNull();
         assertThat(result.linkGithub()).isNull();
         assertThat(result.visibleFields()).containsExactly(
                 MemberProfileField.UNIVERSITY,
+                MemberProfileField.ENTRANCE_YEAR,
                 MemberProfileField.BIO
         );
         assertThat(result.isFollowing()).isTrue();
         assertThat(result.isBlocked()).isFalse();
+        assertThat(result.postCount()).isEqualTo(11L);
     }
 
     @Test
@@ -147,13 +157,16 @@ class MemberServiceTest {
     void 관심사_추가시_서비스가_멤버를_조회하고_응답을_만든다() {
         Member member = createMember(1L, "luna", 10L);
         AddInterestRequest request = new AddInterestRequest(300L);
+        MemberInterestResponse response = new MemberInterestResponse(300L, "스터디", "ACADEMIC");
 
         when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(memberReader.readInterest(300L)).thenReturn(response);
 
         MemberInterestResponse result = memberService.addInterest(1L, request);
 
-        assertThat(result).isEqualTo(new MemberInterestResponse(300L));
+        assertThat(result).isEqualTo(response);
         verify(memberReader).readOrThrow(1L);
+        verify(memberReader).readInterest(300L);
         verify(memberWriter).addInterest(member, request);
     }
 
@@ -163,6 +176,7 @@ class MemberServiceTest {
         ReflectionTestUtils.setField(member, "id", 1L);
         UpdateProfileRequest request = new UpdateProfileRequest(
                 "소개",
+                2022,
                 null,
                 null,
                 null,
@@ -177,12 +191,14 @@ class MemberServiceTest {
         when(memberReader.readUniversitySummary(null)).thenReturn(null);
         when(memberReader.countFollowers(1L)).thenReturn(0L);
         when(memberReader.countFollowings(1L)).thenReturn(0L);
+        when(memberReader.countPosts(1L)).thenReturn(0L);
         doAnswer(invocation -> {
             Member target = invocation.getArgument(0);
             UpdateProfileRequest updateRequest = invocation.getArgument(1);
             MemberProfile profile = MemberProfile.create(target);
             profile.update(
                     updateRequest.bio(),
+                    updateRequest.entranceYear(),
                     updateRequest.profileImageUrl(),
                     updateRequest.linkGithub(),
                     updateRequest.linkNotion(),
@@ -201,6 +217,8 @@ class MemberServiceTest {
         assertThat(result.memberId()).isEqualTo(1L);
         assertThat(result.university()).isNull();
         assertThat(result.bio()).isEqualTo("소개");
+        assertThat(result.entranceYear()).isEqualTo(2022);
+        assertThat(result.postCount()).isZero();
         verify(memberWriter).updateProfile(member, request);
     }
 

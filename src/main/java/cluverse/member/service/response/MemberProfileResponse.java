@@ -13,6 +13,7 @@ public record MemberProfileResponse(
         MemberProfileSummaryResponse university,
         VerificationStatus verificationStatus,
         String bio,
+        Integer entranceYear,
         String profileImageUrl,
         String linkGithub,
         String linkNotion,
@@ -24,7 +25,8 @@ public record MemberProfileResponse(
         boolean isFollowing,
         boolean isBlocked,
         long followerCount,
-        long followingCount
+        long followingCount,
+        long postCount
 ) {
     public static MemberProfileResponse of(
             Member member,
@@ -34,6 +36,7 @@ public record MemberProfileResponse(
             boolean isBlocked,
             long followerCount,
             long followingCount,
+            long postCount,
             boolean sameMember
     ) {
         return new MemberProfileResponse(
@@ -42,6 +45,7 @@ public record MemberProfileResponse(
                 getVisibleUniversity(profile, university, sameMember),
                 member.getVerificationStatus(),
                 getVisibleValue(profile, MemberProfileField.BIO, sameMember, MemberProfile::getBio),
+                getVisibleValue(profile, MemberProfileField.ENTRANCE_YEAR, sameMember, MemberProfile::getEntranceYear),
                 getVisibleValue(profile, MemberProfileField.PROFILE_IMAGE_URL, sameMember, MemberProfile::getProfileImageUrl),
                 getVisibleValue(profile, MemberProfileField.LINK_GITHUB, sameMember, MemberProfile::getLinkGithub),
                 getVisibleValue(profile, MemberProfileField.LINK_NOTION, sameMember, MemberProfile::getLinkNotion),
@@ -53,7 +57,8 @@ public record MemberProfileResponse(
                 isFollowing,
                 isBlocked,
                 followerCount,
-                followingCount
+                followingCount,
+                postCount
         );
     }
 
@@ -68,11 +73,11 @@ public record MemberProfileResponse(
         return MemberProfileSummaryResponse.empty();
     }
 
-    private static String getVisibleValue(
+    private static <T> T getVisibleValue(
             MemberProfile profile,
             MemberProfileField field,
             boolean sameMember,
-            java.util.function.Function<MemberProfile, String> extractor
+            java.util.function.Function<MemberProfile, T> extractor
     ) {
         if (profile == null || !profile.canView(field, sameMember)) {
             return null;

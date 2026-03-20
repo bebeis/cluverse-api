@@ -27,6 +27,8 @@ public class MemberProfile extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String bio;
 
+    private Integer entranceYear;
+
     private String profileImageUrl;
     private String linkGithub;
     private String linkNotion;
@@ -48,11 +50,12 @@ public class MemberProfile extends BaseTimeEntity {
         return new MemberProfile(member);
     }
 
-    public void update(String bio, String profileImageUrl,
+    public void update(String bio, Integer entranceYear, String profileImageUrl,
                        String linkGithub, String linkNotion, String linkPortfolio,
                        String linkInstagram, String linkEtc,
                        boolean isPublic, List<MemberProfileField> visibleFields) {
         this.bio = bio;
+        this.entranceYear = entranceYear;
         this.profileImageUrl = profileImageUrl;
         this.linkGithub = linkGithub;
         this.linkNotion = linkNotion;

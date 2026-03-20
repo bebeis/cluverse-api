@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 public enum MemberProfileField {
     UNIVERSITY,
+    ENTRANCE_YEAR,
     BIO,
     PROFILE_IMAGE_URL,
     LINK_GITHUB,

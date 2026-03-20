@@ -46,7 +46,7 @@ public class MemberService {
 
     public MemberMajorResponse addMajor(Long memberId, AddMajorRequest request) {
         Member member = memberReader.readOrThrow(memberId);
-        return MemberMajorResponse.from(memberWriter.addMajor(member, request));
+        return memberReader.readMajor(memberWriter.addMajor(member, request).getId());
     }
 
     public void removeMajor(Long memberId, Long majorId) {
@@ -62,7 +62,7 @@ public class MemberService {
     public MemberInterestResponse addInterest(Long memberId, AddInterestRequest request) {
         Member member = memberReader.readOrThrow(memberId);
         memberWriter.addInterest(member, request);
-        return MemberInterestResponse.from(request.interestId());
+        return memberReader.readInterest(request.interestId());
     }
 
     public void removeInterest(Long memberId, Long interestId) {
@@ -126,6 +126,7 @@ public class MemberService {
                 !sameMember && memberReader.isBlocked(viewerId, member.getId()),
                 memberReader.countFollowers(member.getId()),
                 memberReader.countFollowings(member.getId()),
+                memberReader.countPosts(member.getId()),
                 sameMember
         );
     }

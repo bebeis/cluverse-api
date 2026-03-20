@@ -73,6 +73,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.university.universityBadgeImageUrl").type(JsonFieldType.STRING).description("학교 배지 이미지 URL"),
                                 fieldWithPath("data.verificationStatus").type(JsonFieldType.STRING).description("학생 인증 상태"),
                                 fieldWithPath("data.bio").type(JsonFieldType.STRING).description("자기소개"),
+                                fieldWithPath("data.entranceYear").type(JsonFieldType.NUMBER).description("입학년도").optional(),
                                 fieldWithPath("data.profileImageUrl").type(JsonFieldType.STRING).description("프로필 이미지 URL"),
                                 fieldWithPath("data.linkGithub").type(JsonFieldType.STRING).description("GitHub 링크"),
                                 fieldWithPath("data.linkNotion").type(JsonFieldType.STRING).description("Notion 링크"),
@@ -84,7 +85,8 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.isFollowing").type(JsonFieldType.BOOLEAN).description("현재 로그인 사용자의 팔로우 여부"),
                                 fieldWithPath("data.isBlocked").type(JsonFieldType.BOOLEAN).description("현재 로그인 사용자의 차단 여부"),
                                 fieldWithPath("data.followerCount").type(JsonFieldType.NUMBER).description("팔로워 수"),
-                                fieldWithPath("data.followingCount").type(JsonFieldType.NUMBER).description("팔로잉 수")
+                                fieldWithPath("data.followingCount").type(JsonFieldType.NUMBER).description("팔로잉 수"),
+                                fieldWithPath("data.postCount").type(JsonFieldType.NUMBER).description("작성한 게시글 수")
                         )
                 ));
     }
@@ -110,6 +112,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.university.universityBadgeImageUrl").type(JsonFieldType.STRING).description("학교 배지 이미지 URL"),
                                 fieldWithPath("data.verificationStatus").type(JsonFieldType.STRING).description("학생 인증 상태"),
                                 fieldWithPath("data.bio").type(JsonFieldType.STRING).description("공개된 자기소개"),
+                                fieldWithPath("data.entranceYear").type(JsonFieldType.NUMBER).description("공개된 입학년도").optional(),
                                 fieldWithPath("data.profileImageUrl").type(JsonFieldType.NULL).description("공개되지 않은 프로필 이미지 URL"),
                                 fieldWithPath("data.linkGithub").type(JsonFieldType.NULL).description("공개되지 않은 GitHub 링크"),
                                 fieldWithPath("data.linkNotion").type(JsonFieldType.NULL).description("공개되지 않은 Notion 링크"),
@@ -121,7 +124,8 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.isFollowing").type(JsonFieldType.BOOLEAN).description("현재 로그인 사용자의 팔로우 여부"),
                                 fieldWithPath("data.isBlocked").type(JsonFieldType.BOOLEAN).description("현재 로그인 사용자의 차단 여부"),
                                 fieldWithPath("data.followerCount").type(JsonFieldType.NUMBER).description("팔로워 수"),
-                                fieldWithPath("data.followingCount").type(JsonFieldType.NUMBER).description("팔로잉 수")
+                                fieldWithPath("data.followingCount").type(JsonFieldType.NUMBER).description("팔로잉 수"),
+                                fieldWithPath("data.postCount").type(JsonFieldType.NUMBER).description("작성한 게시글 수")
                         )
                 ));
     }
@@ -137,6 +141,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
                         .content("""
                                 {
                                     "bio": "안녕하세요, 클루버스입니다.",
+                                    "entranceYear": 2024,
                                     "profileImageUrl": "https://cdn.example.com/profile.png",
                                     "linkGithub": "https://github.com/luna",
                                     "linkNotion": "https://notion.so/luna",
@@ -152,6 +157,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
                 .andDo(document("members/update-profile",
                         requestFields(
                                 fieldWithPath("bio").type(JsonFieldType.STRING).description("자기소개 (최대 500자)").optional(),
+                                fieldWithPath("entranceYear").type(JsonFieldType.NUMBER).description("입학년도").optional(),
                                 fieldWithPath("profileImageUrl").type(JsonFieldType.STRING).description("프로필 이미지 URL").optional(),
                                 fieldWithPath("linkGithub").type(JsonFieldType.STRING).description("GitHub 링크").optional(),
                                 fieldWithPath("linkNotion").type(JsonFieldType.STRING).description("Notion 링크").optional(),
@@ -172,6 +178,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.university.universityBadgeImageUrl").type(JsonFieldType.STRING).description("학교 배지 이미지 URL"),
                                 fieldWithPath("data.verificationStatus").type(JsonFieldType.STRING).description("학생 인증 상태"),
                                 fieldWithPath("data.bio").type(JsonFieldType.STRING).description("자기소개"),
+                                fieldWithPath("data.entranceYear").type(JsonFieldType.NUMBER).description("입학년도").optional(),
                                 fieldWithPath("data.profileImageUrl").type(JsonFieldType.STRING).description("프로필 이미지 URL"),
                                 fieldWithPath("data.linkGithub").type(JsonFieldType.STRING).description("GitHub 링크"),
                                 fieldWithPath("data.linkNotion").type(JsonFieldType.STRING).description("Notion 링크"),
@@ -183,7 +190,8 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.isFollowing").type(JsonFieldType.BOOLEAN).description("현재 로그인 사용자의 팔로우 여부"),
                                 fieldWithPath("data.isBlocked").type(JsonFieldType.BOOLEAN).description("현재 로그인 사용자의 차단 여부"),
                                 fieldWithPath("data.followerCount").type(JsonFieldType.NUMBER).description("팔로워 수"),
-                                fieldWithPath("data.followingCount").type(JsonFieldType.NUMBER).description("팔로잉 수")
+                                fieldWithPath("data.followingCount").type(JsonFieldType.NUMBER).description("팔로잉 수"),
+                                fieldWithPath("data.postCount").type(JsonFieldType.NUMBER).description("작성한 게시글 수")
                         )
                 ));
     }
@@ -191,8 +199,8 @@ class MemberControllerDocsTest extends RestDocsSupport {
     @Test
     void 내_학과_목록_조회() throws Exception {
         when(memberService.getMajors(1L)).thenReturn(List.of(
-                new MemberMajorResponse(1L, 100L, MajorType.PRIMARY),
-                new MemberMajorResponse(2L, 200L, MajorType.DOUBLE_MAJOR)
+                new MemberMajorResponse(1L, 100L, MajorType.PRIMARY, "컴퓨터공학과", "공과대학"),
+                new MemberMajorResponse(2L, 200L, MajorType.DOUBLE_MAJOR, "전자공학과", "공과대학")
         ));
 
         mockMvc.perform(get("/api/v1/members/me/majors")
@@ -206,7 +214,9 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
                                 fieldWithPath("data[].memberMajorId").type(JsonFieldType.NUMBER).description("회원 학과 매핑 ID"),
                                 fieldWithPath("data[].majorId").type(JsonFieldType.NUMBER).description("학과 ID"),
-                                fieldWithPath("data[].majorType").type(JsonFieldType.STRING).description("전공 유형 (`PRIMARY`, `DOUBLE_MAJOR`, `MINOR`)")
+                                fieldWithPath("data[].majorType").type(JsonFieldType.STRING).description("전공 유형 (`PRIMARY`, `DOUBLE_MAJOR`, `MINOR`)"),
+                                fieldWithPath("data[].majorName").type(JsonFieldType.STRING).description("전공명"),
+                                fieldWithPath("data[].collegeName").type(JsonFieldType.STRING).description("상위 단과대 또는 카테고리명").optional()
                         )
                 ));
     }
@@ -214,7 +224,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
     @Test
     void 학과_추가() throws Exception {
         when(memberService.addMajor(anyLong(), any(AddMajorRequest.class)))
-                .thenReturn(new MemberMajorResponse(3L, 300L, MajorType.MINOR));
+                .thenReturn(new MemberMajorResponse(3L, 300L, MajorType.MINOR, "수학과", "자연과학대학"));
 
         mockMvc.perform(post("/api/v1/members/me/majors")
                         .session(createSession())
@@ -238,7 +248,9 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
                                 fieldWithPath("data.memberMajorId").type(JsonFieldType.NUMBER).description("회원 학과 매핑 ID"),
                                 fieldWithPath("data.majorId").type(JsonFieldType.NUMBER).description("추가된 학과 ID"),
-                                fieldWithPath("data.majorType").type(JsonFieldType.STRING).description("전공 유형")
+                                fieldWithPath("data.majorType").type(JsonFieldType.STRING).description("전공 유형"),
+                                fieldWithPath("data.majorName").type(JsonFieldType.STRING).description("전공명"),
+                                fieldWithPath("data.collegeName").type(JsonFieldType.STRING).description("상위 단과대 또는 카테고리명").optional()
                         )
                 ));
     }
@@ -300,8 +312,8 @@ class MemberControllerDocsTest extends RestDocsSupport {
     @Test
     void 내_관심사_목록_조회() throws Exception {
         when(memberService.getInterests(1L)).thenReturn(List.of(
-                new MemberInterestResponse(100L),
-                new MemberInterestResponse(200L)
+                new MemberInterestResponse(100L, "해커톤", "TECH"),
+                new MemberInterestResponse(200L, "축제", "CAMPUS")
         ));
 
         mockMvc.perform(get("/api/v1/members/me/interests")
@@ -313,7 +325,9 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
                                 fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
-                                fieldWithPath("data[].interestId").type(JsonFieldType.NUMBER).description("관심 태그 ID")
+                                fieldWithPath("data[].interestId").type(JsonFieldType.NUMBER).description("관심 태그 ID"),
+                                fieldWithPath("data[].interestName").type(JsonFieldType.STRING).description("관심사명"),
+                                fieldWithPath("data[].category").type(JsonFieldType.STRING).description("관심사 카테고리").optional()
                         )
                 ));
     }
@@ -321,7 +335,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
     @Test
     void 관심사_추가() throws Exception {
         when(memberService.addInterest(1L, new AddInterestRequest(300L)))
-                .thenReturn(new MemberInterestResponse(300L));
+                .thenReturn(new MemberInterestResponse(300L, "스터디", "ACADEMIC"));
 
         mockMvc.perform(post("/api/v1/members/me/interests")
                         .session(createSession())
@@ -341,7 +355,9 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
                                 fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
-                                fieldWithPath("data.interestId").type(JsonFieldType.NUMBER).description("추가된 관심 태그 ID")
+                                fieldWithPath("data.interestId").type(JsonFieldType.NUMBER).description("추가된 관심 태그 ID"),
+                                fieldWithPath("data.interestName").type(JsonFieldType.STRING).description("관심사명"),
+                                fieldWithPath("data.category").type(JsonFieldType.STRING).description("관심사 카테고리").optional()
                         )
                 ));
     }
@@ -459,6 +475,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
                 new MemberProfileSummaryResponse(10L, "클루대", "https://cdn.example.com/badge.png"),
                 VerificationStatus.APPROVED,
                 "소개",
+                2024,
                 isMe ? "https://cdn.example.com/profile.png" : null,
                 isMe ? "https://github.com/luna" : null,
                 isMe ? "https://notion.so/luna" : null,
@@ -466,11 +483,14 @@ class MemberControllerDocsTest extends RestDocsSupport {
                 isMe ? "https://instagram.com/luna" : null,
                 isMe ? "https://blog.example.com" : null,
                 isMe,
-                isMe ? List.of(MemberProfileField.BIO, MemberProfileField.LINK_GITHUB) : List.of(MemberProfileField.UNIVERSITY, MemberProfileField.BIO),
+                isMe
+                        ? List.of(MemberProfileField.BIO, MemberProfileField.ENTRANCE_YEAR, MemberProfileField.LINK_GITHUB)
+                        : List.of(MemberProfileField.UNIVERSITY, MemberProfileField.ENTRANCE_YEAR, MemberProfileField.BIO),
                 !isMe,
                 false,
                 12L,
-                7L
+                7L,
+                34L
         );
     }
 }

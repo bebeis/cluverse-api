@@ -4,6 +4,7 @@ import cluverse.interest.repository.InterestRepository;
 import cluverse.major.repository.MajorRepository;
 import cluverse.member.domain.Member;
 import cluverse.member.domain.MemberProfileField;
+import cluverse.member.repository.MemberRepository;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MemberWriterTest {
+
+    @Mock
+    private MemberRepository memberRepository;
 
     @Mock
     private MajorRepository majorRepository;
@@ -51,6 +55,7 @@ class MemberWriterTest {
                 member,
                 new UpdateProfileRequest(
                         "소개",
+                        2024,
                         null,
                         null,
                         null,

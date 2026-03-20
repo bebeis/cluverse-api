@@ -17,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -31,15 +33,63 @@ public class MemberReader {
     private final UniversityRepository universityRepository;
 
     public List<MemberMajorResponse> readMajors(Long memberId) {
-        return memberQueryRepository.findMajorsByMemberId(memberId).stream()
-                .map(MemberMajorResponse::from)
+        return memberQueryRepository.findMajorDetailsByMemberId(memberId).stream()
+                .map(result -> new MemberMajorResponse(
+                        result.memberMajorId(),
+                        result.majorId(),
+                        result.majorType(),
+                        result.majorName(),
+                        result.collegeName()
+                ))
                 .toList();
     }
 
+    public MemberMajorResponse readMajor(Long memberMajorId) {
+        MemberQueryRepository.MemberMajorDetailDto result = memberQueryRepository.findMajorDetailByMemberMajorId(memberMajorId);
+        if (result == null) {
+            throw new NotFoundException(MemberExceptionMessage.MAJOR_NOT_FOUND.getMessage());
+        }
+        return new MemberMajorResponse(
+                result.memberMajorId(),
+                result.majorId(),
+                result.majorType(),
+                result.majorName(),
+                result.collegeName()
+        );
+    }
+
     public List<MemberInterestResponse> readInterests(Long memberId) {
-        return readOrThrow(memberId).getInterests().stream()
-                .map(MemberInterestResponse::from)
+        List<Long> interestIds = readOrThrow(memberId).getInterests();
+        Map<Long, MemberQueryRepository.MemberInterestDetailDto> detailByInterestId =
+                memberQueryRepository.findInterestDetailsByInterestIds(interestIds).stream()
+                        .collect(java.util.stream.Collectors.toMap(
+                                MemberQueryRepository.MemberInterestDetailDto::interestId,
+                                detail -> detail,
+                                (left, right) -> left,
+                                LinkedHashMap::new
+                        ));
+
+        return interestIds.stream()
+                .map(detailByInterestId::get)
+                .filter(java.util.Objects::nonNull)
+                .map(detail -> new MemberInterestResponse(
+                        detail.interestId(),
+                        detail.interestName(),
+                        detail.category()
+                ))
                 .toList();
+    }
+
+    public MemberInterestResponse readInterest(Long interestId) {
+        MemberQueryRepository.MemberInterestDetailDto detail = memberQueryRepository.findInterestDetailByInterestId(interestId);
+        if (detail == null) {
+            throw new NotFoundException(MemberExceptionMessage.INTEREST_NOT_FOUND.getMessage());
+        }
+        return new MemberInterestResponse(
+                detail.interestId(),
+                detail.interestName(),
+                detail.category()
+        );
     }
 
     public boolean isFollowing(Long followerId, Long followingId) {
@@ -56,6 +106,10 @@ public class MemberReader {
 
     public long countFollowings(Long memberId) {
         return followRepository.countByFollowerId(memberId);
+    }
+
+    public long countPosts(Long memberId) {
+        return memberQueryRepository.countActivePostsByMemberId(memberId);
     }
 
     public List<BlockedMemberResponse> readBlockedMembers(Long blockerId) {

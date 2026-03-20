@@ -78,12 +78,16 @@ class MemberReaderTest {
         member.addInterest(200L);
 
         when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
+        when(memberQueryRepository.findInterestDetailsByInterestIds(List.of(100L, 200L))).thenReturn(List.of(
+                new MemberQueryRepository.MemberInterestDetailDto(100L, "해커톤", "TECH"),
+                new MemberQueryRepository.MemberInterestDetailDto(200L, "축제", "CAMPUS")
+        ));
 
         List<MemberInterestResponse> responses = memberReader.readInterests(1L);
 
         assertThat(responses).containsExactly(
-                new MemberInterestResponse(100L),
-                new MemberInterestResponse(200L)
+                new MemberInterestResponse(100L, "해커톤", "TECH"),
+                new MemberInterestResponse(200L, "축제", "CAMPUS")
         );
     }
 

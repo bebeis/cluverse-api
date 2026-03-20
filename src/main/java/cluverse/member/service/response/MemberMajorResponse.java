@@ -6,13 +6,17 @@ import cluverse.member.domain.MemberMajor;
 public record MemberMajorResponse(
         Long memberMajorId,
         Long majorId,
-        MajorType majorType
+        MajorType majorType,
+        String majorName,
+        String collegeName
 ) {
-    public static MemberMajorResponse from(MemberMajor memberMajor) {
+    public static MemberMajorResponse from(MemberMajor memberMajor, String majorName, String collegeName) {
         return new MemberMajorResponse(
                 memberMajor.getId(),
                 memberMajor.getMajorId(),
-                memberMajor.getMajorType()
+                memberMajor.getMajorType(),
+                majorName,
+                collegeName
         );
     }
 }

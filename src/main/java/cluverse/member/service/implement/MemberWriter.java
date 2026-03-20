@@ -12,6 +12,7 @@ import cluverse.member.domain.MemberProfile;
 import cluverse.member.exception.MemberExceptionMessage;
 import cluverse.member.repository.BlockRepository;
 import cluverse.member.repository.FollowRepository;
+import cluverse.member.repository.MemberRepository;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
@@ -26,6 +27,7 @@ public class MemberWriter {
 
     private final FollowRepository followRepository;
     private final BlockRepository blockRepository;
+    private final MemberRepository memberRepository;
     private final MajorRepository majorRepository;
     private final InterestRepository interestRepository;
 
@@ -33,6 +35,7 @@ public class MemberWriter {
         MemberProfile profile = ensureProfile(member);
         profile.update(
                 request.bio(),
+                request.entranceYear(),
                 request.profileImageUrl(),
                 request.linkGithub(),
                 request.linkNotion(),
@@ -47,6 +50,7 @@ public class MemberWriter {
     public MemberMajor addMajor(Member member, AddMajorRequest request) {
         validateMajorExists(request.majorId());
         member.addMajor(request.majorId(), request.majorType());
+        memberRepository.saveAndFlush(member);
         return member.getMajors().stream()
                 .filter(major -> major.getMajorId().equals(request.majorId()))
                 .findFirst()
