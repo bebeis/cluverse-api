@@ -223,6 +223,36 @@ class MemberServiceTest {
     }
 
     @Test
+    void 학교_수정시_서비스가_수정후_응답을_다시_조립한다() {
+        Member member = Member.createSocialMember("social-user");
+        ReflectionTestUtils.setField(member, "id", 1L);
+        MemberProfileSummaryResponse university = new MemberProfileSummaryResponse(
+                10L,
+                "클루대",
+                "https://cdn.example.com/badge.png"
+        );
+
+        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(memberReader.readUniversitySummary(10L)).thenReturn(university);
+        when(memberReader.countFollowers(1L)).thenReturn(0L);
+        when(memberReader.countFollowings(1L)).thenReturn(0L);
+        when(memberReader.countPosts(1L)).thenReturn(0L);
+        doAnswer(invocation -> {
+            Member target = invocation.getArgument(0);
+            Long universityId = invocation.getArgument(1);
+            target.assignUniversity(universityId);
+            return null;
+        }).when(memberWriter).updateUniversity(any(Member.class), any(Long.class));
+
+        MemberProfileResponse result = memberService.updateUniversity(1L, 10L);
+
+        assertThat(result.memberId()).isEqualTo(1L);
+        assertThat(result.university().universityId()).isEqualTo(10L);
+        assertThat(result.university().universityName()).isEqualTo("클루대");
+        verify(memberWriter).updateUniversity(member, 10L);
+    }
+
+    @Test
     void 비회원은_프로필을_조회할_수_없다() {
         assertThatThrownBy(() -> memberService.getProfile(null, 1L))
                 .isInstanceOf(UnauthorizedException.class)

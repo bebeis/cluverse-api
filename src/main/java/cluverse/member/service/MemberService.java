@@ -41,6 +41,12 @@ public class MemberService {
         return buildProfileResponse(memberId, member);
     }
 
+    public MemberProfileResponse updateUniversity(Long memberId, Long universityId) {
+        Member member = memberReader.readOrThrow(memberId);
+        memberWriter.updateUniversity(member, universityId);
+        return buildProfileResponse(memberId, member);
+    }
+
     @Transactional(readOnly = true)
     public List<MemberMajorResponse> getMajors(Long memberId) {
         return memberReader.readMajors(memberId);

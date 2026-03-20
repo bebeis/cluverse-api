@@ -47,6 +47,10 @@ public class MemberWriter {
         );
     }
 
+    public void updateUniversity(Member member, Long universityId) {
+        member.assignUniversity(universityId);
+    }
+
     public MemberMajor addMajor(Member member, AddMajorRequest request) {
         validateMajorExists(request.majorId());
         member.addMajor(request.majorId(), request.majorType());

@@ -3,8 +3,10 @@ package cluverse.member.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.member.service.MemberUniversityService;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
+import cluverse.member.service.request.MemberUniversityUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.MemberService;
 import cluverse.member.service.response.BlockedMemberResponse;
@@ -24,6 +26,7 @@ import java.util.List;
 public class MemberController {
 
     private final MemberService memberService;
+    private final MemberUniversityService memberUniversityService;
 
     @GetMapping("/me/profile")
     public ApiResponse<MemberProfileResponse> getMyProfile(@Login LoginMember loginMember) {
@@ -40,6 +43,12 @@ public class MemberController {
     public ApiResponse<MemberProfileResponse> updateProfile(@Login LoginMember loginMember,
                                                              @RequestBody @Valid UpdateProfileRequest request) {
         return ApiResponse.ok(memberService.updateProfile(loginMember.memberId(), request));
+    }
+
+    @PutMapping("/me/university")
+    public ApiResponse<MemberProfileResponse> updateUniversity(@Login LoginMember loginMember,
+                                                               @RequestBody @Valid MemberUniversityUpdateRequest request) {
+        return ApiResponse.ok(memberUniversityService.updateUniversity(loginMember.memberId(), request));
     }
 
     @GetMapping("/me/majors")

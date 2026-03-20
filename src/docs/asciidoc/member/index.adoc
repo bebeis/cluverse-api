@@ -42,6 +42,18 @@ include::{snippets}/members/update-profile/request-fields.adoc[]
 include::{snippets}/members/update-profile/http-response.adoc[]
 include::{snippets}/members/update-profile/response-fields.adoc[]
 
+=== 학교 수정
+
+==== 요청
+
+include::{snippets}/members/update-university/http-request.adoc[]
+include::{snippets}/members/update-university/request-fields.adoc[]
+
+==== 응답
+
+include::{snippets}/members/update-university/http-response.adoc[]
+include::{snippets}/members/update-university/response-fields.adoc[]
+
 === 내 학과 목록 조회
 
 ==== 요청
