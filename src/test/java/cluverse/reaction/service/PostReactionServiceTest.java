@@ -6,7 +6,7 @@ import cluverse.feed.repository.dto.FeedPostQueryDto;
 import cluverse.board.domain.BoardType;
 import cluverse.post.domain.PostCategory;
 import cluverse.meta.service.PostMetaService;
-import cluverse.post.service.PostService;
+import cluverse.post.service.PostAccessService;
 import cluverse.reaction.service.implement.PostReactionWriter;
 import cluverse.reaction.service.request.BookmarkedPostSearchRequest;
 import cluverse.reaction.service.request.BookmarkedPostSortType;
@@ -36,7 +36,7 @@ class PostReactionServiceTest {
     private PostReactionWriter postReactionWriter;
 
     @Mock
-    private PostService postService;
+    private PostAccessService postAccessService;
 
     @Mock
     private PostMetaService postMetaService;
@@ -53,11 +53,11 @@ class PostReactionServiceTest {
         PostLikeResponse response = postReactionService.likePost(1L, 10L);
 
         // then
-        InOrder inOrder = inOrder(postService, postReactionWriter, postMetaService);
-        inOrder.verify(postService).validateReadablePost(1L, 10L);
+        InOrder inOrder = inOrder(postAccessService, postReactionWriter, postMetaService);
+        inOrder.verify(postAccessService).validateReadablePost(1L, 10L);
         inOrder.verify(postReactionWriter).likePost(1L, 10L);
         inOrder.verify(postMetaService).increaseLikeCount(10L);
-        verifyNoMoreInteractions(postService, postReactionWriter, postMetaService);
+        verifyNoMoreInteractions(postAccessService, postReactionWriter, postMetaService);
         assertThat(response).isEqualTo(PostLikeResponse.like(10L));
     }
 
@@ -67,11 +67,11 @@ class PostReactionServiceTest {
         PostBookmarkResponse response = postReactionService.bookmarkPost(1L, 10L);
 
         // then
-        InOrder inOrder = inOrder(postService, postReactionWriter, postMetaService);
-        inOrder.verify(postService).validateReadablePost(1L, 10L);
+        InOrder inOrder = inOrder(postAccessService, postReactionWriter, postMetaService);
+        inOrder.verify(postAccessService).validateReadablePost(1L, 10L);
         inOrder.verify(postReactionWriter).bookmarkPost(1L, 10L);
         inOrder.verify(postMetaService).increaseBookmarkCount(10L);
-        verifyNoMoreInteractions(postService, postReactionWriter, postMetaService);
+        verifyNoMoreInteractions(postAccessService, postReactionWriter, postMetaService);
         assertThat(response).isEqualTo(PostBookmarkResponse.bookmark(10L));
     }
 
@@ -81,11 +81,11 @@ class PostReactionServiceTest {
         PostBookmarkResponse response = postReactionService.removeBookmark(1L, 10L);
 
         // then
-        InOrder inOrder = inOrder(postService, postReactionWriter, postMetaService);
-        inOrder.verify(postService).validateReadablePost(1L, 10L);
+        InOrder inOrder = inOrder(postAccessService, postReactionWriter, postMetaService);
+        inOrder.verify(postAccessService).validateReadablePost(1L, 10L);
         inOrder.verify(postReactionWriter).removeBookmark(1L, 10L);
         inOrder.verify(postMetaService).decreaseBookmarkCount(10L);
-        verifyNoMoreInteractions(postService, postReactionWriter, postMetaService);
+        verifyNoMoreInteractions(postAccessService, postReactionWriter, postMetaService);
         assertThat(response).isEqualTo(PostBookmarkResponse.remove(10L));
     }
 

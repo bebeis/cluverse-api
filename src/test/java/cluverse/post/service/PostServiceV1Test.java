@@ -61,6 +61,9 @@ class PostServiceV1Test {
     @Mock
     private CommentService commentService;
 
+    @Mock
+    private PostAccessService postAccessService;
+
     @InjectMocks
     private PostServiceV1 postService;
 
@@ -185,15 +188,11 @@ class PostServiceV1Test {
 
     @Test
     void 게시글_존재_검증은_리더에게_위임한다() {
-        // given
-        Post post = createPost(10L, 3L, 1L, "게시글 존재 확인", false);
-        when(postReader.readOrThrow(10L)).thenReturn(post);
-
         // when
         postService.validatePostExists(10L);
 
         // then
-        verify(postReader).readOrThrow(10L);
+        verify(postAccessService).validatePostExists(10L);
     }
 
     @Test
@@ -224,15 +223,11 @@ class PostServiceV1Test {
 
     @Test
     void 게시글_읽기_권한_검증은_게시판_서비스를_통해_수행한다() {
-        // given
-        Post post = createPost(10L, 3L, 1L, "게시글 존재 확인", false);
-        when(postReader.readOrThrow(10L)).thenReturn(post);
-
         // when
         postService.validateReadablePost(7L, 10L);
 
         // then
-        verify(boardService).validateReadableBoard(7L, 3L);
+        verify(postAccessService).validateReadablePost(7L, 10L);
     }
 
     @Test

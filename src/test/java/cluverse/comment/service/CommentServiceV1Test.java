@@ -16,7 +16,7 @@ import cluverse.comment.service.response.CommentResponse;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.member.service.MemberService;
 import cluverse.meta.service.PostMetaService;
-import cluverse.post.service.PostService;
+import cluverse.post.service.PostAccessService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,7 +44,7 @@ class CommentServiceV1Test {
     private CommentQueryRepository commentQueryRepository;
 
     @Mock
-    private PostService postService;
+    private PostAccessService postAccessService;
 
     @Mock
     private PostMetaService postMetaService;
@@ -73,7 +73,7 @@ class CommentServiceV1Test {
         assertThat(response.limit()).isEqualTo(20);
         assertThat(response.hasNext()).isTrue();
         assertThat(response.comments().getFirst().author().nickname()).isEqualTo("익명");
-        verify(postService).validateReadablePost(99L, 10L);
+        verify(postAccessService).validateReadablePost(99L, 10L);
     }
 
     @Test
@@ -92,7 +92,7 @@ class CommentServiceV1Test {
 
         // then
         assertThat(response.commentId()).isEqualTo(101L);
-        verify(postService).validateWritablePost(1L, 10L);
+        verify(postAccessService).validateWritablePost(1L, 10L);
         verify(commentWriter).increaseReplyCount(100L);
         verify(postMetaService).increaseCommentCount(10L);
     }

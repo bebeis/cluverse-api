@@ -41,6 +41,7 @@ public class PostServiceV1 implements PostService {
     private final BoardService boardService;
     private final PostMetaService postMetaService;
     private final CommentService commentService;
+    private final PostAccessService postAccessService;
 
     @Override
     @Transactional(readOnly = true)
@@ -122,19 +123,17 @@ public class PostServiceV1 implements PostService {
 
     @Override
     public void validatePostExists(Long postId) {
-        postReader.readOrThrow(postId);
+        postAccessService.validatePostExists(postId);
     }
 
     @Override
     public void validateReadablePost(Long memberId, Long postId) {
-        Post post = postReader.readOrThrow(postId);
-        boardService.validateReadableBoard(memberId, post.getBoardId());
+        postAccessService.validateReadablePost(memberId, postId);
     }
 
     @Override
     public void validateWritablePost(Long memberId, Long postId) {
-        Post post = postReader.readOrThrow(postId);
-        boardService.validateWritableBoard(memberId, post.getBoardId());
+        postAccessService.validateWritablePost(memberId, postId);
     }
 
     @Override

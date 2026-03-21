@@ -14,7 +14,7 @@ import cluverse.comment.service.response.*;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.member.service.MemberService;
 import cluverse.meta.service.PostMetaService;
-import cluverse.post.service.PostService;
+import cluverse.post.service.PostAccessService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,14 +29,14 @@ public class CommentServiceV1 implements CommentService {
     private final CommentReader commentReader;
     private final CommentWriter commentWriter;
     private final CommentQueryRepository commentQueryRepository;
-    private final PostService postService;
+    private final PostAccessService postAccessService;
     private final PostMetaService postMetaService;
     private final MemberService memberService;
 
     @Override
     @Transactional(readOnly = true)
     public CommentPageResponse getComments(Long memberId, CommentPageRequest request) {
-        postService.validateReadablePost(memberId, request.postId());
+        postAccessService.validateReadablePost(memberId, request.postId());
         validateParentComment(request.postId(), request.parentCommentId());
 
         CommentPageQueryResult queryResult = commentQueryRepository.findCommentPage(memberId, request);
@@ -49,7 +49,7 @@ public class CommentServiceV1 implements CommentService {
 
     @Override
     public CommentResponse createComment(Long memberId, Long postId, CommentCreateRequest request, String clientIp) {
-        postService.validateWritablePost(memberId, postId);
+        postAccessService.validateWritablePost(memberId, postId);
         Comment parentComment = resolveParentComment(postId, request.parentCommentId());
         Comment comment = commentWriter.create(memberId, postId, parentComment, request, clientIp);
 

@@ -6,7 +6,7 @@ import cluverse.feed.repository.FeedQueryRepository;
 import cluverse.feed.repository.dto.FeedPageQueryResult;
 import cluverse.feed.service.response.FeedPostSummaryResponse;
 import cluverse.meta.service.PostMetaService;
-import cluverse.post.service.PostService;
+import cluverse.post.service.PostAccessService;
 import cluverse.reaction.service.implement.PostReactionWriter;
 import cluverse.reaction.service.request.BookmarkedPostSearchRequest;
 import cluverse.reaction.service.response.BookmarkedPostPageResponse;
@@ -25,25 +25,25 @@ public class PostReactionService {
 
     private final PostReactionWriter postReactionWriter;
     private final PostMetaService postMetaService;
-    private final PostService postService;
+    private final PostAccessService postAccessService;
     private final FeedQueryRepository feedQueryRepository;
 
     public PostLikeResponse likePost(Long memberId, Long postId) {
-        postService.validateReadablePost(memberId, postId);
+        postAccessService.validateReadablePost(memberId, postId);
         postReactionWriter.likePost(memberId, postId);
         postMetaService.increaseLikeCount(postId);
         return PostLikeResponse.like(postId);
     }
 
     public PostBookmarkResponse bookmarkPost(Long memberId, Long postId) {
-        postService.validateReadablePost(memberId, postId);
+        postAccessService.validateReadablePost(memberId, postId);
         postReactionWriter.bookmarkPost(memberId, postId);
         postMetaService.increaseBookmarkCount(postId);
         return PostBookmarkResponse.bookmark(postId);
     }
 
     public PostBookmarkResponse removeBookmark(Long memberId, Long postId) {
-        postService.validateReadablePost(memberId, postId);
+        postAccessService.validateReadablePost(memberId, postId);
         postReactionWriter.removeBookmark(memberId, postId);
         postMetaService.decreaseBookmarkCount(postId);
         return PostBookmarkResponse.remove(postId);
