@@ -10,6 +10,7 @@ import cluverse.post.service.response.PostBoardResponse;
 import cluverse.post.service.response.PostDetailResponse;
 import cluverse.post.service.response.PostPageResponse;
 import cluverse.post.service.response.PostSummaryResponse;
+import cluverse.post.service.response.PostTitleResponse;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.springframework.http.MediaType;
@@ -188,6 +189,41 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                                 fieldWithPath("data.size").type(JsonFieldType.NUMBER).description("페이지 크기"),
                                 fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부"),
                                 fieldWithPath("data.dateBased").type(JsonFieldType.BOOLEAN).description("날짜 기반 조회 여부 (false)")
+                        )
+                ));
+    }
+
+    @Test
+    void 최근_댓글이_달린_게시글_조회() throws Exception {
+        when(postService.getRecentCommentRepliedPosts(10L)).thenReturn(List.of(
+                new PostTitleResponse(
+                        10L,
+                        "스프링 스터디 모집합니다",
+                        LocalDateTime.of(2026, 3, 21, 15, 40)
+                ),
+                new PostTitleResponse(
+                        7L,
+                        "JPA 질문 있습니다",
+                        LocalDateTime.of(2026, 3, 21, 14, 10)
+                )
+        ));
+
+        mockMvc.perform(get("/api/v1/posts/recent-comment-replied")
+                        .queryParam("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].postId").value(10))
+                .andDo(document("posts/get-recent-comment-replied-posts",
+                        queryParameters(
+                                parameterWithName("size").description("조회할 게시글 수").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.ARRAY).description("최근 댓글이 달린 게시글 목록"),
+                                fieldWithPath("data[].postId").type(JsonFieldType.NUMBER).description("게시글 ID"),
+                                fieldWithPath("data[].title").type(JsonFieldType.STRING).description("게시글 제목"),
+                                fieldWithPath("data[].lastCommentRepliedAt").type(JsonFieldType.STRING).description("가장 최근 댓글 작성 시각")
                         )
                 ));
     }

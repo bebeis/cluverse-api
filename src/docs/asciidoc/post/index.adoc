@@ -24,6 +24,18 @@ include::{snippets}/posts/search-posts/query-parameters.adoc[]
 include::{snippets}/posts/search-posts/http-response.adoc[]
 include::{snippets}/posts/search-posts/response-fields.adoc[]
 
+=== 최근 댓글이 달린 게시글 조회
+
+==== 요청
+
+include::{snippets}/posts/get-recent-comment-replied-posts/http-request.adoc[]
+include::{snippets}/posts/get-recent-comment-replied-posts/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/get-recent-comment-replied-posts/http-response.adoc[]
+include::{snippets}/posts/get-recent-comment-replied-posts/response-fields.adoc[]
+
 === 게시글 작성
 
 ==== 요청
