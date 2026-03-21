@@ -1,7 +1,8 @@
 package cluverse.reaction.service;
 
-import cluverse.comment.service.CommentService;
 import cluverse.comment.service.response.CommentReactionTargetResponse;
+import cluverse.comment.service.implement.CommentReader;
+import cluverse.comment.service.implement.CommentWriter;
 import cluverse.reaction.service.implement.CommentReactionWriter;
 import cluverse.reaction.service.response.CommentLikeResponse;
 import lombok.RequiredArgsConstructor;
@@ -14,19 +15,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommentReactionService {
 
     private final CommentReactionWriter commentReactionWriter;
-    private final CommentService commentService;
+    private final CommentReader commentReader;
+    private final CommentWriter commentWriter;
 
     public CommentLikeResponse likeComment(Long memberId, Long commentId) {
-        CommentReactionTargetResponse target = commentService.getReactionTarget(commentId);
+        CommentReactionTargetResponse target = commentReader.readReactionTarget(commentId);
         commentReactionWriter.likeComment(memberId, commentId);
-        commentService.increaseLikeCount(commentId);
+        commentWriter.increaseLikeCount(commentId);
         return CommentLikeResponse.like(target.postId(), target.commentId());
     }
 
     public CommentLikeResponse unlikeComment(Long memberId, Long commentId) {
-        CommentReactionTargetResponse target = commentService.getReactionTarget(commentId);
+        CommentReactionTargetResponse target = commentReader.readReactionTarget(commentId);
         commentReactionWriter.unlikeComment(memberId, commentId);
-        commentService.decreaseLikeCount(commentId);
+        commentWriter.decreaseLikeCount(commentId);
         return CommentLikeResponse.unlike(target.postId(), target.commentId());
     }
 }

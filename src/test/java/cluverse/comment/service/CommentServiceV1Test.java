@@ -14,9 +14,9 @@ import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.comment.service.response.CommentPageResponse;
 import cluverse.comment.service.response.CommentResponse;
 import cluverse.common.exception.ForbiddenException;
-import cluverse.member.service.MemberService;
-import cluverse.meta.service.PostMetaService;
-import cluverse.post.service.PostAccessService;
+import cluverse.member.service.implement.MemberReader;
+import cluverse.meta.service.implement.PostMetaWriter;
+import cluverse.post.service.implement.PostAccessReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,13 +44,13 @@ class CommentServiceV1Test {
     private CommentQueryRepository commentQueryRepository;
 
     @Mock
-    private PostAccessService postAccessService;
+    private MemberReader memberReader;
 
     @Mock
-    private PostMetaService postMetaService;
+    private PostAccessReader postAccessReader;
 
     @Mock
-    private MemberService memberService;
+    private PostMetaWriter postMetaWriter;
 
     @InjectMocks
     private CommentServiceV1 commentService;
@@ -73,7 +73,7 @@ class CommentServiceV1Test {
         assertThat(response.limit()).isEqualTo(20);
         assertThat(response.hasNext()).isTrue();
         assertThat(response.comments().getFirst().author().nickname()).isEqualTo("익명");
-        verify(postAccessService).validateReadablePost(99L, 10L);
+        verify(postAccessReader).validateReadablePost(99L, 10L);
     }
 
     @Test
@@ -92,9 +92,9 @@ class CommentServiceV1Test {
 
         // then
         assertThat(response.commentId()).isEqualTo(101L);
-        verify(postAccessService).validateWritablePost(1L, 10L);
+        verify(postAccessReader).validateWritablePost(1L, 10L);
         verify(commentWriter).increaseReplyCount(100L);
-        verify(postMetaService).increaseCommentCount(10L);
+        verify(postMetaWriter).increaseCommentCount(10L);
     }
 
     @Test
@@ -130,7 +130,7 @@ class CommentServiceV1Test {
         // given
         Comment comment = createComment(101L, 10L, 2L, null, 0);
         when(commentReader.readOrThrow(101L)).thenReturn(comment);
-        when(memberService.isAdmin(1L)).thenReturn(false);
+        when(memberReader.isAdmin(1L)).thenReturn(false);
 
         // when & then
         assertThatThrownBy(() -> commentService.deleteComment(1L, 101L))
@@ -150,7 +150,7 @@ class CommentServiceV1Test {
         // then
         verify(commentWriter).delete(comment);
         verify(commentWriter, never()).remove(any());
-        verify(postMetaService, never()).decreaseCommentCount(anyLong());
+        verify(postMetaWriter, never()).decreaseCommentCount(anyLong());
     }
 
     @Test
@@ -171,7 +171,7 @@ class CommentServiceV1Test {
         verify(commentWriter).remove(child);
         verify(commentWriter).decreaseReplyCount(101L);
         verify(commentWriter).remove(deletedParent);
-        verify(postMetaService, times(2)).decreaseCommentCount(10L);
+        verify(postMetaWriter, times(2)).decreaseCommentCount(10L);
     }
 
     @Test
@@ -181,14 +181,14 @@ class CommentServiceV1Test {
                 new CommentLastRepliedPost(20L, LocalDateTime.of(2026, 3, 20, 12, 0)),
                 new CommentLastRepliedPost(10L, LocalDateTime.of(2026, 3, 20, 11, 0))
         );
-        when(commentQueryRepository.findRecentCommentRepliedPosts(2L)).thenReturn(expected);
+        when(commentReader.readRecentCommentRepliedPosts(2L)).thenReturn(expected);
 
         // when
         List<CommentLastRepliedPost> result = commentService.getRecentCommentRepliedPostIds(2L);
 
         // then
         assertThat(result).isEqualTo(expected);
-        verify(commentQueryRepository).findRecentCommentRepliedPosts(2L);
+        verify(commentReader).readRecentCommentRepliedPosts(2L);
     }
 
     private CommentQueryDto createCommentQueryDto(

@@ -50,7 +50,6 @@
 - 하지만 쿼리 등을 해올 때 성능 상의 이슈로 다른 도메인까지 한 번에 조회해야 하는 경우가 있다.
 - 이 경우, 도메인형 패키지 구조는 유지하되, 도메인 간 격벽을 허물 수 있다.
     - 단, 이 경우 DTO Projection을 활용하여 데이터를 조회해오도록 한다.
-    - 비즈니스 로직이 필요한 경우 다른 격벽의 Service를 호출하여 처리하도록 한다.
     - 이렇게 하면 결합도를 낮출 수 있다.
 - Repository 클래스는 Aggregate 당 1개만 생성한다. Root 에서 하위 엔티티까지 조회할 수 있도록 한다. (예시: OrderRepository에서 Order과 OrderItem을 함께 조회)
     - Aggregate는 생각보다 작다. 보통 라이프사이클이 같은 객체들의 집합들끼리 묶이기 때문이다.
@@ -73,8 +72,7 @@
 - 그렇다면 Service Layer는 Data Access Layer 기술을 자세히 알 필요가 없어지고, ImplementLayer가 상세 구현 로직을 담당하게 된다.
   참고: https://geminikims.medium.com/%EC%A7%80%EC%86%8D-%EC%84%B1%EC%9E%A5-%EA%B0%80%EB%8A%A5%ED%95%9C-%EC%86%8C%ED%94%84%ED%8A%B8%EC%9B%A8%EC%96%B4%EB%A5%BC-%EB%A7%8C%EB%93%A4%EC%96%B4%EA%B0%80%EB%8A%94-%EB%B0%A9%EB%B2%95-97844c5dab63
 
-- 다른 도메인의 Implement Layer간 참조는 불가능하다. 반드시 Service 계층을 통해서 참조하도록 한다. (예시: OrderService에서 PaymentReader를 참조하는 경우,
-  OrderService에서 PaymentService를 참조하여 PaymentReader를 사용하도록 한다.)
+- 다른 도메인의 Service Layer 참조는 불가능하지만, 다른 도메인의 Implement Layer 참조는 허용한다. Implement Layer 재사용성을 높이기 위해서이다.
 
 ## 8. 예외 처리
 

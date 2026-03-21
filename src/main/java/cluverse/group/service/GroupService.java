@@ -1,7 +1,8 @@
 package cluverse.group.service;
 
 import cluverse.board.domain.Board;
-import cluverse.board.service.BoardService;
+import cluverse.board.service.implement.BoardReader;
+import cluverse.board.service.implement.BoardWriter;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupInterest;
@@ -36,9 +37,10 @@ import java.util.Map;
 @Transactional
 public class GroupService {
 
-    private final BoardService boardService;
     private final GroupReader groupReader;
     private final GroupWriter groupWriter;
+    private final BoardReader boardReader;
+    private final BoardWriter boardWriter;
 
     @Transactional(readOnly = true)
     public GroupPageResponse getGroups(Long memberId, GroupSearchRequest request) {
@@ -82,7 +84,7 @@ public class GroupService {
     }
 
     public GroupDetailResponse createGroup(Long memberId, GroupCreateRequest request) {
-        Board board = boardService.createGroupBoard(request.name(), request.description());
+        Board board = boardWriter.createGroupBoard(request.name(), request.description());
         Group group = groupWriter.create(memberId, board.getId(), request);
         return toDetailResponse(memberId, groupReader.readActiveOrThrow(group.getId()));
     }
@@ -96,7 +98,8 @@ public class GroupService {
         Group group = groupReader.readActiveOrThrow(groupId);
         validateManager(memberId, group);
         groupWriter.update(group, request);
-        boardService.updateGroupBoard(group.getBoardId(), request.name(), request.description());
+        Board board = boardReader.readOrThrow(group.getBoardId());
+        boardWriter.updateGroupBoard(board, request.name(), request.description());
         return toDetailResponse(memberId, group);
     }
 
@@ -173,7 +176,8 @@ public class GroupService {
         Group group = groupReader.readActiveOrThrow(groupId);
         validateOwner(memberId, group);
         groupWriter.close(group);
-        boardService.deactivateGroupBoard(group.getBoardId());
+        Board board = boardReader.readOrThrow(group.getBoardId());
+        boardWriter.deactivateGroupBoard(board);
     }
 
     private GroupSummaryResponse toSummaryResponse(Group group) {

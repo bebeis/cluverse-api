@@ -5,7 +5,7 @@ import cluverse.common.config.PasswordConfig;
 import cluverse.common.exception.UnauthorizedException;
 import cluverse.member.domain.Member;
 import cluverse.member.domain.MemberAuth;
-import cluverse.member.repository.MemberQueryRepository;
+import cluverse.member.service.implement.MemberReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class AuthReaderTest {
 
     @Mock
-    private MemberQueryRepository memberQueryRepository;
+    private MemberReader memberReader;
 
     @Mock
     private PasswordConfig passwordConfig;
@@ -36,7 +36,7 @@ class AuthReaderTest {
         Member member = mock(Member.class);
         MemberAuth memberAuth = mock(MemberAuth.class);
 
-        when(memberQueryRepository.findByEmail("test@example.com")).thenReturn(Optional.of(member));
+        when(memberReader.findByEmail("test@example.com")).thenReturn(Optional.of(member));
         when(member.getMemberAuth()).thenReturn(memberAuth);
         when(memberAuth.getPasswordHash()).thenReturn("hashed");
         when(passwordConfig.matches("password123", "hashed")).thenReturn(true);
@@ -48,7 +48,7 @@ class AuthReaderTest {
 
     @Test
     void 이메일_로그인_실패_이메일_없음() {
-        when(memberQueryRepository.findByEmail("none@example.com")).thenReturn(Optional.empty());
+        when(memberReader.findByEmail("none@example.com")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authReader.readByEmailAndPassword("none@example.com", "password"))
                 .isInstanceOf(UnauthorizedException.class)
@@ -60,7 +60,7 @@ class AuthReaderTest {
         Member member = mock(Member.class);
         MemberAuth memberAuth = mock(MemberAuth.class);
 
-        when(memberQueryRepository.findByEmail("test@example.com")).thenReturn(Optional.of(member));
+        when(memberReader.findByEmail("test@example.com")).thenReturn(Optional.of(member));
         when(member.getMemberAuth()).thenReturn(memberAuth);
         when(memberAuth.getPasswordHash()).thenReturn("hashed");
         when(passwordConfig.matches("wrongpass", "hashed")).thenReturn(false);

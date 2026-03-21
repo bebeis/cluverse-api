@@ -3,19 +3,24 @@ package cluverse.meta.service.implement;
 import cluverse.meta.domain.PostBookmarkCount;
 import cluverse.meta.domain.PostCommentCount;
 import cluverse.meta.domain.PostViewCount;
+import cluverse.meta.domain.PostViewCountV2;
 import cluverse.meta.repository.PostBookmarkCountRepository;
 import cluverse.meta.repository.PostCommentCountRepository;
 import cluverse.meta.repository.PostLikeCountRepository;
 import cluverse.meta.repository.PostViewCountRepository;
+import cluverse.meta.repository.PostViewCountV2Repository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,7 +40,13 @@ class PostMetaWriterTest {
     private PostViewCountRepository postViewCountRepository;
 
     @Mock
-    private PostViewCountV2Writer postViewCountV2Writer;
+    private PostViewCountV2Repository postViewCountV2Repository;
+
+    @Mock
+    private PlatformTransactionManager transactionManager;
+
+    @Mock
+    private TransactionStatus transactionStatus;
 
     @InjectMocks
     private PostMetaWriter postMetaWriter;
@@ -57,10 +68,15 @@ class PostMetaWriterTest {
     }
 
     @Test
-    void 게시글_조회수_V2는_낙관적_락_작성기에_위임한다() {
+    void 게시글_조회수_V2는_새_트랜잭션에서_증가시킨다() {
+        when(transactionManager.getTransaction(any())).thenReturn(transactionStatus);
+        when(postViewCountV2Repository.findById(10L)).thenReturn(Optional.of(PostViewCountV2.create(10L)));
+
         postMetaWriter.increaseViewCountV2(10L);
 
-        verify(postViewCountV2Writer).increaseCount(10L);
+        verify(postViewCountV2Repository).findById(10L);
+        verify(postViewCountV2Repository).flush();
+        verify(transactionManager).commit(transactionStatus);
     }
 
     @Test

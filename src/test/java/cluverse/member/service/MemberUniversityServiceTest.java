@@ -3,8 +3,7 @@ package cluverse.member.service;
 import cluverse.member.domain.VerificationStatus;
 import cluverse.member.service.request.MemberUniversityUpdateRequest;
 import cluverse.member.service.response.MemberProfileResponse;
-import cluverse.university.service.UniversityService;
-import cluverse.university.service.response.UniversityDetailResponse;
+import cluverse.university.service.implement.UniversityReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,7 +23,7 @@ class MemberUniversityServiceTest {
     private MemberService memberService;
 
     @Mock
-    private UniversityService universityService;
+    private UniversityReader universityReader;
 
     @InjectMocks
     private MemberUniversityService memberUniversityService;
@@ -54,20 +53,12 @@ class MemberUniversityServiceTest {
                 0L
         );
 
-        when(universityService.getUniversity(10L)).thenReturn(new UniversityDetailResponse(
-                10L,
-                "클루대",
-                "clu.ac.kr",
-                "https://cdn.example.com/badge.png",
-                "서울",
-                true
-        ));
         when(memberService.updateUniversity(1L, 10L)).thenReturn(response);
 
         MemberProfileResponse result = memberUniversityService.updateUniversity(1L, request);
 
         assertThat(result).isEqualTo(response);
-        verify(universityService).getUniversity(10L);
+        verify(universityReader).readOrThrow(10L);
         verify(memberService).updateUniversity(1L, 10L);
     }
 }

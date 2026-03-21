@@ -12,7 +12,7 @@ import cluverse.board.service.response.BoardDetailResponse;
 import cluverse.board.service.response.BoardDirectoryResponse;
 import cluverse.board.service.response.BoardHomeResponse;
 import cluverse.common.exception.ForbiddenException;
-import cluverse.member.service.MemberService;
+import cluverse.member.service.implement.MemberReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,18 +24,18 @@ public class BoardService {
 
     private final BoardReader boardReader;
     private final BoardWriter boardWriter;
-    private final MemberService memberService;
+    private final MemberReader memberReader;
 
     public BoardDirectoryResponse getBoardDirectory(Long memberId, BoardSearchRequest request) {
-        return boardReader.readBoardDirectory(memberId, memberService.isVerified(memberId), request);
+        return boardReader.readBoardDirectory(memberId, memberReader.isVerified(memberId), request);
     }
 
     public BoardDetailResponse getBoard(Long memberId, Long boardId) {
-        return boardReader.readBoardDetail(memberId, memberService.isVerified(memberId), boardId);
+        return boardReader.readBoardDetail(memberId, memberReader.isVerified(memberId), boardId);
     }
 
     public BoardHomeResponse getBoardHome(Long memberId, Long boardId) {
-        return boardReader.readBoardHome(memberId, memberService.isVerified(memberId), boardId);
+        return boardReader.readBoardHome(memberId, memberReader.isVerified(memberId), boardId);
     }
 
     public void validateReadableBoard(Long memberId, Long boardId) {
@@ -43,7 +43,7 @@ public class BoardService {
     }
 
     public void validateWritableBoard(Long memberId, Long boardId) {
-        boardReader.validateWritable(memberId, memberService.isVerified(memberId), boardId);
+        boardReader.validateWritable(memberId, memberReader.isVerified(memberId), boardId);
     }
 
     @Transactional
@@ -86,7 +86,7 @@ public class BoardService {
     }
 
     private void validateAdmin(Long memberId) {
-        if (!memberService.isAdmin(memberId)) {
+        if (!memberReader.isAdmin(memberId)) {
             throw new ForbiddenException(BoardExceptionMessage.BOARD_ACCESS_DENIED.getMessage());
         }
     }

@@ -7,7 +7,7 @@ import cluverse.board.service.implement.BoardWriter;
 import cluverse.board.service.request.BoardCreateRequest;
 import cluverse.board.service.request.BoardUpdateRequest;
 import cluverse.common.exception.ForbiddenException;
-import cluverse.member.service.MemberService;
+import cluverse.member.service.implement.MemberReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,7 +30,7 @@ class BoardServiceTest {
     private BoardWriter boardWriter;
 
     @Mock
-    private MemberService memberService;
+    private MemberReader memberReader;
 
     @InjectMocks
     private BoardService boardService;
@@ -47,7 +47,7 @@ class BoardServiceTest {
                 true
         );
         Board board = createBoard(101L, BoardType.DEPARTMENT, "컴퓨터공학");
-        when(memberService.isAdmin(1L)).thenReturn(true);
+        when(memberReader.isAdmin(1L)).thenReturn(true);
         when(boardWriter.create(request)).thenReturn(board);
 
         // when
@@ -56,7 +56,7 @@ class BoardServiceTest {
         // then
         assertThat(result.boardId()).isEqualTo(101L);
         assertThat(result.boardType()).isEqualTo(BoardType.DEPARTMENT);
-        verify(memberService).isAdmin(1L);
+        verify(memberReader).isAdmin(1L);
         verify(boardWriter).create(request);
     }
 
@@ -70,7 +70,7 @@ class BoardServiceTest {
                 true
         );
         Board board = createBoard(101L, BoardType.DEPARTMENT, "컴퓨터공학");
-        when(memberService.isAdmin(1L)).thenReturn(true);
+        when(memberReader.isAdmin(1L)).thenReturn(true);
         when(boardReader.readOrThrow(101L)).thenReturn(board);
 
         // when
@@ -78,7 +78,7 @@ class BoardServiceTest {
 
         // then
         assertThat(result.boardId()).isEqualTo(101L);
-        verify(memberService).isAdmin(1L);
+        verify(memberReader).isAdmin(1L);
         verify(boardReader).readOrThrow(101L);
         verify(boardWriter).update(board, request);
     }
@@ -87,14 +87,14 @@ class BoardServiceTest {
     void 관리자는_게시판을_삭제할_수_있다() {
         // given
         Board board = createBoard(101L, BoardType.DEPARTMENT, "컴퓨터공학");
-        when(memberService.isAdmin(1L)).thenReturn(true);
+        when(memberReader.isAdmin(1L)).thenReturn(true);
         when(boardReader.readOrThrow(101L)).thenReturn(board);
 
         // when
         boardService.deleteBoard(1L, 101L);
 
         // then
-        verify(memberService).isAdmin(1L);
+        verify(memberReader).isAdmin(1L);
         verify(boardReader).readOrThrow(101L);
         verify(boardWriter).delete(board);
     }
@@ -110,7 +110,7 @@ class BoardServiceTest {
                 1,
                 true
         );
-        when(memberService.isAdmin(1L)).thenReturn(false);
+        when(memberReader.isAdmin(1L)).thenReturn(false);
 
         // when, then
         assertThatThrownBy(() -> boardService.createBoard(1L, request))

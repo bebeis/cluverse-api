@@ -1,18 +1,19 @@
 package cluverse.post.service;
 
-import cluverse.board.service.BoardService;
+import cluverse.board.service.implement.BoardReader;
 import cluverse.board.domain.BoardType;
-import cluverse.comment.service.CommentService;
+import cluverse.comment.service.implement.CommentReader;
 import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.common.exception.ForbiddenException;
-import cluverse.meta.service.PostMetaService;
+import cluverse.member.service.implement.MemberReader;
+import cluverse.meta.service.implement.PostMetaWriter;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.repository.PostQueryRepository;
 import cluverse.post.repository.dto.PostDetailQueryDto;
 import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
-import cluverse.post.service.implement.PostReader;
+import cluverse.post.service.implement.PostAccessReader;
 import cluverse.post.service.implement.PostWriter;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
@@ -36,7 +37,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
 class PostServiceV1Test {
 
     @Mock
-    private PostReader postReader;
+    private PostAccessReader postAccessReader;
 
     @Mock
     private PostWriter postWriter;
@@ -53,16 +53,16 @@ class PostServiceV1Test {
     private PostQueryRepository postQueryRepository;
 
     @Mock
-    private BoardService boardService;
+    private BoardReader boardReader;
 
     @Mock
-    private PostMetaService postMetaService;
+    private MemberReader memberReader;
 
     @Mock
-    private CommentService commentService;
+    private PostMetaWriter postMetaWriter;
 
     @Mock
-    private PostAccessService postAccessService;
+    private CommentReader commentReader;
 
     @InjectMocks
     private PostServiceV1 postService;
@@ -87,7 +87,7 @@ class PostServiceV1Test {
         assertThat(response.hasNext()).isTrue();
         assertThat(response.page()).isEqualTo(1);
         assertThat(response.dateBased()).isFalse();
-        verify(boardService).validateReadableBoard(99L, 3L);
+        verify(boardReader).validateReadable(99L, 3L);
     }
 
     @Test
@@ -111,7 +111,7 @@ class PostServiceV1Test {
         assertThat(response.page()).isNull();
         assertThat(response.dateBased()).isTrue();
         assertThat(response.hasNext()).isFalse();
-        verify(boardService).validateReadableBoard(99L, 3L);
+        verify(boardReader).validateReadable(99L, 3L);
     }
 
     @Test
@@ -131,14 +131,14 @@ class PostServiceV1Test {
         assertThat(response.page()).isEqualTo(1);
         assertThat(response.hasNext()).isTrue();
         assertThat(response.dateBased()).isFalse();
-        verify(boardService).validateReadableBoard(99L, 3L);
+        verify(boardReader).validateReadable(99L, 3L);
     }
 
     @Test
     void 익명_게시글_상세_조회시_작성자_정보를_가린다() {
         // given
         Post post = createPost(10L, 3L, 1L, "익명 질문", true);
-        when(postReader.readOrThrow(10L)).thenReturn(post);
+        when(postAccessReader.readOrThrow(10L)).thenReturn(post);
         when(postQueryRepository.findPostDetail(2L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
 
         // when
@@ -148,22 +148,22 @@ class PostServiceV1Test {
         assertThat(response.isAnonymous()).isTrue();
         assertThat(response.author().memberId()).isNull();
         assertThat(response.author().nickname()).isEqualTo("익명");
-        verify(boardService).validateReadableBoard(2L, 3L);
-        verify(postMetaService).increaseViewCount(10L);
+        verify(boardReader).validateReadable(2L, 3L);
+        verify(postMetaWriter).increaseViewCount(10L);
     }
 
     @Test
     void 게시글_조회수_증가는_meta_서비스에게_위임한다() {
         // given
         Post post = createPost(10L, 3L, 1L, "조회수 증가 대상", false);
-        when(postReader.readOrThrow(10L)).thenReturn(post);
+        when(postAccessReader.readOrThrow(10L)).thenReturn(post);
 
         // when
         postService.increaseViewCount(10L);
 
         // then
-        verify(postReader).readOrThrow(10L);
-        verify(postMetaService).increaseViewCount(10L);
+        verify(postAccessReader).readOrThrow(10L);
+        verify(postMetaWriter).increaseViewCount(10L);
     }
 
     @Test
@@ -180,7 +180,7 @@ class PostServiceV1Test {
                 List.of()
         );
 
-        when(postReader.readOrThrow(10L)).thenReturn(post);
+        when(postAccessReader.readOrThrow(10L)).thenReturn(post);
 
         assertThatThrownBy(() -> postService.updatePost(2L, 10L, request))
                 .isInstanceOf(ForbiddenException.class);
@@ -192,7 +192,7 @@ class PostServiceV1Test {
         postService.validatePostExists(10L);
 
         // then
-        verify(postAccessService).validatePostExists(10L);
+        verify(postAccessReader).validatePostExists(10L);
     }
 
     @Test
@@ -210,6 +210,7 @@ class PostServiceV1Test {
                 List.of()
         );
         Post post = createPost(10L, 3L, 1L, "제목", false);
+        when(memberReader.isVerified(1L)).thenReturn(true);
         when(postWriter.create(1L, request, "127.0.0.1")).thenReturn(post);
         when(postQueryRepository.findPostDetail(1L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
 
@@ -217,8 +218,8 @@ class PostServiceV1Test {
         postService.createPost(1L, request, "127.0.0.1");
 
         // then
-        verify(boardService).validateWritableBoard(1L, 3L);
-        verify(postMetaService).createViewCount(10L);
+        verify(boardReader).validateWritable(1L, true, 3L);
+        verify(postMetaWriter).createViewCount(10L);
     }
 
     @Test
@@ -227,7 +228,7 @@ class PostServiceV1Test {
         postService.validateReadablePost(7L, 10L);
 
         // then
-        verify(postAccessService).validateReadablePost(7L, 10L);
+        verify(postAccessReader).validateReadablePost(7L, 10L);
     }
 
     @Test
@@ -238,11 +239,11 @@ class PostServiceV1Test {
         Post firstPost = createPost(1L, 3L, 10L, "첫 번째 글", false);
         Post secondPost = createPost(2L, 3L, 20L, "두 번째 글", false);
 
-        when(commentService.getRecentCommentRepliedPostIds(2L)).thenReturn(List.of(
+        when(commentReader.readRecentCommentRepliedPosts(2L)).thenReturn(List.of(
                 new CommentLastRepliedPost(2L, latest),
                 new CommentLastRepliedPost(1L, previous)
         ));
-        when(postReader.readPosts(List.of(2L, 1L))).thenReturn(List.of(firstPost, secondPost));
+        when(postAccessReader.readPosts(List.of(2L, 1L))).thenReturn(List.of(firstPost, secondPost));
 
         // when
         List<PostTitleResponse> response = postService.getRecentCommentRepliedPosts(2L);
@@ -251,8 +252,8 @@ class PostServiceV1Test {
         assertThat(response).extracting(PostTitleResponse::postId).containsExactly(2L, 1L);
         assertThat(response).extracting(PostTitleResponse::title).containsExactly("두 번째 글", "첫 번째 글");
         assertThat(response).extracting(PostTitleResponse::lastCommentRepliedAt).containsExactly(latest, previous);
-        verify(commentService).getRecentCommentRepliedPostIds(2L);
-        verify(postReader).readPosts(List.of(2L, 1L));
+        verify(commentReader).readRecentCommentRepliedPosts(2L);
+        verify(postAccessReader).readPosts(List.of(2L, 1L));
     }
 
     private PostSummaryQueryDto createPostSummaryQueryDto(

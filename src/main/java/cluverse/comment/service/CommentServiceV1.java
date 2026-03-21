@@ -12,9 +12,9 @@ import cluverse.comment.service.request.CommentPageRequest;
 import cluverse.comment.service.request.CommentUpdateRequest;
 import cluverse.comment.service.response.*;
 import cluverse.common.exception.ForbiddenException;
-import cluverse.member.service.MemberService;
-import cluverse.meta.service.PostMetaService;
-import cluverse.post.service.PostAccessService;
+import cluverse.member.service.implement.MemberReader;
+import cluverse.meta.service.implement.PostMetaWriter;
+import cluverse.post.service.implement.PostAccessReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,14 +29,14 @@ public class CommentServiceV1 implements CommentService {
     private final CommentReader commentReader;
     private final CommentWriter commentWriter;
     private final CommentQueryRepository commentQueryRepository;
-    private final PostAccessService postAccessService;
-    private final PostMetaService postMetaService;
-    private final MemberService memberService;
+    private final MemberReader memberReader;
+    private final PostAccessReader postAccessReader;
+    private final PostMetaWriter postMetaWriter;
 
     @Override
     @Transactional(readOnly = true)
     public CommentPageResponse getComments(Long memberId, CommentPageRequest request) {
-        postAccessService.validateReadablePost(memberId, request.postId());
+        postAccessReader.validateReadablePost(memberId, request.postId());
         validateParentComment(request.postId(), request.parentCommentId());
 
         CommentPageQueryResult queryResult = commentQueryRepository.findCommentPage(memberId, request);
@@ -49,11 +49,11 @@ public class CommentServiceV1 implements CommentService {
 
     @Override
     public CommentResponse createComment(Long memberId, Long postId, CommentCreateRequest request, String clientIp) {
-        postAccessService.validateWritablePost(memberId, postId);
+        postAccessReader.validateWritablePost(memberId, postId);
         Comment parentComment = resolveParentComment(postId, request.parentCommentId());
         Comment comment = commentWriter.create(memberId, postId, parentComment, request, clientIp);
+        postMetaWriter.increaseCommentCount(postId);
 
-        postMetaService.increaseCommentCount(postId);
         if (parentComment != null) {
             commentWriter.increaseReplyCount(parentComment.getId());
         }
@@ -86,8 +86,7 @@ public class CommentServiceV1 implements CommentService {
     @Override
     @Transactional(readOnly = true)
     public CommentReactionTargetResponse getReactionTarget(Long commentId) {
-        Comment comment = commentReader.readActiveOrThrow(commentId);
-        return new CommentReactionTargetResponse(comment.getPostId(), comment.getId());
+        return commentReader.readReactionTarget(commentId);
     }
 
     @Override
@@ -102,7 +101,7 @@ public class CommentServiceV1 implements CommentService {
 
     @Override
     public List<CommentLastRepliedPost> getRecentCommentRepliedPostIds(final Long size) {
-        return commentQueryRepository.findRecentCommentRepliedPosts(size);
+        return commentReader.readRecentCommentRepliedPosts(size);
     }
 
     private void validateParentComment(Long postId, Long parentCommentId) {
@@ -125,7 +124,7 @@ public class CommentServiceV1 implements CommentService {
     }
 
     private void validateDeletePermission(Long memberId, Comment comment) {
-        if (comment.isAuthor(memberId) || memberService.isAdmin(memberId)) {
+        if (comment.isAuthor(memberId) || memberReader.isAdmin(memberId)) {
             return;
         }
         throw new ForbiddenException(CommentExceptionMessage.COMMENT_ACCESS_DENIED.getMessage());
@@ -150,7 +149,7 @@ public class CommentServiceV1 implements CommentService {
         Long parentId = comment.getParentId();
 
         commentWriter.remove(comment);
-        postMetaService.decreaseCommentCount(comment.getPostId());
+        postMetaWriter.decreaseCommentCount(comment.getPostId());
         if (parentId != null) {
             commentWriter.decreaseReplyCount(parentId);
             deleteParentIfRemovable(parentId);

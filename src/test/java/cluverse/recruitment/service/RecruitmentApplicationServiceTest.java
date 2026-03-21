@@ -5,9 +5,9 @@ import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupActivityType;
 import cluverse.group.domain.GroupCategory;
 import cluverse.group.domain.GroupVisibility;
-import cluverse.group.service.GroupService;
+import cluverse.group.service.implement.GroupReader;
 import cluverse.member.domain.Member;
-import cluverse.member.service.MemberService;
+import cluverse.member.service.implement.MemberReader;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
 import cluverse.recruitment.domain.RecruitmentApplicationStatus;
@@ -44,13 +44,13 @@ class RecruitmentApplicationServiceTest {
     private RecruitmentApplicationWriter recruitmentApplicationWriter;
 
     @Mock
-    private GroupService groupService;
-
-    @Mock
-    private MemberService memberService;
-
-    @Mock
     private RecruitmentApplicationQueryRepository recruitmentApplicationQueryRepository;
+
+    @Mock
+    private GroupReader groupReader;
+
+    @Mock
+    private MemberReader memberReader;
 
     @InjectMocks
     private RecruitmentApplicationService recruitmentApplicationService;
@@ -66,7 +66,7 @@ class RecruitmentApplicationServiceTest {
         );
         when(recruitmentApplicationReader.readRecruitmentOrThrow(10L)).thenReturn(recruitment);
         when(recruitmentApplicationReader.existsByRecruitmentAndApplicant(10L, 200L)).thenReturn(true);
-        when(groupService.readGroupOrThrow(1L)).thenReturn(createGroup(1L, 100L));
+        when(groupReader.readOrThrow(1L)).thenReturn(createGroup(1L, 100L));
 
         // when, then
         assertThatThrownBy(() -> recruitmentApplicationService.createApplication(200L, 10L, request, "127.0.0.1"))
@@ -89,8 +89,8 @@ class RecruitmentApplicationServiceTest {
 
         when(recruitmentApplicationReader.readOrThrow(30L)).thenReturn(application);
         when(recruitmentApplicationReader.readRecruitmentOrThrow(10L)).thenReturn(recruitment);
-        when(groupService.readGroupOrThrow(1L)).thenReturn(group);
-        when(memberService.readMemberMap(List.of(200L, 100L))).thenReturn(Map.of(
+        when(groupReader.readOrThrow(1L)).thenReturn(group);
+        when(memberReader.readMemberMap(List.of(200L, 100L))).thenReturn(Map.of(
                 200L, applicant,
                 100L, manager
         ));

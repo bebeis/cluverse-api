@@ -6,8 +6,9 @@ import cluverse.common.exception.UnauthorizedException;
 import cluverse.notification.domain.Notification;
 import cluverse.notification.domain.NotificationPreference;
 import cluverse.notification.exception.NotificationExceptionMessage;
-import cluverse.notification.repository.NotificationPreferenceRepository;
-import cluverse.notification.repository.NotificationRepository;
+import cluverse.notification.service.implement.NotificationPreferenceManager;
+import cluverse.notification.service.implement.NotificationReader;
+import cluverse.notification.service.implement.NotificationWriter;
 import cluverse.notification.service.request.NotificationPreferenceUpdateRequest;
 import cluverse.notification.service.response.NotificationPreferenceResponse;
 import cluverse.notification.service.response.NotificationResponse;
@@ -22,61 +23,39 @@ import java.util.List;
 @Transactional
 public class NotificationService {
 
-    private final NotificationRepository notificationRepository;
-    private final NotificationPreferenceRepository notificationPreferenceRepository;
+    private final NotificationReader notificationReader;
+    private final NotificationWriter notificationWriter;
+    private final NotificationPreferenceManager notificationPreferenceManager;
 
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications(Long memberId) {
         validateAuthenticated(memberId);
-        return notificationRepository.findAllByMemberIdOrderByCreatedAtDescIdDesc(memberId).stream()
+        return notificationReader.readNotifications(memberId).stream()
                 .map(NotificationResponse::from)
                 .toList();
     }
 
     public void readAll(Long memberId) {
         validateAuthenticated(memberId);
-        notificationRepository.findAllByMemberIdOrderByCreatedAtDescIdDesc(memberId)
-                .forEach(Notification::markRead);
+        notificationWriter.readAll(memberId);
     }
 
     public NotificationResponse read(Long memberId, Long notificationId) {
         validateAuthenticated(memberId);
-        Notification notification = readOwnedNotification(memberId, notificationId);
-        notification.markRead();
+        Notification notification = notificationWriter.read(memberId, notificationId);
         return NotificationResponse.from(notification);
     }
 
     @Transactional(readOnly = true)
     public NotificationPreferenceResponse getPreferences(Long memberId) {
         validateAuthenticated(memberId);
-        return NotificationPreferenceResponse.from(readOrCreatePreference(memberId));
+        return NotificationPreferenceResponse.from(notificationPreferenceManager.readOrCreate(memberId));
     }
 
     public NotificationPreferenceResponse updatePreferences(Long memberId, NotificationPreferenceUpdateRequest request) {
         validateAuthenticated(memberId);
-        NotificationPreference preference = readOrCreatePreference(memberId);
-        preference.update(
-                request.comments(),
-                request.groups(),
-                request.announcements(),
-                request.follows(),
-                request.marketing()
-        );
+        NotificationPreference preference = notificationPreferenceManager.update(memberId, request);
         return NotificationPreferenceResponse.from(preference);
-    }
-
-    private Notification readOwnedNotification(Long memberId, Long notificationId) {
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new cluverse.common.exception.NotFoundException(NotificationExceptionMessage.NOTIFICATION_NOT_FOUND.getMessage()));
-        if (!notification.getMemberId().equals(memberId)) {
-            throw new ForbiddenException(NotificationExceptionMessage.NOTIFICATION_ACCESS_DENIED.getMessage());
-        }
-        return notification;
-    }
-
-    private NotificationPreference readOrCreatePreference(Long memberId) {
-        return notificationPreferenceRepository.findById(memberId)
-                .orElseGet(() -> notificationPreferenceRepository.save(NotificationPreference.create(memberId)));
     }
 
     private void validateAuthenticated(Long memberId) {

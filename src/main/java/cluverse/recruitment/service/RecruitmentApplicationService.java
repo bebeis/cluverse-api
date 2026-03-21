@@ -3,8 +3,8 @@ package cluverse.recruitment.service;
 import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.group.domain.Group;
-import cluverse.group.service.GroupService;
-import cluverse.member.service.MemberService;
+import cluverse.group.service.implement.GroupReader;
+import cluverse.member.service.implement.MemberReader;
 import cluverse.recruitment.domain.FormItem;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
@@ -41,8 +41,8 @@ public class RecruitmentApplicationService {
     private final RecruitmentApplicationReader recruitmentApplicationReader;
     private final RecruitmentApplicationWriter recruitmentApplicationWriter;
     private final RecruitmentApplicationQueryRepository recruitmentApplicationQueryRepository;
-    private final GroupService groupService;
-    private final MemberService memberService;
+    private final GroupReader groupReader;
+    private final MemberReader memberReader;
 
     @Transactional(readOnly = true)
     public RecruitmentApplicationPageResponse getMyApplications(Long memberId,
@@ -98,7 +98,7 @@ public class RecruitmentApplicationService {
                                                                   RecruitmentApplicationCreateRequest request,
                                                                   String clientIp) {
         Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(recruitmentId);
-        Group group = groupService.readGroupOrThrow(recruitment.getGroupId());
+        Group group = groupReader.readOrThrow(recruitment.getGroupId());
         validateApplicationCreatable(memberId, recruitmentId, recruitment, group);
         RecruitmentApplication application = recruitmentApplicationWriter.create(recruitment, memberId, request, clientIp);
         return toDetailResponse(application);
@@ -186,7 +186,7 @@ public class RecruitmentApplicationService {
 
     private RecruitmentApplicationDetailResponse toDetailResponse(RecruitmentApplication application) {
         Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(application.getRecruitmentId());
-        Map<Long, cluverse.member.domain.Member> memberMap = memberService.readMemberMap(
+        Map<Long, cluverse.member.domain.Member> memberMap = memberReader.readMemberMap(
                 java.util.stream.Stream.of(application.getApplicantId(), application.getReviewedBy())
                         .filter(java.util.Objects::nonNull)
                         .distinct()
@@ -252,7 +252,7 @@ public class RecruitmentApplicationService {
     }
 
     private void validateManager(Long memberId, Long groupId) {
-        Group group = groupService.readGroupOrThrow(groupId);
+        Group group = groupReader.readOrThrow(groupId);
         if (!group.isManager(memberId)) {
             throw new ForbiddenException(RecruitmentExceptionMessage.RECRUITMENT_ACCESS_DENIED.getMessage());
         }
@@ -263,7 +263,7 @@ public class RecruitmentApplicationService {
             return;
         }
         Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(application.getRecruitmentId());
-        Group group = groupService.readGroupOrThrow(recruitment.getGroupId());
+        Group group = groupReader.readOrThrow(recruitment.getGroupId());
         if (group.isManager(memberId)) {
             return;
         }
@@ -310,7 +310,7 @@ public class RecruitmentApplicationService {
             return;
         }
 
-        Group group = groupService.readGroupOrThrow(recruitment.getGroupId());
+        Group group = groupReader.readOrThrow(recruitment.getGroupId());
         if (!group.hasMember(application.getApplicantId())) {
             group.addMember(application.getApplicantId());
         }

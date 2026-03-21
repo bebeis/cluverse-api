@@ -1,7 +1,8 @@
 package cluverse.reaction.service.implement;
 
 import cluverse.common.exception.BadRequestException;
-import cluverse.reaction.domain.PostBookmark;
+import cluverse.meta.service.implement.PostMetaWriter;
+import cluverse.post.service.implement.PostAccessReader;
 import cluverse.reaction.exception.PostReactionExceptionMessage;
 import cluverse.reaction.repository.PostBookmarkRepository;
 import cluverse.reaction.repository.PostLikeRepository;
@@ -24,6 +25,12 @@ class PostReactionWriterTest {
 
     @Mock
     private PostBookmarkRepository postBookmarkRepository;
+
+    @Mock
+    private PostAccessReader postAccessReader;
+
+    @Mock
+    private PostMetaWriter postMetaWriter;
 
     @InjectMocks
     private PostReactionWriter postReactionWriter;

@@ -1,15 +1,16 @@
 package cluverse.post.service;
 
-import cluverse.board.service.BoardService;
-import cluverse.comment.service.CommentService;
+import cluverse.board.service.implement.BoardReader;
 import cluverse.comment.service.response.CommentLastRepliedPost;
+import cluverse.comment.service.implement.CommentReader;
 import cluverse.common.exception.ForbiddenException;
-import cluverse.meta.service.PostMetaService;
+import cluverse.member.service.implement.MemberReader;
+import cluverse.meta.service.implement.PostMetaWriter;
 import cluverse.post.domain.Post;
 import cluverse.post.exception.PostExceptionMessage;
 import cluverse.post.repository.PostQueryRepository;
 import cluverse.post.repository.dto.PostPageQueryResult;
-import cluverse.post.service.implement.PostReader;
+import cluverse.post.service.implement.PostAccessReader;
 import cluverse.post.service.implement.PostWriter;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
@@ -35,18 +36,18 @@ import static java.util.stream.Collectors.toMap;
 @Transactional
 public class PostServiceV1 implements PostService {
 
-    private final PostReader postReader;
+    private final PostAccessReader postAccessReader;
     private final PostWriter postWriter;
     private final PostQueryRepository postQueryRepository;
-    private final BoardService boardService;
-    private final PostMetaService postMetaService;
-    private final CommentService commentService;
-    private final PostAccessService postAccessService;
+    private final BoardReader boardReader;
+    private final MemberReader memberReader;
+    private final PostMetaWriter postMetaWriter;
+    private final CommentReader commentReader;
 
     @Override
     @Transactional(readOnly = true)
     public PostPageResponse getPosts(Long memberId, PostSearchRequest request) {
-        boardService.validateReadableBoard(memberId, request.boardId());
+        boardReader.validateReadable(memberId, request.boardId());
 
         PostPageQueryResult queryResult = request.isDateBased()
                 ? postQueryRepository.findPostPageByDate(memberId, request)
@@ -68,7 +69,7 @@ public class PostServiceV1 implements PostService {
     @Override
     @Transactional(readOnly = true)
     public PostPageResponse searchPosts(Long memberId, PostKeywordSearchRequest request) {
-        boardService.validateReadableBoard(memberId, request.boardId());
+        boardReader.validateReadable(memberId, request.boardId());
 
         PostPageQueryResult queryResult = postQueryRepository.findPostPageByKeyword(memberId, request);
         List<PostSummaryResponse> responses = queryResult.posts().stream()
@@ -86,29 +87,29 @@ public class PostServiceV1 implements PostService {
 
     @Override
     public PostDetailResponse createPost(Long memberId, PostCreateRequest request, String clientIp) {
-        boardService.validateWritableBoard(memberId, request.boardId());
+        boardReader.validateWritable(memberId, memberReader.isVerified(memberId), request.boardId());
         Post post = postWriter.create(memberId, request, clientIp);
-        postMetaService.createViewCount(post.getId());
+        postMetaWriter.createViewCount(post.getId());
         return PostDetailResponse.from(postQueryRepository.findPostDetail(memberId, post.getId()));
     }
 
     @Override
     public PostDetailResponse readPost(Long memberId, Long postId) {
-        Post post = postReader.readOrThrow(postId);
-        boardService.validateReadableBoard(memberId, post.getBoardId());
-        postMetaService.increaseViewCount(postId);
+        Post post = postAccessReader.readOrThrow(postId);
+        boardReader.validateReadable(memberId, post.getBoardId());
+        postMetaWriter.increaseViewCount(postId);
         return PostDetailResponse.from(postQueryRepository.findPostDetail(memberId, postId));
     }
 
     @Override
     public void increaseViewCount(Long postId) {
-        postReader.readOrThrow(postId);
-        postMetaService.increaseViewCount(postId);
+        postAccessReader.readOrThrow(postId);
+        postMetaWriter.increaseViewCount(postId);
     }
 
     @Override
     public PostDetailResponse updatePost(Long memberId, Long postId, PostUpdateRequest request) {
-        Post post = postReader.readOrThrow(postId);
+        Post post = postAccessReader.readOrThrow(postId);
         validateAuthor(memberId, post);
         postWriter.update(post, request);
         return PostDetailResponse.from(postQueryRepository.findPostDetail(memberId, postId));
@@ -116,30 +117,30 @@ public class PostServiceV1 implements PostService {
 
     @Override
     public void deletePost(Long memberId, Long postId) {
-        Post post = postReader.readOrThrow(postId);
+        Post post = postAccessReader.readOrThrow(postId);
         validateAuthor(memberId, post);
         postWriter.delete(post);
     }
 
     @Override
     public void validatePostExists(Long postId) {
-        postAccessService.validatePostExists(postId);
+        postAccessReader.validatePostExists(postId);
     }
 
     @Override
     public void validateReadablePost(Long memberId, Long postId) {
-        postAccessService.validateReadablePost(memberId, postId);
+        postAccessReader.validateReadablePost(memberId, postId);
     }
 
     @Override
     public void validateWritablePost(Long memberId, Long postId) {
-        postAccessService.validateWritablePost(memberId, postId);
+        postAccessReader.validateWritablePost(memberId, postId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<PostTitleResponse> getRecentCommentRepliedPosts(Long size) {
-        List<CommentLastRepliedPost> commentLastRepliedPosts = commentService.getRecentCommentRepliedPostIds(size);
+        List<CommentLastRepliedPost> commentLastRepliedPosts = commentReader.readRecentCommentRepliedPosts(size);
         if (commentLastRepliedPosts.isEmpty()) {
             return List.of();
         }
@@ -147,7 +148,7 @@ public class PostServiceV1 implements PostService {
         List<Long> postIds = commentLastRepliedPosts.stream()
                 .map(CommentLastRepliedPost::postId)
                 .toList();
-        Map<Long, Post> postMap = postReader.readPosts(postIds).stream()
+        Map<Long, Post> postMap = postAccessReader.readPosts(postIds).stream()
                 .filter(Post::isActive)
                 .collect(toMap(Post::getId, Function.identity()));
 

@@ -1,7 +1,7 @@
 package cluverse.university.service;
 
 import cluverse.common.exception.ForbiddenException;
-import cluverse.member.service.MemberService;
+import cluverse.member.service.implement.MemberReader;
 import cluverse.university.domain.University;
 import cluverse.university.exception.UniversityExceptionMessage;
 import cluverse.university.service.implement.UniversityReader;
@@ -24,7 +24,7 @@ public class UniversityService {
 
     private final UniversityReader universityReader;
     private final UniversityWriter universityWriter;
-    private final MemberService memberService;
+    private final MemberReader memberReader;
 
     @Transactional(readOnly = true)
     public List<UniversitySummaryResponse> searchUniversities(UniversitySearchRequest request) {
@@ -50,7 +50,7 @@ public class UniversityService {
     }
 
     private void validateAdmin(Long memberId) {
-        if (!memberService.isAdmin(memberId)) {
+        if (!memberReader.isAdmin(memberId)) {
             throw new ForbiddenException(UniversityExceptionMessage.UNIVERSITY_ACCESS_DENIED.getMessage());
         }
     }

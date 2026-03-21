@@ -67,6 +67,10 @@ public class MemberWriter {
         member.delete();
     }
 
+    public Member save(Member member) {
+        return memberRepository.save(member);
+    }
+
     public MemberMajor addMajor(Member member, AddMajorRequest request) {
         validateMajorExists(request.majorId());
         member.addMajor(request.majorId(), request.majorType());
