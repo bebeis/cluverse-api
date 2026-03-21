@@ -2,6 +2,8 @@ package cluverse.post.service;
 
 import cluverse.board.service.BoardService;
 import cluverse.board.domain.BoardType;
+import cluverse.comment.service.CommentService;
+import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.meta.service.PostMetaService;
 import cluverse.post.domain.Post;
@@ -20,6 +22,7 @@ import cluverse.post.service.request.PostUpdateRequest;
 import cluverse.post.service.response.PostAuthorResponse;
 import cluverse.post.service.response.PostDetailResponse;
 import cluverse.post.service.response.PostPageResponse;
+import cluverse.post.service.response.PostTitleResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -54,6 +57,9 @@ class PostServiceV1Test {
 
     @Mock
     private PostMetaService postMetaService;
+
+    @Mock
+    private CommentService commentService;
 
     @InjectMocks
     private PostServiceV1 postService;
@@ -227,6 +233,31 @@ class PostServiceV1Test {
 
         // then
         verify(boardService).validateReadableBoard(7L, 3L);
+    }
+
+    @Test
+    void 최근_댓글이_달린_게시글은_최근_댓글_시각_순서대로_응답한다() {
+        // given
+        LocalDateTime latest = LocalDateTime.of(2026, 3, 20, 12, 0);
+        LocalDateTime previous = LocalDateTime.of(2026, 3, 20, 11, 0);
+        Post firstPost = createPost(1L, 3L, 10L, "첫 번째 글", false);
+        Post secondPost = createPost(2L, 3L, 20L, "두 번째 글", false);
+
+        when(commentService.getRecentCommentRepliedPostIds(2L)).thenReturn(List.of(
+                new CommentLastRepliedPost(2L, latest),
+                new CommentLastRepliedPost(1L, previous)
+        ));
+        when(postReader.readPosts(List.of(2L, 1L))).thenReturn(List.of(firstPost, secondPost));
+
+        // when
+        List<PostTitleResponse> response = postService.getRecentCommentRepliedPosts(2L);
+
+        // then
+        assertThat(response).extracting(PostTitleResponse::postId).containsExactly(2L, 1L);
+        assertThat(response).extracting(PostTitleResponse::title).containsExactly("두 번째 글", "첫 번째 글");
+        assertThat(response).extracting(PostTitleResponse::lastCommentRepliedAt).containsExactly(latest, previous);
+        verify(commentService).getRecentCommentRepliedPostIds(2L);
+        verify(postReader).readPosts(List.of(2L, 1L));
     }
 
     private PostSummaryQueryDto createPostSummaryQueryDto(

@@ -1,6 +1,7 @@
 package cluverse.comment.repository;
 
 import cluverse.comment.domain.Comment;
+import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.comment.repository.dto.CommentPageQueryResult;
 import cluverse.comment.service.request.CommentPageRequest;
 import cluverse.common.config.QuerydslConfig;
@@ -14,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -74,6 +77,25 @@ class CommentQueryRepositoryTest {
                 .singleElement()
                 .extracting("blockedAuthor")
                 .isEqualTo(true);
+    }
+
+    @Test
+    void 게시글별_최근_댓글_시각을_기준으로_내림차순_조회한다() throws InterruptedException {
+        // given
+        Member author = memberRepository.save(Member.createSocialMember("author"));
+
+        commentRepository.save(createComment(10L, author.getId(), null, 0, "post-10-first"));
+        Thread.sleep(5);
+        commentRepository.save(createComment(20L, author.getId(), null, 0, "post-20-first"));
+        Thread.sleep(5);
+        commentRepository.save(createComment(10L, author.getId(), null, 0, "post-10-latest"));
+
+        // when
+        List<CommentLastRepliedPost> result = commentQueryRepository.findRecentCommentRepliedPosts(2L);
+
+        // then
+        assertThat(result).extracting(CommentLastRepliedPost::postId).containsExactly(10L, 20L);
+        assertThat(result.getFirst().lastCommentRepliedAt()).isAfter(result.get(1).lastCommentRepliedAt());
     }
 
     private Comment createComment(Long postId, Long memberId, Long parentId, int depth, String content) {

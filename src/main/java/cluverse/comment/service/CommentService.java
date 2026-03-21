@@ -3,10 +3,9 @@ package cluverse.comment.service;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.comment.service.request.CommentPageRequest;
 import cluverse.comment.service.request.CommentUpdateRequest;
-import cluverse.comment.service.response.CommentDeleteResponse;
-import cluverse.comment.service.response.CommentPageResponse;
-import cluverse.comment.service.response.CommentReactionTargetResponse;
-import cluverse.comment.service.response.CommentResponse;
+import cluverse.comment.service.response.*;
+
+import java.util.List;
 
 public interface CommentService {
 
@@ -23,4 +22,6 @@ public interface CommentService {
     void increaseLikeCount(Long commentId);
 
     void decreaseLikeCount(Long commentId);
+
+    List<CommentLastRepliedPost> getRecentCommentRepliedPostIds(Long size);
 }

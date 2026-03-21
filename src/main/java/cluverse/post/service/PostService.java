@@ -6,6 +6,10 @@ import cluverse.post.service.request.PostSearchRequest;
 import cluverse.post.service.request.PostUpdateRequest;
 import cluverse.post.service.response.PostDetailResponse;
 import cluverse.post.service.response.PostPageResponse;
+import cluverse.post.service.response.PostTitleResponse;
+
+import java.util.List;
+
 public interface PostService {
 
     PostPageResponse getPosts(Long memberId, PostSearchRequest request);
@@ -27,4 +31,6 @@ public interface PostService {
     void validateReadablePost(Long memberId, Long postId);
 
     void validateWritablePost(Long memberId, Long postId);
+
+    List<PostTitleResponse> getRecentCommentRepliedPosts(Long size);
 }

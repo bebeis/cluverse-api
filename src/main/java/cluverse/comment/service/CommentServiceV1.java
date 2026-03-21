@@ -10,10 +10,7 @@ import cluverse.comment.service.implement.CommentWriter;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.comment.service.request.CommentPageRequest;
 import cluverse.comment.service.request.CommentUpdateRequest;
-import cluverse.comment.service.response.CommentDeleteResponse;
-import cluverse.comment.service.response.CommentPageResponse;
-import cluverse.comment.service.response.CommentReactionTargetResponse;
-import cluverse.comment.service.response.CommentResponse;
+import cluverse.comment.service.response.*;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.member.service.MemberService;
 import cluverse.meta.service.PostMetaService;
@@ -101,6 +98,11 @@ public class CommentServiceV1 implements CommentService {
     @Override
     public void decreaseLikeCount(Long commentId) {
         commentWriter.decreaseLikeCount(commentId);
+    }
+
+    @Override
+    public List<CommentLastRepliedPost> getRecentCommentRepliedPostIds(final Long size) {
+        return commentQueryRepository.findRecentCommentRepliedPosts(size);
     }
 
     private void validateParentComment(Long postId, Long parentCommentId) {

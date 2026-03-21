@@ -10,11 +10,15 @@ import cluverse.post.service.request.PostSearchRequest;
 import cluverse.post.service.request.PostUpdateRequest;
 import cluverse.post.service.response.PostDetailResponse;
 import cluverse.post.service.response.PostPageResponse;
+import cluverse.post.service.response.PostTitleResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/posts")
@@ -34,6 +38,14 @@ public class PostControllerV1 {
                                                      @Valid @ModelAttribute PostKeywordSearchRequest request) {
         return ApiResponse.ok(postService.searchPosts(extractMemberId(loginMember), request));
     }
+
+    @GetMapping("/recent-comment-replied")
+    public ApiResponse<List<PostTitleResponse>> getRecentCommentRepliedPosts(@Login LoginMember loginMember,
+                                                                             @Param("size") Long size) {
+        List<PostTitleResponse> postTitleResponses = postService.getRecentCommentRepliedPosts(size);
+        return ApiResponse.ok(postTitleResponses);
+    }
+
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

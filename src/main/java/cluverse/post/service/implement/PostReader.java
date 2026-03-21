@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -26,5 +28,9 @@ public class PostReader {
         if (!post.isActive()) {
             throw new NotFoundException(PostExceptionMessage.POST_NOT_FOUND.getMessage());
         }
+    }
+
+    public List<Post> readPosts(List<Long> postIds) {
+        return postRepository.findAllById(postIds);
     }
 }

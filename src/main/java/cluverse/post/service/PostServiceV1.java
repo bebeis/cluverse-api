@@ -1,6 +1,8 @@
 package cluverse.post.service;
 
 import cluverse.board.service.BoardService;
+import cluverse.comment.service.CommentService;
+import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.meta.service.PostMetaService;
 import cluverse.post.domain.Post;
@@ -16,11 +18,17 @@ import cluverse.post.service.request.PostUpdateRequest;
 import cluverse.post.service.response.PostDetailResponse;
 import cluverse.post.service.response.PostPageResponse;
 import cluverse.post.service.response.PostSummaryResponse;
+import cluverse.post.service.response.PostTitleResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+
+import static java.util.stream.Collectors.toMap;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +40,7 @@ public class PostServiceV1 implements PostService {
     private final PostQueryRepository postQueryRepository;
     private final BoardService boardService;
     private final PostMetaService postMetaService;
+    private final CommentService commentService;
 
     @Override
     @Transactional(readOnly = true)
@@ -126,6 +135,37 @@ public class PostServiceV1 implements PostService {
     public void validateWritablePost(Long memberId, Long postId) {
         Post post = postReader.readOrThrow(postId);
         boardService.validateWritableBoard(memberId, post.getBoardId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PostTitleResponse> getRecentCommentRepliedPosts(Long size) {
+        List<CommentLastRepliedPost> commentLastRepliedPosts = commentService.getRecentCommentRepliedPostIds(size);
+        if (commentLastRepliedPosts.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> postIds = commentLastRepliedPosts.stream()
+                .map(CommentLastRepliedPost::postId)
+                .toList();
+        Map<Long, Post> postMap = postReader.readPosts(postIds).stream()
+                .filter(Post::isActive)
+                .collect(toMap(Post::getId, Function.identity()));
+
+        return commentLastRepliedPosts.stream()
+                .map(commentLastRepliedPost -> {
+                    Post post = postMap.get(commentLastRepliedPost.postId());
+                    if (post == null) {
+                        return null;
+                    }
+                    return new PostTitleResponse(
+                            post.getId(),
+                            post.getTitle(),
+                            commentLastRepliedPost.lastCommentRepliedAt()
+                    );
+                })
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     private void validateAuthor(Long memberId, Post post) {

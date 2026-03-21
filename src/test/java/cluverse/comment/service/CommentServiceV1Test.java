@@ -10,6 +10,7 @@ import cluverse.comment.service.implement.CommentWriter;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.comment.service.request.CommentPageRequest;
 import cluverse.comment.service.request.CommentUpdateRequest;
+import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.comment.service.response.CommentPageResponse;
 import cluverse.comment.service.response.CommentResponse;
 import cluverse.common.exception.ForbiddenException;
@@ -171,6 +172,23 @@ class CommentServiceV1Test {
         verify(commentWriter).decreaseReplyCount(101L);
         verify(commentWriter).remove(deletedParent);
         verify(postMetaService, times(2)).decreaseCommentCount(10L);
+    }
+
+    @Test
+    void 최근_댓글_게시글_조회시_쿼리_결과를_그대로_반환한다() {
+        // given
+        List<CommentLastRepliedPost> expected = List.of(
+                new CommentLastRepliedPost(20L, LocalDateTime.of(2026, 3, 20, 12, 0)),
+                new CommentLastRepliedPost(10L, LocalDateTime.of(2026, 3, 20, 11, 0))
+        );
+        when(commentQueryRepository.findRecentCommentRepliedPosts(2L)).thenReturn(expected);
+
+        // when
+        List<CommentLastRepliedPost> result = commentService.getRecentCommentRepliedPostIds(2L);
+
+        // then
+        assertThat(result).isEqualTo(expected);
+        verify(commentQueryRepository).findRecentCommentRepliedPosts(2L);
     }
 
     private CommentQueryDto createCommentQueryDto(

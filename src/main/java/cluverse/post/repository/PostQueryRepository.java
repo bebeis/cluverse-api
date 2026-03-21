@@ -14,31 +14,22 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.BooleanPath;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.NumberPath;
-import com.querydsl.core.types.dsl.StringExpression;
-import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import static cluverse.board.domain.QBoard.board;
 import static cluverse.member.domain.QMember.member;
 import static cluverse.member.domain.QMemberProfile.memberProfile;
 import static cluverse.meta.domain.QPostBookmarkCount.postBookmarkCount;
 import static cluverse.meta.domain.QPostCommentCount.postCommentCount;
 import static cluverse.meta.domain.QPostLikeCount.postLikeCount;
 import static cluverse.meta.domain.QPostViewCount.postViewCount;
-import static cluverse.board.domain.QBoard.board;
 import static cluverse.post.domain.QPost.post;
 import static cluverse.post.domain.QPostImage.postImage;
 
@@ -195,8 +186,7 @@ public class PostQueryRepository {
                         post.id.eq(postId)
                 )
                 .orderBy(postImage.displayOrder.asc())
-                .fetch()
-                ;
+                .fetch();
 
         if (rows.isEmpty()) {
             throw new NotFoundException(PostExceptionMessage.POST_NOT_FOUND.getMessage());

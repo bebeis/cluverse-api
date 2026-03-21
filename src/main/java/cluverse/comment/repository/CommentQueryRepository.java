@@ -5,7 +5,9 @@ import cluverse.comment.exception.CommentExceptionMessage;
 import cluverse.comment.repository.dto.CommentPageQueryResult;
 import cluverse.comment.repository.dto.CommentQueryDto;
 import cluverse.comment.service.request.CommentPageRequest;
+import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.common.exception.NotFoundException;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +50,23 @@ public class CommentQueryRepository {
             throw new NotFoundException(CommentExceptionMessage.COMMENT_NOT_FOUND.getMessage());
         }
         return comments.getFirst();
+    }
+
+    public List<CommentLastRepliedPost> findRecentCommentRepliedPosts(Long size) {
+        List<Tuple> rows = queryFactory.select(comment.postId, comment.createdAt.max())
+                .from(comment)
+                .where(comment.status.eq(CommentStatus.ACTIVE))
+                .groupBy(comment.postId)
+                .orderBy(comment.createdAt.max().desc(), comment.postId.desc())
+                .limit(size)
+                .fetch();
+
+        return rows.stream()
+                .map(row -> new CommentLastRepliedPost(
+                        row.get(comment.postId),
+                        row.get(comment.createdAt.max())
+                ))
+                .toList();
     }
 
     private List<Long> findPagedRootCommentIds(Long postId, Long parentCommentId, int offset, int limit) {
