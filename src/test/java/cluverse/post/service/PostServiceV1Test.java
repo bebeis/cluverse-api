@@ -65,7 +65,10 @@ class PostServiceV1Test {
     private CommentReader commentReader;
 
     @InjectMocks
-    private PostServiceV1 postService;
+    private PostQueryService postQueryService;
+
+    @InjectMocks
+    private PostService postService;
 
     @Test
     void 게시글_목록_조회시_서비스가_정렬된_ID_순서대로_응답을_조립한다() {
@@ -80,7 +83,7 @@ class PostServiceV1Test {
         ));
 
         // when
-        PostPageResponse response = postService.getPosts(99L, request);
+        PostPageResponse response = postQueryService.getPosts(99L, request);
 
         // then
         assertThat(response.posts()).extracting("postId").containsExactly(2L, 1L);
@@ -104,7 +107,7 @@ class PostServiceV1Test {
         ));
 
         // when
-        PostPageResponse response = postService.getPosts(99L, request);
+        PostPageResponse response = postQueryService.getPosts(99L, request);
 
         // then
         assertThat(response.posts()).extracting("postId").containsExactly(5L, 4L);
@@ -124,7 +127,7 @@ class PostServiceV1Test {
         ));
 
         // when
-        PostPageResponse response = postService.searchPosts(99L, request);
+        PostPageResponse response = postQueryService.searchPosts(99L, request);
 
         // then
         assertThat(response.posts()).extracting("postId").containsExactly(10L);
@@ -142,14 +145,13 @@ class PostServiceV1Test {
         when(postQueryRepository.findPostDetail(2L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
 
         // when
-        PostDetailResponse response = postService.readPost(2L, 10L);
+        PostDetailResponse response = postQueryService.readPost(2L, 10L);
 
         // then
         assertThat(response.isAnonymous()).isTrue();
         assertThat(response.author().memberId()).isNull();
         assertThat(response.author().nickname()).isEqualTo("익명");
         verify(boardReader).validateReadable(2L, 3L);
-        verify(postMetaWriter).increaseViewCount(10L);
     }
 
     @Test
@@ -189,7 +191,7 @@ class PostServiceV1Test {
     @Test
     void 게시글_존재_검증은_리더에게_위임한다() {
         // when
-        postService.validatePostExists(10L);
+        postQueryService.validatePostExists(10L);
 
         // then
         verify(postAccessReader).validatePostExists(10L);
@@ -225,7 +227,7 @@ class PostServiceV1Test {
     @Test
     void 게시글_읽기_권한_검증은_게시판_서비스를_통해_수행한다() {
         // when
-        postService.validateReadablePost(7L, 10L);
+        postQueryService.validateReadablePost(7L, 10L);
 
         // then
         verify(postAccessReader).validateReadablePost(7L, 10L);
@@ -246,7 +248,7 @@ class PostServiceV1Test {
         when(postAccessReader.readPosts(List.of(2L, 1L))).thenReturn(List.of(firstPost, secondPost));
 
         // when
-        List<PostTitleResponse> response = postService.getRecentCommentRepliedPosts(2L);
+        List<PostTitleResponse> response = postQueryService.getRecentCommentRepliedPosts(2L);
 
         // then
         assertThat(response).extracting(PostTitleResponse::postId).containsExactly(2L, 1L);

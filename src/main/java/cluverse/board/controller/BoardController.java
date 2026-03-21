@@ -1,5 +1,6 @@
 package cluverse.board.controller;
 
+import cluverse.board.service.BoardQueryService;
 import cluverse.board.service.BoardService;
 import cluverse.board.service.request.BoardCreateRequest;
 import cluverse.board.service.request.BoardSearchRequest;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class BoardController {
 
+    private final BoardQueryService boardQueryService;
     private final BoardService boardService;
 
     @GetMapping
@@ -28,7 +30,7 @@ public class BoardController {
             @Login LoginMember loginMember,
             @Valid @ModelAttribute BoardSearchRequest request
     ) {
-        return ApiResponse.ok(boardService.getBoardDirectory(extractMemberId(loginMember), request));
+        return ApiResponse.ok(boardQueryService.getBoardDirectory(extractMemberId(loginMember), request));
     }
 
     @GetMapping("/{boardId}")
@@ -36,7 +38,7 @@ public class BoardController {
             @Login LoginMember loginMember,
             @PathVariable Long boardId
     ) {
-        return ApiResponse.ok(boardService.getBoard(extractMemberId(loginMember), boardId));
+        return ApiResponse.ok(boardQueryService.getBoard(extractMemberId(loginMember), boardId));
     }
 
     @GetMapping("/{boardId}/home")
@@ -44,7 +46,7 @@ public class BoardController {
             @Login LoginMember loginMember,
             @PathVariable Long boardId
     ) {
-        return ApiResponse.ok(boardService.getBoardHome(extractMemberId(loginMember), boardId));
+        return ApiResponse.ok(boardQueryService.getBoardHome(extractMemberId(loginMember), boardId));
     }
 
     @PostMapping

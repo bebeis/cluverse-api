@@ -3,6 +3,7 @@ package cluverse.calendar.controller;
 import cluverse.calendar.domain.CalendarEventCategory;
 import cluverse.calendar.domain.CalendarEventVisibility;
 import cluverse.calendar.service.CalendarEventService;
+import cluverse.calendar.service.CalendarEventQueryService;
 import cluverse.calendar.service.request.CalendarEventCreateRequest;
 import cluverse.calendar.service.request.CalendarEventUpdateRequest;
 import cluverse.calendar.service.response.CalendarEventResponse;
@@ -39,16 +40,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CalendarEventControllerDocsTest extends RestDocsSupport {
 
+    private final CalendarEventQueryService calendarEventQueryService = mock(CalendarEventQueryService.class);
     private final CalendarEventService calendarEventService = mock(CalendarEventService.class);
 
     @Override
     protected Object initController() {
-        return new CalendarEventController(calendarEventService);
+        return new CalendarEventController(calendarEventQueryService, calendarEventService);
     }
 
     @Test
     void 일정_목록_조회() throws Exception {
-        when(calendarEventService.getEvents(anyLong(), any())).thenReturn(List.of(createResponse()));
+        when(calendarEventQueryService.getEvents(anyLong(), any())).thenReturn(List.of(createResponse()));
 
         mockMvc.perform(get("/api/v1/calendar/events")
                         .session(createSession())
@@ -201,7 +203,7 @@ class CalendarEventControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 다가오는_일정_조회() throws Exception {
-        when(calendarEventService.getUpcomingEvents(1L, 5)).thenReturn(List.of(createResponse()));
+        when(calendarEventQueryService.getUpcomingEvents(1L, 5)).thenReturn(List.of(createResponse()));
 
         mockMvc.perform(get("/api/v1/calendar/events/upcoming")
                         .session(createSession())

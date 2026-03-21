@@ -3,6 +3,7 @@ package cluverse.report.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.report.service.ReportQueryService;
 import cluverse.report.service.ReportService;
 import cluverse.report.service.request.ReportCreateRequest;
 import cluverse.report.service.response.ReportReasonResponse;
@@ -20,6 +21,7 @@ import java.util.List;
 public class ReportController {
 
     private final ReportService reportService;
+    private final ReportQueryService reportQueryService;
 
     @PostMapping("/reports")
     @ResponseStatus(HttpStatus.CREATED)
@@ -31,6 +33,6 @@ public class ReportController {
 
     @GetMapping("/report-reasons")
     public ApiResponse<List<ReportReasonResponse>> getReportReasons() {
-        return ApiResponse.ok(reportService.getReasonCodes());
+        return ApiResponse.ok(reportQueryService.getReasonCodes());
     }
 }

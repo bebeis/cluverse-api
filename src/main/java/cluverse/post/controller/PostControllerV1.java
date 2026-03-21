@@ -3,6 +3,7 @@ package cluverse.post.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.post.service.PostQueryService;
 import cluverse.post.service.PostService;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
@@ -24,24 +25,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostControllerV1 {
 
+    private final PostQueryService postQueryService;
     private final PostService postService;
 
     @GetMapping
     public ApiResponse<PostPageResponse> getPostList(@Login LoginMember loginMember,
                                                      @Valid @ModelAttribute PostSearchRequest request) {
-        return ApiResponse.ok(postService.getPosts(extractMemberId(loginMember), request));
+        return ApiResponse.ok(postQueryService.getPosts(extractMemberId(loginMember), request));
     }
 
     @GetMapping("/search")
     public ApiResponse<PostPageResponse> searchPosts(@Login LoginMember loginMember,
                                                      @Valid @ModelAttribute PostKeywordSearchRequest request) {
-        return ApiResponse.ok(postService.searchPosts(extractMemberId(loginMember), request));
+        return ApiResponse.ok(postQueryService.searchPosts(extractMemberId(loginMember), request));
     }
 
     @GetMapping("/recent-comment-replied")
     public ApiResponse<List<PostTitleResponse>> getRecentCommentRepliedPosts(@Login LoginMember loginMember,
                                                                              @RequestParam(required = false) Long size) {
-        List<PostTitleResponse> postTitleResponses = postService.getRecentCommentRepliedPosts(size);
+        List<PostTitleResponse> postTitleResponses = postQueryService.getRecentCommentRepliedPosts(size);
         return ApiResponse.ok(postTitleResponses);
     }
 
@@ -59,7 +61,9 @@ public class PostControllerV1 {
     @GetMapping("/{postId}")
     public ApiResponse<PostDetailResponse> readPost(@Login LoginMember loginMember,
                                                     @PathVariable Long postId) {
-        return ApiResponse.ok(postService.readPost(extractMemberId(loginMember), postId));
+        Long memberId = extractMemberId(loginMember);
+        postService.increaseViewCount(memberId, postId);
+        return ApiResponse.ok(postQueryService.readPost(memberId, postId));
     }
 
     @PutMapping("/{postId}")

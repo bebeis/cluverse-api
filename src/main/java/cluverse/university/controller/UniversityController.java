@@ -3,6 +3,7 @@ package cluverse.university.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.university.service.UniversityQueryService;
 import cluverse.university.service.UniversityService;
 import cluverse.university.service.request.UniversityCreateRequest;
 import cluverse.university.service.request.UniversitySearchRequest;
@@ -21,18 +22,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UniversityController {
 
+    private final UniversityQueryService universityQueryService;
     private final UniversityService universityService;
 
     @GetMapping
     public ApiResponse<List<UniversitySummaryResponse>> searchUniversities(
             @Valid @ModelAttribute UniversitySearchRequest request
     ) {
-        return ApiResponse.ok(universityService.searchUniversities(request));
+        return ApiResponse.ok(universityQueryService.searchUniversities(request));
     }
 
     @GetMapping("/{universityId}")
     public ApiResponse<UniversityDetailResponse> getUniversity(@PathVariable Long universityId) {
-        return ApiResponse.ok(universityService.getUniversity(universityId));
+        return ApiResponse.ok(universityQueryService.getUniversity(universityId));
     }
 
     @PostMapping

@@ -35,6 +35,9 @@ class BoardServiceTest {
     @InjectMocks
     private BoardService boardService;
 
+    @InjectMocks
+    private BoardQueryService boardQueryService;
+
     @Test
     void 관리자는_게시판을_생성할_수_있다() {
         // given

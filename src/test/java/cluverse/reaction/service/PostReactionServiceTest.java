@@ -47,6 +47,9 @@ class PostReactionServiceTest {
     @InjectMocks
     private PostReactionService postReactionService;
 
+    @InjectMocks
+    private PostReactionQueryService postReactionQueryService;
+
     @Test
     void 게시글_좋아요를_추가하고_좋아요_수를_증가시킨다() {
         // when
@@ -133,7 +136,7 @@ class PostReactionServiceTest {
                 ));
 
         // when
-        BookmarkedPostPageResponse response = postReactionService.getBookmarkedPosts(1L, request);
+        BookmarkedPostPageResponse response = postReactionQueryService.getBookmarkedPosts(1L, request);
 
         // then
         assertThat(response.posts()).hasSize(1);

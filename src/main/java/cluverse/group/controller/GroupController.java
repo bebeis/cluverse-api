@@ -5,6 +5,7 @@ import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
 import cluverse.common.exception.UnauthorizedException;
+import cluverse.group.service.GroupQueryService;
 import cluverse.group.service.GroupService;
 import cluverse.group.service.request.GroupCreateRequest;
 import cluverse.group.service.request.GroupMemberUpdateRequest;
@@ -31,17 +32,18 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GroupController {
 
+    private final GroupQueryService groupQueryService;
     private final GroupService groupService;
 
     @GetMapping
     public ApiResponse<GroupPageResponse> getGroups(@Login LoginMember loginMember,
                                                     @Valid @ModelAttribute GroupSearchRequest request) {
-        return ApiResponse.ok(groupService.getGroups(extractMemberId(loginMember), request));
+        return ApiResponse.ok(groupQueryService.getGroups(extractMemberId(loginMember), request));
     }
 
     @GetMapping("/me")
     public ApiResponse<List<MyGroupSummaryResponse>> getMyGroups(@Login LoginMember loginMember) {
-        return ApiResponse.ok(groupService.getMyGroups(requireLoginMember(loginMember).memberId()));
+        return ApiResponse.ok(groupQueryService.getMyGroups(requireLoginMember(loginMember).memberId()));
     }
 
     @PostMapping
@@ -54,7 +56,7 @@ public class GroupController {
     @GetMapping("/{groupId}")
     public ApiResponse<GroupDetailResponse> getGroup(@Login LoginMember loginMember,
                                                      @PathVariable Long groupId) {
-        return ApiResponse.ok(groupService.getGroup(extractMemberId(loginMember), groupId));
+        return ApiResponse.ok(groupQueryService.getGroup(extractMemberId(loginMember), groupId));
     }
 
     @PutMapping("/{groupId}")
@@ -74,7 +76,7 @@ public class GroupController {
     @GetMapping("/{groupId}/members")
     public ApiResponse<List<GroupMemberResponse>> getMembers(@Login LoginMember loginMember,
                                                              @PathVariable Long groupId) {
-        return ApiResponse.ok(groupService.getMembers(loginMember.memberId(), groupId));
+        return ApiResponse.ok(groupQueryService.getMembers(loginMember.memberId(), groupId));
     }
 
     @PatchMapping("/{groupId}/members/{memberId}")
@@ -129,7 +131,7 @@ public class GroupController {
     @GetMapping("/{groupId}/roles")
     public ApiResponse<List<GroupRoleResponse>> getRoles(@Login LoginMember loginMember,
                                                          @PathVariable Long groupId) {
-        return ApiResponse.ok(groupService.getRoles(loginMember.memberId(), groupId));
+        return ApiResponse.ok(groupQueryService.getRoles(loginMember.memberId(), groupId));
     }
 
     @PostMapping("/{groupId}/roles")

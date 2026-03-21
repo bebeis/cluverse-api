@@ -4,6 +4,7 @@ import cluverse.common.auth.LoginMember;
 import cluverse.docs.RestDocsSupport;
 import cluverse.member.domain.MemberRole;
 import cluverse.university.service.UniversityService;
+import cluverse.university.service.UniversityQueryService;
 import cluverse.university.service.response.UniversityDetailResponse;
 import cluverse.university.service.response.UniversitySummaryResponse;
 import org.junit.jupiter.api.Test;
@@ -33,17 +34,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class UniversityControllerDocsTest extends RestDocsSupport {
 
+    private final UniversityQueryService universityQueryService = mock(UniversityQueryService.class);
     private final UniversityService universityService = mock(UniversityService.class);
 
     @Override
     protected Object initController() {
-        return new UniversityController(universityService);
+        return new UniversityController(universityQueryService, universityService);
     }
 
     @Test
     void 학교_목록_검색() throws Exception {
         // given
-        when(universityService.searchUniversities(any())).thenReturn(List.of(
+        when(universityQueryService.searchUniversities(any())).thenReturn(List.of(
                 new UniversitySummaryResponse(1L, "클루대학교", "https://cdn.example.com/universities/clu-badge.png"),
                 new UniversitySummaryResponse(2L, "클루공과대학교", "https://cdn.example.com/universities/clu-tech-badge.png")
         ));
@@ -72,7 +74,7 @@ class UniversityControllerDocsTest extends RestDocsSupport {
     @Test
     void 학교_상세_조회() throws Exception {
         // given
-        when(universityService.getUniversity(1L)).thenReturn(createUniversityDetailResponse());
+        when(universityQueryService.getUniversity(1L)).thenReturn(createUniversityDetailResponse());
 
         // when, then
         mockMvc.perform(get("/api/v1/universities/{universityId}", 1L))

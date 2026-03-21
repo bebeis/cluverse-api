@@ -3,6 +3,7 @@ package cluverse.recruitment.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.recruitment.service.RecruitmentQueryService;
 import cluverse.recruitment.service.RecruitmentService;
 import cluverse.recruitment.service.request.RecruitmentCreateRequest;
 import cluverse.recruitment.service.request.RecruitmentSearchRequest;
@@ -20,12 +21,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RecruitmentController {
 
+    private final RecruitmentQueryService recruitmentQueryService;
     private final RecruitmentService recruitmentService;
 
     @GetMapping
     public ApiResponse<RecruitmentPageResponse> getRecruitments(@Login LoginMember loginMember,
                                                                 @Valid @ModelAttribute RecruitmentSearchRequest request) {
-        return ApiResponse.ok(recruitmentService.getRecruitments(extractMemberId(loginMember), request));
+        return ApiResponse.ok(recruitmentQueryService.getRecruitments(extractMemberId(loginMember), request));
     }
 
     @PostMapping
@@ -39,7 +41,7 @@ public class RecruitmentController {
     @GetMapping("/{recruitmentId}")
     public ApiResponse<RecruitmentDetailResponse> getRecruitment(@Login LoginMember loginMember,
                                                                  @PathVariable Long recruitmentId) {
-        return ApiResponse.ok(recruitmentService.getRecruitment(extractMemberId(loginMember), recruitmentId));
+        return ApiResponse.ok(recruitmentQueryService.getRecruitment(extractMemberId(loginMember), recruitmentId));
     }
 
     @PutMapping("/{recruitmentId}")

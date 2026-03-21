@@ -2,6 +2,7 @@ package cluverse.comment.controller;
 
 import cluverse.comment.domain.CommentStatus;
 import cluverse.comment.service.CommentService;
+import cluverse.comment.service.CommentQueryService;
 import cluverse.comment.service.response.CommentAuthorResponse;
 import cluverse.comment.service.response.CommentDeleteResponse;
 import cluverse.comment.service.response.CommentPageResponse;
@@ -39,16 +40,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CommentControllerDocsTest extends RestDocsSupport {
 
+    private final CommentQueryService commentQueryService = mock(CommentQueryService.class);
     private final CommentService commentService = mock(CommentService.class);
 
     @Override
     protected Object initController() {
-        return new CommentController(commentService);
+        return new CommentController(commentQueryService, commentService);
     }
 
     @Test
     void 댓글_목록_조회() throws Exception {
-        when(commentService.getComments(anyLong(), any())).thenReturn(new CommentPageResponse(
+        when(commentQueryService.getComments(anyLong(), any())).thenReturn(new CommentPageResponse(
                 List.of(createCommentResponse(101L, null, 0, false, true)),
                 0,
                 20,
@@ -100,7 +102,7 @@ class CommentControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 비회원도_댓글_목록을_조회할_수_있다() throws Exception {
-        when(commentService.getComments(isNull(), any())).thenReturn(new CommentPageResponse(
+        when(commentQueryService.getComments(isNull(), any())).thenReturn(new CommentPageResponse(
                 List.of(),
                 0,
                 20,
@@ -115,7 +117,7 @@ class CommentControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 대댓글_목록_조회() throws Exception {
-        when(commentService.getComments(anyLong(), any())).thenReturn(new CommentPageResponse(
+        when(commentQueryService.getComments(anyLong(), any())).thenReturn(new CommentPageResponse(
                 List.of(createCommentResponse(201L, 101L, 1, false, false)),
                 20,
                 20,

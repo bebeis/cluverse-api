@@ -3,6 +3,7 @@ package cluverse.recruitment.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.recruitment.service.RecruitmentApplicationQueryService;
 import cluverse.recruitment.service.RecruitmentApplicationService;
 import cluverse.recruitment.service.request.ApplicationChatMessageCreateRequest;
 import cluverse.recruitment.service.request.ApplicationChatMessageSearchRequest;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RecruitmentApplicationController {
 
+    private final RecruitmentApplicationQueryService recruitmentApplicationQueryService;
     private final RecruitmentApplicationService recruitmentApplicationService;
 
     @GetMapping("/me")
@@ -31,7 +33,7 @@ public class RecruitmentApplicationController {
             @Login LoginMember loginMember,
             @Valid @ModelAttribute RecruitmentApplicationSearchRequest request
     ) {
-        return ApiResponse.ok(recruitmentApplicationService.getMyApplications(loginMember.memberId(), request));
+        return ApiResponse.ok(recruitmentApplicationQueryService.getMyApplications(loginMember.memberId(), request));
     }
 
     @GetMapping
@@ -41,7 +43,7 @@ public class RecruitmentApplicationController {
             @Valid @ModelAttribute RecruitmentApplicationSearchRequest request
     ) {
         return ApiResponse.ok(
-                recruitmentApplicationService.getApplications(loginMember.memberId(), recruitmentId, request)
+                recruitmentApplicationQueryService.getApplications(loginMember.memberId(), recruitmentId, request)
         );
     }
 
@@ -68,7 +70,7 @@ public class RecruitmentApplicationController {
             @Login LoginMember loginMember,
             @PathVariable Long applicationId
     ) {
-        return ApiResponse.ok(recruitmentApplicationService.getApplication(loginMember.memberId(), applicationId));
+        return ApiResponse.ok(recruitmentApplicationQueryService.getApplication(loginMember.memberId(), applicationId));
     }
 
     @PatchMapping("/{applicationId}/status")
@@ -104,7 +106,7 @@ public class RecruitmentApplicationController {
     public ApiResponse<ApplicationChatMessagePageResponse> getMessages(@Login LoginMember loginMember,
                                                                        @PathVariable Long applicationId,
                                                                        @Valid @ModelAttribute ApplicationChatMessageSearchRequest request) {
-        return ApiResponse.ok(recruitmentApplicationService.getMessages(loginMember.memberId(), applicationId, request));
+        return ApiResponse.ok(recruitmentApplicationQueryService.getMessages(loginMember.memberId(), applicationId, request));
     }
 
     @PostMapping("/{applicationId}/messages")

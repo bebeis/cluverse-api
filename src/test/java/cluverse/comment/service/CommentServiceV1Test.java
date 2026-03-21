@@ -53,7 +53,10 @@ class CommentServiceV1Test {
     private PostMetaWriter postMetaWriter;
 
     @InjectMocks
-    private CommentServiceV1 commentService;
+    private CommentQueryService commentQueryService;
+
+    @InjectMocks
+    private CommentService commentService;
 
     @Test
     void 댓글_목록_조회시_쿼리_결과를_응답으로_조립한다() {
@@ -65,7 +68,7 @@ class CommentServiceV1Test {
         ));
 
         // when
-        CommentPageResponse response = commentService.getComments(99L, request);
+        CommentPageResponse response = commentQueryService.getComments(99L, request);
 
         // then
         assertThat(response.comments()).extracting(CommentResponse::commentId).containsExactly(101L);
@@ -184,7 +187,7 @@ class CommentServiceV1Test {
         when(commentReader.readRecentCommentRepliedPosts(2L)).thenReturn(expected);
 
         // when
-        List<CommentLastRepliedPost> result = commentService.getRecentCommentRepliedPostIds(2L);
+        List<CommentLastRepliedPost> result = commentQueryService.getRecentCommentRepliedPostIds(2L);
 
         // then
         assertThat(result).isEqualTo(expected);

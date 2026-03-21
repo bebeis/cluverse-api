@@ -10,14 +10,11 @@ import cluverse.recruitment.exception.RecruitmentExceptionMessage;
 import cluverse.recruitment.service.implement.RecruitmentReader;
 import cluverse.recruitment.service.implement.RecruitmentWriter;
 import cluverse.recruitment.service.request.RecruitmentCreateRequest;
-import cluverse.recruitment.service.request.RecruitmentSearchRequest;
 import cluverse.recruitment.service.request.RecruitmentStatusUpdateRequest;
 import cluverse.recruitment.service.request.RecruitmentUpdateRequest;
 import cluverse.recruitment.service.response.RecruitmentDetailResponse;
 import cluverse.recruitment.service.response.RecruitmentFormItemResponse;
-import cluverse.recruitment.service.response.RecruitmentPageResponse;
 import cluverse.recruitment.service.response.RecruitmentPositionResponse;
-import cluverse.recruitment.service.response.RecruitmentSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,30 +32,11 @@ public class RecruitmentService {
     private final GroupReader groupReader;
     private final MemberReader memberReader;
 
-    @Transactional(readOnly = true)
-    public RecruitmentPageResponse getRecruitments(Long memberId, RecruitmentSearchRequest request) {
-        List<Recruitment> recruitments = recruitmentReader.readRecruitments(request);
-        List<RecruitmentSummaryResponse> pageItems = paginate(recruitments, request.pageOrDefault(), request.sizeOrDefault()).stream()
-                .map(RecruitmentSummaryResponse::from)
-                .toList();
-        return new RecruitmentPageResponse(
-                pageItems,
-                request.pageOrDefault(),
-                request.sizeOrDefault(),
-                recruitments.size() > request.pageOrDefault() * request.sizeOrDefault()
-        );
-    }
-
     public RecruitmentDetailResponse createRecruitment(Long memberId, Long groupId, RecruitmentCreateRequest request) {
         Group group = groupReader.readOrThrow(groupId);
         validateGroupManager(memberId, group);
         Recruitment recruitment = recruitmentWriter.create(memberId, groupId, request);
         return toDetailResponse(recruitmentReader.readOrThrow(recruitment.getId()));
-    }
-
-    @Transactional(readOnly = true)
-    public RecruitmentDetailResponse getRecruitment(Long memberId, Long recruitmentId) {
-        return toDetailResponse(recruitmentReader.readOrThrow(recruitmentId));
     }
 
     public RecruitmentDetailResponse updateRecruitment(Long memberId,
@@ -111,12 +89,6 @@ public class RecruitmentService {
                 recruitment.getCreatedAt(),
                 recruitment.getUpdatedAt()
         );
-    }
-
-    private List<Recruitment> paginate(List<Recruitment> items, int page, int size) {
-        int fromIndex = Math.min((page - 1) * size, items.size());
-        int toIndex = Math.min(fromIndex + size, items.size());
-        return items.subList(fromIndex, toIndex);
     }
 
     private void validateGroupManager(Long memberId, Group group) {

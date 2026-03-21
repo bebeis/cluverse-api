@@ -5,6 +5,7 @@ import cluverse.docs.RestDocsSupport;
 import cluverse.member.domain.MemberRole;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.service.PostService;
+import cluverse.post.service.PostQueryService;
 import cluverse.post.service.response.PostAuthorResponse;
 import cluverse.post.service.response.PostBoardResponse;
 import cluverse.post.service.response.PostDetailResponse;
@@ -34,16 +35,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class PostControllerV1DocsTest extends RestDocsSupport {
 
+    private final PostQueryService postQueryService = mock(PostQueryService.class);
     private final PostService postService = mock(PostService.class);
 
     @Override
     protected Object initController() {
-        return new PostControllerV1(postService);
+        return new PostControllerV1(postQueryService, postService);
     }
 
     @Test
     void 게시글_목록_조회() throws Exception {
-        when(postService.getPosts(anyLong(), any())).thenReturn(new PostPageResponse(
+        when(postQueryService.getPosts(anyLong(), any())).thenReturn(new PostPageResponse(
                 List.of(
                         new PostSummaryResponse(
                                 10L,
@@ -120,7 +122,7 @@ class PostControllerV1DocsTest extends RestDocsSupport {
 
     @Test
     void 게시글_검색() throws Exception {
-        when(postService.searchPosts(anyLong(), any())).thenReturn(new PostPageResponse(
+        when(postQueryService.searchPosts(anyLong(), any())).thenReturn(new PostPageResponse(
                 List.of(
                         new PostSummaryResponse(
                                 10L,
@@ -195,7 +197,7 @@ class PostControllerV1DocsTest extends RestDocsSupport {
 
     @Test
     void 최근_댓글이_달린_게시글_조회() throws Exception {
-        when(postService.getRecentCommentRepliedPosts(10L)).thenReturn(List.of(
+        when(postQueryService.getRecentCommentRepliedPosts(10L)).thenReturn(List.of(
                 new PostTitleResponse(
                         10L,
                         "스프링 스터디 모집합니다",
@@ -230,7 +232,7 @@ class PostControllerV1DocsTest extends RestDocsSupport {
 
     @Test
     void 비회원도_게시글_목록을_조회할_수_있다() throws Exception {
-        when(postService.getPosts(isNull(), any())).thenReturn(new PostPageResponse(
+        when(postQueryService.getPosts(isNull(), any())).thenReturn(new PostPageResponse(
                 List.of(),
                 1,
                 20,
@@ -247,7 +249,7 @@ class PostControllerV1DocsTest extends RestDocsSupport {
     @Test
     void 날짜_기반_게시글_목록_조회() throws Exception {
         // given
-        when(postService.getPosts(anyLong(), any())).thenReturn(new PostPageResponse(
+        when(postQueryService.getPosts(anyLong(), any())).thenReturn(new PostPageResponse(
                 List.of(
                         new PostSummaryResponse(
                                 10L,
@@ -389,7 +391,8 @@ class PostControllerV1DocsTest extends RestDocsSupport {
 
     @Test
     void 게시글_상세_조회() throws Exception {
-        when(postService.readPost(1L, 10L)).thenReturn(createPostDetailResponse());
+        doNothing().when(postService).increaseViewCount(1L, 10L);
+        when(postQueryService.readPost(1L, 10L)).thenReturn(createPostDetailResponse());
 
         mockMvc.perform(get("/api/v1/posts/{postId}", 10L)
                         .session(createSession()))
@@ -429,7 +432,8 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                         )
                 ));
 
-        verify(postService).readPost(1L, 10L);
+        verify(postService).increaseViewCount(1L, 10L);
+        verify(postQueryService).readPost(1L, 10L);
     }
 
     @Test

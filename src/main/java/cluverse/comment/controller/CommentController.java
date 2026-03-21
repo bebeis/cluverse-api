@@ -1,5 +1,6 @@
 package cluverse.comment.controller;
 
+import cluverse.comment.service.CommentQueryService;
 import cluverse.comment.service.CommentService;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.comment.service.request.CommentPageRequest;
@@ -21,12 +22,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CommentController {
 
+    private final CommentQueryService commentQueryService;
     private final CommentService commentService;
 
     @GetMapping
     public ApiResponse<CommentPageResponse> getComments(@Login LoginMember loginMember,
                                                         @Valid @ModelAttribute CommentPageRequest request) {
-        return ApiResponse.ok(commentService.getComments(extractMemberId(loginMember), request));
+        return ApiResponse.ok(commentQueryService.getComments(extractMemberId(loginMember), request));
     }
 
     @PostMapping

@@ -3,6 +3,8 @@ package cluverse.member.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.member.service.MemberQueryService;
+import cluverse.member.service.MemberService;
 import cluverse.member.service.MemberUniversityService;
 import cluverse.member.service.MemberPostService;
 import cluverse.member.service.MemberProfileImageService;
@@ -15,7 +17,6 @@ import cluverse.member.service.request.MemberPostPageRequest;
 import cluverse.member.service.request.MemberProfileImagePresignedUrlRequest;
 import cluverse.member.service.request.MemberUniversityUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
-import cluverse.member.service.MemberService;
 import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberFollowResponse;
 import cluverse.member.service.response.MemberInterestResponse;
@@ -36,6 +37,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MemberController {
 
+    private final MemberQueryService memberQueryService;
     private final MemberService memberService;
     private final MemberUniversityService memberUniversityService;
     private final MemberPostService memberPostService;
@@ -43,20 +45,20 @@ public class MemberController {
 
     @GetMapping("/me/profile")
     public ApiResponse<MemberProfileResponse> getMyProfile(@Login LoginMember loginMember) {
-        return ApiResponse.ok(memberService.getProfile(loginMember.memberId(), loginMember.memberId()));
+        return ApiResponse.ok(memberQueryService.getProfile(loginMember.memberId(), loginMember.memberId()));
     }
 
     @GetMapping("/{memberId}/profile")
     public ApiResponse<MemberProfileResponse> getProfile(@Login LoginMember loginMember,
                                                          @PathVariable Long memberId) {
-        return ApiResponse.ok(memberService.getProfile(loginMember.memberId(), memberId));
+        return ApiResponse.ok(memberQueryService.getProfile(loginMember.memberId(), memberId));
     }
 
     @GetMapping("/nickname/availability")
     public ApiResponse<MemberNicknameAvailabilityResponse> checkNicknameAvailability(
             @Valid @ModelAttribute MemberNicknameCheckRequest request
     ) {
-        return ApiResponse.ok(memberService.checkNicknameAvailability(request.nickname()));
+        return ApiResponse.ok(memberQueryService.checkNicknameAvailability(request.nickname()));
     }
 
     @PutMapping("/me/profile")
@@ -106,7 +108,7 @@ public class MemberController {
 
     @GetMapping("/me/majors")
     public ApiResponse<List<MemberMajorResponse>> getMyMajors(@Login LoginMember loginMember) {
-        return ApiResponse.ok(memberService.getMajors(loginMember.memberId()));
+        return ApiResponse.ok(memberQueryService.getMajors(loginMember.memberId()));
     }
 
     @PostMapping("/me/majors")
@@ -125,22 +127,22 @@ public class MemberController {
 
     @GetMapping("/me/interests")
     public ApiResponse<List<MemberInterestResponse>> getMyInterests(@Login LoginMember loginMember) {
-        return ApiResponse.ok(memberService.getInterests(loginMember.memberId()));
+        return ApiResponse.ok(memberQueryService.getInterests(loginMember.memberId()));
     }
 
     @GetMapping("/me/blocks")
     public ApiResponse<List<BlockedMemberResponse>> getMyBlocks(@Login LoginMember loginMember) {
-        return ApiResponse.ok(memberService.getBlockedMembers(loginMember.memberId()));
+        return ApiResponse.ok(memberQueryService.getBlockedMembers(loginMember.memberId()));
     }
 
     @GetMapping("/{memberId}/followers")
     public ApiResponse<List<MemberFollowResponse>> getFollowers(@PathVariable Long memberId) {
-        return ApiResponse.ok(memberService.getFollowers(memberId));
+        return ApiResponse.ok(memberQueryService.getFollowers(memberId));
     }
 
     @GetMapping("/{memberId}/following")
     public ApiResponse<List<MemberFollowResponse>> getFollowings(@PathVariable Long memberId) {
-        return ApiResponse.ok(memberService.getFollowings(memberId));
+        return ApiResponse.ok(memberQueryService.getFollowings(memberId));
     }
 
     @PostMapping("/me/interests")

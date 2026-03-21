@@ -49,6 +49,9 @@ class GroupServiceTest {
     private BoardWriter boardWriter;
 
     @InjectMocks
+    private GroupQueryService groupQueryService;
+
+    @InjectMocks
     private GroupService groupService;
 
     @Test

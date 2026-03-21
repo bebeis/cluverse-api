@@ -7,6 +7,7 @@ import cluverse.report.domain.ReportReasonCode;
 import cluverse.report.domain.ReportStatus;
 import cluverse.report.domain.ReportTargetType;
 import cluverse.report.service.ReportService;
+import cluverse.report.service.ReportQueryService;
 import cluverse.report.service.request.ReportCreateRequest;
 import cluverse.report.service.response.ReportReasonResponse;
 import cluverse.report.service.response.ReportResponse;
@@ -33,10 +34,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ReportControllerDocsTest extends RestDocsSupport {
 
     private final ReportService reportService = mock(ReportService.class);
+    private final ReportQueryService reportQueryService = mock(ReportQueryService.class);
 
     @Override
     protected Object initController() {
-        return new ReportController(reportService);
+        return new ReportController(reportService, reportQueryService);
     }
 
     @Test
@@ -89,7 +91,7 @@ class ReportControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 신고_사유_목록_조회() throws Exception {
-        when(reportService.getReasonCodes()).thenReturn(List.of(
+        when(reportQueryService.getReasonCodes()).thenReturn(List.of(
                 new ReportReasonResponse("SPAM", "스팸/광고"),
                 new ReportReasonResponse("ABUSE", "욕설/혐오 표현")
         ));

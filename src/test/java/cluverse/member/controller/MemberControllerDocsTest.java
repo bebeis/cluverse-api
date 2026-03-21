@@ -6,9 +6,10 @@ import cluverse.member.domain.MajorType;
 import cluverse.member.domain.MemberProfileField;
 import cluverse.member.domain.MemberRole;
 import cluverse.member.domain.VerificationStatus;
+import cluverse.member.service.MemberService;
 import cluverse.member.service.MemberPostService;
 import cluverse.member.service.MemberProfileImageService;
-import cluverse.member.service.MemberService;
+import cluverse.member.service.MemberQueryService;
 import cluverse.member.service.MemberUniversityService;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
@@ -59,6 +60,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class MemberControllerDocsTest extends RestDocsSupport {
 
+    private final MemberQueryService memberQueryService = mock(MemberQueryService.class);
     private final MemberService memberService = mock(MemberService.class);
     private final MemberUniversityService memberUniversityService = mock(MemberUniversityService.class);
     private final MemberPostService memberPostService = mock(MemberPostService.class);
@@ -66,12 +68,12 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Override
     protected Object initController() {
-        return new MemberController(memberService, memberUniversityService, memberPostService, memberProfileImageService);
+        return new MemberController(memberQueryService, memberService, memberUniversityService, memberPostService, memberProfileImageService);
     }
 
     @Test
     void 내_프로필_조회() throws Exception {
-        when(memberService.getProfile(1L, 1L)).thenReturn(createProfileResponse(1L, true));
+        when(memberQueryService.getProfile(1L, 1L)).thenReturn(createProfileResponse(1L, true));
 
         mockMvc.perform(get("/api/v1/members/me/profile")
                         .session(createSession())
@@ -111,7 +113,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 상대_프로필_조회() throws Exception {
-        when(memberService.getProfile(1L, 2L)).thenReturn(createProfileResponse(2L, false));
+        when(memberQueryService.getProfile(1L, 2L)).thenReturn(createProfileResponse(2L, false));
 
         mockMvc.perform(get("/api/v1/members/{memberId}/profile", 2L)
                         .session(createSession()))
@@ -231,7 +233,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 닉네임_중복_확인() throws Exception {
-        when(memberService.checkNicknameAvailability("luna"))
+        when(memberQueryService.checkNicknameAvailability("luna"))
                 .thenReturn(new MemberNicknameAvailabilityResponse("luna", false));
 
         mockMvc.perform(get("/api/v1/members/nickname/availability")
@@ -507,7 +509,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 내_학과_목록_조회() throws Exception {
-        when(memberService.getMajors(1L)).thenReturn(List.of(
+        when(memberQueryService.getMajors(1L)).thenReturn(List.of(
                 new MemberMajorResponse(1L, 100L, MajorType.PRIMARY, "컴퓨터공학과", "공과대학"),
                 new MemberMajorResponse(2L, 200L, MajorType.DOUBLE_MAJOR, "전자공학과", "공과대학")
         ));
@@ -586,7 +588,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 차단_목록_조회() throws Exception {
-        when(memberService.getBlockedMembers(1L)).thenReturn(List.of(
+        when(memberQueryService.getBlockedMembers(1L)).thenReturn(List.of(
                 new BlockedMemberResponse(
                         2L,
                         "blocked-user",
@@ -620,7 +622,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 팔로워_목록_조회() throws Exception {
-        when(memberService.getFollowers(2L)).thenReturn(List.of(
+        when(memberQueryService.getFollowers(2L)).thenReturn(List.of(
                 new MemberFollowResponse(3L, "nova", "https://cdn.example.com/nova.png")
         ));
 
@@ -645,7 +647,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 팔로잉_목록_조회() throws Exception {
-        when(memberService.getFollowings(2L)).thenReturn(List.of(
+        when(memberQueryService.getFollowings(2L)).thenReturn(List.of(
                 new MemberFollowResponse(4L, "sol", "https://cdn.example.com/sol.png")
         ));
 
@@ -670,7 +672,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 내_관심사_목록_조회() throws Exception {
-        when(memberService.getInterests(1L)).thenReturn(List.of(
+        when(memberQueryService.getInterests(1L)).thenReturn(List.of(
                 new MemberInterestResponse(100L, "해커톤", "TECH"),
                 new MemberInterestResponse(200L, "축제", "CAMPUS")
         ));

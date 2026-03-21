@@ -12,20 +12,14 @@ import cluverse.recruitment.domain.RecruitmentApplicationStatus;
 import cluverse.recruitment.exception.RecruitmentExceptionMessage;
 import cluverse.recruitment.repository.RecruitmentApplicationQueryRepository;
 import cluverse.recruitment.repository.dto.ApplicationChatMessageQueryDto;
-import cluverse.recruitment.repository.dto.RecruitmentApplicationSummaryQueryDto;
 import cluverse.recruitment.service.implement.RecruitmentApplicationReader;
 import cluverse.recruitment.service.implement.RecruitmentApplicationWriter;
 import cluverse.recruitment.service.request.ApplicationChatMessageCreateRequest;
-import cluverse.recruitment.service.request.ApplicationChatMessageSearchRequest;
 import cluverse.recruitment.service.request.RecruitmentApplicationCreateRequest;
-import cluverse.recruitment.service.request.RecruitmentApplicationSearchRequest;
 import cluverse.recruitment.service.request.RecruitmentApplicationStatusUpdateRequest;
-import cluverse.recruitment.service.response.ApplicationChatMessagePageResponse;
 import cluverse.recruitment.service.response.ApplicationChatMessageResponse;
 import cluverse.recruitment.service.response.RecruitmentApplicationAnswerResponse;
 import cluverse.recruitment.service.response.RecruitmentApplicationDetailResponse;
-import cluverse.recruitment.service.response.RecruitmentApplicationPageResponse;
-import cluverse.recruitment.service.response.RecruitmentApplicationSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,55 +38,6 @@ public class RecruitmentApplicationService {
     private final GroupReader groupReader;
     private final MemberReader memberReader;
 
-    @Transactional(readOnly = true)
-    public RecruitmentApplicationPageResponse getMyApplications(Long memberId,
-                                                               RecruitmentApplicationSearchRequest request) {
-        List<RecruitmentApplicationSummaryQueryDto> queriedApplications =
-                recruitmentApplicationQueryRepository.findMyApplicationSummaries(
-                        memberId,
-                        request.status(),
-                        request.pageOrDefault(),
-                        request.sizeOrDefault()
-                );
-        List<RecruitmentApplicationSummaryResponse> pageItems = trimToPage(
-                queriedApplications, request.sizeOrDefault()
-        ).stream()
-                .map(this::toSummaryResponse)
-                .toList();
-        return new RecruitmentApplicationPageResponse(
-                pageItems,
-                request.pageOrDefault(),
-                request.sizeOrDefault(),
-                queriedApplications.size() > request.sizeOrDefault()
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public RecruitmentApplicationPageResponse getApplications(Long memberId,
-                                                              Long recruitmentId,
-                                                              RecruitmentApplicationSearchRequest request) {
-        Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(recruitmentId);
-        validateManager(memberId, recruitment.getGroupId());
-        List<RecruitmentApplicationSummaryQueryDto> queriedApplications =
-                recruitmentApplicationQueryRepository.findRecruitmentApplicationSummaries(
-                        recruitmentId,
-                        request.status(),
-                        request.pageOrDefault(),
-                        request.sizeOrDefault()
-                );
-        List<RecruitmentApplicationSummaryResponse> pageItems = trimToPage(
-                queriedApplications, request.sizeOrDefault()
-        ).stream()
-                .map(this::toSummaryResponse)
-                .toList();
-        return new RecruitmentApplicationPageResponse(
-                pageItems,
-                request.pageOrDefault(),
-                request.sizeOrDefault(),
-                queriedApplications.size() > request.sizeOrDefault()
-        );
-    }
-
     public RecruitmentApplicationDetailResponse createApplication(Long memberId,
                                                                   Long recruitmentId,
                                                                   RecruitmentApplicationCreateRequest request,
@@ -101,13 +46,6 @@ public class RecruitmentApplicationService {
         Group group = groupReader.readOrThrow(recruitment.getGroupId());
         validateApplicationCreatable(memberId, recruitmentId, recruitment, group);
         RecruitmentApplication application = recruitmentApplicationWriter.create(recruitment, memberId, request, clientIp);
-        return toDetailResponse(application);
-    }
-
-    @Transactional(readOnly = true)
-    public RecruitmentApplicationDetailResponse getApplication(Long memberId, Long applicationId) {
-        RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
-        validateParticipantOrManager(memberId, application);
         return toDetailResponse(application);
     }
 
@@ -130,31 +68,6 @@ public class RecruitmentApplicationService {
         recruitmentApplicationWriter.cancel(application, memberId, clientIp);
     }
 
-    @Transactional(readOnly = true)
-    public ApplicationChatMessagePageResponse getMessages(Long memberId,
-                                                          Long applicationId,
-                                                          ApplicationChatMessageSearchRequest request) {
-        RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
-        validateParticipantOrManager(memberId, application);
-        List<ApplicationChatMessageQueryDto> queriedMessages =
-                recruitmentApplicationQueryRepository.findApplicationMessages(
-                        applicationId,
-                        request.beforeMessageId(),
-                        request.limitOrDefault()
-                );
-        List<ApplicationChatMessageResponse> pageItems = trimToPage(
-                queriedMessages, request.limitOrDefault()
-        ).stream()
-                .map(message -> toMessageResponse(memberId, message))
-                .toList();
-        return new ApplicationChatMessagePageResponse(
-                pageItems,
-                request.beforeMessageId(),
-                request.limitOrDefault(),
-                queriedMessages.size() > request.limitOrDefault()
-        );
-    }
-
     public ApplicationChatMessageResponse createMessage(Long memberId,
                                                         Long applicationId,
                                                         ApplicationChatMessageCreateRequest request,
@@ -165,23 +78,6 @@ public class RecruitmentApplicationService {
         ApplicationChatMessageQueryDto message =
                 recruitmentApplicationQueryRepository.findApplicationMessages(applicationId, null, 1).getFirst();
         return toMessageResponse(memberId, message);
-    }
-
-    private RecruitmentApplicationSummaryResponse toSummaryResponse(RecruitmentApplicationSummaryQueryDto application) {
-        return new RecruitmentApplicationSummaryResponse(
-                application.applicationId(),
-                application.recruitmentId(),
-                application.groupId(),
-                application.recruitmentTitle(),
-                application.applicantId(),
-                application.applicantNickname(),
-                application.applicantProfileImageUrl(),
-                application.position(),
-                application.portfolioUrl(),
-                application.status(),
-                application.createdAt(),
-                application.reviewedAt()
-        );
     }
 
     private RecruitmentApplicationDetailResponse toDetailResponse(RecruitmentApplication application) {
@@ -247,17 +143,6 @@ public class RecruitmentApplicationService {
         );
     }
 
-    private <T> List<T> trimToPage(List<T> items, int size) {
-        return items.size() > size ? items.subList(0, size) : items;
-    }
-
-    private void validateManager(Long memberId, Long groupId) {
-        Group group = groupReader.readOrThrow(groupId);
-        if (!group.isManager(memberId)) {
-            throw new ForbiddenException(RecruitmentExceptionMessage.RECRUITMENT_ACCESS_DENIED.getMessage());
-        }
-    }
-
     private void validateParticipantOrManager(Long memberId, RecruitmentApplication application) {
         if (application.getApplicantId().equals(memberId)) {
             return;
@@ -294,6 +179,13 @@ public class RecruitmentApplicationService {
     private void validateGroupMemberApplicant(Long memberId, Group group) {
         if (group.hasMember(memberId)) {
             throw new BadRequestException(RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_ALREADY_EXISTS.getMessage());
+        }
+    }
+
+    private void validateManager(Long memberId, Long groupId) {
+        Group group = groupReader.readOrThrow(groupId);
+        if (!group.isManager(memberId)) {
+            throw new ForbiddenException(RecruitmentExceptionMessage.RECRUITMENT_ACCESS_DENIED.getMessage());
         }
     }
 

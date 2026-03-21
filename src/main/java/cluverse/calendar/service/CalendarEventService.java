@@ -6,7 +6,6 @@ import cluverse.calendar.exception.CalendarExceptionMessage;
 import cluverse.calendar.service.implement.CalendarEventReader;
 import cluverse.calendar.service.implement.CalendarEventWriter;
 import cluverse.calendar.service.request.CalendarEventCreateRequest;
-import cluverse.calendar.service.request.CalendarEventSearchRequest;
 import cluverse.calendar.service.request.CalendarEventUpdateRequest;
 import cluverse.calendar.service.response.CalendarEventResponse;
 import cluverse.common.exception.ForbiddenException;
@@ -15,8 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -24,14 +21,6 @@ public class CalendarEventService {
 
     private final CalendarEventReader calendarEventReader;
     private final CalendarEventWriter calendarEventWriter;
-
-    @Transactional(readOnly = true)
-    public List<CalendarEventResponse> getEvents(Long memberId, CalendarEventSearchRequest request) {
-        validateAuthenticated(memberId);
-        return calendarEventReader.readEvents(memberId, request).stream()
-                .map(CalendarEventResponse::from)
-                .toList();
-    }
 
     public CalendarEventResponse createEvent(Long memberId, CalendarEventCreateRequest request) {
         validateAuthenticated(memberId);
@@ -48,14 +37,6 @@ public class CalendarEventService {
     public void deleteEvent(Long memberId, Long eventId) {
         validateAuthenticated(memberId);
         calendarEventWriter.delete(readOwnedEvent(memberId, eventId));
-    }
-
-    @Transactional(readOnly = true)
-    public List<CalendarEventResponse> getUpcomingEvents(Long memberId, int size) {
-        validateAuthenticated(memberId);
-        return calendarEventReader.readUpcomingEvents(memberId, size).stream()
-                .map(CalendarEventResponse::from)
-                .toList();
     }
 
     private CalendarEvent readOwnedEvent(Long memberId, Long eventId) {

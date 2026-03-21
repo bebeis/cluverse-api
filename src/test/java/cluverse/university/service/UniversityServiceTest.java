@@ -38,6 +38,9 @@ class UniversityServiceTest {
     private MemberReader memberReader;
 
     @InjectMocks
+    private UniversityQueryService universityQueryService;
+
+    @InjectMocks
     private UniversityService universityService;
 
     @Test
@@ -50,7 +53,7 @@ class UniversityServiceTest {
         when(universityReader.search(request)).thenReturn(responses);
 
         // when
-        List<UniversitySummaryResponse> result = universityService.searchUniversities(request);
+        List<UniversitySummaryResponse> result = universityQueryService.searchUniversities(request);
 
         // then
         assertThat(result).isEqualTo(responses);
@@ -64,7 +67,7 @@ class UniversityServiceTest {
         when(universityReader.readOrThrow(1L)).thenReturn(university);
 
         // when
-        UniversityDetailResponse result = universityService.getUniversity(1L);
+        UniversityDetailResponse result = universityQueryService.getUniversity(1L);
 
         // then
         assertThat(result.universityId()).isEqualTo(1L);

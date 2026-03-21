@@ -3,6 +3,7 @@ package cluverse.notification.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.notification.service.NotificationQueryService;
 import cluverse.notification.service.NotificationService;
 import cluverse.notification.service.request.NotificationPreferenceUpdateRequest;
 import cluverse.notification.service.response.NotificationPreferenceResponse;
@@ -17,11 +18,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NotificationController {
 
+    private final NotificationQueryService notificationQueryService;
     private final NotificationService notificationService;
 
     @GetMapping("/notifications")
     public ApiResponse<List<NotificationResponse>> getNotifications(@Login LoginMember loginMember) {
-        return ApiResponse.ok(notificationService.getNotifications(extractMemberId(loginMember)));
+        return ApiResponse.ok(notificationQueryService.getNotifications(extractMemberId(loginMember)));
     }
 
     @PostMapping("/notifications/read-all")
@@ -38,7 +40,7 @@ public class NotificationController {
 
     @GetMapping("/notification-preferences")
     public ApiResponse<NotificationPreferenceResponse> getPreferences(@Login LoginMember loginMember) {
-        return ApiResponse.ok(notificationService.getPreferences(extractMemberId(loginMember)));
+        return ApiResponse.ok(notificationQueryService.getPreferences(extractMemberId(loginMember)));
     }
 
     @PutMapping("/notification-preferences")
