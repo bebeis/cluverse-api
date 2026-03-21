@@ -7,7 +7,7 @@ import cluverse.member.domain.MemberProfileField;
 import cluverse.member.domain.MemberRole;
 import cluverse.member.domain.VerificationStatus;
 import cluverse.member.service.MemberService;
-import cluverse.member.service.MemberPostService;
+import cluverse.member.service.MemberPostQueryService;
 import cluverse.member.service.MemberProfileImageService;
 import cluverse.member.service.MemberQueryService;
 import cluverse.member.service.MemberUniversityService;
@@ -63,12 +63,12 @@ class MemberControllerDocsTest extends RestDocsSupport {
     private final MemberQueryService memberQueryService = mock(MemberQueryService.class);
     private final MemberService memberService = mock(MemberService.class);
     private final MemberUniversityService memberUniversityService = mock(MemberUniversityService.class);
-    private final MemberPostService memberPostService = mock(MemberPostService.class);
+    private final MemberPostQueryService memberPostQueryService = mock(MemberPostQueryService.class);
     private final MemberProfileImageService memberProfileImageService = mock(MemberProfileImageService.class);
 
     @Override
     protected Object initController() {
-        return new MemberController(memberQueryService, memberService, memberUniversityService, memberPostService, memberProfileImageService);
+        return new MemberController(memberQueryService, memberService, memberUniversityService, memberPostQueryService, memberProfileImageService);
     }
 
     @Test
@@ -354,7 +354,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 내_게시글_목록_조회() throws Exception {
-        when(memberPostService.getMyPosts(anyLong(), any())).thenReturn(new PostPageResponse(
+        when(memberPostQueryService.getMyPosts(anyLong(), any())).thenReturn(new PostPageResponse(
                 List.of(
                         new PostSummaryResponse(
                                 10L,

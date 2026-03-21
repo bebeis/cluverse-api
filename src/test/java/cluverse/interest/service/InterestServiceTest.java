@@ -21,7 +21,7 @@ class InterestServiceTest {
     private InterestReader interestReader;
 
     @InjectMocks
-    private InterestService interestService;
+    private InterestQueryService interestQueryService;
 
     @Test
     void 관심사_조회는_reader에_위임한다() {
@@ -32,7 +32,7 @@ class InterestServiceTest {
         when(interestReader.readInterests()).thenReturn(responses);
 
         // when
-        List<InterestResponse> result = interestService.getInterests();
+        List<InterestResponse> result = interestQueryService.getInterests();
 
         // then
         assertThat(result).isEqualTo(responses);

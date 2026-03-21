@@ -3,10 +3,10 @@ package cluverse.member.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.member.service.MemberPostQueryService;
 import cluverse.member.service.MemberQueryService;
 import cluverse.member.service.MemberService;
 import cluverse.member.service.MemberUniversityService;
-import cluverse.member.service.MemberPostService;
 import cluverse.member.service.MemberProfileImageService;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
@@ -40,7 +40,7 @@ public class MemberController {
     private final MemberQueryService memberQueryService;
     private final MemberService memberService;
     private final MemberUniversityService memberUniversityService;
-    private final MemberPostService memberPostService;
+    private final MemberPostQueryService memberPostQueryService;
     private final MemberProfileImageService memberProfileImageService;
 
     @GetMapping("/me/profile")
@@ -82,7 +82,7 @@ public class MemberController {
     @GetMapping("/me/posts")
     public ApiResponse<PostPageResponse> getMyPosts(@Login LoginMember loginMember,
                                                     @Valid @ModelAttribute MemberPostPageRequest request) {
-        return ApiResponse.ok(memberPostService.getMyPosts(loginMember.memberId(), request));
+        return ApiResponse.ok(memberPostQueryService.getMyPosts(loginMember.memberId(), request));
     }
 
     @PatchMapping("/me/password")

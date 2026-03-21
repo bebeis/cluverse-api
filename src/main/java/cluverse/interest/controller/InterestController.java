@@ -1,7 +1,7 @@
 package cluverse.interest.controller;
 
 import cluverse.common.api.response.ApiResponse;
-import cluverse.interest.service.InterestService;
+import cluverse.interest.service.InterestQueryService;
 import cluverse.interest.service.response.InterestResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,10 +15,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InterestController {
 
-    private final InterestService interestService;
+    private final InterestQueryService interestQueryService;
 
     @GetMapping
     public ApiResponse<List<InterestResponse>> getInterests() {
-        return ApiResponse.ok(interestService.getInterests());
+        return ApiResponse.ok(interestQueryService.getInterests());
     }
 }

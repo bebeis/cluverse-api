@@ -3,7 +3,7 @@ package cluverse.post.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
-import cluverse.feed.service.FeedService;
+import cluverse.feed.service.FeedQueryService;
 import cluverse.feed.service.request.TrendingPostSearchRequest;
 import cluverse.feed.service.response.FeedPageResponse;
 import jakarta.validation.Valid;
@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class TrendingPostController {
 
-    private final FeedService feedService;
+    private final FeedQueryService feedQueryService;
 
     @GetMapping("/trending")
     public ApiResponse<FeedPageResponse> getTrendingPosts(
             @Login LoginMember loginMember,
             @Valid @ModelAttribute TrendingPostSearchRequest request
     ) {
-        return ApiResponse.ok(feedService.getTrendingPosts(extractMemberId(loginMember), request));
+        return ApiResponse.ok(feedQueryService.getTrendingPosts(extractMemberId(loginMember), request));
     }
 
     private Long extractMemberId(LoginMember loginMember) {

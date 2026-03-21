@@ -1,7 +1,7 @@
 package cluverse.major.controller;
 
 import cluverse.common.api.response.ApiResponse;
-import cluverse.major.service.MajorService;
+import cluverse.major.service.MajorQueryService;
 import cluverse.major.service.response.MajorResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,10 +16,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MajorController {
 
-    private final MajorService majorService;
+    private final MajorQueryService majorQueryService;
 
     @GetMapping
     public ApiResponse<List<MajorResponse>> getMajors(@RequestParam(required = false) Long parentMajorId) {
-        return ApiResponse.ok(majorService.getMajors(parentMajorId));
+        return ApiResponse.ok(majorQueryService.getMajors(parentMajorId));
     }
 }

@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class TermsService {
+public class TermsQueryService {
 
     private final TermsReader termsReader;
 

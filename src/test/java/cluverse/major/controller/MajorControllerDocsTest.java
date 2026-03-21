@@ -1,7 +1,7 @@
 package cluverse.major.controller;
 
 import cluverse.docs.RestDocsSupport;
-import cluverse.major.service.MajorService;
+import cluverse.major.service.MajorQueryService;
 import cluverse.major.service.response.MajorResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -21,17 +21,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class MajorControllerDocsTest extends RestDocsSupport {
 
-    private final MajorService majorService = mock(MajorService.class);
+    private final MajorQueryService majorQueryService = mock(MajorQueryService.class);
 
     @Override
     protected Object initController() {
-        return new MajorController(majorService);
+        return new MajorController(majorQueryService);
     }
 
     @Test
     void 전공_목록_조회() throws Exception {
         // given
-        when(majorService.getMajors(1L)).thenReturn(List.of(
+        when(majorQueryService.getMajors(1L)).thenReturn(List.of(
                 new MajorResponse(10L, 210L, "컴퓨터공학", 1L, 1, 1),
                 new MajorResponse(11L, 211L, "인공지능", 1L, 1, 2)
         ));

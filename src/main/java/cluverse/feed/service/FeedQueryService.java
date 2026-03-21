@@ -14,22 +14,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class FeedServiceV1 implements FeedService {
-
+public class FeedQueryService {
     private final FeedReader feedReader;
 
-    @Override
     public FeedPageResponse getHomeFeed(Long memberId, HomeFeedSearchRequest request) {
         return feedReader.readHomeFeed(memberId, request);
     }
 
-    @Override
     public FeedPageResponse getFollowingFeed(Long memberId, FollowingFeedSearchRequest request) {
         validateAuthenticated(memberId);
         return feedReader.readFollowingFeed(memberId, request);
     }
 
-    @Override
     public FeedPageResponse getTrendingPosts(Long memberId, TrendingPostSearchRequest request) {
         return feedReader.readTrendingFeed(memberId, request);
     }

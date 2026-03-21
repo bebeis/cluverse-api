@@ -1,7 +1,7 @@
 package cluverse.member.controller;
 
 import cluverse.docs.RestDocsSupport;
-import cluverse.member.service.TermsService;
+import cluverse.member.service.TermsQueryService;
 import cluverse.member.service.response.TermsResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -20,17 +20,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class TermsControllerDocsTest extends RestDocsSupport {
 
-    private final TermsService termsService = mock(TermsService.class);
+    private final TermsQueryService termsQueryService = mock(TermsQueryService.class);
 
     @Override
     protected Object initController() {
-        return new TermsController(termsService);
+        return new TermsController(termsQueryService);
     }
 
     @Test
     void 약관_목록_조회() throws Exception {
         // given
-        when(termsService.getTerms()).thenReturn(List.of(
+        when(termsQueryService.getTerms()).thenReturn(List.of(
                 new TermsResponse(1L, "SERVICE", "서비스 이용약관", "약관 내용", "1.0.0", true, LocalDateTime.of(2026, 3, 1, 0, 0)),
                 new TermsResponse(2L, "PRIVACY", "개인정보 처리방침", "개인정보 처리방침 내용", "1.0.0", true, LocalDateTime.of(2026, 3, 1, 0, 0))
         ));

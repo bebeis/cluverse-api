@@ -1,7 +1,7 @@
 package cluverse.interest.controller;
 
 import cluverse.docs.RestDocsSupport;
-import cluverse.interest.service.InterestService;
+import cluverse.interest.service.InterestQueryService;
 import cluverse.interest.service.response.InterestResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -19,17 +19,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class InterestControllerDocsTest extends RestDocsSupport {
 
-    private final InterestService interestService = mock(InterestService.class);
+    private final InterestQueryService interestQueryService = mock(InterestQueryService.class);
 
     @Override
     protected Object initController() {
-        return new InterestController(interestService);
+        return new InterestController(interestQueryService);
     }
 
     @Test
     void 관심사_목록_조회() throws Exception {
         // given
-        when(interestService.getInterests()).thenReturn(List.of(
+        when(interestQueryService.getInterests()).thenReturn(List.of(
                 new InterestResponse(1L, 101L, "인공지능", "TECH", 10L, 1),
                 new InterestResponse(2L, 102L, "백엔드", "TECH", 1L, 2)
         ));

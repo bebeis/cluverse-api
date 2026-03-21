@@ -2,7 +2,7 @@ package cluverse.post.controller;
 
 import cluverse.common.auth.LoginMember;
 import cluverse.docs.RestDocsSupport;
-import cluverse.feed.service.FeedService;
+import cluverse.feed.service.FeedQueryService;
 import cluverse.feed.service.response.FeedAuthorResponse;
 import cluverse.feed.service.response.FeedBoardResponse;
 import cluverse.feed.service.response.FeedPageResponse;
@@ -34,16 +34,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class TrendingPostControllerDocsTest extends RestDocsSupport {
 
-    private final FeedService feedService = mock(FeedService.class);
+    private final FeedQueryService feedQueryService = mock(FeedQueryService.class);
 
     @Override
     protected Object initController() {
-        return new TrendingPostController(feedService);
+        return new TrendingPostController(feedQueryService);
     }
 
     @Test
     void 트렌딩_게시글_조회() throws Exception {
-        when(feedService.getTrendingPosts(anyLong(), any())).thenReturn(createFeedPageResponse());
+        when(feedQueryService.getTrendingPosts(anyLong(), any())).thenReturn(createFeedPageResponse());
 
         mockMvc.perform(get("/api/v1/posts/trending")
                         .session(createSession())
@@ -98,7 +98,7 @@ class TrendingPostControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 비회원도_트렌딩_게시글을_조회할_수_있다() throws Exception {
-        when(feedService.getTrendingPosts(isNull(), any())).thenReturn(FeedPageResponse.empty(20));
+        when(feedQueryService.getTrendingPosts(isNull(), any())).thenReturn(FeedPageResponse.empty(20));
 
         mockMvc.perform(get("/api/v1/posts/trending"))
                 .andExpect(status().isOk())

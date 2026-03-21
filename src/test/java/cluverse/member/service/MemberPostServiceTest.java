@@ -32,7 +32,7 @@ class MemberPostServiceTest {
     private PostQueryRepository postQueryRepository;
 
     @InjectMocks
-    private MemberPostService memberPostService;
+    private MemberPostQueryService memberPostQueryService;
 
     @Test
     void 내_게시글_목록을_조회한다() {
@@ -68,7 +68,7 @@ class MemberPostServiceTest {
         ));
 
         // when
-        PostPageResponse response = memberPostService.getMyPosts(1L, request);
+        PostPageResponse response = memberPostQueryService.getMyPosts(1L, request);
 
         // then
         assertThat(response.posts()).hasSize(1);

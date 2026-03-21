@@ -1,7 +1,7 @@
 package cluverse.member.controller;
 
 import cluverse.common.api.response.ApiResponse;
-import cluverse.member.service.TermsService;
+import cluverse.member.service.TermsQueryService;
 import cluverse.member.service.response.TermsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,10 +15,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TermsController {
 
-    private final TermsService termsService;
+    private final TermsQueryService termsQueryService;
 
     @GetMapping
     public ApiResponse<List<TermsResponse>> getTerms() {
-        return ApiResponse.ok(termsService.getTerms());
+        return ApiResponse.ok(termsQueryService.getTerms());
     }
 }
