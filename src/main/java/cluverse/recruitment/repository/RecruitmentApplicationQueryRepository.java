@@ -158,6 +158,41 @@ public class RecruitmentApplicationQueryRepository {
                 .toList();
     }
 
+    public ApplicationChatMessageQueryDto findApplicationMessage(Long applicationId, Long messageId) {
+        return queryFactory
+                .select(
+                        applicationChatMessage.id,
+                        applicationChatMessage.application.id,
+                        applicationChatMessage.senderId,
+                        member.nickname,
+                        memberProfile.profileImageUrl,
+                        applicationChatMessage.content,
+                        applicationChatMessage.isRead,
+                        applicationChatMessage.createdAt
+                )
+                .from(applicationChatMessage)
+                .join(member).on(member.id.eq(applicationChatMessage.senderId))
+                .leftJoin(memberProfile).on(memberProfile.memberId.eq(member.id))
+                .where(
+                        applicationChatMessage.application.id.eq(applicationId),
+                        applicationChatMessage.id.eq(messageId)
+                )
+                .fetch()
+                .stream()
+                .findFirst()
+                .map(tuple -> new ApplicationChatMessageQueryDto(
+                        tuple.get(applicationChatMessage.id),
+                        tuple.get(applicationChatMessage.application.id),
+                        tuple.get(applicationChatMessage.senderId),
+                        tuple.get(member.nickname),
+                        tuple.get(memberProfile.profileImageUrl),
+                        tuple.get(applicationChatMessage.content),
+                        Boolean.TRUE.equals(tuple.get(applicationChatMessage.isRead)),
+                        tuple.get(applicationChatMessage.createdAt)
+                ))
+                .orElse(null);
+    }
+
     private BooleanExpression statusEq(RecruitmentApplicationStatus status) {
         return status == null ? null : recruitmentApplication.status.eq(status);
     }

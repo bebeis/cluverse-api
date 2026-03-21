@@ -37,8 +37,9 @@ public class CommentController {
                                                       @RequestParam Long postId,
                                                       @RequestBody @Valid CommentCreateRequest request,
                                                       HttpServletRequest httpRequest) {
+        Long commentId = commentService.createComment(loginMember.memberId(), postId, request, httpRequest.getRemoteAddr());
         return ApiResponse.created(
-                commentService.createComment(loginMember.memberId(), postId, request, httpRequest.getRemoteAddr())
+                commentQueryService.getComment(loginMember.memberId(), commentId)
         );
     }
 
@@ -46,7 +47,8 @@ public class CommentController {
     public ApiResponse<CommentResponse> updateComment(@Login LoginMember loginMember,
                                                       @PathVariable Long commentId,
                                                       @RequestBody @Valid CommentUpdateRequest request) {
-        return ApiResponse.ok(commentService.updateComment(loginMember.memberId(), commentId, request));
+        Long updatedCommentId = commentService.updateComment(loginMember.memberId(), commentId, request);
+        return ApiResponse.ok(commentQueryService.getComment(loginMember.memberId(), updatedCommentId));
     }
 
     @DeleteMapping("/{commentId}")

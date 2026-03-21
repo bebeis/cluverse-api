@@ -55,13 +55,14 @@ public class RecruitmentApplicationController {
             @RequestBody @Valid RecruitmentApplicationCreateRequest request,
             HttpServletRequest httpRequest
     ) {
+        Long applicationId = recruitmentApplicationService.createApplication(
+                loginMember.memberId(),
+                recruitmentId,
+                request,
+                httpRequest.getRemoteAddr()
+        );
         return ApiResponse.created(
-                recruitmentApplicationService.createApplication(
-                        loginMember.memberId(),
-                        recruitmentId,
-                        request,
-                        httpRequest.getRemoteAddr()
-                )
+                recruitmentApplicationQueryService.getApplication(loginMember.memberId(), applicationId)
         );
     }
 
@@ -80,13 +81,14 @@ public class RecruitmentApplicationController {
             @RequestBody @Valid RecruitmentApplicationStatusUpdateRequest request,
             HttpServletRequest httpRequest
     ) {
+        Long updatedApplicationId = recruitmentApplicationService.updateApplicationStatus(
+                loginMember.memberId(),
+                applicationId,
+                request,
+                httpRequest.getRemoteAddr()
+        );
         return ApiResponse.ok(
-                recruitmentApplicationService.updateApplicationStatus(
-                        loginMember.memberId(),
-                        applicationId,
-                        request,
-                        httpRequest.getRemoteAddr()
-                )
+                recruitmentApplicationQueryService.getApplication(loginMember.memberId(), updatedApplicationId)
         );
     }
 
@@ -115,13 +117,14 @@ public class RecruitmentApplicationController {
                                                                      @PathVariable Long applicationId,
                                                                      @RequestBody @Valid ApplicationChatMessageCreateRequest request,
                                                                      HttpServletRequest httpRequest) {
+        Long messageId = recruitmentApplicationService.createMessage(
+                loginMember.memberId(),
+                applicationId,
+                request,
+                httpRequest.getRemoteAddr()
+        );
         return ApiResponse.created(
-                recruitmentApplicationService.createMessage(
-                        loginMember.memberId(),
-                        applicationId,
-                        request,
-                        httpRequest.getRemoteAddr()
-                )
+                recruitmentApplicationQueryService.getMessage(loginMember.memberId(), applicationId, messageId)
         );
     }
 }

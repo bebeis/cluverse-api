@@ -53,8 +53,9 @@ public class PostControllerV1 {
     public ApiResponse<PostDetailResponse> createPost(@Login LoginMember loginMember,
                                                       @RequestBody @Valid PostCreateRequest request,
                                                       HttpServletRequest httpRequest) {
+        Long postId = postService.createPost(loginMember.memberId(), request, httpRequest.getRemoteAddr());
         return ApiResponse.created(
-                postService.createPost(loginMember.memberId(), request, httpRequest.getRemoteAddr())
+                postQueryService.readPost(loginMember.memberId(), postId)
         );
     }
 
@@ -70,7 +71,8 @@ public class PostControllerV1 {
     public ApiResponse<PostDetailResponse> updatePost(@Login LoginMember loginMember,
                                                       @PathVariable Long postId,
                                                       @RequestBody @Valid PostUpdateRequest request) {
-        return ApiResponse.ok(postService.updatePost(loginMember.memberId(), postId, request));
+        Long updatedPostId = postService.updatePost(loginMember.memberId(), postId, request);
+        return ApiResponse.ok(postQueryService.readPost(loginMember.memberId(), updatedPostId));
     }
 
     @DeleteMapping("/{postId}")

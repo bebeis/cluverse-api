@@ -1,6 +1,7 @@
 package cluverse.recruitment.service;
 
 import cluverse.common.exception.ForbiddenException;
+import cluverse.common.exception.NotFoundException;
 import cluverse.group.domain.Group;
 import cluverse.group.service.implement.GroupReader;
 import cluverse.member.service.implement.MemberReader;
@@ -112,6 +113,17 @@ public class RecruitmentApplicationQueryService {
                 request.limitOrDefault(),
                 queriedMessages.size() > request.limitOrDefault()
         );
+    }
+
+    public ApplicationChatMessageResponse getMessage(Long memberId, Long applicationId, Long messageId) {
+        RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
+        validateParticipantOrManager(memberId, application);
+        ApplicationChatMessageQueryDto message =
+                recruitmentApplicationQueryRepository.findApplicationMessage(applicationId, messageId);
+        if (message == null) {
+            throw new NotFoundException(RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_NOT_FOUND.getMessage());
+        }
+        return toMessageResponse(memberId, message);
     }
 
     private RecruitmentApplicationSummaryResponse toSummaryResponse(RecruitmentApplicationSummaryQueryDto application) {

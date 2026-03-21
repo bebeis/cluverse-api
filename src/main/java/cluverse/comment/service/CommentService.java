@@ -2,14 +2,11 @@ package cluverse.comment.service;
 
 import cluverse.comment.domain.Comment;
 import cluverse.comment.exception.CommentExceptionMessage;
-import cluverse.comment.repository.CommentQueryRepository;
-import cluverse.comment.repository.dto.CommentQueryDto;
 import cluverse.comment.service.implement.CommentReader;
 import cluverse.comment.service.implement.CommentWriter;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.comment.service.request.CommentUpdateRequest;
 import cluverse.comment.service.response.CommentDeleteResponse;
-import cluverse.comment.service.response.CommentResponse;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.meta.service.implement.PostMetaWriter;
@@ -25,12 +22,11 @@ public class CommentService {
 
     private final CommentReader commentReader;
     private final CommentWriter commentWriter;
-    private final CommentQueryRepository commentQueryRepository;
     private final MemberReader memberReader;
     private final PostAccessReader postAccessReader;
     private final PostMetaWriter postMetaWriter;
 
-    public CommentResponse createComment(Long memberId, Long postId, CommentCreateRequest request, String clientIp) {
+    public Long createComment(Long memberId, Long postId, CommentCreateRequest request, String clientIp) {
         postAccessReader.validateWritablePost(memberId, postId);
         Comment parentComment = resolveParentComment(postId, request.parentCommentId());
         Comment comment = commentWriter.create(memberId, postId, parentComment, request, clientIp);
@@ -40,18 +36,15 @@ public class CommentService {
             commentWriter.increaseReplyCount(parentComment.getId());
         }
 
-        CommentQueryDto commentQueryDto = commentQueryRepository.findComment(memberId, comment.getId());
-        return CommentResponse.from(commentQueryDto, memberId);
+        return comment.getId();
     }
 
-    public CommentResponse updateComment(Long memberId, Long commentId, CommentUpdateRequest request) {
+    public Long updateComment(Long memberId, Long commentId, CommentUpdateRequest request) {
         Comment comment = commentReader.readActiveOrThrow(commentId);
         validateUpdatePermission(memberId, comment);
 
         commentWriter.update(comment, request);
-
-        CommentQueryDto commentQueryDto = commentQueryRepository.findComment(memberId, commentId);
-        return CommentResponse.from(commentQueryDto, memberId);
+        return commentId;
     }
 
     public CommentDeleteResponse deleteComment(Long memberId, Long commentId) {

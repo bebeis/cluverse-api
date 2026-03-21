@@ -6,17 +6,13 @@ import cluverse.group.domain.GroupActivityType;
 import cluverse.group.domain.GroupCategory;
 import cluverse.group.domain.GroupVisibility;
 import cluverse.group.service.implement.GroupReader;
-import cluverse.member.domain.Member;
-import cluverse.member.service.implement.MemberReader;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
 import cluverse.recruitment.domain.RecruitmentApplicationStatus;
-import cluverse.recruitment.repository.RecruitmentApplicationQueryRepository;
 import cluverse.recruitment.service.implement.RecruitmentApplicationReader;
 import cluverse.recruitment.service.implement.RecruitmentApplicationWriter;
 import cluverse.recruitment.service.request.RecruitmentApplicationCreateRequest;
 import cluverse.recruitment.service.request.RecruitmentApplicationStatusUpdateRequest;
-import cluverse.recruitment.service.response.RecruitmentApplicationDetailResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,7 +22,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,13 +39,7 @@ class RecruitmentApplicationServiceTest {
     private RecruitmentApplicationWriter recruitmentApplicationWriter;
 
     @Mock
-    private RecruitmentApplicationQueryRepository recruitmentApplicationQueryRepository;
-
-    @Mock
     private GroupReader groupReader;
-
-    @Mock
-    private MemberReader memberReader;
 
     @InjectMocks
     private RecruitmentApplicationService recruitmentApplicationService;
@@ -84,23 +73,16 @@ class RecruitmentApplicationServiceTest {
                 RecruitmentApplicationStatus.APPROVED,
                 "합류 승인"
         );
-        Member applicant = createMember(200L, "applicant");
-        Member manager = createMember(100L, "manager");
-
         when(recruitmentApplicationReader.readOrThrow(30L)).thenReturn(application);
         when(recruitmentApplicationReader.readRecruitmentOrThrow(10L)).thenReturn(recruitment);
         when(groupReader.readOrThrow(1L)).thenReturn(group);
-        when(memberReader.readMemberMap(List.of(200L, 100L))).thenReturn(Map.of(
-                200L, applicant,
-                100L, manager
-        ));
         doAnswer(invocation -> {
             application.changeStatus(RecruitmentApplicationStatus.APPROVED, 100L, "합류 승인", "127.0.0.1");
             return null;
         }).when(recruitmentApplicationWriter).updateStatus(any(), any(), any(), any());
 
         // when
-        RecruitmentApplicationDetailResponse result = recruitmentApplicationService.updateApplicationStatus(
+        Long applicationId = recruitmentApplicationService.updateApplicationStatus(
                 100L,
                 30L,
                 request,
@@ -108,7 +90,8 @@ class RecruitmentApplicationServiceTest {
         );
 
         // then
-        assertThat(result.status()).isEqualTo(RecruitmentApplicationStatus.APPROVED);
+        assertThat(applicationId).isEqualTo(30L);
+        assertThat(application.getStatus()).isEqualTo(RecruitmentApplicationStatus.APPROVED);
         assertThat(group.hasMember(200L)).isTrue();
     }
 
@@ -159,11 +142,5 @@ class RecruitmentApplicationServiceTest {
         );
         ReflectionTestUtils.setField(application, "id", applicationId);
         return application;
-    }
-
-    private Member createMember(Long memberId, String nickname) {
-        Member member = Member.createSocialMember(nickname);
-        ReflectionTestUtils.setField(member, "id", memberId);
-        return member;
     }
 }

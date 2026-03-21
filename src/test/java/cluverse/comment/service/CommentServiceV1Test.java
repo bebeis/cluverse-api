@@ -88,13 +88,12 @@ class CommentServiceV1Test {
 
         when(commentReader.readOrThrow(100L)).thenReturn(parentComment);
         when(commentWriter.create(1L, 10L, parentComment, request, "127.0.0.1")).thenReturn(createdComment);
-        when(commentQueryRepository.findComment(1L, 101L)).thenReturn(createCommentQueryDto(101L, 100L, 1, false, false));
 
         // when
-        CommentResponse response = commentService.createComment(1L, 10L, request, "127.0.0.1");
+        Long commentId = commentService.createComment(1L, 10L, request, "127.0.0.1");
 
         // then
-        assertThat(response.commentId()).isEqualTo(101L);
+        assertThat(commentId).isEqualTo(101L);
         verify(postAccessReader).validateWritablePost(1L, 10L);
         verify(commentWriter).increaseReplyCount(100L);
         verify(postMetaWriter).increaseCommentCount(10L);
@@ -107,13 +106,12 @@ class CommentServiceV1Test {
         CommentUpdateRequest request = new CommentUpdateRequest("수정된 댓글입니다.");
 
         when(commentReader.readActiveOrThrow(101L)).thenReturn(comment);
-        when(commentQueryRepository.findComment(1L, 101L)).thenReturn(createCommentQueryDto(101L, null, 0, false, false));
 
         // when
-        CommentResponse response = commentService.updateComment(1L, 101L, request);
+        Long commentId = commentService.updateComment(1L, 101L, request);
 
         // then
-        assertThat(response.commentId()).isEqualTo(101L);
+        assertThat(commentId).isEqualTo(101L);
         verify(commentWriter).update(comment, request);
     }
 

@@ -116,7 +116,8 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
     void 지원서_제출() throws Exception {
         // given
         when(recruitmentApplicationService.createApplication(eq(1L), eq(10L), any(), eq("127.0.0.1")))
-                .thenReturn(createApplicationDetailResponse());
+                .thenReturn(30L);
+        when(recruitmentApplicationQueryService.getApplication(1L, 30L)).thenReturn(createApplicationDetailResponse());
 
         // when, then
         mockMvc.perform(post("/api/v1/recruitment-applications")
@@ -182,7 +183,8 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
                 eq(30L),
                 any(RecruitmentApplicationStatusUpdateRequest.class),
                 eq("127.0.0.1")
-        )).thenReturn(createApprovedApplicationDetailResponse());
+        )).thenReturn(30L);
+        when(recruitmentApplicationQueryService.getApplication(1L, 30L)).thenReturn(createApprovedApplicationDetailResponse());
 
         // when, then
         mockMvc.perform(patch("/api/v1/recruitment-applications/{applicationId}/status", 30L)
@@ -267,7 +269,8 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
     void 지원_채팅_메시지_전송() throws Exception {
         // given
         when(recruitmentApplicationService.createMessage(eq(1L), eq(30L), any(ApplicationChatMessageCreateRequest.class), eq("127.0.0.1")))
-                .thenReturn(createMessageResponse());
+                .thenReturn(101L);
+        when(recruitmentApplicationQueryService.getMessage(1L, 30L, 101L)).thenReturn(createMessageResponse());
 
         // when, then
         mockMvc.perform(post("/api/v1/recruitment-applications/{applicationId}/messages", 30L)

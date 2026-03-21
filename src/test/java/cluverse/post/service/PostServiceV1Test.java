@@ -214,12 +214,12 @@ class PostServiceV1Test {
         Post post = createPost(10L, 3L, 1L, "제목", false);
         when(memberReader.isVerified(1L)).thenReturn(true);
         when(postWriter.create(1L, request, "127.0.0.1")).thenReturn(post);
-        when(postQueryRepository.findPostDetail(1L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
 
         // when
-        postService.createPost(1L, request, "127.0.0.1");
+        Long postId = postService.createPost(1L, request, "127.0.0.1");
 
         // then
+        assertThat(postId).isEqualTo(10L);
         verify(boardReader).validateWritable(1L, true, 3L);
         verify(postMetaWriter).createViewCount(10L);
     }

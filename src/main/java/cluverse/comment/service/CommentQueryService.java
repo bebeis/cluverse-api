@@ -40,6 +40,10 @@ public class CommentQueryService {
         return commentReader.readReactionTarget(commentId);
     }
 
+    public CommentResponse getComment(Long memberId, Long commentId) {
+        return CommentResponse.from(commentQueryRepository.findComment(memberId, commentId), memberId);
+    }
+
     public List<CommentLastRepliedPost> getRecentCommentRepliedPostIds(final Long size) {
         return commentReader.readRecentCommentRepliedPosts(size);
     }

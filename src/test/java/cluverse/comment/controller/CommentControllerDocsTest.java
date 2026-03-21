@@ -170,7 +170,8 @@ class CommentControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 댓글_작성() throws Exception {
-        when(commentService.createComment(anyLong(), anyLong(), any(), any())).thenReturn(
+        when(commentService.createComment(anyLong(), anyLong(), any(), any())).thenReturn(301L);
+        when(commentQueryService.getComment(1L, 301L)).thenReturn(
                 createCommentResponse(301L, 101L, 1, true, false)
         );
 
@@ -223,7 +224,8 @@ class CommentControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 댓글_수정() throws Exception {
-        when(commentService.updateComment(anyLong(), anyLong(), any())).thenReturn(
+        when(commentService.updateComment(anyLong(), anyLong(), any())).thenReturn(101L);
+        when(commentQueryService.getComment(1L, 101L)).thenReturn(
                 createCommentResponse(101L, null, 0, false, false)
         );
 

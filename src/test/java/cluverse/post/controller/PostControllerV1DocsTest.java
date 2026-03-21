@@ -323,7 +323,8 @@ class PostControllerV1DocsTest extends RestDocsSupport {
 
     @Test
     void 게시글_작성() throws Exception {
-        when(postService.createPost(anyLong(), any(), any())).thenReturn(createPostDetailResponse());
+        when(postService.createPost(anyLong(), any(), any())).thenReturn(10L);
+        when(postQueryService.readPost(1L, 10L)).thenReturn(createPostDetailResponse());
 
         mockMvc.perform(post("/api/v1/posts")
                         .session(createSession())
@@ -438,7 +439,8 @@ class PostControllerV1DocsTest extends RestDocsSupport {
 
     @Test
     void 게시글_수정() throws Exception {
-        when(postService.updatePost(anyLong(), anyLong(), any())).thenReturn(createUpdatedPostDetailResponse());
+        when(postService.updatePost(anyLong(), anyLong(), any())).thenReturn(10L);
+        when(postQueryService.readPost(1L, 10L)).thenReturn(createUpdatedPostDetailResponse());
 
         mockMvc.perform(put("/api/v1/posts/{postId}", 10L)
                         .session(createSession())
