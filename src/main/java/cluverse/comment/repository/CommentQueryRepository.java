@@ -7,10 +7,10 @@ import cluverse.comment.repository.dto.CommentQueryDto;
 import cluverse.comment.service.request.CommentPageRequest;
 import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.common.exception.NotFoundException;
-import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -30,6 +30,7 @@ public class CommentQueryRepository {
     private static final int MAX_DEPTH = 5;
 
     private final JPAQueryFactory queryFactory;
+    private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     public CommentPageQueryResult findCommentPage(Long viewerId, CommentPageRequest request) {
@@ -53,20 +54,21 @@ public class CommentQueryRepository {
     }
 
     public List<CommentLastRepliedPost> findRecentCommentRepliedPosts(Long size) {
-        List<Tuple> rows = queryFactory.select(comment.postId, comment.createdAt.max())
-                .from(comment)
-                .where(comment.status.eq(CommentStatus.ACTIVE))
-                .groupBy(comment.postId)
-                .orderBy(comment.createdAt.max().desc(), comment.postId.desc())
-                .limit(size)
-                .fetch();
+        String sql = """
+                SELECT x.post_id, x.last_commented_at
+                FROM (
+                    SELECT c.post_id, MAX(c.created_at) AS last_commented_at
+                    FROM comment c
+                    GROUP BY c.post_id
+                ) x
+                ORDER BY x.last_commented_at DESC, x.post_id DESC
+                LIMIT ?
+                """;
 
-        return rows.stream()
-                .map(row -> new CommentLastRepliedPost(
-                        row.get(comment.postId),
-                        row.get(comment.createdAt.max())
-                ))
-                .toList();
+        return jdbcTemplate.query(sql, (resultSet, rowNum) -> new CommentLastRepliedPost(
+                resultSet.getLong("post_id"),
+                resultSet.getTimestamp("last_commented_at").toLocalDateTime()
+        ), size);
     }
 
     private List<Long> findPagedRootCommentIds(Long postId, Long parentCommentId, int offset, int limit) {

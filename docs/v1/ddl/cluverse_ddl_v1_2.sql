@@ -320,6 +320,9 @@ CREATE TABLE comment (
 CREATE INDEX idx_comment_post_status_created
     ON comment (post_id, status, created_at ASC);
 
+CREATE INDEX idx_comment_post_created_latest
+    ON comment (post_id, created_at DESC, comment_id DESC);
+
 CREATE INDEX idx_comment_member_id
     ON comment (member_id);
 
