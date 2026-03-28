@@ -5,12 +5,13 @@ import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.member.domain.Member;
 import cluverse.member.domain.MemberProfile;
 import cluverse.member.domain.OAuthProvider;
-import cluverse.member.repository.MemberQueryRepository;
-import cluverse.member.repository.MemberRepository;
-import cluverse.member.repository.MemberTermsAgreementRepository;
-import cluverse.member.repository.TermsRepository;
-import cluverse.university.repository.UniversityRepository;
 import cluverse.common.config.PasswordConfig;
+import cluverse.member.service.implement.MemberReader;
+import cluverse.member.service.implement.MemberTermsAgreementWriter;
+import cluverse.member.service.implement.MemberWriter;
+import cluverse.member.service.implement.TermsReader;
+import cluverse.university.domain.University;
+import cluverse.university.service.implement.UniversityReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,19 +34,19 @@ import static org.mockito.Mockito.when;
 class AuthWriterTest {
 
     @Mock
-    private MemberRepository memberRepository;
+    private MemberReader memberReader;
 
     @Mock
-    private MemberQueryRepository memberQueryRepository;
+    private MemberWriter memberWriter;
 
     @Mock
-    private TermsRepository termsRepository;
+    private MemberTermsAgreementWriter memberTermsAgreementWriter;
 
     @Mock
-    private MemberTermsAgreementRepository memberTermsAgreementRepository;
+    private TermsReader termsReader;
 
     @Mock
-    private UniversityRepository universityRepository;
+    private UniversityReader universityReader;
 
     @Mock
     private PasswordConfig passwordConfig;
@@ -56,9 +57,9 @@ class AuthWriterTest {
     @Test
     void OAuth_로그인_신규_회원_자동_가입() {
         OAuthUserInfo userInfo = new OAuthUserInfo("new-provider-id", "new@example.com", "newuser");
-        when(memberQueryRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
-        when(memberRepository.existsByNickname(anyString())).thenReturn(false);
-        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberReader.findByEmail("new@example.com")).thenReturn(Optional.empty());
+        when(memberReader.existsByNickname(anyString())).thenReturn(false);
+        when(memberWriter.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Member result = authWriter.registerBySocial(userInfo, OAuthProvider.GOOGLE);
 
@@ -68,15 +69,15 @@ class AuthWriterTest {
         assertThat(result.isVerified()).isTrue();
         assertThat(result.getMemberAuth().getEmail()).isEqualTo("new@example.com");
         assertThat(result.getSocialAccounts()).hasSize(1);
-        verify(memberRepository).existsByNickname(anyString());
+        verify(memberReader).existsByNickname(anyString());
     }
 
     @Test
     void OAuth_로그인_닉네임은_최대_길이를_초과하지_않는다() {
         OAuthUserInfo userInfo = new OAuthUserInfo("provider-id", "new@example.com", "a".repeat(100));
-        when(memberQueryRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
-        when(memberRepository.existsByNickname(anyString())).thenReturn(false);
-        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberReader.findByEmail("new@example.com")).thenReturn(Optional.empty());
+        when(memberReader.existsByNickname(anyString())).thenReturn(false);
+        when(memberWriter.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Member result = authWriter.registerBySocial(userInfo, OAuthProvider.GOOGLE);
 
@@ -92,8 +93,8 @@ class AuthWriterTest {
         member.initMemberAuth("linked@example.com", "encoded-password");
         member.initProfile(MemberProfile.create(member));
 
-        when(memberQueryRepository.findByEmail("linked@example.com")).thenReturn(Optional.of(member));
-        when(memberRepository.save(member)).thenReturn(member);
+        when(memberReader.findByEmail("linked@example.com")).thenReturn(Optional.of(member));
+        when(memberWriter.save(member)).thenReturn(member);
 
         Member result = authWriter.registerBySocial(userInfo, OAuthProvider.GOOGLE);
 
@@ -102,27 +103,27 @@ class AuthWriterTest {
         assertThat(result.getSocialAccounts().getFirst().getProvider()).isEqualTo(OAuthProvider.GOOGLE);
         assertThat(result.getSocialAccounts().getFirst().getProviderUserId()).isEqualTo("google-user-1");
         assertThat(result.getMemberAuth().getEmail()).isEqualTo("linked@example.com");
-        verify(memberRepository, never()).existsByNickname(anyString());
+        verify(memberReader, never()).existsByNickname(anyString());
     }
 
     @Test
     void OAuth_로그인_닉네임이_충돌하면_다른_후보로_재시도한다() {
         OAuthUserInfo userInfo = new OAuthUserInfo("retry-provider-id", "retry@example.com", "retry-user");
-        when(memberQueryRepository.findByEmail("retry@example.com")).thenReturn(Optional.empty());
-        when(memberRepository.existsByNickname(anyString())).thenReturn(true, false);
-        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberReader.findByEmail("retry@example.com")).thenReturn(Optional.empty());
+        when(memberReader.existsByNickname(anyString())).thenReturn(true, false);
+        when(memberWriter.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Member result = authWriter.registerBySocial(userInfo, OAuthProvider.KAKAO);
 
         assertThat(result.getNickname()).startsWith("retry-user_");
-        verify(memberRepository, times(2)).existsByNickname(anyString());
+        verify(memberReader, times(2)).existsByNickname(anyString());
     }
 
     @Test
     void OAuth_로그인_닉네임을_끝내_생성하지_못하면_예외가_발생한다() {
         OAuthUserInfo userInfo = new OAuthUserInfo("retry-provider-id", "retry@example.com", "retry-user");
-        when(memberQueryRepository.findByEmail("retry@example.com")).thenReturn(Optional.empty());
-        when(memberRepository.existsByNickname(anyString())).thenReturn(true);
+        when(memberReader.findByEmail("retry@example.com")).thenReturn(Optional.empty());
+        when(memberReader.existsByNickname(anyString())).thenReturn(true);
 
         assertThatThrownBy(() -> authWriter.registerBySocial(userInfo, OAuthProvider.KAKAO))
                 .isInstanceOf(IllegalStateException.class)

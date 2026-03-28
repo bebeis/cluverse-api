@@ -1,36 +1,64 @@
 package cluverse.post.service;
 
+import cluverse.board.service.implement.BoardReader;
+import cluverse.common.exception.ForbiddenException;
+import cluverse.member.service.implement.MemberReader;
+import cluverse.meta.service.implement.PostMetaWriter;
+import cluverse.post.domain.Post;
+import cluverse.post.exception.PostExceptionMessage;
+import cluverse.post.service.implement.PostAccessReader;
+import cluverse.post.service.implement.PostWriter;
 import cluverse.post.service.request.PostCreateRequest;
-import cluverse.post.service.request.PostKeywordSearchRequest;
-import cluverse.post.service.request.PostSearchRequest;
 import cluverse.post.service.request.PostUpdateRequest;
-import cluverse.post.service.response.PostDetailResponse;
-import cluverse.post.service.response.PostPageResponse;
-import cluverse.post.service.response.PostTitleResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class PostService {
 
-public interface PostService {
+    private final PostAccessReader postAccessReader;
+    private final PostWriter postWriter;
+    private final BoardReader boardReader;
+    private final MemberReader memberReader;
+    private final PostMetaWriter postMetaWriter;
 
-    PostPageResponse getPosts(Long memberId, PostSearchRequest request);
+    public Long createPost(Long memberId, PostCreateRequest request, String clientIp) {
+        boardReader.validateWritable(memberId, memberReader.isVerified(memberId), request.boardId());
+        Post post = postWriter.create(memberId, request, clientIp);
+        postMetaWriter.createViewCount(post.getId());
+        return post.getId();
+    }
 
-    PostPageResponse searchPosts(Long memberId, PostKeywordSearchRequest request);
+    public void increaseViewCount(Long memberId, Long postId) {
+        Post post = postAccessReader.readOrThrow(postId);
+        boardReader.validateReadable(memberId, post.getBoardId());
+        postMetaWriter.increaseViewCount(postId);
+    }
 
-    PostDetailResponse createPost(Long memberId, PostCreateRequest request, String clientIp);
+    public void increaseViewCount(Long postId) {
+        postAccessReader.readOrThrow(postId);
+        postMetaWriter.increaseViewCount(postId);
+    }
 
-    PostDetailResponse readPost(Long memberId, Long postId);
+    public Long updatePost(Long memberId, Long postId, PostUpdateRequest request) {
+        Post post = postAccessReader.readOrThrow(postId);
+        validateAuthor(memberId, post);
+        postWriter.update(post, request);
+        return postId;
+    }
 
-    void increaseViewCount(Long postId);
+    public void deletePost(Long memberId, Long postId) {
+        Post post = postAccessReader.readOrThrow(postId);
+        validateAuthor(memberId, post);
+        postWriter.delete(post);
+    }
 
-    PostDetailResponse updatePost(Long memberId, Long postId, PostUpdateRequest request);
-
-    void deletePost(Long memberId, Long postId);
-
-    void validatePostExists(Long postId);
-
-    void validateReadablePost(Long memberId, Long postId);
-
-    void validateWritablePost(Long memberId, Long postId);
-
-    List<PostTitleResponse> getRecentCommentRepliedPosts(Long size);
+    private void validateAuthor(Long memberId, Post post) {
+        if (!post.isAuthor(memberId)) {
+            throw new ForbiddenException(PostExceptionMessage.POST_ACCESS_DENIED.getMessage());
+        }
+    }
 }

@@ -3,6 +3,7 @@ package cluverse.recruitment.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.recruitment.service.RecruitmentApplicationQueryService;
 import cluverse.recruitment.service.RecruitmentApplicationService;
 import cluverse.recruitment.service.request.ApplicationChatMessageCreateRequest;
 import cluverse.recruitment.service.request.ApplicationChatMessageSearchRequest;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RecruitmentApplicationController {
 
+    private final RecruitmentApplicationQueryService recruitmentApplicationQueryService;
     private final RecruitmentApplicationService recruitmentApplicationService;
 
     @GetMapping("/me")
@@ -31,7 +33,7 @@ public class RecruitmentApplicationController {
             @Login LoginMember loginMember,
             @Valid @ModelAttribute RecruitmentApplicationSearchRequest request
     ) {
-        return ApiResponse.ok(recruitmentApplicationService.getMyApplications(loginMember.memberId(), request));
+        return ApiResponse.ok(recruitmentApplicationQueryService.getMyApplications(loginMember.memberId(), request));
     }
 
     @GetMapping
@@ -41,7 +43,7 @@ public class RecruitmentApplicationController {
             @Valid @ModelAttribute RecruitmentApplicationSearchRequest request
     ) {
         return ApiResponse.ok(
-                recruitmentApplicationService.getApplications(loginMember.memberId(), recruitmentId, request)
+                recruitmentApplicationQueryService.getApplications(loginMember.memberId(), recruitmentId, request)
         );
     }
 
@@ -53,13 +55,14 @@ public class RecruitmentApplicationController {
             @RequestBody @Valid RecruitmentApplicationCreateRequest request,
             HttpServletRequest httpRequest
     ) {
+        Long applicationId = recruitmentApplicationService.createApplication(
+                loginMember.memberId(),
+                recruitmentId,
+                request,
+                httpRequest.getRemoteAddr()
+        );
         return ApiResponse.created(
-                recruitmentApplicationService.createApplication(
-                        loginMember.memberId(),
-                        recruitmentId,
-                        request,
-                        httpRequest.getRemoteAddr()
-                )
+                recruitmentApplicationQueryService.getApplication(loginMember.memberId(), applicationId)
         );
     }
 
@@ -68,7 +71,7 @@ public class RecruitmentApplicationController {
             @Login LoginMember loginMember,
             @PathVariable Long applicationId
     ) {
-        return ApiResponse.ok(recruitmentApplicationService.getApplication(loginMember.memberId(), applicationId));
+        return ApiResponse.ok(recruitmentApplicationQueryService.getApplication(loginMember.memberId(), applicationId));
     }
 
     @PatchMapping("/{applicationId}/status")
@@ -78,13 +81,14 @@ public class RecruitmentApplicationController {
             @RequestBody @Valid RecruitmentApplicationStatusUpdateRequest request,
             HttpServletRequest httpRequest
     ) {
+        Long updatedApplicationId = recruitmentApplicationService.updateApplicationStatus(
+                loginMember.memberId(),
+                applicationId,
+                request,
+                httpRequest.getRemoteAddr()
+        );
         return ApiResponse.ok(
-                recruitmentApplicationService.updateApplicationStatus(
-                        loginMember.memberId(),
-                        applicationId,
-                        request,
-                        httpRequest.getRemoteAddr()
-                )
+                recruitmentApplicationQueryService.getApplication(loginMember.memberId(), updatedApplicationId)
         );
     }
 
@@ -104,7 +108,7 @@ public class RecruitmentApplicationController {
     public ApiResponse<ApplicationChatMessagePageResponse> getMessages(@Login LoginMember loginMember,
                                                                        @PathVariable Long applicationId,
                                                                        @Valid @ModelAttribute ApplicationChatMessageSearchRequest request) {
-        return ApiResponse.ok(recruitmentApplicationService.getMessages(loginMember.memberId(), applicationId, request));
+        return ApiResponse.ok(recruitmentApplicationQueryService.getMessages(loginMember.memberId(), applicationId, request));
     }
 
     @PostMapping("/{applicationId}/messages")
@@ -113,13 +117,14 @@ public class RecruitmentApplicationController {
                                                                      @PathVariable Long applicationId,
                                                                      @RequestBody @Valid ApplicationChatMessageCreateRequest request,
                                                                      HttpServletRequest httpRequest) {
+        Long messageId = recruitmentApplicationService.createMessage(
+                loginMember.memberId(),
+                applicationId,
+                request,
+                httpRequest.getRemoteAddr()
+        );
         return ApiResponse.created(
-                recruitmentApplicationService.createMessage(
-                        loginMember.memberId(),
-                        applicationId,
-                        request,
-                        httpRequest.getRemoteAddr()
-                )
+                recruitmentApplicationQueryService.getMessage(loginMember.memberId(), applicationId, messageId)
         );
     }
 }

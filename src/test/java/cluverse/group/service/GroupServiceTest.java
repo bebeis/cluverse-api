@@ -2,7 +2,8 @@ package cluverse.group.service;
 
 import cluverse.board.domain.Board;
 import cluverse.board.domain.BoardType;
-import cluverse.board.service.BoardService;
+import cluverse.board.service.implement.BoardReader;
+import cluverse.board.service.implement.BoardWriter;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupActivityType;
@@ -36,13 +37,19 @@ import static org.mockito.Mockito.when;
 class GroupServiceTest {
 
     @Mock
-    private BoardService boardService;
-
-    @Mock
     private GroupReader groupReader;
 
     @Mock
     private GroupWriter groupWriter;
+
+    @Mock
+    private BoardReader boardReader;
+
+    @Mock
+    private BoardWriter boardWriter;
+
+    @InjectMocks
+    private GroupQueryService groupQueryService;
 
     @InjectMocks
     private GroupService groupService;
@@ -65,7 +72,7 @@ class GroupServiceTest {
         Board board = createBoard(11L, "AI 프로젝트");
         GroupMemberSummaryQueryDto owner = createMemberSummary(100L, "luna");
 
-        when(boardService.createGroupBoard("AI 프로젝트", "함께 만드는 AI 프로젝트 그룹")).thenReturn(board);
+        when(boardWriter.createGroupBoard("AI 프로젝트", "함께 만드는 AI 프로젝트 그룹")).thenReturn(board);
         when(groupWriter.create(100L, 11L, request)).thenReturn(group);
         when(groupReader.readActiveOrThrow(1L)).thenReturn(group);
         when(groupReader.readMemberSummaryMap(List.of(100L))).thenReturn(Map.of(100L, owner));
@@ -79,7 +86,7 @@ class GroupServiceTest {
         assertThat(result.groupId()).isEqualTo(1L);
         assertThat(result.ownerNickname()).isEqualTo("luna");
         assertThat(result.member()).isTrue();
-        verify(boardService).createGroupBoard("AI 프로젝트", "함께 만드는 AI 프로젝트 그룹");
+        verify(boardWriter).createGroupBoard("AI 프로젝트", "함께 만드는 AI 프로젝트 그룹");
         verify(groupWriter).create(100L, 11L, request);
         verify(groupReader).readActiveOrThrow(1L);
     }
@@ -105,7 +112,7 @@ class GroupServiceTest {
         assertThatThrownBy(() -> groupService.updateGroup(200L, 1L, request))
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessage("그룹 관리 권한이 없습니다.");
-        verifyNoMoreInteractions(boardService);
+        verifyNoMoreInteractions(boardWriter, boardReader);
     }
 
     @Test
@@ -126,6 +133,7 @@ class GroupServiceTest {
         GroupMemberSummaryQueryDto owner = createMemberSummary(100L, "luna");
 
         when(groupReader.readActiveOrThrow(1L)).thenReturn(group);
+        when(boardReader.readOrThrow(11L)).thenReturn(createBoard(11L, "AI 프로젝트"));
         when(groupReader.readMemberSummaryMap(List.of(100L))).thenReturn(Map.of(100L, owner));
         when(groupReader.readInterestNameMap(List.of(1L))).thenReturn(Map.of());
         when(groupReader.countOpenRecruitments(List.of(1L))).thenReturn(Map.of(1L, 0L));
@@ -151,7 +159,8 @@ class GroupServiceTest {
 
         // then
         assertThat(result.name()).isEqualTo("AI 프로젝트 시즌2");
-        verify(boardService).updateGroupBoard(11L, "AI 프로젝트 시즌2", "업데이트된 소개");
+        verify(groupWriter).update(group, request);
+        verify(boardWriter).updateGroupBoard(any(Board.class), org.mockito.ArgumentMatchers.eq("AI 프로젝트 시즌2"), org.mockito.ArgumentMatchers.eq("업데이트된 소개"));
     }
 
     @Test
@@ -159,6 +168,7 @@ class GroupServiceTest {
         // given
         Group group = createGroup(1L, 11L, 100L);
         when(groupReader.readActiveOrThrow(1L)).thenReturn(group);
+        when(boardReader.readOrThrow(11L)).thenReturn(createBoard(11L, "AI 프로젝트"));
         doAnswer(invocation -> {
             Group targetGroup = invocation.getArgument(0);
             targetGroup.close();
@@ -170,7 +180,8 @@ class GroupServiceTest {
 
         // then
         assertThat(group.getStatus()).isEqualTo(cluverse.group.domain.GroupStatus.CLOSED);
-        verify(boardService).deactivateGroupBoard(11L);
+        verify(groupWriter).close(group);
+        verify(boardWriter).deactivateGroupBoard(any(Board.class));
     }
 
     private Group createGroup(Long groupId, Long boardId, Long ownerId) {
@@ -191,13 +202,13 @@ class GroupServiceTest {
         return group;
     }
 
+    private GroupMemberSummaryQueryDto createMemberSummary(Long memberId, String nickname) {
+        return new GroupMemberSummaryQueryDto(memberId, nickname, null);
+    }
+
     private Board createBoard(Long boardId, String name) {
         Board board = Board.create(BoardType.GROUP, name, "설명", null, 0, 0, true);
         ReflectionTestUtils.setField(board, "id", boardId);
         return board;
-    }
-
-    private GroupMemberSummaryQueryDto createMemberSummary(Long memberId, String nickname) {
-        return new GroupMemberSummaryQueryDto(memberId, nickname, null);
     }
 }

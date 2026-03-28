@@ -2,22 +2,19 @@ package cluverse.recruitment.service;
 
 import cluverse.common.exception.ForbiddenException;
 import cluverse.group.domain.Group;
-import cluverse.group.service.GroupService;
+import cluverse.group.service.implement.GroupReader;
 import cluverse.member.domain.Member;
-import cluverse.member.service.MemberService;
+import cluverse.member.service.implement.MemberReader;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.exception.RecruitmentExceptionMessage;
 import cluverse.recruitment.service.implement.RecruitmentReader;
 import cluverse.recruitment.service.implement.RecruitmentWriter;
 import cluverse.recruitment.service.request.RecruitmentCreateRequest;
-import cluverse.recruitment.service.request.RecruitmentSearchRequest;
 import cluverse.recruitment.service.request.RecruitmentStatusUpdateRequest;
 import cluverse.recruitment.service.request.RecruitmentUpdateRequest;
 import cluverse.recruitment.service.response.RecruitmentDetailResponse;
 import cluverse.recruitment.service.response.RecruitmentFormItemResponse;
-import cluverse.recruitment.service.response.RecruitmentPageResponse;
 import cluverse.recruitment.service.response.RecruitmentPositionResponse;
-import cluverse.recruitment.service.response.RecruitmentSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,40 +29,21 @@ public class RecruitmentService {
 
     private final RecruitmentReader recruitmentReader;
     private final RecruitmentWriter recruitmentWriter;
-    private final GroupService groupService;
-    private final MemberService memberService;
-
-    @Transactional(readOnly = true)
-    public RecruitmentPageResponse getRecruitments(Long memberId, RecruitmentSearchRequest request) {
-        List<Recruitment> recruitments = recruitmentReader.readRecruitments(request);
-        List<RecruitmentSummaryResponse> pageItems = paginate(recruitments, request.pageOrDefault(), request.sizeOrDefault()).stream()
-                .map(RecruitmentSummaryResponse::from)
-                .toList();
-        return new RecruitmentPageResponse(
-                pageItems,
-                request.pageOrDefault(),
-                request.sizeOrDefault(),
-                recruitments.size() > request.pageOrDefault() * request.sizeOrDefault()
-        );
-    }
+    private final GroupReader groupReader;
+    private final MemberReader memberReader;
 
     public RecruitmentDetailResponse createRecruitment(Long memberId, Long groupId, RecruitmentCreateRequest request) {
-        Group group = groupService.readGroupOrThrow(groupId);
+        Group group = groupReader.readOrThrow(groupId);
         validateGroupManager(memberId, group);
         Recruitment recruitment = recruitmentWriter.create(memberId, groupId, request);
         return toDetailResponse(recruitmentReader.readOrThrow(recruitment.getId()));
-    }
-
-    @Transactional(readOnly = true)
-    public RecruitmentDetailResponse getRecruitment(Long memberId, Long recruitmentId) {
-        return toDetailResponse(recruitmentReader.readOrThrow(recruitmentId));
     }
 
     public RecruitmentDetailResponse updateRecruitment(Long memberId,
                                                        Long recruitmentId,
                                                        RecruitmentUpdateRequest request) {
         Recruitment recruitment = recruitmentReader.readOrThrow(recruitmentId);
-        validateGroupManager(memberId, groupService.readGroupOrThrow(recruitment.getGroupId()));
+        validateGroupManager(memberId, groupReader.readOrThrow(recruitment.getGroupId()));
         recruitmentWriter.update(recruitment, request);
         return toDetailResponse(recruitment);
     }
@@ -74,19 +52,19 @@ public class RecruitmentService {
                                                              Long recruitmentId,
                                                              RecruitmentStatusUpdateRequest request) {
         Recruitment recruitment = recruitmentReader.readOrThrow(recruitmentId);
-        validateGroupManager(memberId, groupService.readGroupOrThrow(recruitment.getGroupId()));
+        validateGroupManager(memberId, groupReader.readOrThrow(recruitment.getGroupId()));
         recruitmentWriter.updateStatus(recruitment, request);
         return toDetailResponse(recruitment);
     }
 
     public void deleteRecruitment(Long memberId, Long recruitmentId) {
         Recruitment recruitment = recruitmentReader.readOrThrow(recruitmentId);
-        validateGroupManager(memberId, groupService.readGroupOrThrow(recruitment.getGroupId()));
+        validateGroupManager(memberId, groupReader.readOrThrow(recruitment.getGroupId()));
         recruitmentWriter.delete(recruitment);
     }
 
     private RecruitmentDetailResponse toDetailResponse(Recruitment recruitment) {
-        Map<Long, Member> memberMap = memberService.readMemberMap(List.of(recruitment.getAuthorId()));
+        Map<Long, Member> memberMap = memberReader.readMemberMap(List.of(recruitment.getAuthorId()));
         Member author = memberMap.get(recruitment.getAuthorId());
         return new RecruitmentDetailResponse(
                 recruitment.getId(),
@@ -111,12 +89,6 @@ public class RecruitmentService {
                 recruitment.getCreatedAt(),
                 recruitment.getUpdatedAt()
         );
-    }
-
-    private List<Recruitment> paginate(List<Recruitment> items, int page, int size) {
-        int fromIndex = Math.min((page - 1) * size, items.size());
-        int toIndex = Math.min(fromIndex + size, items.size());
-        return items.subList(fromIndex, toIndex);
     }
 
     private void validateGroupManager(Long memberId, Group group) {

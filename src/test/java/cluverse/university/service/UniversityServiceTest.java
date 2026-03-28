@@ -1,7 +1,7 @@
 package cluverse.university.service;
 
 import cluverse.common.exception.ForbiddenException;
-import cluverse.member.service.MemberService;
+import cluverse.member.service.implement.MemberReader;
 import cluverse.university.domain.University;
 import cluverse.university.service.implement.UniversityReader;
 import cluverse.university.service.implement.UniversityWriter;
@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,7 +35,10 @@ class UniversityServiceTest {
     private UniversityWriter universityWriter;
 
     @Mock
-    private MemberService memberService;
+    private MemberReader memberReader;
+
+    @InjectMocks
+    private UniversityQueryService universityQueryService;
 
     @InjectMocks
     private UniversityService universityService;
@@ -49,7 +53,7 @@ class UniversityServiceTest {
         when(universityReader.search(request)).thenReturn(responses);
 
         // when
-        List<UniversitySummaryResponse> result = universityService.searchUniversities(request);
+        List<UniversitySummaryResponse> result = universityQueryService.searchUniversities(request);
 
         // then
         assertThat(result).isEqualTo(responses);
@@ -63,7 +67,7 @@ class UniversityServiceTest {
         when(universityReader.readOrThrow(1L)).thenReturn(university);
 
         // when
-        UniversityDetailResponse result = universityService.getUniversity(1L);
+        UniversityDetailResponse result = universityQueryService.getUniversity(1L);
 
         // then
         assertThat(result.universityId()).isEqualTo(1L);
@@ -83,7 +87,7 @@ class UniversityServiceTest {
                 true
         );
         University university = createUniversity(1L, "클루대학교", "cluverse.ac.kr", "badge", "서울", true);
-        when(memberService.isAdmin(10L)).thenReturn(true);
+        when(memberReader.isAdmin(10L)).thenReturn(true);
         when(universityWriter.create(request)).thenReturn(university);
 
         // when
@@ -92,7 +96,7 @@ class UniversityServiceTest {
         // then
         assertThat(result.universityId()).isEqualTo(1L);
         assertThat(result.universityName()).isEqualTo("클루대학교");
-        verify(memberService).isAdmin(10L);
+        verify(memberReader).isAdmin(10L);
         verify(universityWriter).create(request);
     }
 
@@ -107,7 +111,7 @@ class UniversityServiceTest {
                 "부산",
                 false
         );
-        when(memberService.isAdmin(10L)).thenReturn(true);
+        when(memberReader.isAdmin(10L)).thenReturn(true);
         when(universityReader.readOrThrow(1L)).thenReturn(university);
 
         // when
@@ -115,7 +119,7 @@ class UniversityServiceTest {
 
         // then
         assertThat(result.universityId()).isEqualTo(1L);
-        verify(memberService).isAdmin(10L);
+        verify(memberReader).isAdmin(10L);
         verify(universityReader).readOrThrow(1L);
         verify(universityWriter).update(university, request);
     }
@@ -130,7 +134,7 @@ class UniversityServiceTest {
                 "서울",
                 true
         );
-        when(memberService.isAdmin(10L)).thenReturn(false);
+        when(memberReader.isAdmin(10L)).thenReturn(false);
 
         // when, then
         assertThatThrownBy(() -> universityService.createUniversity(10L, request))

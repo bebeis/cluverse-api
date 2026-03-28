@@ -3,7 +3,7 @@ package cluverse.feed.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
-import cluverse.feed.service.FeedService;
+import cluverse.feed.service.FeedQueryService;
 import cluverse.feed.service.request.FollowingFeedSearchRequest;
 import cluverse.feed.service.request.HomeFeedSearchRequest;
 import cluverse.feed.service.response.FeedPageResponse;
@@ -19,14 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class FeedController {
 
-    private final FeedService feedService;
+    private final FeedQueryService feedQueryService;
 
     @GetMapping("/home")
     public ApiResponse<FeedPageResponse> getHomeFeed(
             @Login LoginMember loginMember,
             @Valid @ModelAttribute HomeFeedSearchRequest request
     ) {
-        return ApiResponse.ok(feedService.getHomeFeed(extractMemberId(loginMember), request));
+        return ApiResponse.ok(feedQueryService.getHomeFeed(extractMemberId(loginMember), request));
     }
 
     @GetMapping("/following")
@@ -34,7 +34,7 @@ public class FeedController {
             @Login LoginMember loginMember,
             @Valid @ModelAttribute FollowingFeedSearchRequest request
     ) {
-        return ApiResponse.ok(feedService.getFollowingFeed(loginMember.memberId(), request));
+        return ApiResponse.ok(feedQueryService.getFollowingFeed(loginMember.memberId(), request));
     }
 
     private Long extractMemberId(LoginMember loginMember) {

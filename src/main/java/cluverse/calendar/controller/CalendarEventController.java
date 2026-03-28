@@ -1,5 +1,6 @@
 package cluverse.calendar.controller;
 
+import cluverse.calendar.service.CalendarEventQueryService;
 import cluverse.calendar.service.CalendarEventService;
 import cluverse.calendar.service.request.CalendarEventCreateRequest;
 import cluverse.calendar.service.request.CalendarEventSearchRequest;
@@ -21,12 +22,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CalendarEventController {
 
+    private final CalendarEventQueryService calendarEventQueryService;
     private final CalendarEventService calendarEventService;
 
     @GetMapping
     public ApiResponse<List<CalendarEventResponse>> getEvents(@Login LoginMember loginMember,
                                                               @Valid @ModelAttribute CalendarEventSearchRequest request) {
-        return ApiResponse.ok(calendarEventService.getEvents(extractMemberId(loginMember), request));
+        return ApiResponse.ok(calendarEventQueryService.getEvents(extractMemberId(loginMember), request));
     }
 
     @PostMapping
@@ -53,7 +55,7 @@ public class CalendarEventController {
     @GetMapping("/upcoming")
     public ApiResponse<List<CalendarEventResponse>> getUpcomingEvents(@Login LoginMember loginMember,
                                                                       @Valid @ModelAttribute UpcomingCalendarEventRequest request) {
-        return ApiResponse.ok(calendarEventService.getUpcomingEvents(extractMemberId(loginMember), request.sizeOrDefault()));
+        return ApiResponse.ok(calendarEventQueryService.getUpcomingEvents(extractMemberId(loginMember), request.sizeOrDefault()));
     }
 
     private Long extractMemberId(LoginMember loginMember) {

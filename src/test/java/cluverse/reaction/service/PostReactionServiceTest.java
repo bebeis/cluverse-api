@@ -4,9 +4,9 @@ import cluverse.feed.repository.FeedQueryRepository;
 import cluverse.feed.repository.dto.FeedPageQueryResult;
 import cluverse.feed.repository.dto.FeedPostQueryDto;
 import cluverse.board.domain.BoardType;
+import cluverse.meta.service.implement.PostMetaWriter;
 import cluverse.post.domain.PostCategory;
-import cluverse.meta.service.PostMetaService;
-import cluverse.post.service.PostAccessService;
+import cluverse.post.service.implement.PostAccessReader;
 import cluverse.reaction.service.implement.PostReactionWriter;
 import cluverse.reaction.service.request.BookmarkedPostSearchRequest;
 import cluverse.reaction.service.request.BookmarkedPostSortType;
@@ -36,10 +36,10 @@ class PostReactionServiceTest {
     private PostReactionWriter postReactionWriter;
 
     @Mock
-    private PostAccessService postAccessService;
+    private PostAccessReader postAccessReader;
 
     @Mock
-    private PostMetaService postMetaService;
+    private PostMetaWriter postMetaWriter;
 
     @Mock
     private FeedQueryRepository feedQueryRepository;
@@ -47,17 +47,20 @@ class PostReactionServiceTest {
     @InjectMocks
     private PostReactionService postReactionService;
 
+    @InjectMocks
+    private PostReactionQueryService postReactionQueryService;
+
     @Test
     void 게시글_좋아요를_추가하고_좋아요_수를_증가시킨다() {
         // when
         PostLikeResponse response = postReactionService.likePost(1L, 10L);
 
         // then
-        InOrder inOrder = inOrder(postAccessService, postReactionWriter, postMetaService);
-        inOrder.verify(postAccessService).validateReadablePost(1L, 10L);
+        InOrder inOrder = inOrder(postAccessReader, postReactionWriter, postMetaWriter);
+        inOrder.verify(postAccessReader).validateReadablePost(1L, 10L);
         inOrder.verify(postReactionWriter).likePost(1L, 10L);
-        inOrder.verify(postMetaService).increaseLikeCount(10L);
-        verifyNoMoreInteractions(postAccessService, postReactionWriter, postMetaService);
+        inOrder.verify(postMetaWriter).increaseLikeCount(10L);
+        verifyNoMoreInteractions(postAccessReader, postReactionWriter, postMetaWriter);
         assertThat(response).isEqualTo(PostLikeResponse.like(10L));
     }
 
@@ -67,11 +70,11 @@ class PostReactionServiceTest {
         PostBookmarkResponse response = postReactionService.bookmarkPost(1L, 10L);
 
         // then
-        InOrder inOrder = inOrder(postAccessService, postReactionWriter, postMetaService);
-        inOrder.verify(postAccessService).validateReadablePost(1L, 10L);
+        InOrder inOrder = inOrder(postAccessReader, postReactionWriter, postMetaWriter);
+        inOrder.verify(postAccessReader).validateReadablePost(1L, 10L);
         inOrder.verify(postReactionWriter).bookmarkPost(1L, 10L);
-        inOrder.verify(postMetaService).increaseBookmarkCount(10L);
-        verifyNoMoreInteractions(postAccessService, postReactionWriter, postMetaService);
+        inOrder.verify(postMetaWriter).increaseBookmarkCount(10L);
+        verifyNoMoreInteractions(postAccessReader, postReactionWriter, postMetaWriter);
         assertThat(response).isEqualTo(PostBookmarkResponse.bookmark(10L));
     }
 
@@ -81,11 +84,11 @@ class PostReactionServiceTest {
         PostBookmarkResponse response = postReactionService.removeBookmark(1L, 10L);
 
         // then
-        InOrder inOrder = inOrder(postAccessService, postReactionWriter, postMetaService);
-        inOrder.verify(postAccessService).validateReadablePost(1L, 10L);
+        InOrder inOrder = inOrder(postAccessReader, postReactionWriter, postMetaWriter);
+        inOrder.verify(postAccessReader).validateReadablePost(1L, 10L);
         inOrder.verify(postReactionWriter).removeBookmark(1L, 10L);
-        inOrder.verify(postMetaService).decreaseBookmarkCount(10L);
-        verifyNoMoreInteractions(postAccessService, postReactionWriter, postMetaService);
+        inOrder.verify(postMetaWriter).decreaseBookmarkCount(10L);
+        verifyNoMoreInteractions(postAccessReader, postReactionWriter, postMetaWriter);
         assertThat(response).isEqualTo(PostBookmarkResponse.remove(10L));
     }
 
@@ -133,7 +136,7 @@ class PostReactionServiceTest {
                 ));
 
         // when
-        BookmarkedPostPageResponse response = postReactionService.getBookmarkedPosts(1L, request);
+        BookmarkedPostPageResponse response = postReactionQueryService.getBookmarkedPosts(1L, request);
 
         // then
         assertThat(response.posts()).hasSize(1);

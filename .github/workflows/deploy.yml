@@ -128,42 +128,129 @@ jobs:
         run: echo "Both API instances deployed successfully with image ${{ github.sha }}"
 
       # ============================================================
-      # Prometheus 배포: nginx 인스턴스
+      # Prometheus + Alertmanager 배포: nginx 인스턴스
       # ============================================================
-      - name: Deploy Prometheus to nginx instance
+      - name: Deploy Prometheus and Alertmanager to nginx instance
         run: |
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids ${{ secrets.EC2_INSTANCE_ID_NGINX }} \
             --document-name "AWS-RunShellScript" \
             --parameters '{
               "commands": [
-                "mkdir -p /opt/prometheus",
-                "cat > /opt/prometheus/prometheus.yml << '\''EOF'\''",
+                "mkdir -p /opt/prometheus /opt/alertmanager",
+
+                "cat > /opt/prometheus/prometheus.yml << '\''PROMEOF'\''",
                 "global:",
                 "  scrape_interval: 15s",
+                "  evaluation_interval: 15s",
+                "",
+                "rule_files:",
+                "  - /etc/prometheus/alert_rules.yml",
+                "",
+                "alerting:",
+                "  alertmanagers:",
+                "    - static_configs:",
+                "        - targets: ['\''host.docker.internal:9093'\'']",
+                "",
                 "scrape_configs:",
-                "  - job_name: '\''cluverse-api-1'\''",
+                "  - job_name: '\''cluverse-api'\''",
                 "    metrics_path: '\''/actuator/prometheus'\''",
                 "    static_configs:",
-                "      - targets: ['\''${{ secrets.API_INSTANCE_1_PRIVATE_IP }}:8080'\'']",
+                "      - targets:",
+                "          - '\''${{ secrets.API_INSTANCE_1_PRIVATE_IP }}:8080'\''",
+                "          - '\''${{ secrets.API_INSTANCE_2_PRIVATE_IP }}:8080'\''",
                 "        labels:",
-                "          instance: '\''api-1'\''",
-                "  - job_name: '\''cluverse-api-2'\''",
-                "    metrics_path: '\''/actuator/prometheus'\''",
-                "    static_configs:",
-                "      - targets: ['\''${{ secrets.API_INSTANCE_2_PRIVATE_IP }}:8080'\'']",
+                "          app: '\''cluverse-api'\''",
+                "PROMEOF",
+
+                "cat > /opt/prometheus/alert_rules.yml << '\''ALERTEOF'\''",
+                "groups:",
+                "  - name: cluverse-api-alerts",
+                "    rules:",
+                "      - alert: InstanceDown",
+                "        expr: up{job=\"cluverse-api\"} == 0",
+                "        for: 30s",
                 "        labels:",
-                "          instance: '\''api-2'\''",
-                "EOF",
+                "          severity: critical",
+                "        annotations:",
+                "          summary: \"Spring 인스턴스 다운: {{ $labels.instance }}\"",
+                "          description: \"{{ $labels.instance }}이 30초 이상 응답하지 않습니다.\"",
+                "",
+                "      - alert: AllInstancesDown",
+                "        expr: count(up{job=\"cluverse-api\"} == 1) == 0",
+                "        for: 10s",
+                "        labels:",
+                "          severity: critical",
+                "        annotations:",
+                "          summary: \"전체 서비스 장애: 모든 Spring 인스턴스 다운\"",
+                "          description: \"cluverse-api의 모든 인스턴스가 응답하지 않습니다.\"",
+                "",
+                "      - alert: HighResponseTime",
+                "        expr: rate(http_server_requests_seconds_sum{job=\"cluverse-api\"}[5m]) / rate(http_server_requests_seconds_count{job=\"cluverse-api\"}[5m]) > 3",
+                "        for: 2m",
+                "        labels:",
+                "          severity: warning",
+                "        annotations:",
+                "          summary: \"응답 지연: {{ $labels.instance }}\"",
+                "          description: \"평균 응답 시간이 3초를 초과했습니다.\"",
+                "",
+                "      - alert: HighHeapUsage",
+                "        expr: jvm_memory_used_bytes{area=\"heap\", job=\"cluverse-api\"} / jvm_memory_max_bytes{area=\"heap\", job=\"cluverse-api\"} > 0.85",
+                "        for: 2m",
+                "        labels:",
+                "          severity: warning",
+                "        annotations:",
+                "          summary: \"힙 메모리 부족: {{ $labels.instance }}\"",
+                "          description: \"힙 사용률이 85%%를 초과했습니다.\"",
+                "ALERTEOF",
+
+                "cat > /opt/alertmanager/alertmanager.yml << '\''AMEOF'\''",
+                "global:",
+                "  resolve_timeout: 5m",
+                "  slack_api_url: '\''${{ secrets.SLACK_WEBHOOK_URL }}'\''",
+                "",
+                "route:",
+                "  receiver: '\''slack-critical'\''",
+                "  group_by: ['\''alertname'\'', '\''instance'\'']",
+                "  group_wait: 10s",
+                "  group_interval: 5m",
+                "  repeat_interval: 1h",
+                "  routes:",
+                "    - match:",
+                "        severity: warning",
+                "      receiver: '\''slack-warning'\''",
+                "    - match:",
+                "        severity: critical",
+                "      receiver: '\''slack-critical'\''",
+                "",
+                "receivers:",
+                "  - name: '\''slack-critical'\''",
+                "    slack_configs:",
+                "      - channel: '\''#server-alerts'\''",
+                "        title: '\''[CRITICAL] {{ .GroupLabels.alertname }}'\''",
+                "        text: '\''{{ range .Alerts }}{{ .Annotations.summary }}\\n{{ .Annotations.description }}\\n{{ end }}'\''",
+                "        send_resolved: true",
+                "  - name: '\''slack-warning'\''",
+                "    slack_configs:",
+                "      - channel: '\''#server-alerts'\''",
+                "        title: '\''[WARNING] {{ .GroupLabels.alertname }}'\''",
+                "        text: '\''{{ range .Alerts }}{{ .Annotations.summary }}\\n{{ .Annotations.description }}\\n{{ end }}'\''",
+                "        send_resolved: true",
+                "AMEOF",
+
+                "docker stop alertmanager || true",
+                "docker rm alertmanager || true",
+                "docker run -d --name alertmanager --restart unless-stopped -p 9093:9093 -v /opt/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml prom/alertmanager:latest",
+
                 "docker stop prometheus || true",
                 "docker rm prometheus || true",
-                "docker run -d --name prometheus --restart unless-stopped -p 9090:9090 -v /opt/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus:latest"
+                "docker run -d --name prometheus --restart unless-stopped --add-host=host.docker.internal:host-gateway -p 9090:9090 -v /opt/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml -v /opt/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml prom/prometheus:latest"
               ]
             }' \
             --query 'Command.CommandId' \
             --output text)
 
-          echo "Waiting for Prometheus deployment..."
+          echo "Waiting for Prometheus + Alertmanager deployment..."
           aws ssm wait command-executed \
             --command-id "$COMMAND_ID" \
             --instance-id ${{ secrets.EC2_INSTANCE_ID_NGINX }} || true
@@ -174,7 +261,7 @@ jobs:
             --query 'Status' --output text)
 
           if [ "$STATUS" != "Success" ]; then
-            echo "::error::Prometheus deployment failed with status: $STATUS"
+            echo "::error::Prometheus + Alertmanager deployment failed with status: $STATUS"
             exit 1
           fi
-          echo "Prometheus deployed successfully"
+          echo "Prometheus + Alertmanager deployed successfully"

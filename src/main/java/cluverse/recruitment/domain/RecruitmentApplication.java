@@ -83,8 +83,10 @@ public class RecruitmentApplication extends BaseTimeEntity {
         this.statusHistories.add(ApplicationStatusHistory.create(this, previousStatus, newStatus, changedBy, note, clientIp));
     }
 
-    public void addMessage(Long senderId, String content, String clientIp) {
-        this.messages.add(ApplicationChatMessage.create(this, senderId, content, clientIp));
+    public ApplicationChatMessage addMessage(Long senderId, String content, String clientIp) {
+        ApplicationChatMessage message = ApplicationChatMessage.create(this, senderId, content, clientIp);
+        this.messages.add(message);
+        return message;
     }
 
     public String getLatestReviewNote() {

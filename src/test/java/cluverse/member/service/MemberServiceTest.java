@@ -51,6 +51,9 @@ class MemberServiceTest {
     private PasswordConfig passwordConfig;
 
     @InjectMocks
+    private MemberQueryService memberQueryService;
+
+    @InjectMocks
     private MemberService memberService;
 
     @Test
@@ -82,7 +85,7 @@ class MemberServiceTest {
         when(memberReader.countFollowings(1L)).thenReturn(7L);
         when(memberReader.countPosts(1L)).thenReturn(34L);
 
-        MemberProfileResponse result = memberService.getProfile(1L, 1L);
+        MemberProfileResponse result = memberQueryService.getProfile(1L, 1L);
 
         assertThat(result.nickname()).isEqualTo("luna");
         assertThat(result.university().universityName()).isEqualTo("클루대");
@@ -134,7 +137,7 @@ class MemberServiceTest {
         when(memberReader.countFollowings(1L)).thenReturn(4L);
         when(memberReader.countPosts(1L)).thenReturn(11L);
 
-        MemberProfileResponse result = memberService.getProfile(2L, 1L);
+        MemberProfileResponse result = memberQueryService.getProfile(2L, 1L);
 
         assertThat(result.university().universityName()).isEqualTo("클루대");
         assertThat(result.bio()).isEqualTo("소개");
@@ -158,7 +161,7 @@ class MemberServiceTest {
         );
         when(memberReader.readBlockedMembers(1L)).thenReturn(responses);
 
-        List<BlockedMemberResponse> result = memberService.getBlockedMembers(1L);
+        List<BlockedMemberResponse> result = memberQueryService.getBlockedMembers(1L);
 
         assertThat(result).isEqualTo(responses);
         verify(memberReader).readBlockedMembers(1L);
@@ -174,7 +177,7 @@ class MemberServiceTest {
         when(memberReader.readOrThrow(1L)).thenReturn(member);
         when(memberReader.readFollowers(1L)).thenReturn(responses);
 
-        List<MemberFollowResponse> result = memberService.getFollowers(1L);
+        List<MemberFollowResponse> result = memberQueryService.getFollowers(1L);
 
         assertThat(result).isEqualTo(responses);
         verify(memberReader).readOrThrow(1L);
@@ -191,7 +194,7 @@ class MemberServiceTest {
         when(memberReader.readOrThrow(1L)).thenReturn(member);
         when(memberReader.readFollowings(1L)).thenReturn(responses);
 
-        List<MemberFollowResponse> result = memberService.getFollowings(1L);
+        List<MemberFollowResponse> result = memberQueryService.getFollowings(1L);
 
         assertThat(result).isEqualTo(responses);
         verify(memberReader).readOrThrow(1L);
@@ -300,7 +303,7 @@ class MemberServiceTest {
     void 닉네임_중복_확인은_사용_가능_여부를_반환한다() {
         when(memberReader.existsByNickname("luna")).thenReturn(true);
 
-        MemberNicknameAvailabilityResponse result = memberService.checkNicknameAvailability("luna");
+        MemberNicknameAvailabilityResponse result = memberQueryService.checkNicknameAvailability("luna");
 
         assertThat(result.nickname()).isEqualTo("luna");
         assertThat(result.available()).isFalse();
@@ -391,7 +394,7 @@ class MemberServiceTest {
 
     @Test
     void 비회원은_프로필을_조회할_수_없다() {
-        assertThatThrownBy(() -> memberService.getProfile(null, 1L))
+        assertThatThrownBy(() -> memberQueryService.getProfile(null, 1L))
                 .isInstanceOf(UnauthorizedException.class)
                 .hasMessage(AuthExceptionMessage.UNAUTHORIZED.getMessage());
     }

@@ -22,7 +22,7 @@ class TermsServiceTest {
     private TermsReader termsReader;
 
     @InjectMocks
-    private TermsService termsService;
+    private TermsQueryService termsQueryService;
 
     @Test
     void 약관_조회는_reader에_위임한다() {
@@ -33,7 +33,7 @@ class TermsServiceTest {
         when(termsReader.readTerms()).thenReturn(responses);
 
         // when
-        List<TermsResponse> result = termsService.getTerms();
+        List<TermsResponse> result = termsQueryService.getTerms();
 
         // then
         assertThat(result).isEqualTo(responses);

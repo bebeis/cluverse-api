@@ -5,9 +5,9 @@ import cluverse.group.domain.Group;
 import cluverse.group.domain.GroupActivityType;
 import cluverse.group.domain.GroupCategory;
 import cluverse.group.domain.GroupVisibility;
-import cluverse.group.service.GroupService;
+import cluverse.group.service.implement.GroupReader;
 import cluverse.member.domain.Member;
-import cluverse.member.service.MemberService;
+import cluverse.member.service.implement.MemberReader;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.service.implement.RecruitmentReader;
 import cluverse.recruitment.service.implement.RecruitmentWriter;
@@ -39,10 +39,10 @@ class RecruitmentServiceTest {
     private RecruitmentWriter recruitmentWriter;
 
     @Mock
-    private GroupService groupService;
+    private GroupReader groupReader;
 
     @Mock
-    private MemberService memberService;
+    private MemberReader memberReader;
 
     @InjectMocks
     private RecruitmentService recruitmentService;
@@ -65,10 +65,10 @@ class RecruitmentServiceTest {
         Recruitment recruitment = createRecruitment(10L, 1L, 100L);
         Member author = createMember(100L, "luna");
 
-        when(groupService.readGroupOrThrow(1L)).thenReturn(group);
+        when(groupReader.readOrThrow(1L)).thenReturn(group);
         when(recruitmentWriter.create(100L, 1L, request)).thenReturn(recruitment);
         when(recruitmentReader.readOrThrow(10L)).thenReturn(recruitment);
-        when(memberService.readMemberMap(List.of(100L))).thenReturn(Map.of(100L, author));
+        when(memberReader.readMemberMap(List.of(100L))).thenReturn(Map.of(100L, author));
 
         // when
         RecruitmentDetailResponse result = recruitmentService.createRecruitment(100L, 1L, request);
@@ -94,7 +94,7 @@ class RecruitmentServiceTest {
                 null,
                 List.of()
         );
-        when(groupService.readGroupOrThrow(1L)).thenReturn(group);
+        when(groupReader.readOrThrow(1L)).thenReturn(group);
 
         // when, then
         assertThatThrownBy(() -> recruitmentService.createRecruitment(200L, 1L, request))

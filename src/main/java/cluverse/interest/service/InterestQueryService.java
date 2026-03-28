@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class InterestService {
+public class InterestQueryService {
 
     private final InterestReader interestReader;
 

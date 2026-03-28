@@ -7,11 +7,11 @@ import cluverse.common.config.PasswordConfig;
 import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.NotFoundException;
 import cluverse.member.domain.*;
-import cluverse.member.repository.MemberQueryRepository;
-import cluverse.member.repository.MemberRepository;
-import cluverse.member.repository.MemberTermsAgreementRepository;
-import cluverse.member.repository.TermsRepository;
-import cluverse.university.repository.UniversityRepository;
+import cluverse.member.service.implement.MemberReader;
+import cluverse.member.service.implement.MemberTermsAgreementWriter;
+import cluverse.member.service.implement.MemberWriter;
+import cluverse.member.service.implement.TermsReader;
+import cluverse.university.service.implement.UniversityReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,11 +36,11 @@ public class AuthWriter {
     private static final String SOCIAL_NICKNAME_SEPARATOR = "_";
     private static final String DEFAULT_SOCIAL_NICKNAME = "user";
 
-    private final MemberRepository memberRepository;
-    private final MemberQueryRepository memberQueryRepository;
-    private final TermsRepository termsRepository;
-    private final MemberTermsAgreementRepository memberTermsAgreementRepository;
-    private final UniversityRepository universityRepository;
+    private final MemberReader memberReader;
+    private final MemberWriter memberWriter;
+    private final MemberTermsAgreementWriter memberTermsAgreementWriter;
+    private final TermsReader termsReader;
+    private final UniversityReader universityReader;
     private final PasswordConfig passwordConfig;
 
     public Member register(MemberRegisterRequest request) {
@@ -55,15 +55,15 @@ public class AuthWriter {
         MemberProfile profile = MemberProfile.create(member);
         member.initProfile(profile);
 
-        memberRepository.save(member);
+        memberWriter.save(member);
         request.agreedTermsIds().forEach(termsId ->
-                memberTermsAgreementRepository.save(MemberTermsAgreement.of(member, termsId))
+                memberTermsAgreementWriter.save(member, termsId)
         );
         return member;
     }
 
     public Member registerBySocial(OAuthUserInfo userInfo, OAuthProvider provider) {
-        return memberQueryRepository.findByEmail(userInfo.email())
+        return memberReader.findByEmail(userInfo.email())
                 .map(member -> linkSocialAccount(member, provider, userInfo.providerId()))
                 .orElseGet(() -> createSocialMember(userInfo, provider));
     }
@@ -73,27 +73,23 @@ public class AuthWriter {
     }
 
     private void validateEmailNotDuplicated(String email) {
-        if (memberQueryRepository.existsByEmail(email)) {
+        if (memberReader.existsByEmail(email)) {
             throw new BadRequestException(AuthExceptionMessage.EMAIL_ALREADY_EXISTS.getMessage());
         }
     }
 
     private void validateNicknameNotDuplicated(String nickname) {
-        if (memberRepository.existsByNickname(nickname)) {
+        if (memberReader.existsByNickname(nickname)) {
             throw new BadRequestException(AuthExceptionMessage.NICKNAME_ALREADY_EXISTS.getMessage());
         }
     }
 
     private void validateUniversityExists(Long universityId) {
-        if (!universityRepository.existsById(universityId)) {
-            throw new NotFoundException(AuthExceptionMessage.UNIVERSITY_NOT_FOUND.getMessage());
-        }
+        universityReader.readOrThrow(universityId);
     }
 
     private void validateRequiredTermsAgreed(List<Long> agreedTermsIds) {
-        List<Long> requiredTermsIds = termsRepository.findAllByIsActiveTrueAndIsRequiredTrue().stream()
-                .map(Terms::getId)
-                .toList();
+        List<Long> requiredTermsIds = termsReader.readRequiredTermsIds();
         if (!new HashSet<>(agreedTermsIds).containsAll(requiredTermsIds)) {
             throw new BadRequestException(AuthExceptionMessage.REQUIRED_TERMS_NOT_AGREED.getMessage());
         }
@@ -107,7 +103,7 @@ public class AuthWriter {
 
         member.addSocialAccount(provider, providerUserId);
         ensureProfile(member);
-        return memberRepository.save(member);
+        return memberWriter.save(member);
     }
 
     private Member createSocialMember(OAuthUserInfo userInfo, OAuthProvider provider) {
@@ -116,7 +112,7 @@ public class AuthWriter {
         member.initMemberAuthBySocial(userInfo.email());
         member.addSocialAccount(provider, userInfo.providerId());
         ensureProfile(member);
-        return memberRepository.save(member);
+        return memberWriter.save(member);
     }
 
     private boolean hasSocialAccount(Member member, OAuthProvider provider, String providerUserId) {
@@ -133,7 +129,7 @@ public class AuthWriter {
     private String createAvailableSocialNickname(String base, OAuthProvider provider, String providerUserId) {
         for (int attempt = 0; attempt < MAX_SOCIAL_NICKNAME_RETRY_COUNT; attempt++) {
             String nickname = generateSocialNickname(base, provider, providerUserId, attempt);
-            if (!memberRepository.existsByNickname(nickname)) {
+            if (!memberReader.existsByNickname(nickname)) {
                 return nickname;
             }
         }
@@ -146,7 +142,7 @@ public class AuthWriter {
             String suffix = UUID.randomUUID().toString().replace("-", "")
                     .substring(0, SOCIAL_NICKNAME_SUFFIX_LENGTH);
             String nickname = joinSocialNickname(normalizedBase, suffix);
-            if (!memberRepository.existsByNickname(nickname)) {
+            if (!memberReader.existsByNickname(nickname)) {
                 return nickname;
             }
         }

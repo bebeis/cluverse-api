@@ -2,6 +2,7 @@ package cluverse.member.service.implement;
 
 import cluverse.common.exception.NotFoundException;
 import cluverse.member.domain.Member;
+import cluverse.member.domain.OAuthProvider;
 import cluverse.member.exception.MemberExceptionMessage;
 import cluverse.member.repository.BlockRepository;
 import cluverse.member.repository.FollowRepository;
@@ -13,7 +14,7 @@ import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberMajorResponse;
 import cluverse.member.service.response.MemberProfileSummaryResponse;
 import cluverse.university.domain.University;
-import cluverse.university.repository.UniversityRepository;
+import cluverse.university.service.implement.UniversityReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -32,7 +34,7 @@ public class MemberReader {
     private final MemberQueryRepository memberQueryRepository;
     private final FollowRepository followRepository;
     private final BlockRepository blockRepository;
-    private final UniversityRepository universityRepository;
+    private final UniversityReader universityReader;
 
     public List<MemberMajorResponse> readMajors(Long memberId) {
         return memberQueryRepository.findMajorDetailsByMemberId(memberId).stream()
@@ -111,7 +113,7 @@ public class MemberReader {
     }
 
     public long countPosts(Long memberId) {
-        return memberQueryRepository.countActivePostsByMemberId(memberId);
+        return memberRepository.countActivePostsByMemberId(memberId);
     }
 
     public List<BlockedMemberResponse> readBlockedMembers(Long blockerId) {
@@ -153,8 +155,31 @@ public class MemberReader {
                 .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.MEMBER_NOT_FOUND.getMessage()));
     }
 
+    public boolean isAdmin(Long memberId) {
+        return readOrThrow(memberId).isAdmin();
+    }
+
+    public boolean isVerified(Long memberId) {
+        if (memberId == null) {
+            return false;
+        }
+        return readOrThrow(memberId).isVerified();
+    }
+
     public boolean existsByNickname(String nickname) {
         return memberRepository.existsByNickname(nickname);
+    }
+
+    public boolean existsByEmail(String email) {
+        return memberRepository.existsByEmail(email);
+    }
+
+    public Optional<Member> findByEmail(String email) {
+        return memberRepository.findByEmail(email);
+    }
+
+    public Optional<Member> findBySocialAccount(OAuthProvider provider, String providerUserId) {
+        return memberRepository.findBySocialAccount(provider, providerUserId);
     }
 
     public Map<Long, Member> readMemberMap(Collection<Long> memberIds) {
@@ -169,8 +194,7 @@ public class MemberReader {
         if (universityId == null) {
             return null;
         }
-        University university = universityRepository.findById(universityId)
-                .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.UNIVERSITY_NOT_FOUND.getMessage()));
+        University university = universityReader.readOrThrow(universityId);
         return new MemberProfileSummaryResponse(
                 university.getId(),
                 university.getName(),

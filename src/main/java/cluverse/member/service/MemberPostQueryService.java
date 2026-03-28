@@ -15,7 +15,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class MemberPostService {
+public class MemberPostQueryService {
 
     private final MemberReader memberReader;
     private final PostQueryRepository postQueryRepository;

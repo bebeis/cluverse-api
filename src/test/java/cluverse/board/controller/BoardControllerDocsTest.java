@@ -2,6 +2,7 @@ package cluverse.board.controller;
 
 import cluverse.board.domain.BoardType;
 import cluverse.board.service.BoardService;
+import cluverse.board.service.BoardQueryService;
 import cluverse.board.service.response.BoardAdminResponse;
 import cluverse.board.service.response.BoardBreadcrumbResponse;
 import cluverse.board.service.response.BoardDetailResponse;
@@ -48,16 +49,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class BoardControllerDocsTest extends RestDocsSupport {
 
+    private final BoardQueryService boardQueryService = mock(BoardQueryService.class);
     private final BoardService boardService = mock(BoardService.class);
 
     @Override
     protected Object initController() {
-        return new BoardController(boardService);
+        return new BoardController(boardQueryService, boardService);
     }
 
     @Test
     void 보드_디렉토리_조회() throws Exception {
-        when(boardService.getBoardDirectory(anyLong(), any())).thenReturn(new BoardDirectoryResponse(
+        when(boardQueryService.getBoardDirectory(anyLong(), any())).thenReturn(new BoardDirectoryResponse(
                 BoardType.DEPARTMENT,
                 10L,
                 2,
@@ -181,7 +183,7 @@ class BoardControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 보드_상세_조회() throws Exception {
-        when(boardService.getBoard(anyLong(), anyLong())).thenReturn(createBoardDetailResponse());
+        when(boardQueryService.getBoard(anyLong(), anyLong())).thenReturn(createBoardDetailResponse());
 
         mockMvc.perform(get("/api/v1/boards/{boardId}", 31L)
                         .session(createMemberSession()))
@@ -299,7 +301,7 @@ class BoardControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 보드_홈_조회() throws Exception {
-        when(boardService.getBoardHome(anyLong(), anyLong())).thenReturn(createBoardHomeResponse());
+        when(boardQueryService.getBoardHome(anyLong(), anyLong())).thenReturn(createBoardHomeResponse());
 
         mockMvc.perform(get("/api/v1/boards/{boardId}/home", 31L)
                         .session(createMemberSession()))

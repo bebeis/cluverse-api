@@ -2,13 +2,17 @@ package cluverse.comment.service.implement;
 
 import cluverse.comment.domain.Comment;
 import cluverse.comment.exception.CommentExceptionMessage;
+import cluverse.comment.repository.CommentQueryRepository;
 import cluverse.comment.repository.CommentRepository;
+import cluverse.comment.service.response.CommentLastRepliedPost;
+import cluverse.comment.service.response.CommentReactionTargetResponse;
 import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -17,6 +21,7 @@ import java.util.Optional;
 public class CommentReader {
 
     private final CommentRepository commentRepository;
+    private final CommentQueryRepository commentQueryRepository;
 
     public Comment readOrThrow(Long commentId) {
         return commentRepository.findById(commentId)
@@ -31,6 +36,15 @@ public class CommentReader {
 
     public Optional<Comment> read(Long commentId) {
         return commentRepository.findById(commentId);
+    }
+
+    public CommentReactionTargetResponse readReactionTarget(Long commentId) {
+        Comment comment = readActiveOrThrow(commentId);
+        return new CommentReactionTargetResponse(comment.getPostId(), comment.getId());
+    }
+
+    public List<CommentLastRepliedPost> readRecentCommentRepliedPosts(Long size) {
+        return commentQueryRepository.findRecentCommentRepliedPosts(size);
     }
 
     public boolean hasChildren(Comment comment) {

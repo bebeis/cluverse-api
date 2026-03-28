@@ -1,7 +1,7 @@
 package cluverse.event.controller;
 
 import cluverse.docs.RestDocsSupport;
-import cluverse.event.service.CampusEventService;
+import cluverse.event.service.CampusEventQueryService;
 import cluverse.event.service.response.CampusEventResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -24,16 +24,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CampusEventControllerDocsTest extends RestDocsSupport {
 
-    private final CampusEventService campusEventService = mock(CampusEventService.class);
+    private final CampusEventQueryService campusEventQueryService = mock(CampusEventQueryService.class);
 
     @Override
     protected Object initController() {
-        return new CampusEventController(campusEventService);
+        return new CampusEventController(campusEventQueryService);
     }
 
     @Test
     void 행사_목록_조회() throws Exception {
-        when(campusEventService.getEvents(any())).thenReturn(List.of(createResponse()));
+        when(campusEventQueryService.getEvents(any())).thenReturn(List.of(createResponse()));
 
         mockMvc.perform(get("/api/v1/events")
                         .queryParam("ongoing", "true")
@@ -66,7 +66,7 @@ class CampusEventControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 행사_상세_조회() throws Exception {
-        when(campusEventService.getEvent(1L)).thenReturn(createResponse());
+        when(campusEventQueryService.getEvent(1L)).thenReturn(createResponse());
 
         mockMvc.perform(get("/api/v1/events/{eventId}", 1L))
                 .andExpect(status().isOk())

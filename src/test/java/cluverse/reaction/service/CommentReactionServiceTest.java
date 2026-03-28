@@ -1,7 +1,8 @@
 package cluverse.reaction.service;
 
-import cluverse.comment.service.CommentService;
 import cluverse.comment.service.response.CommentReactionTargetResponse;
+import cluverse.comment.service.implement.CommentReader;
+import cluverse.comment.service.implement.CommentWriter;
 import cluverse.reaction.service.implement.CommentReactionWriter;
 import cluverse.reaction.service.response.CommentLikeResponse;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,10 @@ class CommentReactionServiceTest {
     private CommentReactionWriter commentReactionWriter;
 
     @Mock
-    private CommentService commentService;
+    private CommentReader commentReader;
+
+    @Mock
+    private CommentWriter commentWriter;
 
     @InjectMocks
     private CommentReactionService commentReactionService;
@@ -29,7 +33,7 @@ class CommentReactionServiceTest {
     @Test
     void 댓글_좋아요시_댓글_검증후_좋아요_수까지_증가시킨다() {
         // given
-        when(commentService.getReactionTarget(101L)).thenReturn(new CommentReactionTargetResponse(10L, 101L));
+        when(commentReader.readReactionTarget(101L)).thenReturn(new CommentReactionTargetResponse(10L, 101L));
 
         // when
         CommentLikeResponse response = commentReactionService.likeComment(1L, 101L);
@@ -38,7 +42,8 @@ class CommentReactionServiceTest {
         assertThat(response.postId()).isEqualTo(10L);
         assertThat(response.commentId()).isEqualTo(101L);
         assertThat(response.liked()).isTrue();
+        verify(commentReader).readReactionTarget(101L);
         verify(commentReactionWriter).likeComment(1L, 101L);
-        verify(commentService).increaseLikeCount(101L);
+        verify(commentWriter).increaseLikeCount(101L);
     }
 }

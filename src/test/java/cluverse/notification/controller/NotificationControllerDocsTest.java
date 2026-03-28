@@ -5,6 +5,7 @@ import cluverse.docs.RestDocsSupport;
 import cluverse.member.domain.MemberRole;
 import cluverse.notification.domain.NotificationType;
 import cluverse.notification.service.NotificationService;
+import cluverse.notification.service.NotificationQueryService;
 import cluverse.notification.service.response.NotificationPreferenceResponse;
 import cluverse.notification.service.response.NotificationResponse;
 import org.junit.jupiter.api.Test;
@@ -35,16 +36,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class NotificationControllerDocsTest extends RestDocsSupport {
 
+    private final NotificationQueryService notificationQueryService = mock(NotificationQueryService.class);
     private final NotificationService notificationService = mock(NotificationService.class);
 
     @Override
     protected Object initController() {
-        return new NotificationController(notificationService);
+        return new NotificationController(notificationQueryService, notificationService);
     }
 
     @Test
     void 알림_목록_조회() throws Exception {
-        when(notificationService.getNotifications(1L)).thenReturn(List.of(createNotification()));
+        when(notificationQueryService.getNotifications(1L)).thenReturn(List.of(createNotification()));
 
         mockMvc.perform(get("/api/v1/notifications").session(createSession()))
                 .andExpect(status().isOk())
@@ -109,7 +111,7 @@ class NotificationControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 알림_설정_조회() throws Exception {
-        when(notificationService.getPreferences(1L)).thenReturn(new NotificationPreferenceResponse(true, true, true, true, false));
+        when(notificationQueryService.getPreferences(1L)).thenReturn(new NotificationPreferenceResponse(true, true, true, true, false));
 
         mockMvc.perform(get("/api/v1/notification-preferences").session(createSession()))
                 .andExpect(status().isOk())

@@ -21,7 +21,7 @@ class MajorServiceTest {
     private MajorReader majorReader;
 
     @InjectMocks
-    private MajorService majorService;
+    private MajorQueryService majorQueryService;
 
     @Test
     void 전공_조회는_reader에_위임한다() {
@@ -32,7 +32,7 @@ class MajorServiceTest {
         when(majorReader.readMajors(null)).thenReturn(responses);
 
         // when
-        List<MajorResponse> result = majorService.getMajors(null);
+        List<MajorResponse> result = majorQueryService.getMajors(null);
 
         // then
         assertThat(result).isEqualTo(responses);

@@ -13,7 +13,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class CampusEventService {
+public class CampusEventQueryService {
 
     private final CampusEventReader campusEventReader;
 

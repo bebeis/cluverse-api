@@ -4,6 +4,7 @@ import cluverse.common.auth.LoginMember;
 import cluverse.docs.RestDocsSupport;
 import cluverse.member.domain.MemberRole;
 import cluverse.reaction.service.PostReactionService;
+import cluverse.reaction.service.PostReactionQueryService;
 import cluverse.reaction.service.request.BookmarkedPostSortType;
 import cluverse.reaction.service.response.BookmarkedPostPageResponse;
 import cluverse.reaction.service.response.PostBookmarkResponse;
@@ -39,10 +40,11 @@ import static org.mockito.ArgumentMatchers.any;
 class PostReactionControllerDocsTest extends RestDocsSupport {
 
     private final PostReactionService postReactionService = mock(PostReactionService.class);
+    private final PostReactionQueryService postReactionQueryService = mock(PostReactionQueryService.class);
 
     @Override
     protected Object initController() {
-        return new PostReactionController(postReactionService);
+        return new PostReactionController(postReactionService, postReactionQueryService);
     }
 
     @Test
@@ -116,7 +118,7 @@ class PostReactionControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 북마크_목록_조회() throws Exception {
-        when(postReactionService.getBookmarkedPosts(any(), any())).thenReturn(new BookmarkedPostPageResponse(
+        when(postReactionQueryService.getBookmarkedPosts(any(), any())).thenReturn(new BookmarkedPostPageResponse(
                 List.of(
                         new FeedPostSummaryResponse(
                                 10L,

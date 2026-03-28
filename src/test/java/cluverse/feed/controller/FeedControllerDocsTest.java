@@ -2,7 +2,7 @@ package cluverse.feed.controller;
 
 import cluverse.common.auth.LoginMember;
 import cluverse.docs.RestDocsSupport;
-import cluverse.feed.service.FeedService;
+import cluverse.feed.service.FeedQueryService;
 import cluverse.feed.service.response.FeedAuthorResponse;
 import cluverse.feed.service.response.FeedBoardResponse;
 import cluverse.feed.service.response.FeedPageResponse;
@@ -34,16 +34,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class FeedControllerDocsTest extends RestDocsSupport {
 
-    private final FeedService feedService = mock(FeedService.class);
+    private final FeedQueryService feedQueryService = mock(FeedQueryService.class);
 
     @Override
     protected Object initController() {
-        return new FeedController(feedService);
+        return new FeedController(feedQueryService);
     }
 
     @Test
     void 홈_피드_조회() throws Exception {
-        when(feedService.getHomeFeed(isNull(), any())).thenReturn(createFeedPageResponse());
+        when(feedQueryService.getHomeFeed(isNull(), any())).thenReturn(createFeedPageResponse());
 
         mockMvc.perform(get("/api/v1/feeds/home")
                         .queryParam("filter", "ALL")
@@ -62,7 +62,7 @@ class FeedControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 팔로잉_피드_조회() throws Exception {
-        when(feedService.getFollowingFeed(anyLong(), any())).thenReturn(createFeedPageResponse());
+        when(feedQueryService.getFollowingFeed(anyLong(), any())).thenReturn(createFeedPageResponse());
 
         mockMvc.perform(get("/api/v1/feeds/following")
                         .session(createSession())

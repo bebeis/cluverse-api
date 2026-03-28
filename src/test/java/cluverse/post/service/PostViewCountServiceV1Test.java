@@ -1,9 +1,9 @@
 package cluverse.post.service;
 
-import cluverse.meta.service.PostMetaService;
+import cluverse.meta.service.implement.PostMetaWriter;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
-import cluverse.post.service.implement.PostReader;
+import cluverse.post.service.implement.PostAccessReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,10 +21,10 @@ import static org.mockito.Mockito.when;
 class PostViewCountServiceV1Test {
 
     @Mock
-    private PostReader postReader;
+    private PostAccessReader postAccessReader;
 
     @Mock
-    private PostMetaService postMetaService;
+    private PostMetaWriter postMetaWriter;
 
     @InjectMocks
     private PostViewCountServiceV1 postViewCountService;
@@ -32,27 +32,27 @@ class PostViewCountServiceV1Test {
     @Test
     void V1_조회수_증가시_기존_메타_서비스에게_위임한다() {
         // given
-        when(postReader.readOrThrow(10L)).thenReturn(createPost(10L));
+        when(postAccessReader.readOrThrow(10L)).thenReturn(createPost(10L));
 
         // when
         postViewCountService.increaseViewCountV1(10L);
 
         // then
-        verify(postReader).readOrThrow(10L);
-        verify(postMetaService).increaseViewCount(10L);
+        verify(postAccessReader).readOrThrow(10L);
+        verify(postMetaWriter).increaseViewCount(10L);
     }
 
     @Test
     void V2_조회수_증가시_낙관적_락_메타_서비스에게_위임한다() {
         // given
-        when(postReader.readOrThrow(10L)).thenReturn(createPost(10L));
+        when(postAccessReader.readOrThrow(10L)).thenReturn(createPost(10L));
 
         // when
         postViewCountService.increaseViewCountV2(10L);
 
         // then
-        verify(postReader).readOrThrow(10L);
-        verify(postMetaService).increaseViewCountV2(10L);
+        verify(postAccessReader).readOrThrow(10L);
+        verify(postMetaWriter).increaseViewCountV2(10L);
     }
 
     private Post createPost(Long postId) {

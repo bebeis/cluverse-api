@@ -10,7 +10,7 @@ import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberInterestResponse;
 import cluverse.member.service.response.MemberProfileSummaryResponse;
 import cluverse.university.domain.University;
-import cluverse.university.repository.UniversityRepository;
+import cluverse.university.service.implement.UniversityReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,7 +43,7 @@ class MemberReaderTest {
     private BlockRepository blockRepository;
 
     @Mock
-    private UniversityRepository universityRepository;
+    private UniversityReader universityReader;
 
     @InjectMocks
     private MemberReader memberReader;
@@ -93,7 +93,8 @@ class MemberReaderTest {
 
     @Test
     void 학교가_없으면_학교_요약_조회에_실패한다() {
-        when(universityRepository.findById(10L)).thenReturn(Optional.empty());
+        when(universityReader.readOrThrow(10L))
+                .thenThrow(new NotFoundException("존재하지 않는 학교입니다."));
 
         assertThatThrownBy(() -> memberReader.readUniversitySummary(10L))
                 .isInstanceOf(NotFoundException.class)

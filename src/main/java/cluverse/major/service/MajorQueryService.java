@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class MajorService {
+public class MajorQueryService {
 
     private final MajorReader majorReader;
 

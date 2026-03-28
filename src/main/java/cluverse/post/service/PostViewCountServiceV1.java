@@ -1,7 +1,7 @@
 package cluverse.post.service;
 
-import cluverse.meta.service.PostMetaService;
-import cluverse.post.service.implement.PostReader;
+import cluverse.meta.service.implement.PostMetaWriter;
+import cluverse.post.service.implement.PostAccessReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,16 +11,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class PostViewCountServiceV1 {
 
-    private final PostReader postReader;
-    private final PostMetaService postMetaService;
+    private final PostAccessReader postAccessReader;
+    private final PostMetaWriter postMetaWriter;
 
     public void increaseViewCountV1(Long postId) {
-        postReader.readOrThrow(postId);
-        postMetaService.increaseViewCount(postId);
+        postAccessReader.readOrThrow(postId);
+        postMetaWriter.increaseViewCount(postId);
     }
 
     public void increaseViewCountV2(Long postId) {
-        postReader.readOrThrow(postId);
-        postMetaService.increaseViewCountV2(postId);
+        postAccessReader.readOrThrow(postId);
+        postMetaWriter.increaseViewCountV2(postId);
     }
 }

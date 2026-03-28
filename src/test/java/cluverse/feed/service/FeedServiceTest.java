@@ -24,7 +24,7 @@ class FeedServiceTest {
     private FeedReader feedReader;
 
     @InjectMocks
-    private FeedServiceV1 feedService;
+    private FeedQueryService feedQueryService;
 
     @Test
     void 홈_피드를_조회한다() {
@@ -34,7 +34,7 @@ class FeedServiceTest {
         when(feedReader.readHomeFeed(1L, request)).thenReturn(response);
 
         // when
-        FeedPageResponse result = feedService.getHomeFeed(1L, request);
+        FeedPageResponse result = feedQueryService.getHomeFeed(1L, request);
 
         // then
         assertThat(result).isEqualTo(response);
@@ -47,7 +47,7 @@ class FeedServiceTest {
         FollowingFeedSearchRequest request = new FollowingFeedSearchRequest(null, null, 20);
 
         // when, then
-        assertThatThrownBy(() -> feedService.getFollowingFeed(null, request))
+        assertThatThrownBy(() -> feedQueryService.getFollowingFeed(null, request))
                 .isInstanceOf(UnauthorizedException.class)
                 .hasMessage("인증이 필요합니다.");
         verifyNoInteractions(feedReader);

@@ -6,6 +6,7 @@ import cluverse.member.domain.MemberRole;
 import cluverse.recruitment.domain.FormItemQuestionType;
 import cluverse.recruitment.domain.RecruitmentStatus;
 import cluverse.recruitment.service.RecruitmentService;
+import cluverse.recruitment.service.RecruitmentQueryService;
 import cluverse.recruitment.service.request.RecruitmentStatusUpdateRequest;
 import cluverse.recruitment.service.request.RecruitmentUpdateRequest;
 import cluverse.recruitment.service.response.RecruitmentDetailResponse;
@@ -45,17 +46,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class RecruitmentControllerDocsTest extends RestDocsSupport {
 
+    private final RecruitmentQueryService recruitmentQueryService = mock(RecruitmentQueryService.class);
     private final RecruitmentService recruitmentService = mock(RecruitmentService.class);
 
     @Override
     protected Object initController() {
-        return new RecruitmentController(recruitmentService);
+        return new RecruitmentController(recruitmentQueryService, recruitmentService);
     }
 
     @Test
     void 모집글_목록_조회() throws Exception {
         // given
-        when(recruitmentService.getRecruitments(eq(1L), any())).thenReturn(new RecruitmentPageResponse(
+        when(recruitmentQueryService.getRecruitments(eq(1L), any())).thenReturn(new RecruitmentPageResponse(
                 List.of(createRecruitmentSummaryResponse()),
                 1,
                 20,
@@ -134,7 +136,7 @@ class RecruitmentControllerDocsTest extends RestDocsSupport {
     @Test
     void 모집글_상세_조회() throws Exception {
         // given
-        when(recruitmentService.getRecruitment(1L, 10L)).thenReturn(createRecruitmentDetailResponse());
+        when(recruitmentQueryService.getRecruitment(1L, 10L)).thenReturn(createRecruitmentDetailResponse());
 
         // when, then
         mockMvc.perform(get("/api/v1/recruitments/{recruitmentId}", 10L)

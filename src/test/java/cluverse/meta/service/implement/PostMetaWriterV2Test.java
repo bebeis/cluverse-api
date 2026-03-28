@@ -1,7 +1,6 @@
 package cluverse.meta.service.implement;
 
 import cluverse.meta.domain.PostViewCountV2;
-import cluverse.common.config.RetryConfig;
 import cluverse.meta.repository.PostViewCountV2Repository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import({
-        RetryConfig.class,
-        PostViewCountV2Writer.class,
-        PostViewCountV2TransactionWriter.class
-})
+@Import(PostMetaWriter.class)
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
-class PostViewCountV2WriterTest {
+class PostMetaWriterV2Test {
 
     @Autowired
-    private PostViewCountV2Writer postViewCountV2Writer;
+    private PostMetaWriter postMetaWriter;
 
     @Autowired
     private PostViewCountV2Repository postViewCountV2Repository;
@@ -30,7 +25,7 @@ class PostViewCountV2WriterTest {
     @Test
     void V2_조회수_레코드가_없으면_생성후_증가시킨다() {
         // when
-        postViewCountV2Writer.increaseCount(20L);
+        postMetaWriter.increaseViewCountV2(20L);
 
         // then
         assertThat(postViewCountV2Repository.findById(20L))
@@ -45,7 +40,7 @@ class PostViewCountV2WriterTest {
         postViewCountV2Repository.save(PostViewCountV2.create(10L));
 
         // when
-        postViewCountV2Writer.increaseCount(10L);
+        postMetaWriter.increaseViewCountV2(10L);
 
         // then
         assertThat(postViewCountV2Repository.findById(10L))

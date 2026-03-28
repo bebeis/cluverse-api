@@ -18,7 +18,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import({MemberQueryRepository.class, QuerydslConfig.class})
+@Import({MemberQueryRepository.class, MemberRepositoryImpl.class, QuerydslConfig.class})
 class MemberQueryRepositoryTest {
 
     @Autowired
@@ -42,7 +42,7 @@ class MemberQueryRepositoryTest {
         em.clear();
 
         // when
-        Optional<Member> result = memberQueryRepository.findByEmail("test@example.com");
+        Optional<Member> result = memberRepository.findByEmail("test@example.com");
 
         // then
         assertThat(result).isPresent();
@@ -53,7 +53,7 @@ class MemberQueryRepositoryTest {
     @Test
     void 이메일로_회원_조회_없는_경우() {
         // when
-        Optional<Member> result = memberQueryRepository.findByEmail("none@example.com");
+        Optional<Member> result = memberRepository.findByEmail("none@example.com");
 
         // then
         assertThat(result).isEmpty();
@@ -70,7 +70,7 @@ class MemberQueryRepositoryTest {
         em.clear();
 
         // when
-        Optional<Member> result = memberQueryRepository.findBySocialAccount(OAuthProvider.KAKAO, "kakao-provider-id");
+        Optional<Member> result = memberRepository.findBySocialAccount(OAuthProvider.KAKAO, "kakao-provider-id");
 
         // then
         assertThat(result).isPresent();
@@ -80,7 +80,7 @@ class MemberQueryRepositoryTest {
     @Test
     void 소셜_계정으로_회원_조회_없는_경우() {
         // when
-        Optional<Member> result = memberQueryRepository.findBySocialAccount(OAuthProvider.GOOGLE, "nonexistent-id");
+        Optional<Member> result = memberRepository.findBySocialAccount(OAuthProvider.GOOGLE, "nonexistent-id");
 
         // then
         assertThat(result).isEmpty();
@@ -97,7 +97,7 @@ class MemberQueryRepositoryTest {
         em.clear();
 
         // when
-        Optional<Member> result = memberQueryRepository.findBySocialAccount(OAuthProvider.KAKAO, "google-provider-id");
+        Optional<Member> result = memberRepository.findBySocialAccount(OAuthProvider.KAKAO, "google-provider-id");
 
         // then
         assertThat(result).isEmpty();

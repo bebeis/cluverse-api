@@ -4,6 +4,7 @@ import cluverse.recruitment.domain.FormItemAnswer;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
 import cluverse.recruitment.domain.RecruitmentApplicationStatus;
+import cluverse.recruitment.domain.ApplicationChatMessage;
 import cluverse.recruitment.repository.RecruitmentApplicationRepository;
 import cluverse.recruitment.service.request.ApplicationChatMessageCreateRequest;
 import cluverse.recruitment.service.request.RecruitmentApplicationAnswerRequest;
@@ -49,11 +50,13 @@ public class RecruitmentApplicationWriter {
         application.changeStatus(RecruitmentApplicationStatus.CANCELLED, actorId, null, clientIp);
     }
 
-    public void createMessage(RecruitmentApplication application,
+    public Long createMessage(RecruitmentApplication application,
                               Long senderId,
                               ApplicationChatMessageCreateRequest request,
                               String clientIp) {
-        application.addMessage(senderId, request.content(), clientIp);
+        ApplicationChatMessage message = application.addMessage(senderId, request.content(), clientIp);
+        recruitmentApplicationRepository.flush();
+        return message.getId();
     }
 
     private List<FormItemAnswer> toAnswers(List<RecruitmentApplicationAnswerRequest> requests) {

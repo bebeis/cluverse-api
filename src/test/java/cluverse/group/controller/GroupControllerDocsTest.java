@@ -8,6 +8,7 @@ import cluverse.group.domain.GroupMemberRole;
 import cluverse.group.domain.GroupStatus;
 import cluverse.group.domain.GroupVisibility;
 import cluverse.group.service.GroupService;
+import cluverse.group.service.GroupQueryService;
 import cluverse.group.service.request.GroupMemberUpdateRequest;
 import cluverse.group.service.request.GroupOwnerTransferRequest;
 import cluverse.group.service.request.GroupRoleCreateRequest;
@@ -53,17 +54,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class GroupControllerDocsTest extends RestDocsSupport {
 
+    private final GroupQueryService groupQueryService = mock(GroupQueryService.class);
     private final GroupService groupService = mock(GroupService.class);
 
     @Override
     protected Object initController() {
-        return new GroupController(groupService);
+        return new GroupController(groupQueryService, groupService);
     }
 
     @Test
     void 그룹_목록_조회() throws Exception {
         // given
-        when(groupService.getGroups(eq(1L), any())).thenReturn(new GroupPageResponse(
+        when(groupQueryService.getGroups(eq(1L), any())).thenReturn(new GroupPageResponse(
                 List.of(createGroupSummaryResponse()),
                 1,
                 20,
@@ -101,7 +103,7 @@ class GroupControllerDocsTest extends RestDocsSupport {
     @Test
     void 내_그룹_목록_조회() throws Exception {
         // given
-        when(groupService.getMyGroups(1L)).thenReturn(List.of(
+        when(groupQueryService.getMyGroups(1L)).thenReturn(List.of(
                 new MyGroupSummaryResponse(
                         1L,
                         "AI 프로젝트",
@@ -166,7 +168,7 @@ class GroupControllerDocsTest extends RestDocsSupport {
     @Test
     void 그룹_상세_조회() throws Exception {
         // given
-        when(groupService.getGroup(1L, 1L)).thenReturn(createGroupDetailResponse());
+        when(groupQueryService.getGroup(1L, 1L)).thenReturn(createGroupDetailResponse());
 
         // when, then
         mockMvc.perform(get("/api/v1/groups/{groupId}", 1L)
@@ -245,7 +247,7 @@ class GroupControllerDocsTest extends RestDocsSupport {
     @Test
     void 그룹_멤버_목록_조회() throws Exception {
         // given
-        when(groupService.getMembers(1L, 1L)).thenReturn(List.of(
+        when(groupQueryService.getMembers(1L, 1L)).thenReturn(List.of(
                 new GroupMemberResponse(
                         1L,
                         "luna",
@@ -397,7 +399,7 @@ class GroupControllerDocsTest extends RestDocsSupport {
     @Test
     void 그룹_직책_목록_조회() throws Exception {
         // given
-        when(groupService.getRoles(1L, 1L)).thenReturn(List.of(
+        when(groupQueryService.getRoles(1L, 1L)).thenReturn(List.of(
                 new GroupRoleResponse(1L, "운영진", 1),
                 new GroupRoleResponse(2L, "디자이너", 2)
         ));

@@ -5,6 +5,7 @@ import cluverse.docs.RestDocsSupport;
 import cluverse.member.domain.MemberRole;
 import cluverse.recruitment.domain.RecruitmentApplicationStatus;
 import cluverse.recruitment.service.RecruitmentApplicationService;
+import cluverse.recruitment.service.RecruitmentApplicationQueryService;
 import cluverse.recruitment.service.request.ApplicationChatMessageCreateRequest;
 import cluverse.recruitment.service.request.RecruitmentApplicationStatusUpdateRequest;
 import cluverse.recruitment.service.response.ApplicationChatMessagePageResponse;
@@ -44,17 +45,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
 
+    private final RecruitmentApplicationQueryService recruitmentApplicationQueryService = mock(RecruitmentApplicationQueryService.class);
     private final RecruitmentApplicationService recruitmentApplicationService = mock(RecruitmentApplicationService.class);
 
     @Override
     protected Object initController() {
-        return new RecruitmentApplicationController(recruitmentApplicationService);
+        return new RecruitmentApplicationController(recruitmentApplicationQueryService, recruitmentApplicationService);
     }
 
     @Test
     void 내_지원서_목록_조회() throws Exception {
         // given
-        when(recruitmentApplicationService.getMyApplications(eq(1L), any())).thenReturn(new RecruitmentApplicationPageResponse(
+        when(recruitmentApplicationQueryService.getMyApplications(eq(1L), any())).thenReturn(new RecruitmentApplicationPageResponse(
                 List.of(createApplicationSummaryResponse()),
                 1,
                 20,
@@ -82,7 +84,7 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
     @Test
     void 모집글_지원서_목록_조회() throws Exception {
         // given
-        when(recruitmentApplicationService.getApplications(eq(1L), eq(10L), any()))
+        when(recruitmentApplicationQueryService.getApplications(eq(1L), eq(10L), any()))
                 .thenReturn(new RecruitmentApplicationPageResponse(
                         List.of(createApplicationSummaryResponse()),
                         1,
@@ -114,7 +116,8 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
     void 지원서_제출() throws Exception {
         // given
         when(recruitmentApplicationService.createApplication(eq(1L), eq(10L), any(), eq("127.0.0.1")))
-                .thenReturn(createApplicationDetailResponse());
+                .thenReturn(30L);
+        when(recruitmentApplicationQueryService.getApplication(1L, 30L)).thenReturn(createApplicationDetailResponse());
 
         // when, then
         mockMvc.perform(post("/api/v1/recruitment-applications")
@@ -157,7 +160,7 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
     @Test
     void 지원서_상세_조회() throws Exception {
         // given
-        when(recruitmentApplicationService.getApplication(1L, 30L)).thenReturn(createReviewedApplicationDetailResponse());
+        when(recruitmentApplicationQueryService.getApplication(1L, 30L)).thenReturn(createReviewedApplicationDetailResponse());
 
         // when, then
         mockMvc.perform(get("/api/v1/recruitment-applications/{applicationId}", 30L)
@@ -180,7 +183,8 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
                 eq(30L),
                 any(RecruitmentApplicationStatusUpdateRequest.class),
                 eq("127.0.0.1")
-        )).thenReturn(createApprovedApplicationDetailResponse());
+        )).thenReturn(30L);
+        when(recruitmentApplicationQueryService.getApplication(1L, 30L)).thenReturn(createApprovedApplicationDetailResponse());
 
         // when, then
         mockMvc.perform(patch("/api/v1/recruitment-applications/{applicationId}/status", 30L)
@@ -234,7 +238,7 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
     @Test
     void 지원_채팅_메시지_목록_조회() throws Exception {
         // given
-        when(recruitmentApplicationService.getMessages(eq(1L), eq(30L), any()))
+        when(recruitmentApplicationQueryService.getMessages(eq(1L), eq(30L), any()))
                 .thenReturn(new ApplicationChatMessagePageResponse(
                         List.of(createMessageResponse()),
                         100L,
@@ -265,7 +269,8 @@ class RecruitmentApplicationControllerDocsTest extends RestDocsSupport {
     void 지원_채팅_메시지_전송() throws Exception {
         // given
         when(recruitmentApplicationService.createMessage(eq(1L), eq(30L), any(ApplicationChatMessageCreateRequest.class), eq("127.0.0.1")))
-                .thenReturn(createMessageResponse());
+                .thenReturn(101L);
+        when(recruitmentApplicationQueryService.getMessage(1L, 30L, 101L)).thenReturn(createMessageResponse());
 
         // when, then
         mockMvc.perform(post("/api/v1/recruitment-applications/{applicationId}/messages", 30L)

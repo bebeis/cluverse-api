@@ -3,6 +3,7 @@ package cluverse.reaction.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.reaction.service.PostReactionQueryService;
 import cluverse.reaction.service.PostReactionService;
 import cluverse.reaction.service.request.BookmarkedPostSearchRequest;
 import cluverse.reaction.service.response.BookmarkedPostPageResponse;
@@ -20,6 +21,7 @@ import jakarta.validation.Valid;
 public class PostReactionController {
 
     private final PostReactionService postReactionService;
+    private final PostReactionQueryService postReactionQueryService;
 
     @PostMapping("/{postId}/likes")
     @ResponseStatus(HttpStatus.CREATED)
@@ -45,6 +47,6 @@ public class PostReactionController {
     public ApiResponse<BookmarkedPostPageResponse> getBookmarkedPosts(@Login LoginMember loginMember,
                                                                       @Valid @ModelAttribute BookmarkedPostSearchRequest request) {
         Long memberId = loginMember == null ? null : loginMember.memberId();
-        return ApiResponse.ok(postReactionService.getBookmarkedPosts(memberId, request));
+        return ApiResponse.ok(postReactionQueryService.getBookmarkedPosts(memberId, request));
     }
 }

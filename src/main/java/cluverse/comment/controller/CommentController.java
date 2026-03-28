@@ -1,5 +1,6 @@
 package cluverse.comment.controller;
 
+import cluverse.comment.service.CommentQueryService;
 import cluverse.comment.service.CommentService;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.comment.service.request.CommentPageRequest;
@@ -21,12 +22,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CommentController {
 
+    private final CommentQueryService commentQueryService;
     private final CommentService commentService;
 
     @GetMapping
     public ApiResponse<CommentPageResponse> getComments(@Login LoginMember loginMember,
                                                         @Valid @ModelAttribute CommentPageRequest request) {
-        return ApiResponse.ok(commentService.getComments(extractMemberId(loginMember), request));
+        return ApiResponse.ok(commentQueryService.getComments(extractMemberId(loginMember), request));
     }
 
     @PostMapping
@@ -35,8 +37,9 @@ public class CommentController {
                                                       @RequestParam Long postId,
                                                       @RequestBody @Valid CommentCreateRequest request,
                                                       HttpServletRequest httpRequest) {
+        Long commentId = commentService.createComment(loginMember.memberId(), postId, request, httpRequest.getRemoteAddr());
         return ApiResponse.created(
-                commentService.createComment(loginMember.memberId(), postId, request, httpRequest.getRemoteAddr())
+                commentQueryService.getComment(loginMember.memberId(), commentId)
         );
     }
 
@@ -44,7 +47,8 @@ public class CommentController {
     public ApiResponse<CommentResponse> updateComment(@Login LoginMember loginMember,
                                                       @PathVariable Long commentId,
                                                       @RequestBody @Valid CommentUpdateRequest request) {
-        return ApiResponse.ok(commentService.updateComment(loginMember.memberId(), commentId, request));
+        Long updatedCommentId = commentService.updateComment(loginMember.memberId(), commentId, request);
+        return ApiResponse.ok(commentQueryService.getComment(loginMember.memberId(), updatedCommentId));
     }
 
     @DeleteMapping("/{commentId}")

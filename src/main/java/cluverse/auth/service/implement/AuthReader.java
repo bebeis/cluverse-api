@@ -5,7 +5,7 @@ import cluverse.common.config.PasswordConfig;
 import cluverse.common.exception.UnauthorizedException;
 import cluverse.member.domain.Member;
 import cluverse.member.domain.OAuthProvider;
-import cluverse.member.repository.MemberQueryRepository;
+import cluverse.member.service.implement.MemberReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,11 +17,11 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class AuthReader {
 
-    private final MemberQueryRepository memberQueryRepository;
+    private final MemberReader memberReader;
     private final PasswordConfig passwordConfig;
 
     public Member readByEmailAndPassword(String email, String rawPassword) {
-        Member member = memberQueryRepository.findByEmail(email)
+        Member member = memberReader.findByEmail(email)
                 .orElseThrow(() -> new UnauthorizedException(AuthExceptionMessage.INVALID_CREDENTIALS.getMessage()));
         if (!passwordConfig.matches(rawPassword, member.getMemberAuth().getPasswordHash())) {
             throw new UnauthorizedException(AuthExceptionMessage.INVALID_CREDENTIALS.getMessage());
@@ -30,6 +30,6 @@ public class AuthReader {
     }
 
     public Optional<Member> findBySocialAccount(OAuthProvider provider, String providerUserId) {
-        return memberQueryRepository.findBySocialAccount(provider, providerUserId);
+        return memberReader.findBySocialAccount(provider, providerUserId);
     }
 }
