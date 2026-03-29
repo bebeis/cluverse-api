@@ -16,6 +16,8 @@ import java.time.Duration;
 public class S3PostImageStorageClient implements PostImageStorageClient {
 
     private static final Duration PRESIGNED_URL_DURATION = Duration.ofMinutes(10);
+    private static final String CUSTOM_ENDPOINT_IMAGE_URL_FORMAT = "%s/%s/%s";
+    private static final String AWS_S3_IMAGE_URL_FORMAT = "https://%s.s3.%s.amazonaws.com/%s";
 
     private final S3Presigner s3Presigner;
     private final AwsProperties awsProperties;
@@ -46,13 +48,13 @@ public class S3PostImageStorageClient implements PostImageStorageClient {
 
     private String createImageUrl(String fileKey) {
         if (StringUtils.hasText(awsProperties.s3().endpoint())) {
-            return "%s/%s/%s".formatted(
+            return CUSTOM_ENDPOINT_IMAGE_URL_FORMAT.formatted(
                     awsProperties.s3().endpoint(),
                     awsProperties.s3().bucket(),
                     fileKey
             );
         }
-        return "https://%s.s3.%s.amazonaws.com/%s".formatted(
+        return AWS_S3_IMAGE_URL_FORMAT.formatted(
                 awsProperties.s3().bucket(),
                 awsProperties.region(),
                 fileKey
