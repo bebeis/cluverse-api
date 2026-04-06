@@ -47,7 +47,7 @@ class RecruitmentApplicationServiceTest {
     @Test
     void 이미_지원한_모집글에는_다시_지원할_수_없다() {
         // given
-        Recruitment recruitment = createRecruitment(10L, 1L, 100L);
+        Recruitment recruitment = createRecruitmentWithDeadLine(10L, 1L, 100L, LocalDateTime.now().plusDays(1L));
         RecruitmentApplicationCreateRequest request = new RecruitmentApplicationCreateRequest(
                 "Backend",
                 null,
@@ -67,7 +67,7 @@ class RecruitmentApplicationServiceTest {
     void 지원_승인시_그룹_멤버로_편입된다() {
         // given
         Group group = createGroup(1L, 100L);
-        Recruitment recruitment = createRecruitment(10L, 1L, 100L);
+        Recruitment recruitment = createRecruitmentWithDeadLine(10L, 1L, 100L, LocalDateTime.now().plusDays(1L));
         RecruitmentApplication application = createApplication(30L, 10L, 200L);
         RecruitmentApplicationStatusUpdateRequest request = new RecruitmentApplicationStatusUpdateRequest(
                 RecruitmentApplicationStatus.APPROVED,
@@ -113,7 +113,7 @@ class RecruitmentApplicationServiceTest {
         return group;
     }
 
-    private Recruitment createRecruitment(Long recruitmentId, Long groupId, Long authorId) {
+    private Recruitment createRecruitmentWithDeadLine(Long recruitmentId, Long groupId, Long authorId, LocalDateTime deadline) {
         Recruitment recruitment = Recruitment.create(
                 groupId,
                 authorId,
@@ -124,7 +124,7 @@ class RecruitmentApplicationServiceTest {
                 null,
                 null,
                 null,
-                LocalDateTime.of(2026, 3, 31, 23, 59),
+                deadline,
                 List.of()
         );
         ReflectionTestUtils.setField(recruitment, "id", recruitmentId);
