@@ -90,7 +90,7 @@ CREATE TABLE student_verification_email_challenge (
     challenge_id                            VARCHAR(64)  NOT NULL                  COMMENT '외부에 노출하는 인증 시도 식별자',
     email                                   VARCHAR(255) NOT NULL                  COMMENT '인증 코드를 발송한 학교 이메일',
     code_hash                               VARCHAR(255) NOT NULL                  COMMENT '인증 코드 해시',
-    status                                  VARCHAR(20)  NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING / VERIFIED / EXPIRED',
+    status                                  VARCHAR(20)  NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING / VERIFIED / EXPIRED / REPLACED',
     expires_at                              DATETIME     NOT NULL                  COMMENT '인증 코드 만료 시각',
     attempt_count                           INT          NOT NULL DEFAULT 0        COMMENT '코드 확인 시도 횟수',
     verified_at                             DATETIME     NULL                      COMMENT '코드 확인 완료 시각',

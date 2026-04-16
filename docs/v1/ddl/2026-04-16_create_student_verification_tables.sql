@@ -23,7 +23,7 @@ CREATE TABLE student_verification_email_challenge (
     challenge_id VARCHAR(64) NOT NULL COMMENT '외부에 노출하는 인증 시도 식별자',
     email VARCHAR(255) NOT NULL COMMENT '인증 코드를 발송한 학교 이메일',
     code_hash VARCHAR(255) NOT NULL COMMENT '인증 코드 해시',
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING / VERIFIED / EXPIRED',
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING / VERIFIED / EXPIRED / REPLACED',
     expires_at DATETIME NOT NULL COMMENT '인증 코드 만료 시각',
     attempt_count INT NOT NULL DEFAULT 0 COMMENT '코드 확인 시도 횟수',
     verified_at DATETIME NULL COMMENT '코드 확인 완료 시각',
@@ -102,7 +102,7 @@ ON DUPLICATE KEY UPDATE
     verified_at = VALUES(verified_at),
     updated_at = VALUES(updated_at);
 
--- 검증 후 member_credential은 제거 가능하다.
--- 현재 애플리케이션 코드가 member.verification_status를 아직 권한 판단 캐시로 사용하므로
--- member.verification_status / member.verification_rejected_reason 제거는 읽기 경로 전환 이후 별도 migration에서 처리한다.
--- DROP TABLE member_credential;
+-- 호환성을 위해 기존 member_credential 테이블과 member의 인증 상태 컬럼은 이 migration에서 제거하지 않는다.
+-- 신규 로직은 student_verification을 함께 갱신하되, 기존 조회/권한 판단 경로를 위해
+-- member.verification_status / member.verification_rejected_reason도 계속 동기화한다.
+-- member_credential 제거 여부는 운영 호환성 확인 후 별도 major migration에서만 검토한다.
