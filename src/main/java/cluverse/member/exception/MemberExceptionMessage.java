@@ -24,7 +24,18 @@ public enum MemberExceptionMessage {
     NICKNAME_ALREADY_EXISTS("이미 사용 중인 닉네임입니다."),
     INVALID_PROFILE_VISIBLE_FIELD("유효하지 않은 프로필 공개 필드입니다."),
     INVALID_PASSWORD("현재 비밀번호가 올바르지 않습니다."),
-    PASSWORD_CHANGE_NOT_ALLOWED("비밀번호를 변경할 수 없는 계정입니다.");
+    PASSWORD_CHANGE_NOT_ALLOWED("비밀번호를 변경할 수 없는 계정입니다."),
+    STUDENT_VERIFICATION_ALREADY_APPROVED("이미 학생 인증이 완료되었습니다."),
+    STUDENT_VERIFICATION_NOT_FOUND("존재하지 않는 학생 인증 정보입니다."),
+    STUDENT_VERIFICATION_EMAIL_DOMAIN_REQUIRED("학교 이메일 도메인이 등록되지 않은 학교입니다."),
+    STUDENT_VERIFICATION_EMAIL_DOMAIN_MISMATCH("학교 이메일 도메인이 일치하지 않습니다."),
+    STUDENT_VERIFICATION_EMAIL_CHALLENGE_NOT_FOUND("존재하지 않는 이메일 인증 요청입니다."),
+    STUDENT_VERIFICATION_EMAIL_CHALLENGE_REPLACED("최신 인증 코드로 다시 인증해주세요."),
+    STUDENT_VERIFICATION_EMAIL_CHALLENGE_EXPIRED("만료된 이메일 인증 코드입니다."),
+    STUDENT_VERIFICATION_EMAIL_CHALLENGE_INVALID_STATUS("처리할 수 없는 이메일 인증 요청입니다."),
+    STUDENT_VERIFICATION_EMAIL_CODE_INVALID("인증 코드가 올바르지 않습니다."),
+    STUDENT_VERIFICATION_MAIL_SENDER_NOT_CONFIGURED("메일 발송 설정이 필요합니다."),
+    STUDENT_VERIFICATION_MAIL_SEND_FAILED("인증 메일 발송에 실패했습니다.");
 
     private final String message;
 }

@@ -37,7 +37,7 @@ public class Member extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private VerificationStatus verificationStatus = VerificationStatus.APPROVED;
+    private VerificationStatus verificationStatus = VerificationStatus.NONE;
 
     @Column(name = "verification_rejected_reason")
     private String verificationRejectedReason;

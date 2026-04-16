@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 import static cluverse.common.util.StringNormalizer.requireTrimmed;
-import static cluverse.common.util.StringNormalizer.requireTrimmedLowerCase;
+import static cluverse.common.util.StringNormalizer.requireNormalizedEmail;
 import static java.util.Objects.requireNonNull;
 
 @Entity
@@ -52,10 +52,11 @@ public class StudentVerification extends BaseTimeEntity {
         return new StudentVerification(memberId, universityId);
     }
 
-    public void requestSchoolEmailVerification(String schoolEmail, LocalDateTime requestedAt) {
+    public void requestSchoolEmailVerification(Long universityId, String schoolEmail, LocalDateTime requestedAt) {
+        this.universityId = requireNonNull(universityId);
         this.status = VerificationStatus.PENDING;
         this.method = StudentVerificationMethod.SCHOOL_EMAIL;
-        this.schoolEmail = normalizeEmail(schoolEmail);
+        this.schoolEmail = requireNormalizedEmail(schoolEmail);
         this.rejectedReason = null;
         this.requestedAt = requireNonNull(requestedAt);
         this.verifiedAt = null;
@@ -77,7 +78,7 @@ public class StudentVerification extends BaseTimeEntity {
         return this.status == VerificationStatus.APPROVED;
     }
 
-    private String normalizeEmail(String email) {
-        return requireTrimmedLowerCase(email);
+    public boolean isOwnedBy(Long memberId) {
+        return this.memberId.equals(memberId);
     }
 }

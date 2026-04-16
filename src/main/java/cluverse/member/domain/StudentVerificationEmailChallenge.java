@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import static cluverse.common.util.StringNormalizer.requireTrimmed;
-import static cluverse.common.util.StringNormalizer.requireTrimmedLowerCase;
+import static cluverse.common.util.StringNormalizer.requireNormalizedEmail;
 
 @Entity
 @Getter
@@ -55,7 +55,7 @@ public class StudentVerificationEmailChallenge extends BaseTimeEntity {
     ) {
         this.studentVerificationId = Objects.requireNonNull(studentVerificationId);
         this.challengeId = requireTrimmed(challengeId);
-        this.email = normalizeEmail(email);
+        this.email = requireNormalizedEmail(email);
         this.codeHash = requireTrimmed(codeHash);
         this.expiresAt = Objects.requireNonNull(expiresAt);
     }
@@ -89,15 +89,27 @@ public class StudentVerificationEmailChallenge extends BaseTimeEntity {
         this.status = StudentVerificationEmailChallengeStatus.EXPIRED;
     }
 
+    public void replace() {
+        this.status = StudentVerificationEmailChallengeStatus.REPLACED;
+    }
+
     public boolean isExpired(LocalDateTime now) {
         return !expiresAt.isAfter(now);
     }
 
-    public boolean isVerified() {
-        return this.status == StudentVerificationEmailChallengeStatus.VERIFIED;
+    public boolean isPending() {
+        return this.status == StudentVerificationEmailChallengeStatus.PENDING;
     }
 
-    private String normalizeEmail(String email) {
-        return requireTrimmedLowerCase(email);
+    public boolean isReplaced() {
+        return this.status == StudentVerificationEmailChallengeStatus.REPLACED;
+    }
+
+    public boolean isExpiredStatus() {
+        return this.status == StudentVerificationEmailChallengeStatus.EXPIRED;
+    }
+
+    public boolean isVerified() {
+        return this.status == StudentVerificationEmailChallengeStatus.VERIFIED;
     }
 }

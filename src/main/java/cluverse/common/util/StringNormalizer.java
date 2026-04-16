@@ -10,6 +10,8 @@ import java.util.Locale;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class StringNormalizer {
 
+    private static final String EMAIL_DOMAIN_SEPARATOR = "@";
+
     public static String requireTrimmed(String value) {
         String trimmed = trimToNull(value);
         if (trimmed == null) {
@@ -20,6 +22,24 @@ public final class StringNormalizer {
 
     public static String requireTrimmedLowerCase(String value) {
         return requireTrimmed(value).toLowerCase(Locale.ROOT);
+    }
+
+    public static String requireNormalizedEmail(String email) {
+        return requireTrimmedLowerCase(email);
+    }
+
+    public static String extractEmailDomain(String email) {
+        String normalizedEmail = requireNormalizedEmail(email);
+        int atIndex = normalizedEmail.lastIndexOf(EMAIL_DOMAIN_SEPARATOR);
+        return normalizedEmail.substring(atIndex + 1);
+    }
+
+    public static String normalizeOptionalDomain(String domain) {
+        String trimmedDomain = trimToNull(domain);
+        if (trimmedDomain == null) {
+            return null;
+        }
+        return trimmedDomain.toLowerCase(Locale.ROOT);
     }
 
     public static String trimToNull(String value) {
