@@ -41,8 +41,6 @@ decorator:
 logging:
   level:
     org.springframework: info
-# TODO: BulkInsert 모니터링 - 아래 주석을 해제해야함
-#    com.mysql.cj: trace
 
 management:
   endpoints:

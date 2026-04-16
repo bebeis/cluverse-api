@@ -6,7 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Objects;
+import static cluverse.common.util.StringNormalizer.requireTrimmed;
+import static cluverse.common.util.StringNormalizer.trimToNull;
 
 @Entity
 @Getter
@@ -29,10 +30,10 @@ public class University extends BaseTimeEntity {
     private boolean isActive = true;
 
     private University(String name, String emailDomain, String badgeImageUrl, String address, boolean isActive) {
-        this.name = normalizeRequired(name);
-        this.emailDomain = normalizeOptional(emailDomain);
-        this.badgeImageUrl = normalizeOptional(badgeImageUrl);
-        this.address = normalizeOptional(address);
+        this.name = requireTrimmed(name);
+        this.emailDomain = trimToNull(emailDomain);
+        this.badgeImageUrl = trimToNull(badgeImageUrl);
+        this.address = trimToNull(address);
         this.isActive = isActive;
     }
 
@@ -47,22 +48,10 @@ public class University extends BaseTimeEntity {
     }
 
     public void update(String name, String emailDomain, String badgeImageUrl, String address, boolean isActive) {
-        this.name = normalizeRequired(name);
-        this.emailDomain = normalizeOptional(emailDomain);
-        this.badgeImageUrl = normalizeOptional(badgeImageUrl);
-        this.address = normalizeOptional(address);
+        this.name = requireTrimmed(name);
+        this.emailDomain = trimToNull(emailDomain);
+        this.badgeImageUrl = trimToNull(badgeImageUrl);
+        this.address = trimToNull(address);
         this.isActive = isActive;
-    }
-
-    private String normalizeRequired(String value) {
-        return normalizeOptional(Objects.requireNonNull(value));
-    }
-
-    private String normalizeOptional(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
     }
 }
