@@ -275,4 +275,7 @@ terraform.rc
 cluverse-key
 cluverse-key.*
 
+## blog
+/docs/blog
+
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij,macos,visualstudiocode,terraform
