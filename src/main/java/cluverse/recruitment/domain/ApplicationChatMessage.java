@@ -18,9 +18,8 @@ public class ApplicationChatMessage extends BaseTimeEntity {
     @Column(name = "application_chat_message_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recruitment_application_id", nullable = false)
-    private RecruitmentApplication application;
+    @Column(name = "recruitment_application_id", nullable = false)
+    private Long recruitmentApplicationId;
 
     @Column(name = "sender_id", nullable = false)
     private Long senderId;
@@ -37,18 +36,18 @@ public class ApplicationChatMessage extends BaseTimeEntity {
     @Column(name = "client_ip")
     private String clientIp;
 
-    private ApplicationChatMessage(RecruitmentApplication application, Long senderId, String content, String clientIp) {
-        this.application = application;
+    private ApplicationChatMessage(Long recruitmentApplicationId, Long senderId, String content, String clientIp) {
+        this.recruitmentApplicationId = recruitmentApplicationId;
         this.senderId = senderId;
         this.content = content;
         this.clientIp = clientIp;
         this.isRead = false;
     }
 
-    public static ApplicationChatMessage create(RecruitmentApplication application,
+    public static ApplicationChatMessage create(Long recruitmentApplicationId,
                                                 Long senderId,
                                                 String content,
                                                 String clientIp) {
-        return new ApplicationChatMessage(application, senderId, content, clientIp);
+        return new ApplicationChatMessage(recruitmentApplicationId, senderId, content, clientIp);
     }
 }

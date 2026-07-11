@@ -5,7 +5,9 @@ import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
 import cluverse.recruitment.domain.RecruitmentApplicationStatus;
 import cluverse.recruitment.domain.ApplicationChatMessage;
+import cluverse.recruitment.repository.ApplicationChatMessageRepository;
 import cluverse.recruitment.repository.RecruitmentApplicationRepository;
+import cluverse.recruitment.repository.RecruitmentRepository;
 import cluverse.recruitment.service.request.ApplicationChatMessageCreateRequest;
 import cluverse.recruitment.service.request.RecruitmentApplicationAnswerRequest;
 import cluverse.recruitment.service.request.RecruitmentApplicationCreateRequest;
@@ -22,6 +24,8 @@ import java.util.List;
 public class RecruitmentApplicationWriter {
 
     private final RecruitmentApplicationRepository recruitmentApplicationRepository;
+    private final RecruitmentRepository recruitmentRepository;
+    private final ApplicationChatMessageRepository applicationChatMessageRepository;
 
     public RecruitmentApplication create(Recruitment recruitment,
                                          Long applicantId,
@@ -35,8 +39,9 @@ public class RecruitmentApplicationWriter {
                 toAnswers(request.answers()),
                 clientIp
         );
-        recruitment.increaseApplicationCount();
-        return recruitmentApplicationRepository.save(application);
+        RecruitmentApplication saved = recruitmentApplicationRepository.save(application);
+        recruitmentRepository.increaseApplicationCount(recruitment.getId());
+        return saved;
     }
 
     public void updateStatus(RecruitmentApplication application,
@@ -50,13 +55,12 @@ public class RecruitmentApplicationWriter {
         application.changeStatus(RecruitmentApplicationStatus.CANCELLED, actorId, null, clientIp);
     }
 
-    public Long createMessage(RecruitmentApplication application,
+    public Long createMessage(Long applicationId,
                               Long senderId,
                               ApplicationChatMessageCreateRequest request,
                               String clientIp) {
-        ApplicationChatMessage message = application.addMessage(senderId, request.content(), clientIp);
-        recruitmentApplicationRepository.flush();
-        return message.getId();
+        ApplicationChatMessage message = ApplicationChatMessage.create(applicationId, senderId, request.content(), clientIp);
+        return applicationChatMessageRepository.save(message).getId();
     }
 
     private List<FormItemAnswer> toAnswers(List<RecruitmentApplicationAnswerRequest> requests) {

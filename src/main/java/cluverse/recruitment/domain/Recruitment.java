@@ -152,14 +152,6 @@ public class Recruitment extends BaseTimeEntity {
         return status == RecruitmentStatus.OPEN && (deadline == null || deadline.isAfter(LocalDateTime.now()));
     }
 
-    public void increaseApplicationCount() {
-        this.applicationCount++;
-    }
-
-    public void decreaseApplicationCount() {
-        this.applicationCount--;
-    }
-
     private void replaceFormItems(List<FormItem> formItems) {
         this.formItems.clear();
         if (formItems == null) {

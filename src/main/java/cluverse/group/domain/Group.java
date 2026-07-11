@@ -62,6 +62,10 @@ public class Group extends BaseTimeEntity {
     @Column(name = "member_count", nullable = false)
     private int memberCount;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupInterest> interests = new ArrayList<>();
 

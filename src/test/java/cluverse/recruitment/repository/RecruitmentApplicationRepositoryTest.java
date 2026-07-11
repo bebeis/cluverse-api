@@ -1,5 +1,6 @@
 package cluverse.recruitment.repository;
 
+import cluverse.recruitment.domain.ApplicationChatMessage;
 import cluverse.recruitment.domain.RecruitmentApplication;
 import cluverse.recruitment.domain.FormItemAnswer;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,9 @@ class RecruitmentApplicationRepositoryTest {
     @Autowired
     private RecruitmentApplicationRepository recruitmentApplicationRepository;
 
+    @Autowired
+    private ApplicationChatMessageRepository applicationChatMessageRepository;
+
     @Test
     void 지원서를_상세_조회할_수_있다() {
         // given
@@ -27,7 +31,6 @@ class RecruitmentApplicationRepositoryTest {
                 List.of(FormItemAnswer.create(1L, "지원 동기입니다.")),
                 "127.0.0.1"
         );
-        application.addMessage(200L, "안녕하세요.", "127.0.0.1");
         RecruitmentApplication saved = recruitmentApplicationRepository.save(application);
 
         // when
@@ -35,7 +38,28 @@ class RecruitmentApplicationRepositoryTest {
 
         // then
         assertThat(result.getAnswers()).hasSize(1);
-        assertThat(result.getMessages()).hasSize(1);
+    }
+
+    @Test
+    void 지원서_채팅_메시지를_지원서_ID_참조로_저장한다() {
+        // given
+        RecruitmentApplication saved = recruitmentApplicationRepository.save(RecruitmentApplication.create(
+                10L,
+                200L,
+                "Backend",
+                null,
+                List.of(),
+                "127.0.0.1"
+        ));
+
+        // when
+        ApplicationChatMessage message = applicationChatMessageRepository.save(
+                ApplicationChatMessage.create(saved.getId(), 200L, "안녕하세요.", "127.0.0.1")
+        );
+
+        // then
+        ApplicationChatMessage result = applicationChatMessageRepository.findById(message.getId()).orElseThrow();
+        assertThat(result.getRecruitmentApplicationId()).isEqualTo(saved.getId());
     }
 
     @Test

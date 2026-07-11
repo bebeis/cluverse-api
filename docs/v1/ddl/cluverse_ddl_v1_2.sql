@@ -460,6 +460,7 @@ CREATE TABLE `group` (
     owner_id        BIGINT       NOT NULL                      COMMENT '그룹 소유자 → member.member_id',
     max_members     INT          NULL                          COMMENT 'NULL이면 무제한',
     member_count    INT          NOT NULL DEFAULT 1            COMMENT '반정규화',
+    version         BIGINT       NOT NULL DEFAULT 0            COMMENT '낙관적 락 버전',
     created_at      DATETIME     NOT NULL DEFAULT NOW(),
     updated_at      DATETIME     NOT NULL DEFAULT NOW() ON UPDATE NOW(),
     PRIMARY KEY (group_id),

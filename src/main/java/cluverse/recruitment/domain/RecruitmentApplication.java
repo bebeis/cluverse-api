@@ -48,10 +48,6 @@ public class RecruitmentApplication extends BaseTimeEntity {
     @OrderBy("createdAt DESC")
     private List<ApplicationStatusHistory> statusHistories = new ArrayList<>();
 
-    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("createdAt ASC")
-    private List<ApplicationChatMessage> messages = new ArrayList<>();
-
     private RecruitmentApplication(Long recruitmentId, Long applicantId, String position, String portfolioUrl) {
         this.recruitmentId = recruitmentId;
         this.applicantId = applicantId;
@@ -81,12 +77,6 @@ public class RecruitmentApplication extends BaseTimeEntity {
         this.reviewedBy = changedBy;
         this.reviewedAt = LocalDateTime.now();
         this.statusHistories.add(ApplicationStatusHistory.create(this, previousStatus, newStatus, changedBy, note, clientIp));
-    }
-
-    public ApplicationChatMessage addMessage(Long senderId, String content, String clientIp) {
-        ApplicationChatMessage message = ApplicationChatMessage.create(this, senderId, content, clientIp);
-        this.messages.add(message);
-        return message;
     }
 
     public String getLatestReviewNote() {

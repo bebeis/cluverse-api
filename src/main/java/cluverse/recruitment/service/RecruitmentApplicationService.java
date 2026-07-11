@@ -62,7 +62,7 @@ public class RecruitmentApplicationService {
                               String clientIp) {
         RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
         validateParticipantOrManager(memberId, application);
-        return recruitmentApplicationWriter.createMessage(application, memberId, request, clientIp);
+        return recruitmentApplicationWriter.createMessage(application.getId(), memberId, request, clientIp);
     }
 
     private void validateParticipantOrManager(Long memberId, RecruitmentApplication application) {

@@ -126,7 +126,7 @@ public class RecruitmentApplicationQueryRepository {
         return queryFactory
                 .select(
                         applicationChatMessage.id,
-                        applicationChatMessage.application.id,
+                        applicationChatMessage.recruitmentApplicationId,
                         applicationChatMessage.senderId,
                         member.nickname,
                         memberProfile.profileImageUrl,
@@ -138,7 +138,7 @@ public class RecruitmentApplicationQueryRepository {
                 .join(member).on(member.id.eq(applicationChatMessage.senderId))
                 .leftJoin(memberProfile).on(memberProfile.memberId.eq(member.id))
                 .where(
-                        applicationChatMessage.application.id.eq(applicationId),
+                        applicationChatMessage.recruitmentApplicationId.eq(applicationId),
                         beforeMessageIdLt(beforeMessageId)
                 )
                 .orderBy(applicationChatMessage.createdAt.asc(), applicationChatMessage.id.asc())
@@ -147,7 +147,7 @@ public class RecruitmentApplicationQueryRepository {
                 .stream()
                 .map(tuple -> new ApplicationChatMessageQueryDto(
                         tuple.get(applicationChatMessage.id),
-                        tuple.get(applicationChatMessage.application.id),
+                        tuple.get(applicationChatMessage.recruitmentApplicationId),
                         tuple.get(applicationChatMessage.senderId),
                         tuple.get(member.nickname),
                         tuple.get(memberProfile.profileImageUrl),
@@ -162,7 +162,7 @@ public class RecruitmentApplicationQueryRepository {
         return queryFactory
                 .select(
                         applicationChatMessage.id,
-                        applicationChatMessage.application.id,
+                        applicationChatMessage.recruitmentApplicationId,
                         applicationChatMessage.senderId,
                         member.nickname,
                         memberProfile.profileImageUrl,
@@ -174,7 +174,7 @@ public class RecruitmentApplicationQueryRepository {
                 .join(member).on(member.id.eq(applicationChatMessage.senderId))
                 .leftJoin(memberProfile).on(memberProfile.memberId.eq(member.id))
                 .where(
-                        applicationChatMessage.application.id.eq(applicationId),
+                        applicationChatMessage.recruitmentApplicationId.eq(applicationId),
                         applicationChatMessage.id.eq(messageId)
                 )
                 .fetch()
@@ -182,7 +182,7 @@ public class RecruitmentApplicationQueryRepository {
                 .findFirst()
                 .map(tuple -> new ApplicationChatMessageQueryDto(
                         tuple.get(applicationChatMessage.id),
-                        tuple.get(applicationChatMessage.application.id),
+                        tuple.get(applicationChatMessage.recruitmentApplicationId),
                         tuple.get(applicationChatMessage.senderId),
                         tuple.get(member.nickname),
                         tuple.get(memberProfile.profileImageUrl),

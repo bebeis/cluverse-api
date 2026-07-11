@@ -7,6 +7,7 @@ import cluverse.common.exception.NotFoundException;
 import cluverse.common.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -79,6 +80,14 @@ public class ApiControllerAdvice {
     public ApiResponse<Object> noResourceFoundException(NoResourceFoundException e, HttpServletRequest request) {
         logClientException(HttpStatus.NOT_FOUND, request, e);
         return ApiResponse.notFound(e.getMessage());
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiResponse<Object> optimisticLockingFailureException(OptimisticLockingFailureException e,
+                                                                 HttpServletRequest request) {
+        logClientException(HttpStatus.CONFLICT, request, e);
+        return ApiResponse.of(HttpStatus.CONFLICT, "동시에 처리된 다른 요청과 충돌했습니다. 잠시 후 다시 시도해주세요.", null);
     }
 
     @ExceptionHandler(Exception.class)
