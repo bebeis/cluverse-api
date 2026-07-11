@@ -6,7 +6,6 @@ import cluverse.common.auth.LoginMember;
 import cluverse.member.service.MemberPostQueryService;
 import cluverse.member.service.MemberQueryService;
 import cluverse.member.service.MemberService;
-import cluverse.member.service.MemberUniversityService;
 import cluverse.member.service.MemberProfileImageService;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
@@ -49,7 +48,6 @@ public class MemberController {
 
     private final MemberQueryService memberQueryService;
     private final MemberService memberService;
-    private final MemberUniversityService memberUniversityService;
     private final MemberPostQueryService memberPostQueryService;
     private final MemberProfileImageService memberProfileImageService;
 
@@ -86,7 +84,7 @@ public class MemberController {
     @PutMapping("/me/university")
     public ApiResponse<MemberProfileResponse> updateUniversity(@Login LoginMember loginMember,
                                                                @RequestBody @Valid MemberUniversityUpdateRequest request) {
-        return ApiResponse.ok(memberUniversityService.updateUniversity(loginMember.memberId(), request));
+        return ApiResponse.ok(memberService.updateUniversity(loginMember.memberId(), request.universityId()));
     }
 
     @GetMapping("/me/posts")

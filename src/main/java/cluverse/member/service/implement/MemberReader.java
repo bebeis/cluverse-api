@@ -155,6 +155,11 @@ public class MemberReader {
                 .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.MEMBER_NOT_FOUND.getMessage()));
     }
 
+    public Member readWithProfileOrThrow(Long memberId) {
+        return memberRepository.findWithProfileById(memberId)
+                .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.MEMBER_NOT_FOUND.getMessage()));
+    }
+
     public boolean isAdmin(Long memberId) {
         return readOrThrow(memberId).isAdmin();
     }

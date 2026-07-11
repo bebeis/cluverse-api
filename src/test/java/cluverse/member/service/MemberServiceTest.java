@@ -1,14 +1,10 @@
 package cluverse.member.service;
 
 import cluverse.auth.exception.AuthExceptionMessage;
-import cluverse.common.config.PasswordConfig;
-import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.UnauthorizedException;
 import cluverse.member.domain.Member;
-import cluverse.member.domain.MemberAuth;
 import cluverse.member.domain.MemberProfile;
 import cluverse.member.domain.MemberProfileField;
-import cluverse.member.domain.MemberStatus;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.member.service.implement.MemberWriter;
 import cluverse.member.service.request.AddInterestRequest;
@@ -32,9 +28,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,9 +40,6 @@ class MemberServiceTest {
 
     @Mock
     private MemberWriter memberWriter;
-
-    @Mock
-    private PasswordConfig passwordConfig;
 
     @InjectMocks
     private MemberQueryService memberQueryService;
@@ -202,26 +193,37 @@ class MemberServiceTest {
     }
 
     @Test
-    void 관심사_추가시_서비스가_멤버를_조회하고_응답을_만든다() {
-        Member member = createMember(1L, "luna", 10L);
+    void 관심사_추가시_서비스가_응답을_만든다() {
         AddInterestRequest request = new AddInterestRequest(300L);
         MemberInterestResponse response = new MemberInterestResponse(300L, "스터디", "ACADEMIC");
 
-        when(memberReader.readOrThrow(1L)).thenReturn(member);
         when(memberReader.readInterest(300L)).thenReturn(response);
 
         MemberInterestResponse result = memberService.addInterest(1L, request);
 
         assertThat(result).isEqualTo(response);
-        verify(memberReader).readOrThrow(1L);
+        verify(memberWriter).addInterest(1L, request);
         verify(memberReader).readInterest(300L);
-        verify(memberWriter).addInterest(member, request);
     }
 
     @Test
     void 프로필_수정시_서비스가_수정후_응답을_다시_조립한다() {
         Member member = Member.createSocialMember("social-user");
         ReflectionTestUtils.setField(member, "id", 1L);
+        MemberProfile profile = MemberProfile.create(member);
+        profile.update(
+                "소개",
+                2022,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                List.of(MemberProfileField.BIO)
+        );
+        member.initProfile(profile);
         UpdateProfileRequest request = new UpdateProfileRequest(
                 "소개",
                 2022,
@@ -235,30 +237,11 @@ class MemberServiceTest {
                 List.of(MemberProfileField.BIO)
         );
 
-        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(memberReader.readWithProfileOrThrow(1L)).thenReturn(member);
         when(memberReader.readUniversitySummary(null)).thenReturn(null);
         when(memberReader.countFollowers(1L)).thenReturn(0L);
         when(memberReader.countFollowings(1L)).thenReturn(0L);
         when(memberReader.countPosts(1L)).thenReturn(0L);
-        doAnswer(invocation -> {
-            Member target = invocation.getArgument(0);
-            UpdateProfileRequest updateRequest = invocation.getArgument(1);
-            MemberProfile profile = MemberProfile.create(target);
-            profile.update(
-                    updateRequest.bio(),
-                    updateRequest.entranceYear(),
-                    updateRequest.profileImageUrl(),
-                    updateRequest.linkGithub(),
-                    updateRequest.linkNotion(),
-                    updateRequest.linkPortfolio(),
-                    updateRequest.linkInstagram(),
-                    updateRequest.linkEtc(),
-                    updateRequest.isPublic(),
-                    updateRequest.visibleFields()
-            );
-            target.initProfile(profile);
-            return null;
-        }).when(memberWriter).updateProfile(any(Member.class), any(UpdateProfileRequest.class));
 
         MemberProfileResponse result = memberService.updateProfile(1L, request);
 
@@ -267,12 +250,12 @@ class MemberServiceTest {
         assertThat(result.bio()).isEqualTo("소개");
         assertThat(result.entranceYear()).isEqualTo(2022);
         assertThat(result.postCount()).isZero();
-        verify(memberWriter).updateProfile(member, request);
+        verify(memberWriter).updateProfile(1L, request);
     }
 
     @Test
     void 닉네임_수정시_서비스가_수정후_응답을_다시_조립한다() {
-        Member member = createMember(1L, "luna", 10L);
+        Member member = createMember(1L, "nova", 10L);
         MemberNicknameUpdateRequest request = new MemberNicknameUpdateRequest("nova");
         MemberProfileSummaryResponse university = new MemberProfileSummaryResponse(
                 10L,
@@ -280,23 +263,17 @@ class MemberServiceTest {
                 "https://cdn.example.com/badge.png"
         );
 
-        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(memberReader.readWithProfileOrThrow(1L)).thenReturn(member);
         when(memberReader.readUniversitySummary(10L)).thenReturn(university);
         when(memberReader.countFollowers(1L)).thenReturn(3L);
         when(memberReader.countFollowings(1L)).thenReturn(4L);
         when(memberReader.countPosts(1L)).thenReturn(5L);
-        doAnswer(invocation -> {
-            Member target = invocation.getArgument(0);
-            String nickname = invocation.getArgument(1);
-            target.updateNickname(nickname);
-            return null;
-        }).when(memberWriter).updateNickname(any(Member.class), any(String.class));
 
         MemberProfileResponse result = memberService.updateNickname(1L, request);
 
         assertThat(result.nickname()).isEqualTo("nova");
         assertThat(result.followerCount()).isEqualTo(3L);
-        verify(memberWriter).updateNickname(member, "nova");
+        verify(memberWriter).updateNickname(1L, "nova");
     }
 
     @Test
@@ -312,84 +289,41 @@ class MemberServiceTest {
 
     @Test
     void 학교_수정시_서비스가_수정후_응답을_다시_조립한다() {
-        Member member = Member.createSocialMember("social-user");
-        ReflectionTestUtils.setField(member, "id", 1L);
+        Member member = createMember(1L, "luna", 10L);
         MemberProfileSummaryResponse university = new MemberProfileSummaryResponse(
                 10L,
                 "클루대",
                 "https://cdn.example.com/badge.png"
         );
 
-        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(memberReader.readWithProfileOrThrow(1L)).thenReturn(member);
         when(memberReader.readUniversitySummary(10L)).thenReturn(university);
         when(memberReader.countFollowers(1L)).thenReturn(0L);
         when(memberReader.countFollowings(1L)).thenReturn(0L);
         when(memberReader.countPosts(1L)).thenReturn(0L);
-        doAnswer(invocation -> {
-            Member target = invocation.getArgument(0);
-            Long universityId = invocation.getArgument(1);
-            target.assignUniversity(universityId);
-            return null;
-        }).when(memberWriter).updateUniversity(any(Member.class), any(Long.class));
 
         MemberProfileResponse result = memberService.updateUniversity(1L, 10L);
 
         assertThat(result.memberId()).isEqualTo(1L);
         assertThat(result.university().universityId()).isEqualTo(10L);
         assertThat(result.university().universityName()).isEqualTo("클루대");
-        verify(memberWriter).updateUniversity(member, 10L);
+        verify(memberWriter).updateUniversity(1L, 10L);
     }
 
     @Test
-    void 비밀번호_수정시_현재_비밀번호를_검증한_후_변경한다() {
-        // given
-        Member member = createMember(1L, "luna", 10L);
-        member.initMemberAuth("luna@example.com", "encoded-old-password");
+    void 비밀번호_수정은_writer에_위임한다() {
         MemberPasswordUpdateRequest request = new MemberPasswordUpdateRequest("old-password", "new-password");
 
-        when(memberReader.readOrThrow(1L)).thenReturn(member);
-        when(passwordConfig.matches("old-password", "encoded-old-password")).thenReturn(true);
-        when(passwordConfig.encode("new-password")).thenReturn("encoded-new-password");
-
-        // when
         memberService.updatePassword(1L, request);
 
-        // then
-        verify(memberWriter).updatePassword(member, "encoded-new-password");
+        verify(memberWriter).updatePassword(1L, request);
     }
 
     @Test
-    void 현재_비밀번호가_틀리면_비밀번호를_변경할_수_없다() {
-        // given
-        Member member = createMember(1L, "luna", 10L);
-        member.initMemberAuth("luna@example.com", "encoded-old-password");
-        MemberPasswordUpdateRequest request = new MemberPasswordUpdateRequest("wrong-password", "new-password");
-
-        when(memberReader.readOrThrow(1L)).thenReturn(member);
-        when(passwordConfig.matches("wrong-password", "encoded-old-password")).thenReturn(false);
-
-        // when & then
-        assertThatThrownBy(() -> memberService.updatePassword(1L, request))
-                .isInstanceOf(BadRequestException.class);
-    }
-
-    @Test
-    void 회원_탈퇴시_삭제_상태로_변경한다() {
-        // given
-        Member member = createMember(1L, "luna", 10L);
-        when(memberReader.readOrThrow(1L)).thenReturn(member);
-        doAnswer(invocation -> {
-            Member target = invocation.getArgument(0);
-            target.delete();
-            return null;
-        }).when(memberWriter).delete(any(Member.class));
-
-        // when
+    void 회원_탈퇴는_writer에_위임한다() {
         memberService.deleteMember(1L);
 
-        // then
-        assertThat(member.getStatus()).isEqualTo(MemberStatus.DELETED);
-        verify(memberWriter).delete(member);
+        verify(memberWriter).delete(1L);
     }
 
     @Test

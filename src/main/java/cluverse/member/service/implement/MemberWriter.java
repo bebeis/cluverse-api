@@ -1,5 +1,6 @@
 package cluverse.member.service.implement;
 
+import cluverse.common.config.PasswordConfig;
 import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.NotFoundException;
 import cluverse.interest.repository.InterestRepository;
@@ -7,7 +8,7 @@ import cluverse.major.repository.MajorRepository;
 import cluverse.member.domain.Block;
 import cluverse.member.domain.Follow;
 import cluverse.member.domain.Member;
-import cluverse.member.domain.MemberMajor;
+import cluverse.member.domain.MemberAuth;
 import cluverse.member.domain.MemberProfile;
 import cluverse.member.exception.MemberExceptionMessage;
 import cluverse.member.repository.BlockRepository;
@@ -15,7 +16,9 @@ import cluverse.member.repository.FollowRepository;
 import cluverse.member.repository.MemberRepository;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
+import cluverse.member.service.request.MemberPasswordUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
+import cluverse.university.service.implement.UniversityReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +33,12 @@ public class MemberWriter {
     private final MemberRepository memberRepository;
     private final MajorRepository majorRepository;
     private final InterestRepository interestRepository;
+    private final MemberReader memberReader;
+    private final UniversityReader universityReader;
+    private final PasswordConfig passwordConfig;
 
-    public void updateProfile(Member member, UpdateProfileRequest request) {
+    public void updateProfile(Long memberId, UpdateProfileRequest request) {
+        Member member = memberReader.readOrThrow(memberId);
         MemberProfile profile = ensureProfile(member);
         profile.update(
                 request.bio(),
@@ -47,7 +54,8 @@ public class MemberWriter {
         );
     }
 
-    public void updateNickname(Member member, String nickname) {
+    public void updateNickname(Long memberId, String nickname) {
+        Member member = memberReader.readOrThrow(memberId);
         if (member.getNickname().equals(nickname)) {
             return;
         }
@@ -55,15 +63,26 @@ public class MemberWriter {
         member.updateNickname(nickname);
     }
 
-    public void updateUniversity(Member member, Long universityId) {
+    public void updateUniversity(Long memberId, Long universityId) {
+        universityReader.readOrThrow(universityId);
+        Member member = memberReader.readOrThrow(memberId);
         member.assignUniversity(universityId);
     }
 
-    public void updatePassword(Member member, String passwordHash) {
-        member.getMemberAuth().changePassword(passwordHash);
+    public void updatePassword(Long memberId, MemberPasswordUpdateRequest request) {
+        Member member = memberReader.readOrThrow(memberId);
+        MemberAuth memberAuth = member.getMemberAuth();
+        if (memberAuth == null || memberAuth.getPasswordHash() == null) {
+            throw new BadRequestException(MemberExceptionMessage.PASSWORD_CHANGE_NOT_ALLOWED.getMessage());
+        }
+        if (!passwordConfig.matches(request.currentPassword(), memberAuth.getPasswordHash())) {
+            throw new BadRequestException(MemberExceptionMessage.INVALID_PASSWORD.getMessage());
+        }
+        memberAuth.changePassword(passwordConfig.encode(request.newPassword()));
     }
 
-    public void delete(Member member) {
+    public void delete(Long memberId) {
+        Member member = memberReader.readOrThrow(memberId);
         member.delete();
     }
 
@@ -71,28 +90,33 @@ public class MemberWriter {
         return memberRepository.save(member);
     }
 
-    public MemberMajor addMajor(Member member, AddMajorRequest request) {
+    public Long addMajor(Long memberId, AddMajorRequest request) {
         validateMajorExists(request.majorId());
+        Member member = memberReader.readOrThrow(memberId);
         member.addMajor(request.majorId(), request.majorType());
         memberRepository.saveAndFlush(member);
         return member.getMajors().stream()
                 .filter(major -> major.getMajorId().equals(request.majorId()))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow()
+                .getId();
     }
 
-    public void removeMajor(Member member, Long majorId) {
+    public void removeMajor(Long memberId, Long majorId) {
         validateMajorExists(majorId);
+        Member member = memberReader.readOrThrow(memberId);
         member.removeMajor(majorId);
     }
 
-    public void addInterest(Member member, AddInterestRequest request) {
+    public void addInterest(Long memberId, AddInterestRequest request) {
         validateInterestExists(request.interestId());
+        Member member = memberReader.readOrThrow(memberId);
         member.addInterest(request.interestId());
     }
 
-    public void removeInterest(Member member, Long interestId) {
+    public void removeInterest(Long memberId, Long interestId) {
         validateInterestExists(interestId);
+        Member member = memberReader.readOrThrow(memberId);
         member.removeInterest(interestId);
     }
 

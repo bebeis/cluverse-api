@@ -10,12 +10,10 @@ import cluverse.member.service.MemberService;
 import cluverse.member.service.MemberPostQueryService;
 import cluverse.member.service.MemberProfileImageService;
 import cluverse.member.service.MemberQueryService;
-import cluverse.member.service.MemberUniversityService;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
 import cluverse.member.service.request.MemberNicknameUpdateRequest;
 import cluverse.member.service.request.MemberPasswordUpdateRequest;
-import cluverse.member.service.request.MemberUniversityUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberFollowResponse;
@@ -62,13 +60,12 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     private final MemberQueryService memberQueryService = mock(MemberQueryService.class);
     private final MemberService memberService = mock(MemberService.class);
-    private final MemberUniversityService memberUniversityService = mock(MemberUniversityService.class);
     private final MemberPostQueryService memberPostQueryService = mock(MemberPostQueryService.class);
     private final MemberProfileImageService memberProfileImageService = mock(MemberProfileImageService.class);
 
     @Override
     protected Object initController() {
-        return new MemberController(memberQueryService, memberService, memberUniversityService, memberPostQueryService, memberProfileImageService);
+        return new MemberController(memberQueryService, memberService, memberPostQueryService, memberProfileImageService);
     }
 
     @Test
@@ -305,7 +302,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 학교_수정() throws Exception {
-        when(memberUniversityService.updateUniversity(anyLong(), any(MemberUniversityUpdateRequest.class)))
+        when(memberService.updateUniversity(anyLong(), anyLong()))
                 .thenReturn(createProfileResponse(1L, true));
 
         mockMvc.perform(put("/api/v1/members/me/university")
