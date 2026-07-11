@@ -1,25 +1,18 @@
 package cluverse.calendar.service;
 
 import cluverse.auth.exception.AuthExceptionMessage;
-import cluverse.calendar.domain.CalendarEvent;
-import cluverse.calendar.exception.CalendarExceptionMessage;
-import cluverse.calendar.service.implement.CalendarEventReader;
 import cluverse.calendar.service.implement.CalendarEventWriter;
 import cluverse.calendar.service.request.CalendarEventCreateRequest;
 import cluverse.calendar.service.request.CalendarEventUpdateRequest;
 import cluverse.calendar.service.response.CalendarEventResponse;
-import cluverse.common.exception.ForbiddenException;
 import cluverse.common.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class CalendarEventService {
 
-    private final CalendarEventReader calendarEventReader;
     private final CalendarEventWriter calendarEventWriter;
 
     public CalendarEventResponse createEvent(Long memberId, CalendarEventCreateRequest request) {
@@ -29,22 +22,12 @@ public class CalendarEventService {
 
     public CalendarEventResponse updateEvent(Long memberId, Long eventId, CalendarEventUpdateRequest request) {
         validateAuthenticated(memberId);
-        CalendarEvent event = readOwnedEvent(memberId, eventId);
-        calendarEventWriter.update(event, request);
-        return CalendarEventResponse.from(event);
+        return CalendarEventResponse.from(calendarEventWriter.update(memberId, eventId, request));
     }
 
     public void deleteEvent(Long memberId, Long eventId) {
         validateAuthenticated(memberId);
-        calendarEventWriter.delete(readOwnedEvent(memberId, eventId));
-    }
-
-    private CalendarEvent readOwnedEvent(Long memberId, Long eventId) {
-        CalendarEvent event = calendarEventReader.readOrThrow(eventId);
-        if (!event.isOwner(memberId)) {
-            throw new ForbiddenException(CalendarExceptionMessage.EVENT_ACCESS_DENIED.getMessage());
-        }
-        return event;
+        calendarEventWriter.delete(memberId, eventId);
     }
 
     private void validateAuthenticated(Long memberId) {

@@ -6,6 +6,7 @@ import cluverse.calendar.repository.CalendarEventRepository;
 import cluverse.calendar.service.request.CalendarEventCreateRequest;
 import cluverse.calendar.service.request.CalendarEventUpdateRequest;
 import cluverse.common.exception.BadRequestException;
+import cluverse.common.exception.ForbiddenException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 public class CalendarEventWriter {
 
     private final CalendarEventRepository calendarEventRepository;
+    private final CalendarEventReader calendarEventReader;
 
     public CalendarEvent create(Long memberId, CalendarEventCreateRequest request) {
         validatePeriod(request.startAt(), request.endAt());
@@ -34,7 +36,8 @@ public class CalendarEventWriter {
         ));
     }
 
-    public void update(CalendarEvent event, CalendarEventUpdateRequest request) {
+    public CalendarEvent update(Long memberId, Long eventId, CalendarEventUpdateRequest request) {
+        CalendarEvent event = readOwnedEvent(memberId, eventId);
         validatePeriod(request.startAt(), request.endAt());
         event.update(
                 request.title(),
@@ -46,10 +49,19 @@ public class CalendarEventWriter {
                 request.allDay(),
                 request.visibility()
         );
+        return event;
     }
 
-    public void delete(CalendarEvent event) {
-        calendarEventRepository.delete(event);
+    public void delete(Long memberId, Long eventId) {
+        calendarEventRepository.delete(readOwnedEvent(memberId, eventId));
+    }
+
+    private CalendarEvent readOwnedEvent(Long memberId, Long eventId) {
+        CalendarEvent event = calendarEventReader.readOrThrow(eventId);
+        if (!event.isOwner(memberId)) {
+            throw new ForbiddenException(CalendarExceptionMessage.EVENT_ACCESS_DENIED.getMessage());
+        }
+        return event;
     }
 
     private void validatePeriod(LocalDateTime startAt, LocalDateTime endAt) {
