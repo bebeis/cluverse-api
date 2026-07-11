@@ -1,12 +1,8 @@
 package cluverse.recruitment.service;
 
-import cluverse.common.exception.ForbiddenException;
-import cluverse.group.domain.Group;
-import cluverse.group.service.implement.GroupReader;
 import cluverse.member.domain.Member;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.recruitment.domain.Recruitment;
-import cluverse.recruitment.exception.RecruitmentExceptionMessage;
 import cluverse.recruitment.service.implement.RecruitmentReader;
 import cluverse.recruitment.service.implement.RecruitmentWriter;
 import cluverse.recruitment.service.request.RecruitmentCreateRequest;
@@ -17,24 +13,19 @@ import cluverse.recruitment.service.response.RecruitmentFormItemResponse;
 import cluverse.recruitment.service.response.RecruitmentPositionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class RecruitmentService {
 
     private final RecruitmentReader recruitmentReader;
     private final RecruitmentWriter recruitmentWriter;
-    private final GroupReader groupReader;
     private final MemberReader memberReader;
 
     public RecruitmentDetailResponse createRecruitment(Long memberId, Long groupId, RecruitmentCreateRequest request) {
-        Group group = groupReader.readOrThrow(groupId);
-        validateGroupManager(memberId, group);
         Recruitment recruitment = recruitmentWriter.create(memberId, groupId, request);
         return toDetailResponse(recruitmentReader.readOrThrow(recruitment.getId()));
     }
@@ -42,25 +33,17 @@ public class RecruitmentService {
     public RecruitmentDetailResponse updateRecruitment(Long memberId,
                                                        Long recruitmentId,
                                                        RecruitmentUpdateRequest request) {
-        Recruitment recruitment = recruitmentReader.readOrThrow(recruitmentId);
-        validateGroupManager(memberId, groupReader.readOrThrow(recruitment.getGroupId()));
-        recruitmentWriter.update(recruitment, request);
-        return toDetailResponse(recruitment);
+        return toDetailResponse(recruitmentWriter.update(memberId, recruitmentId, request));
     }
 
     public RecruitmentDetailResponse updateRecruitmentStatus(Long memberId,
                                                              Long recruitmentId,
                                                              RecruitmentStatusUpdateRequest request) {
-        Recruitment recruitment = recruitmentReader.readOrThrow(recruitmentId);
-        validateGroupManager(memberId, groupReader.readOrThrow(recruitment.getGroupId()));
-        recruitmentWriter.updateStatus(recruitment, request);
-        return toDetailResponse(recruitment);
+        return toDetailResponse(recruitmentWriter.updateStatus(memberId, recruitmentId, request));
     }
 
     public void deleteRecruitment(Long memberId, Long recruitmentId) {
-        Recruitment recruitment = recruitmentReader.readOrThrow(recruitmentId);
-        validateGroupManager(memberId, groupReader.readOrThrow(recruitment.getGroupId()));
-        recruitmentWriter.delete(recruitment);
+        recruitmentWriter.delete(memberId, recruitmentId);
     }
 
     private RecruitmentDetailResponse toDetailResponse(Recruitment recruitment) {
@@ -89,11 +72,5 @@ public class RecruitmentService {
                 recruitment.getCreatedAt(),
                 recruitment.getUpdatedAt()
         );
-    }
-
-    private void validateGroupManager(Long memberId, Group group) {
-        if (!group.isManager(memberId)) {
-            throw new ForbiddenException(RecruitmentExceptionMessage.RECRUITMENT_ACCESS_DENIED.getMessage());
-        }
     }
 }
