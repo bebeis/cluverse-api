@@ -81,7 +81,7 @@ public class RecruitmentApplicationQueryService {
     }
 
     public RecruitmentApplicationDetailResponse getApplication(Long memberId, Long applicationId) {
-        RecruitmentApplication application = recruitmentApplicationReader.readWithAnswersOrThrow(applicationId);
+        RecruitmentApplication application = recruitmentApplicationReader.readForDetailOrThrow(applicationId);
         validateParticipantOrManager(memberId, application);
         return toDetailResponse(application);
     }

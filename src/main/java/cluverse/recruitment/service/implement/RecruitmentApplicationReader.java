@@ -12,6 +12,7 @@ import cluverse.recruitment.repository.dto.ApplicationChatMessageQueryDto;
 import cluverse.recruitment.repository.dto.RecruitmentApplicationSummaryQueryDto;
 import cluverse.recruitment.service.request.RecruitmentApplicationSearchRequest;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,11 +37,15 @@ public class RecruitmentApplicationReader {
                 ));
     }
 
-    public RecruitmentApplication readWithAnswersOrThrow(Long applicationId) {
-        return recruitmentApplicationRepository.findWithAnswersById(applicationId)
+    public RecruitmentApplication readForDetailOrThrow(Long applicationId) {
+        RecruitmentApplication application = recruitmentApplicationRepository.findWithAnswersById(applicationId)
                 .orElseThrow(() -> new NotFoundException(
                         RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_NOT_FOUND.getMessage()
                 ));
+        // answers는 위 쿼리로 fetch join, statusHistories는 또 다른 bag이라 동시 fetch 불가(MultipleBagFetchException).
+        // getLatestReviewNote()가 접근하므로 트랜잭션 안에서 별도 초기화한다.
+        Hibernate.initialize(application.getStatusHistories());
+        return application;
     }
 
     public Recruitment readRecruitmentOrThrow(Long recruitmentId) {
