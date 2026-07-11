@@ -11,11 +11,9 @@ import cluverse.notification.service.response.NotificationPreferenceResponse;
 import cluverse.notification.service.response.NotificationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class NotificationService {
 
     private final NotificationWriter notificationWriter;
