@@ -52,6 +52,7 @@ cluverse
 | **도메인(=Entity)**                     | **개념 명사 (Entity 접미사 없음)**              | `Member`, `MemberProfile`, `Follow`                                      |
 | Repository                           | `[도메인]Repository`                      | `MemberRepository`, `FollowRepository`                                   |
 | QueryRepository (동적·복잡 조회, QueryDSL) | `[도메인]QueryRepository`                 | `MemberQueryRepository`, `FeedQueryRepository`                           |
+| Repository 확장 fragment (QueryDSL, 엔티티 반환·fetch join·벌크 UPDATE) | `[도메인]RepositoryCustom` + `[도메인]RepositoryImpl` | `MemberRepositoryCustom`/`Impl`, `PostRepositoryCustom`/`Impl`, `CommentRepositoryCustom`/`Impl` |
 | Enum                                 | 개념 명사                                  | `MemberStatus`, `MajorType`                                              |
 | Service (명령)                         | `[도메인]Service`                         | `MemberService`                                                          |
 | Service (조회)                         | `[도메인]QueryService`                    | `MemberQueryService`, `FeedQueryService`                                 |
@@ -297,8 +298,10 @@ cluverse 는 **`Reader`(조회·조립)** 와 **`Writer`(생성/수정/저장)**
 - **쿼리 우선순위(단순 → 복잡):**
     1. Spring Data 쿼리 메서드(`findByFollowerIdAndFollowingId`) — 엔티티/기본 조회.
     2. 조회 결과가 DTO 면 **인터페이스 Projection** 또는 `@Query`(JPQL) 생성자 Projection.
-    3. 엔티티 반환이면서 복잡하면 `@Query`(JPQL) + fetch join.
-    4. **동적 쿼리(런타임 조건 조합)·복잡 조인/집계/서브쿼리는 QueryDSL 로, 별도 `[도메인]QueryRepository` 에 둔다(§7.5).**
+    3. 엔티티 반환이면서 복잡하면 `@Query`(JPQL) + fetch join. 조건이 정적이면 이 방식으로 충분하다.
+    4. **동적 쿼리(런타임 조건 조합)·복잡 조인/집계/서브쿼리는 QueryDSL 로 분리한다.** 반환 형태에 따라 두 곳 중 하나에 둔다(§7.5):
+        - 읽기 전용 **DTO(projection/summary)** 를 반환하면 → 독립 `[도메인]QueryRepository`.
+        - **엔티티 fetch join·벌크 UPDATE·count** 처럼 메인 Repository 에 붙어야 하면 → `[도메인]RepositoryCustom` + `[도메인]RepositoryImpl` fragment.
 - N+1 대응: `hibernate.default_batch_fetch_size` 전역 설정 + 필요 시 fetch join.
 
 ### 7.2 Entity (= 도메인)
@@ -352,6 +355,26 @@ cluverse 는 **`Reader`(조회·조립)** 와 **`Writer`(생성/수정/저장)**
 - **인프라 설정**: `JPAQueryFactory` 빈 정의(`QuerydslConfig`)는 `common.config` 에 둔다. Q 클래스는 `annotationProcessor` 로
   `build/generated` 에 생성한다.
 - **주의**: `QueryRepository` 는 데이터 조회만 한다. 조합·가공·비즈니스 판단은 `Reader` 몫이다.
+
+### 7.5.1 Repository 확장 fragment (QueryDSL — 엔티티·벌크)
+
+QueryDSL 이 **읽기 전용 DTO 가 아니라 엔티티(fetch join)를 반환하거나, 벌크 UPDATE·count 처럼 메인 Repository 에
+붙어야 하는** 경우가 있다. 이때는 독립 `QueryRepository`(§7.5) 대신 **Spring Data fragment** 로 메인 Repository 를 확장한다.
+`QueryRepository` 는 "projection 을 반환하는 별도 조회 컴포넌트"이고, fragment 는 "메인 Repository 의 일부로 노출되는
+QueryDSL 확장"이라는 점이 다르다.
+
+- **구성**: `[도메인]RepositoryCustom`(인터페이스) + `[도메인]RepositoryImpl`(`JPAQueryFactory` 주입 구현).
+  메인 Repository 가 `extends JpaRepository<[도메인], Long>, [도메인]RepositoryCustom` 로 fragment 를 합성한다.
+  Spring Data 규약상 구현 클래스 이름은 반드시 **`[Repository 이름]Impl`** 이어야 한다.
+- **위치**: `<domain>.repository` 패키지, 메인 Repository 와 나란히 둔다.
+- **쓰임(현행 예)**:
+    - 엔티티 fetch join: `PostRepositoryCustom.findWithImagesById` / `findAllWithImagesByIdIn`, `MemberRepositoryCustom.findBySocialAccount`.
+    - 벌크 UPDATE(1차 캐시 flush/clear 포함): `CommentRepositoryCustom.increase/decreaseLikeCount·ReplyCount`.
+    - 엔티티/집계 조회: `MemberRepositoryCustom.findByEmail`, `findMajorsByMemberId`, `countActivePostsByMemberId`.
+- **주입 규칙**: fragment 는 메인 Repository 를 통해 노출되므로 §2.2 의 Repository 주입 규칙을 그대로 따른다 —
+  Implement(`Reader`/`Writer`)가 `[도메인]Repository` 를 주입하면 fragment 메서드도 함께 사용한다.
+- **선택 기준**: DTO(projection/summary) 반환이면 `QueryRepository`, 엔티티/벌크면 fragment. 정적·단순 fetch join 은
+  `@Query`(JPQL, §7.1-3)로도 충분하므로 QueryDSL 이 꼭 필요할 때만 fragment 를 만든다.
 
 ### 7.6 연관관계 매핑
 
