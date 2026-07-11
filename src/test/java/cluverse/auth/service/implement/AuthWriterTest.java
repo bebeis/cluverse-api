@@ -6,6 +6,7 @@ import cluverse.member.domain.Member;
 import cluverse.member.domain.MemberProfile;
 import cluverse.member.domain.OAuthProvider;
 import cluverse.common.config.PasswordConfig;
+import cluverse.common.exception.BadRequestException;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.member.service.implement.MemberTermsAgreementWriter;
 import cluverse.member.service.implement.MemberWriter;
@@ -126,7 +127,7 @@ class AuthWriterTest {
         when(memberReader.existsByNickname(anyString())).thenReturn(true);
 
         assertThatThrownBy(() -> authWriter.registerBySocial(userInfo, OAuthProvider.KAKAO))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessage(AuthExceptionMessage.SOCIAL_NICKNAME_GENERATION_FAILED.getMessage());
     }
 }

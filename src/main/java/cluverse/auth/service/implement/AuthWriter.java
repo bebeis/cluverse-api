@@ -6,7 +6,9 @@ import cluverse.auth.service.request.MemberRegisterRequest;
 import cluverse.common.config.PasswordConfig;
 import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.NotFoundException;
-import cluverse.member.domain.*;
+import cluverse.member.domain.Member;
+import cluverse.member.domain.MemberProfile;
+import cluverse.member.domain.OAuthProvider;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.member.service.implement.MemberTermsAgreementWriter;
 import cluverse.member.service.implement.MemberWriter;
@@ -146,7 +148,7 @@ public class AuthWriter {
                 return nickname;
             }
         }
-        throw new IllegalStateException(AuthExceptionMessage.SOCIAL_NICKNAME_GENERATION_FAILED.getMessage());
+        throw new BadRequestException(AuthExceptionMessage.SOCIAL_NICKNAME_GENERATION_FAILED.getMessage());
     }
 
     private String generateSocialNickname(String base, OAuthProvider provider, String providerUserId, int attempt) {

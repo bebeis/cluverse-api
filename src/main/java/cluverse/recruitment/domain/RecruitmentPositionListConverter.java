@@ -3,6 +3,7 @@ package cluverse.recruitment.domain;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cluverse.recruitment.exception.RecruitmentExceptionMessage;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
@@ -20,7 +21,7 @@ public class RecruitmentPositionListConverter implements AttributeConverter<List
         try {
             return OBJECT_MAPPER.writeValueAsString(attribute == null ? List.of() : attribute);
         } catch (JsonProcessingException exception) {
-            throw new IllegalArgumentException("모집 포지션을 JSON으로 변환할 수 없습니다.", exception);
+            throw new IllegalArgumentException(RecruitmentExceptionMessage.RECRUITMENT_POSITION_SERIALIZE_FAILED.getMessage(), exception);
         }
     }
 
@@ -32,7 +33,7 @@ public class RecruitmentPositionListConverter implements AttributeConverter<List
             }
             return OBJECT_MAPPER.readValue(dbData, TYPE_REFERENCE);
         } catch (JsonProcessingException exception) {
-            throw new IllegalArgumentException("모집 포지션 JSON을 읽을 수 없습니다.", exception);
+            throw new IllegalArgumentException(RecruitmentExceptionMessage.RECRUITMENT_POSITION_DESERIALIZE_FAILED.getMessage(), exception);
         }
     }
 }
