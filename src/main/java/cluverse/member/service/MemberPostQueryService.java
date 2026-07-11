@@ -8,13 +8,11 @@ import cluverse.post.service.response.PostPageResponse;
 import cluverse.post.service.response.PostSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class MemberPostQueryService {
 
     private final MemberReader memberReader;

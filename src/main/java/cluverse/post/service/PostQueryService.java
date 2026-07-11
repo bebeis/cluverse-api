@@ -16,7 +16,6 @@ import cluverse.post.service.response.PostSummaryResponse;
 import cluverse.post.service.response.PostTitleResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +26,6 @@ import static java.util.stream.Collectors.toMap;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class PostQueryService {
 
     private final PostAccessReader postAccessReader;

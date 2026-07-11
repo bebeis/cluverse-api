@@ -9,11 +9,9 @@ import cluverse.feed.service.request.TrendingPostSearchRequest;
 import cluverse.feed.service.response.FeedPageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class FeedQueryService {
     private final FeedReader feedReader;
 

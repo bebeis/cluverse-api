@@ -6,13 +6,11 @@ import cluverse.university.service.response.UniversityDetailResponse;
 import cluverse.university.service.response.UniversitySummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class UniversityQueryService {
 
     private final UniversityReader universityReader;

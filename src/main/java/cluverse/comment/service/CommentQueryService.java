@@ -10,13 +10,11 @@ import cluverse.comment.service.response.CommentResponse;
 import cluverse.post.service.implement.PostAccessReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class CommentQueryService {
 
     private final CommentReader commentReader;
