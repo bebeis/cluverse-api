@@ -47,6 +47,8 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:2.0.0")
     implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-mysql")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("com.h2database:h2")
     runtimeOnly("com.mysql:mysql-connector-j")

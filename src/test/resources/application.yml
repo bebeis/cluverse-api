@@ -13,6 +13,8 @@ spring:
         format_sql: false
         show_sql: false
     open-in-view: false
+  flyway:
+    enabled: false               # 테스트는 H2 + Hibernate create-drop 사용, Flyway(MySQL DDL) 미적용
 
 decorator:
   datasource:

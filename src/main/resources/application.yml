@@ -30,6 +30,11 @@ spring:
         format_sql: false
         show_sql: false
     open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true    # 기존 운영 스키마는 V1 baseline 처리(미실행), 이후 버전만 적용
+    baseline-version: 1
+    locations: classpath:db/migration
 
 decorator:
   datasource:
