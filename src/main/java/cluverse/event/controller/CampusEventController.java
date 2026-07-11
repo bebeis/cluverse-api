@@ -4,8 +4,13 @@ import cluverse.common.api.response.ApiResponse;
 import cluverse.event.service.CampusEventQueryService;
 import cluverse.event.service.request.CampusEventSearchRequest;
 import cluverse.event.service.response.CampusEventResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -17,7 +22,7 @@ public class CampusEventController {
     private final CampusEventQueryService campusEventQueryService;
 
     @GetMapping
-    public ApiResponse<List<CampusEventResponse>> getEvents(@ModelAttribute CampusEventSearchRequest request) {
+    public ApiResponse<List<CampusEventResponse>> getEvents(@Valid @ModelAttribute CampusEventSearchRequest request) {
         return ApiResponse.ok(campusEventQueryService.getEvents(request));
     }
 
