@@ -20,6 +20,7 @@ public class BoardWriter {
     private static final int MAX_DEPTH = 2;
 
     private final BoardRepository boardRepository;
+    private final BoardReader boardReader;
 
     public Board create(BoardCreateRequest request) {
         validateCreatableType(request.boardType());
@@ -45,7 +46,8 @@ public class BoardWriter {
         return boardRepository.save(Board.createGroupBoard(name, description));
     }
 
-    public void update(Board board, BoardUpdateRequest request) {
+    public Board update(Long boardId, BoardUpdateRequest request) {
+        Board board = boardReader.readOrThrow(boardId);
         validateMutable(board);
         board.update(
                 request.name().trim(),
@@ -53,6 +55,7 @@ public class BoardWriter {
                 request.displayOrderOrDefault(),
                 request.isActiveOrDefault()
         );
+        return board;
     }
 
     public void updateGroupBoard(Board board, String name, String description) {
@@ -60,7 +63,8 @@ public class BoardWriter {
         board.updateGroupMetadata(name.trim(), description);
     }
 
-    public void delete(Board board) {
+    public void delete(Long boardId) {
+        Board board = boardReader.readOrThrow(boardId);
         validateMutable(board);
         validateDeletable(board);
         board.deactivate();
