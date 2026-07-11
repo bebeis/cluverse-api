@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UniversityWriter {
 
     private final UniversityRepository universityRepository;
+    private final UniversityReader universityReader;
 
     public University create(UniversityCreateRequest request) {
         validateNameNotExists(request.name());
@@ -29,7 +30,8 @@ public class UniversityWriter {
         return universityRepository.save(university);
     }
 
-    public void update(University university, UniversityUpdateRequest request) {
+    public University update(Long universityId, UniversityUpdateRequest request) {
+        University university = universityReader.readOrThrow(universityId);
         validateNameNotExists(request.name(), university.getId());
         university.update(
                 request.name(),
@@ -38,6 +40,7 @@ public class UniversityWriter {
                 request.address(),
                 request.isActive()
         );
+        return university;
     }
 
     private void validateNameNotExists(String universityName) {

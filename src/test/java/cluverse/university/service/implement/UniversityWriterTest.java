@@ -25,6 +25,9 @@ class UniversityWriterTest {
     @Mock
     private UniversityRepository universityRepository;
 
+    @Mock
+    private UniversityReader universityReader;
+
     @InjectMocks
     private UniversityWriter universityWriter;
 
@@ -75,10 +78,11 @@ class UniversityWriterTest {
         // given
         University university = University.create("클루대학교", null, null, null, true);
         ReflectionTestUtils.setField(university, "id", 10L);
+        when(universityReader.readOrThrow(10L)).thenReturn(university);
         when(universityRepository.existsByNameAndIdNot("클루대학교", 10L)).thenReturn(false);
 
         // when
-        universityWriter.update(university, new UniversityUpdateRequest(
+        universityWriter.update(10L, new UniversityUpdateRequest(
                 " 클루대학교 ",
                 " cluverse.ac.kr ",
                 " https://cdn.example.com/badge-v2.png ",
