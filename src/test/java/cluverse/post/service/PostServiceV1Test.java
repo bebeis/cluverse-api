@@ -9,7 +9,7 @@ import cluverse.member.service.implement.MemberReader;
 import cluverse.meta.service.implement.PostMetaWriter;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
-import cluverse.post.repository.PostQueryRepository;
+import cluverse.post.service.implement.PostReader;
 import cluverse.post.repository.dto.PostDetailQueryDto;
 import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
@@ -50,7 +50,7 @@ class PostServiceV1Test {
     private PostWriter postWriter;
 
     @Mock
-    private PostQueryRepository postQueryRepository;
+    private PostReader postReader;
 
     @Mock
     private BoardReader boardReader;
@@ -74,7 +74,7 @@ class PostServiceV1Test {
     void 게시글_목록_조회시_서비스가_정렬된_ID_순서대로_응답을_조립한다() {
         // given
         PostSearchRequest request = new PostSearchRequest(3L, null, PostSortType.LATEST, 1, 20, null);
-        when(postQueryRepository.findPostPage(99L, request)).thenReturn(new PostPageQueryResult(
+        when(postReader.readPostPage(99L, request)).thenReturn(new PostPageQueryResult(
                 List.of(
                         createPostSummaryQueryDto(2L, 20L, false),
                         createPostSummaryQueryDto(1L, 10L, false)
@@ -98,7 +98,7 @@ class PostServiceV1Test {
         // given
         LocalDate date = LocalDate.of(2024, 1, 15);
         PostSearchRequest request = new PostSearchRequest(3L, null, null, null, 20, date);
-        when(postQueryRepository.findPostPageByDate(99L, request)).thenReturn(new PostPageQueryResult(
+        when(postReader.readPostPageByDate(99L, request)).thenReturn(new PostPageQueryResult(
                 List.of(
                         createPostSummaryQueryDto(5L, 20L, false),
                         createPostSummaryQueryDto(4L, 20L, false)
@@ -121,7 +121,7 @@ class PostServiceV1Test {
     void 게시글_검색시_검색_결과를_응답으로_조립한다() {
         // given
         PostKeywordSearchRequest request = new PostKeywordSearchRequest(3L, "스프링", 1, 20);
-        when(postQueryRepository.findPostPageByKeyword(99L, request)).thenReturn(new PostPageQueryResult(
+        when(postReader.readPostPageByKeyword(99L, request)).thenReturn(new PostPageQueryResult(
                 List.of(createPostSummaryQueryDto(10L, 20L, false)),
                 true
         ));
@@ -142,7 +142,7 @@ class PostServiceV1Test {
         // given
         Post post = createPost(10L, 3L, 1L, "익명 질문", true);
         when(postAccessReader.readOrThrow(10L)).thenReturn(post);
-        when(postQueryRepository.findPostDetail(2L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
+        when(postReader.readPostDetail(2L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
 
         // when
         PostDetailResponse response = postQueryService.readPost(2L, 10L);

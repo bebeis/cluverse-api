@@ -4,6 +4,9 @@ import cluverse.comment.domain.Comment;
 import cluverse.comment.exception.CommentExceptionMessage;
 import cluverse.comment.repository.CommentQueryRepository;
 import cluverse.comment.repository.CommentRepository;
+import cluverse.comment.repository.dto.CommentPageQueryResult;
+import cluverse.comment.repository.dto.CommentQueryDto;
+import cluverse.comment.service.request.CommentPageRequest;
 import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.comment.service.response.CommentReactionTargetResponse;
 import cluverse.common.exception.BadRequestException;
@@ -45,6 +48,14 @@ public class CommentReader {
 
     public List<CommentLastRepliedPost> readRecentCommentRepliedPosts(Long size) {
         return commentQueryRepository.findRecentCommentRepliedPosts(size);
+    }
+
+    public CommentPageQueryResult readCommentPage(Long viewerId, CommentPageRequest request) {
+        return commentQueryRepository.findCommentPage(viewerId, request);
+    }
+
+    public CommentQueryDto readComment(Long viewerId, Long commentId) {
+        return commentQueryRepository.findComment(viewerId, commentId);
     }
 
     public boolean hasChildren(Comment comment) {

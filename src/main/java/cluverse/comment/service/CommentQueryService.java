@@ -1,6 +1,5 @@
 package cluverse.comment.service;
 
-import cluverse.comment.repository.CommentQueryRepository;
 import cluverse.comment.repository.dto.CommentPageQueryResult;
 import cluverse.comment.service.implement.CommentReader;
 import cluverse.comment.service.request.CommentPageRequest;
@@ -21,14 +20,13 @@ import java.util.List;
 public class CommentQueryService {
 
     private final CommentReader commentReader;
-    private final CommentQueryRepository commentQueryRepository;
     private final PostAccessReader postAccessReader;
 
     public CommentPageResponse getComments(Long memberId, CommentPageRequest request) {
         postAccessReader.validateReadablePost(memberId, request.postId());
         validateParentComment(request.postId(), request.parentCommentId());
 
-        CommentPageQueryResult queryResult = commentQueryRepository.findCommentPage(memberId, request);
+        CommentPageQueryResult queryResult = commentReader.readCommentPage(memberId, request);
         List<CommentResponse> comments = queryResult.comments().stream()
                 .map(comment -> CommentResponse.from(comment, memberId))
                 .toList();
@@ -41,7 +39,7 @@ public class CommentQueryService {
     }
 
     public CommentResponse getComment(Long memberId, Long commentId) {
-        return CommentResponse.from(commentQueryRepository.findComment(memberId, commentId), memberId);
+        return CommentResponse.from(commentReader.readComment(memberId, commentId), memberId);
     }
 
     public List<CommentLastRepliedPost> getRecentCommentRepliedPostIds(final Long size) {

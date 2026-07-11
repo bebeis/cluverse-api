@@ -1,12 +1,12 @@
 package cluverse.reaction.service;
 
-import cluverse.feed.repository.FeedQueryRepository;
 import cluverse.feed.repository.dto.FeedPageQueryResult;
 import cluverse.feed.repository.dto.FeedPostQueryDto;
 import cluverse.board.domain.BoardType;
 import cluverse.meta.service.implement.PostMetaWriter;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.service.implement.PostAccessReader;
+import cluverse.reaction.service.implement.PostReactionReader;
 import cluverse.reaction.service.implement.PostReactionWriter;
 import cluverse.reaction.service.request.BookmarkedPostSearchRequest;
 import cluverse.reaction.service.request.BookmarkedPostSortType;
@@ -22,7 +22,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.inOrder;
@@ -42,7 +41,7 @@ class PostReactionServiceTest {
     private PostMetaWriter postMetaWriter;
 
     @Mock
-    private FeedQueryRepository feedQueryRepository;
+    private PostReactionReader postReactionReader;
 
     @InjectMocks
     private PostReactionService postReactionService;
@@ -100,9 +99,7 @@ class PostReactionServiceTest {
                 1,
                 20
         );
-        when(feedQueryRepository.findBlockedMemberIds(1L)).thenReturn(Set.of(99L));
-        when(feedQueryRepository.findMyGroupBoardIds(1L)).thenReturn(Set.of(30L));
-        when(feedQueryRepository.findBookmarkedFeedPage(1L, Set.of(99L), Set.of(30L), BookmarkedPostSortType.BOOKMARKED_AT, 1, 20))
+        when(postReactionReader.readBookmarkedFeed(1L, BookmarkedPostSortType.BOOKMARKED_AT, 1, 20))
                 .thenReturn(new FeedPageQueryResult(
                         List.of(new FeedPostQueryDto(
                                 10L,

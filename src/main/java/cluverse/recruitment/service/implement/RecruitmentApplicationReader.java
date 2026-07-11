@@ -3,9 +3,13 @@ package cluverse.recruitment.service.implement;
 import cluverse.common.exception.NotFoundException;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
+import cluverse.recruitment.domain.RecruitmentApplicationStatus;
 import cluverse.recruitment.exception.RecruitmentExceptionMessage;
+import cluverse.recruitment.repository.RecruitmentApplicationQueryRepository;
 import cluverse.recruitment.repository.RecruitmentApplicationRepository;
 import cluverse.recruitment.repository.RecruitmentRepository;
+import cluverse.recruitment.repository.dto.ApplicationChatMessageQueryDto;
+import cluverse.recruitment.repository.dto.RecruitmentApplicationSummaryQueryDto;
 import cluverse.recruitment.service.request.RecruitmentApplicationSearchRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,6 +27,7 @@ public class RecruitmentApplicationReader {
 
     private final RecruitmentApplicationRepository recruitmentApplicationRepository;
     private final RecruitmentRepository recruitmentRepository;
+    private final RecruitmentApplicationQueryRepository recruitmentApplicationQueryRepository;
 
     public RecruitmentApplication readOrThrow(Long applicationId) {
         return recruitmentApplicationRepository.findById(applicationId)
@@ -60,6 +65,35 @@ public class RecruitmentApplicationReader {
         }
         return recruitmentRepository.findAllById(recruitmentIds).stream()
                 .collect(Collectors.toMap(Recruitment::getId, recruitment -> recruitment));
+    }
+
+    public List<RecruitmentApplicationSummaryQueryDto> readMyApplicationSummaries(Long applicantId,
+                                                                                 RecruitmentApplicationStatus status,
+                                                                                 int page,
+                                                                                 int size) {
+        return recruitmentApplicationQueryRepository.findMyApplicationSummaries(applicantId, status, page, size);
+    }
+
+    public List<RecruitmentApplicationSummaryQueryDto> readApplicationSummaries(Long recruitmentId,
+                                                                                RecruitmentApplicationStatus status,
+                                                                                int page,
+                                                                                int size) {
+        return recruitmentApplicationQueryRepository.findRecruitmentApplicationSummaries(recruitmentId, status, page, size);
+    }
+
+    public List<ApplicationChatMessageQueryDto> readApplicationMessages(Long applicationId,
+                                                                        Long beforeMessageId,
+                                                                        int limit) {
+        return recruitmentApplicationQueryRepository.findApplicationMessages(applicationId, beforeMessageId, limit);
+    }
+
+    public ApplicationChatMessageQueryDto readApplicationMessageOrThrow(Long applicationId, Long messageId) {
+        ApplicationChatMessageQueryDto message =
+                recruitmentApplicationQueryRepository.findApplicationMessage(applicationId, messageId);
+        if (message == null) {
+            throw new NotFoundException(RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_NOT_FOUND.getMessage());
+        }
+        return message;
     }
 
     private void validateActive(Recruitment recruitment) {

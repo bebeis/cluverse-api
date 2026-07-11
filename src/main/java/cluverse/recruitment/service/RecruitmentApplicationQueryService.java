@@ -1,7 +1,6 @@
 package cluverse.recruitment.service;
 
 import cluverse.common.exception.ForbiddenException;
-import cluverse.common.exception.NotFoundException;
 import cluverse.group.domain.Group;
 import cluverse.group.service.implement.GroupReader;
 import cluverse.member.service.implement.MemberReader;
@@ -9,7 +8,6 @@ import cluverse.recruitment.domain.FormItem;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
 import cluverse.recruitment.exception.RecruitmentExceptionMessage;
-import cluverse.recruitment.repository.RecruitmentApplicationQueryRepository;
 import cluverse.recruitment.repository.dto.ApplicationChatMessageQueryDto;
 import cluverse.recruitment.repository.dto.RecruitmentApplicationSummaryQueryDto;
 import cluverse.recruitment.service.implement.RecruitmentApplicationReader;
@@ -34,14 +32,13 @@ import java.util.Map;
 public class RecruitmentApplicationQueryService {
 
     private final RecruitmentApplicationReader recruitmentApplicationReader;
-    private final RecruitmentApplicationQueryRepository recruitmentApplicationQueryRepository;
     private final GroupReader groupReader;
     private final MemberReader memberReader;
 
     public RecruitmentApplicationPageResponse getMyApplications(Long memberId,
                                                                RecruitmentApplicationSearchRequest request) {
         List<RecruitmentApplicationSummaryQueryDto> queriedApplications =
-                recruitmentApplicationQueryRepository.findMyApplicationSummaries(
+                recruitmentApplicationReader.readMyApplicationSummaries(
                         memberId,
                         request.status(),
                         request.pageOrDefault(),
@@ -66,7 +63,7 @@ public class RecruitmentApplicationQueryService {
         Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(recruitmentId);
         validateManager(memberId, recruitment.getGroupId());
         List<RecruitmentApplicationSummaryQueryDto> queriedApplications =
-                recruitmentApplicationQueryRepository.findRecruitmentApplicationSummaries(
+                recruitmentApplicationReader.readApplicationSummaries(
                         recruitmentId,
                         request.status(),
                         request.pageOrDefault(),
@@ -97,7 +94,7 @@ public class RecruitmentApplicationQueryService {
         RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
         validateParticipantOrManager(memberId, application);
         List<ApplicationChatMessageQueryDto> queriedMessages =
-                recruitmentApplicationQueryRepository.findApplicationMessages(
+                recruitmentApplicationReader.readApplicationMessages(
                         applicationId,
                         request.beforeMessageId(),
                         request.limitOrDefault()
@@ -119,10 +116,7 @@ public class RecruitmentApplicationQueryService {
         RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
         validateParticipantOrManager(memberId, application);
         ApplicationChatMessageQueryDto message =
-                recruitmentApplicationQueryRepository.findApplicationMessage(applicationId, messageId);
-        if (message == null) {
-            throw new NotFoundException(RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_NOT_FOUND.getMessage());
-        }
+                recruitmentApplicationReader.readApplicationMessageOrThrow(applicationId, messageId);
         return toMessageResponse(memberId, message);
     }
 

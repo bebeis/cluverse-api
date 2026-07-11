@@ -5,9 +5,9 @@ import cluverse.comment.service.implement.CommentReader;
 import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.post.domain.Post;
-import cluverse.post.repository.PostQueryRepository;
 import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.service.implement.PostAccessReader;
+import cluverse.post.service.implement.PostReader;
 import cluverse.post.service.request.PostKeywordSearchRequest;
 import cluverse.post.service.request.PostSearchRequest;
 import cluverse.post.service.response.PostDetailResponse;
@@ -31,7 +31,7 @@ import static java.util.stream.Collectors.toMap;
 public class PostQueryService {
 
     private final PostAccessReader postAccessReader;
-    private final PostQueryRepository postQueryRepository;
+    private final PostReader postReader;
     private final BoardReader boardReader;
     private final MemberReader memberReader;
     private final CommentReader commentReader;
@@ -40,8 +40,8 @@ public class PostQueryService {
         boardReader.validateReadable(memberId, request.boardId());
 
         PostPageQueryResult queryResult = request.isDateBased()
-                ? postQueryRepository.findPostPageByDate(memberId, request)
-                : postQueryRepository.findPostPage(memberId, request);
+                ? postReader.readPostPageByDate(memberId, request)
+                : postReader.readPostPage(memberId, request);
 
         List<PostSummaryResponse> responses = queryResult.posts().stream()
                 .map(PostSummaryResponse::from)
@@ -59,7 +59,7 @@ public class PostQueryService {
     public PostPageResponse searchPosts(Long memberId, PostKeywordSearchRequest request) {
         boardReader.validateReadable(memberId, request.boardId());
 
-        PostPageQueryResult queryResult = postQueryRepository.findPostPageByKeyword(memberId, request);
+        PostPageQueryResult queryResult = postReader.readPostPageByKeyword(memberId, request);
         List<PostSummaryResponse> responses = queryResult.posts().stream()
                 .map(PostSummaryResponse::from)
                 .toList();
@@ -76,7 +76,7 @@ public class PostQueryService {
     public PostDetailResponse readPost(Long memberId, Long postId) {
         Post post = postAccessReader.readOrThrow(postId);
         boardReader.validateReadable(memberId, post.getBoardId());
-        return PostDetailResponse.from(postQueryRepository.findPostDetail(memberId, postId));
+        return PostDetailResponse.from(postReader.readPostDetail(memberId, postId));
     }
 
     public void validatePostExists(Long postId) {

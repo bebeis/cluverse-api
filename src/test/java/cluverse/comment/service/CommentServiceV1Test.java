@@ -2,7 +2,6 @@ package cluverse.comment.service;
 
 import cluverse.comment.domain.Comment;
 import cluverse.comment.domain.CommentStatus;
-import cluverse.comment.repository.CommentQueryRepository;
 import cluverse.comment.repository.dto.CommentPageQueryResult;
 import cluverse.comment.repository.dto.CommentQueryDto;
 import cluverse.comment.service.implement.CommentReader;
@@ -41,9 +40,6 @@ class CommentServiceV1Test {
     private CommentWriter commentWriter;
 
     @Mock
-    private CommentQueryRepository commentQueryRepository;
-
-    @Mock
     private MemberReader memberReader;
 
     @Mock
@@ -62,7 +58,7 @@ class CommentServiceV1Test {
     void 댓글_목록_조회시_쿼리_결과를_응답으로_조립한다() {
         // given
         CommentPageRequest request = new CommentPageRequest(10L, null, 0, 20);
-        when(commentQueryRepository.findCommentPage(99L, request)).thenReturn(new CommentPageQueryResult(
+        when(commentReader.readCommentPage(99L, request)).thenReturn(new CommentPageQueryResult(
                 List.of(createCommentQueryDto(101L, null, 0, true, false)),
                 true
         ));

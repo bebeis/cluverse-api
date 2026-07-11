@@ -2,8 +2,8 @@ package cluverse.member.service;
 
 import cluverse.member.service.implement.MemberReader;
 import cluverse.member.service.request.MemberPostPageRequest;
-import cluverse.post.repository.PostQueryRepository;
 import cluverse.post.repository.dto.PostPageQueryResult;
+import cluverse.post.service.implement.PostReader;
 import cluverse.post.service.response.PostPageResponse;
 import cluverse.post.service.response.PostSummaryResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +18,12 @@ import java.util.List;
 public class MemberPostQueryService {
 
     private final MemberReader memberReader;
-    private final PostQueryRepository postQueryRepository;
+    private final PostReader postReader;
 
     public PostPageResponse getMyPosts(Long memberId, MemberPostPageRequest request) {
         memberReader.readOrThrow(memberId);
 
-        PostPageQueryResult queryResult = postQueryRepository.findPostPageByAuthor(memberId, memberId, request.pageOrDefault(),
+        PostPageQueryResult queryResult = postReader.readPostPageByAuthor(memberId, memberId, request.pageOrDefault(),
                 request.sizeOrDefault());
         List<PostSummaryResponse> responses = queryResult.posts().stream()
                 .map(PostSummaryResponse::from)
