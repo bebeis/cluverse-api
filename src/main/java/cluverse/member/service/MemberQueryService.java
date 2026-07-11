@@ -13,7 +13,6 @@ import cluverse.member.service.response.MemberNicknameAvailabilityResponse;
 import cluverse.member.service.response.MemberProfileResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.List;
@@ -21,14 +20,13 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class MemberQueryService {
 
     private final MemberReader memberReader;
 
     public MemberProfileResponse getProfile(Long viewerId, Long targetMemberId) {
         validateViewerId(viewerId);
-        Member member = memberReader.readOrThrow(targetMemberId);
+        Member member = memberReader.readWithProfileOrThrow(targetMemberId);
         return buildProfileResponse(viewerId, member);
     }
 

@@ -15,14 +15,12 @@ import cluverse.group.service.response.GroupSummaryResponse;
 import cluverse.group.service.response.MyGroupSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class GroupQueryService {
 
     private final GroupReader groupReader;
@@ -66,17 +64,17 @@ public class GroupQueryService {
     }
 
     public GroupDetailResponse getGroup(Long memberId, Long groupId) {
-        return toDetailResponse(memberId, groupReader.readActiveOrThrow(groupId));
+        return toDetailResponse(memberId, groupReader.readActiveDetailOrThrow(groupId));
     }
 
     public List<GroupMemberResponse> getMembers(Long memberId, Long groupId) {
-        Group group = groupReader.readActiveOrThrow(groupId);
+        Group group = groupReader.readActiveWithMembersAndRolesOrThrow(groupId);
         validateManager(memberId, group);
         return toMemberResponses(memberId, group);
     }
 
     public List<GroupRoleResponse> getRoles(Long memberId, Long groupId) {
-        Group group = groupReader.readActiveOrThrow(groupId);
+        Group group = groupReader.readActiveWithMembersAndRolesOrThrow(groupId);
         validateManager(memberId, group);
         return toRoleResponses(group);
     }

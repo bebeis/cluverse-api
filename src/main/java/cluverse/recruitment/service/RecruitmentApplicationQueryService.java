@@ -21,14 +21,12 @@ import cluverse.recruitment.service.response.RecruitmentApplicationPageResponse;
 import cluverse.recruitment.service.response.RecruitmentApplicationSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class RecruitmentApplicationQueryService {
 
     private final RecruitmentApplicationReader recruitmentApplicationReader;
@@ -83,7 +81,7 @@ public class RecruitmentApplicationQueryService {
     }
 
     public RecruitmentApplicationDetailResponse getApplication(Long memberId, Long applicationId) {
-        RecruitmentApplication application = recruitmentApplicationReader.readOrThrow(applicationId);
+        RecruitmentApplication application = recruitmentApplicationReader.readWithAnswersOrThrow(applicationId);
         validateParticipantOrManager(memberId, application);
         return toDetailResponse(application);
     }
@@ -138,8 +136,8 @@ public class RecruitmentApplicationQueryService {
     }
 
     private RecruitmentApplicationDetailResponse toDetailResponse(RecruitmentApplication application) {
-        Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(application.getRecruitmentId());
-        Map<Long, cluverse.member.domain.Member> memberMap = memberReader.readMemberMap(
+        Recruitment recruitment = recruitmentApplicationReader.readRecruitmentWithFormItemsOrThrow(application.getRecruitmentId());
+        Map<Long, cluverse.member.domain.Member> memberMap = memberReader.readMemberMapWithProfile(
                 java.util.stream.Stream.of(application.getApplicantId(), application.getReviewedBy())
                         .filter(java.util.Objects::nonNull)
                         .distinct()
@@ -205,7 +203,7 @@ public class RecruitmentApplicationQueryService {
     }
 
     private void validateManager(Long memberId, Long groupId) {
-        Group group = groupReader.readOrThrow(groupId);
+        Group group = groupReader.readWithMembersOrThrow(groupId);
         if (!group.isManager(memberId)) {
             throw new ForbiddenException(RecruitmentExceptionMessage.RECRUITMENT_ACCESS_DENIED.getMessage());
         }
@@ -216,7 +214,7 @@ public class RecruitmentApplicationQueryService {
             return;
         }
         Recruitment recruitment = recruitmentApplicationReader.readRecruitmentOrThrow(application.getRecruitmentId());
-        Group group = groupReader.readOrThrow(recruitment.getGroupId());
+        Group group = groupReader.readWithMembersOrThrow(recruitment.getGroupId());
         if (group.isManager(memberId)) {
             return;
         }

@@ -70,7 +70,7 @@ class MemberServiceTest {
                 "https://cdn.example.com/badge.png"
         );
 
-        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(memberReader.readWithProfileOrThrow(1L)).thenReturn(member);
         when(memberReader.readUniversitySummary(10L)).thenReturn(university);
         when(memberReader.countFollowers(1L)).thenReturn(12L);
         when(memberReader.countFollowings(1L)).thenReturn(7L);
@@ -88,7 +88,7 @@ class MemberServiceTest {
         assertThat(result.followerCount()).isEqualTo(12L);
         assertThat(result.followingCount()).isEqualTo(7L);
         assertThat(result.postCount()).isEqualTo(34L);
-        verify(memberReader).readOrThrow(1L);
+        verify(memberReader).readWithProfileOrThrow(1L);
         verify(memberReader).readUniversitySummary(10L);
         verify(memberReader).countFollowers(1L);
         verify(memberReader).countFollowings(1L);
@@ -120,7 +120,7 @@ class MemberServiceTest {
                 "https://cdn.example.com/badge.png"
         );
 
-        when(memberReader.readOrThrow(1L)).thenReturn(member);
+        when(memberReader.readWithProfileOrThrow(1L)).thenReturn(member);
         when(memberReader.readUniversitySummary(10L)).thenReturn(university);
         when(memberReader.isFollowing(2L, 1L)).thenReturn(true);
         when(memberReader.isBlocked(2L, 1L)).thenReturn(false);

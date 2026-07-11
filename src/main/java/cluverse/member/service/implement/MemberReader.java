@@ -195,6 +195,14 @@ public class MemberReader {
                 .collect(java.util.stream.Collectors.toMap(Member::getId, member -> member));
     }
 
+    public Map<Long, Member> readMemberMapWithProfile(Collection<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        return memberRepository.findAllWithProfileByIdIn(memberIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Member::getId, member -> member));
+    }
+
     public MemberProfileSummaryResponse readUniversitySummary(Long universityId) {
         if (universityId == null) {
             return null;

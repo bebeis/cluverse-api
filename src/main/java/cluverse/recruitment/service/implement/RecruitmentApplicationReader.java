@@ -36,8 +36,22 @@ public class RecruitmentApplicationReader {
                 ));
     }
 
+    public RecruitmentApplication readWithAnswersOrThrow(Long applicationId) {
+        return recruitmentApplicationRepository.findWithAnswersById(applicationId)
+                .orElseThrow(() -> new NotFoundException(
+                        RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_NOT_FOUND.getMessage()
+                ));
+    }
+
     public Recruitment readRecruitmentOrThrow(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
+                .orElseThrow(() -> new NotFoundException(RecruitmentExceptionMessage.RECRUITMENT_NOT_FOUND.getMessage()));
+        validateActive(recruitment);
+        return recruitment;
+    }
+
+    public Recruitment readRecruitmentWithFormItemsOrThrow(Long recruitmentId) {
+        Recruitment recruitment = recruitmentRepository.findWithFormItemsById(recruitmentId)
                 .orElseThrow(() -> new NotFoundException(RecruitmentExceptionMessage.RECRUITMENT_NOT_FOUND.getMessage()));
         validateActive(recruitment);
         return recruitment;
