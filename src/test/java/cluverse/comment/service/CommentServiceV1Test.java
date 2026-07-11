@@ -1,18 +1,18 @@
 package cluverse.comment.service;
 
-import cluverse.comment.domain.Comment;
 import cluverse.comment.domain.CommentStatus;
 import cluverse.comment.repository.dto.CommentPageQueryResult;
 import cluverse.comment.repository.dto.CommentQueryDto;
+import cluverse.comment.service.implement.CommentProcessor;
 import cluverse.comment.service.implement.CommentReader;
 import cluverse.comment.service.implement.CommentWriter;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.comment.service.request.CommentPageRequest;
 import cluverse.comment.service.request.CommentUpdateRequest;
+import cluverse.comment.service.response.CommentDeleteResponse;
 import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.comment.service.response.CommentPageResponse;
 import cluverse.comment.service.response.CommentResponse;
-import cluverse.common.exception.ForbiddenException;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.meta.service.implement.PostMetaWriter;
 import cluverse.post.service.implement.PostAccessReader;
@@ -21,13 +21,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,6 +45,9 @@ class CommentServiceV1Test {
 
     @Mock
     private PostMetaWriter postMetaWriter;
+
+    @Mock
+    private CommentProcessor commentProcessor;
 
     @InjectMocks
     private CommentQueryService commentQueryService;
@@ -76,99 +77,45 @@ class CommentServiceV1Test {
     }
 
     @Test
-    void 대댓글_작성시_게시글_댓글수와_부모_대댓글수를_증가시킨다() {
+    void 댓글_작성은_Processor에_위임하고_생성된_ID를_반환한다() {
         // given
         CommentCreateRequest request = new CommentCreateRequest(100L, "대댓글입니다.", false);
-        Comment parentComment = createComment(100L, 10L, 2L, null, 0);
-        Comment createdComment = createComment(101L, 10L, 1L, 100L, 1);
-
-        when(commentReader.readOrThrow(100L)).thenReturn(parentComment);
-        when(commentWriter.create(1L, 10L, parentComment, request, "127.0.0.1")).thenReturn(createdComment);
+        when(commentProcessor.createComment(1L, 10L, request, "127.0.0.1")).thenReturn(101L);
 
         // when
         Long commentId = commentService.createComment(1L, 10L, request, "127.0.0.1");
 
         // then
         assertThat(commentId).isEqualTo(101L);
-        verify(postAccessReader).validateWritablePost(1L, 10L);
-        verify(commentWriter).increaseReplyCount(100L);
-        verify(postMetaWriter).increaseCommentCount(10L);
+        verify(commentProcessor).createComment(1L, 10L, request, "127.0.0.1");
     }
 
     @Test
-    void 댓글_수정시_수정된_댓글을_응답으로_반환한다() {
+    void 댓글_수정은_Writer에_위임하고_댓글ID를_반환한다() {
         // given
-        Comment comment = createComment(101L, 10L, 1L, null, 0);
         CommentUpdateRequest request = new CommentUpdateRequest("수정된 댓글입니다.");
-
-        when(commentReader.readActiveOrThrow(101L)).thenReturn(comment);
 
         // when
         Long commentId = commentService.updateComment(1L, 101L, request);
 
         // then
         assertThat(commentId).isEqualTo(101L);
-        verify(commentWriter).update(comment, request);
+        verify(commentWriter).update(1L, 101L, request);
     }
 
     @Test
-    void 작성자가_아니면_댓글을_수정할_수_없다() {
+    void 댓글_삭제는_Processor에_위임하고_삭제_응답을_조립한다() {
         // given
-        Comment comment = createComment(101L, 10L, 2L, null, 0);
-        when(commentReader.readActiveOrThrow(101L)).thenReturn(comment);
-
-        // when & then
-        assertThatThrownBy(() -> commentService.updateComment(1L, 101L, new CommentUpdateRequest("수정")))
-                .isInstanceOf(ForbiddenException.class);
-    }
-
-    @Test
-    void 작성자도_관리자도_아니면_댓글을_삭제할_수_없다() {
-        // given
-        Comment comment = createComment(101L, 10L, 2L, null, 0);
-        when(commentReader.readOrThrow(101L)).thenReturn(comment);
-        when(memberReader.isAdmin(1L)).thenReturn(false);
-
-        // when & then
-        assertThatThrownBy(() -> commentService.deleteComment(1L, 101L))
-                .isInstanceOf(ForbiddenException.class);
-    }
-
-    @Test
-    void 자식이_있는_댓글을_삭제하면_soft_delete만_수행한다() {
-        // given
-        Comment comment = createComment(101L, 10L, 1L, null, 0);
-        when(commentReader.readOrThrow(101L)).thenReturn(comment);
-        when(commentReader.hasChildren(comment)).thenReturn(true);
+        when(commentProcessor.deleteComment(1L, 101L)).thenReturn(10L);
 
         // when
-        commentService.deleteComment(1L, 101L);
+        CommentDeleteResponse response = commentService.deleteComment(1L, 101L);
 
         // then
-        verify(commentWriter).delete(comment);
-        verify(commentWriter, never()).remove(any());
-        verify(postMetaWriter, never()).decreaseCommentCount(anyLong());
-    }
-
-    @Test
-    void 자식이_없는_삭제된_부모는_자식_삭제시_함께_실제_삭제된다() {
-        // given
-        Comment child = createComment(102L, 10L, 1L, 101L, 1);
-        Comment deletedParent = createDeletedComment(101L, 10L, 1L, null, 0);
-
-        when(commentReader.readOrThrow(102L)).thenReturn(child);
-        when(commentReader.hasChildren(child)).thenReturn(false);
-        when(commentReader.read(101L)).thenReturn(java.util.Optional.of(deletedParent));
-        when(commentReader.hasChildren(deletedParent)).thenReturn(false);
-
-        // when
-        commentService.deleteComment(1L, 102L);
-
-        // then
-        verify(commentWriter).remove(child);
-        verify(commentWriter).decreaseReplyCount(101L);
-        verify(commentWriter).remove(deletedParent);
-        verify(postMetaWriter, times(2)).decreaseCommentCount(10L);
+        assertThat(response.postId()).isEqualTo(10L);
+        assertThat(response.commentId()).isEqualTo(101L);
+        assertThat(response.status()).isEqualTo(CommentStatus.DELETED);
+        verify(commentProcessor).deleteComment(1L, 101L);
     }
 
     @Test
@@ -213,19 +160,5 @@ class CommentServiceV1Test {
                 LocalDateTime.of(2026, 3, 15, 10, 0),
                 LocalDateTime.of(2026, 3, 15, 10, 5)
         );
-    }
-
-    private Comment createComment(Long commentId, Long postId, Long memberId, Long parentId, int depth) {
-        Comment comment = Comment.createByMember(postId, memberId, parentId, depth, "댓글 내용", false, "127.0.0.1");
-        ReflectionTestUtils.setField(comment, "id", commentId);
-        ReflectionTestUtils.setField(comment, "createdAt", LocalDateTime.of(2026, 3, 15, 10, 0));
-        ReflectionTestUtils.setField(comment, "updatedAt", LocalDateTime.of(2026, 3, 15, 10, 0));
-        return comment;
-    }
-
-    private Comment createDeletedComment(Long commentId, Long postId, Long memberId, Long parentId, int depth) {
-        Comment comment = createComment(commentId, postId, memberId, parentId, depth);
-        comment.delete();
-        return comment;
     }
 }
