@@ -4,7 +4,6 @@ import cluverse.board.service.implement.BoardReader;
 import cluverse.board.domain.BoardType;
 import cluverse.comment.service.implement.CommentReader;
 import cluverse.comment.service.response.CommentLastRepliedPost;
-import cluverse.common.exception.ForbiddenException;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.meta.service.implement.PostMetaWriter;
 import cluverse.post.domain.Post;
@@ -14,6 +13,7 @@ import cluverse.post.repository.dto.PostDetailQueryDto;
 import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
 import cluverse.post.service.implement.PostAccessReader;
+import cluverse.post.service.implement.PostCreationProcessor;
 import cluverse.post.service.implement.PostWriter;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
@@ -36,7 +36,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -63,6 +62,9 @@ class PostServiceV1Test {
 
     @Mock
     private CommentReader commentReader;
+
+    @Mock
+    private PostCreationProcessor postCreationProcessor;
 
     @InjectMocks
     private PostQueryService postQueryService;
@@ -169,8 +171,7 @@ class PostServiceV1Test {
     }
 
     @Test
-    void 작성자가_아니면_게시글을_수정할_수_없다() {
-        Post post = createPost(10L, 3L, 1L, "원본 글", false);
+    void 게시글_수정은_Writer에_위임하고_게시글ID를_반환한다() {
         PostUpdateRequest request = new PostUpdateRequest(
                 "수정 제목",
                 "수정 본문",
@@ -182,10 +183,17 @@ class PostServiceV1Test {
                 List.of()
         );
 
-        when(postAccessReader.readOrThrow(10L)).thenReturn(post);
+        Long result = postService.updatePost(1L, 10L, request);
 
-        assertThatThrownBy(() -> postService.updatePost(2L, 10L, request))
-                .isInstanceOf(ForbiddenException.class);
+        assertThat(result).isEqualTo(10L);
+        verify(postWriter).update(1L, 10L, request);
+    }
+
+    @Test
+    void 게시글_삭제는_Writer에_위임한다() {
+        postService.deletePost(1L, 10L);
+
+        verify(postWriter).delete(1L, 10L);
     }
 
     @Test
@@ -198,7 +206,7 @@ class PostServiceV1Test {
     }
 
     @Test
-    void 게시글_작성시_게시판_쓰기_권한을_검증한다() {
+    void 게시글_작성은_Processor에_위임하고_생성된_ID를_반환한다() {
         // given
         PostCreateRequest request = new PostCreateRequest(
                 3L,
@@ -211,17 +219,14 @@ class PostServiceV1Test {
                 true,
                 List.of()
         );
-        Post post = createPost(10L, 3L, 1L, "제목", false);
-        when(memberReader.isVerified(1L)).thenReturn(true);
-        when(postWriter.create(1L, request, "127.0.0.1")).thenReturn(post);
+        when(postCreationProcessor.create(1L, request, "127.0.0.1")).thenReturn(10L);
 
         // when
         Long postId = postService.createPost(1L, request, "127.0.0.1");
 
         // then
         assertThat(postId).isEqualTo(10L);
-        verify(boardReader).validateWritable(1L, true, 3L);
-        verify(postMetaWriter).createViewCount(10L);
+        verify(postCreationProcessor).create(1L, request, "127.0.0.1");
     }
 
     @Test
