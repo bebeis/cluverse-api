@@ -148,7 +148,7 @@ public class AuthWriter {
                 return nickname;
             }
         }
-        throw new BadRequestException(AuthExceptionMessage.SOCIAL_NICKNAME_GENERATION_FAILED.getMessage());
+        throw new IllegalStateException(AuthExceptionMessage.SOCIAL_NICKNAME_GENERATION_FAILED.getMessage());
     }
 
     private String generateSocialNickname(String base, OAuthProvider provider, String providerUserId, int attempt) {
