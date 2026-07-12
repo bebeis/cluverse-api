@@ -17,7 +17,7 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
     List<Recruitment> findAllByDeletedAtIsNullOrderByCreatedAtDesc();
 
     @Query("""
-            SELECT recruitment
+            SELECT DISTINCT recruitment
             FROM Recruitment recruitment
             LEFT JOIN FETCH recruitment.formItems
             WHERE recruitment.id = :recruitmentId

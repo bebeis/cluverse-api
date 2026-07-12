@@ -16,7 +16,7 @@ public interface RecruitmentApplicationRepository extends JpaRepository<Recruitm
 
     List<RecruitmentApplication> findAllByRecruitmentIdOrderByCreatedAtDesc(Long recruitmentId);
 
-    @Query("SELECT application FROM RecruitmentApplication application "
+    @Query("SELECT DISTINCT application FROM RecruitmentApplication application "
             + "LEFT JOIN FETCH application.answers WHERE application.id = :applicationId")
     Optional<RecruitmentApplication> findWithAnswersById(@Param("applicationId") Long applicationId);
 }
