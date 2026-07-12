@@ -6,6 +6,7 @@ import cluverse.comment.repository.CommentRepository;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.comment.service.request.CommentUpdateRequest;
 import cluverse.common.exception.BadRequestException;
+import cluverse.common.exception.ForbiddenException;
 import cluverse.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommentWriter {
 
     private final CommentRepository commentRepository;
+    private final CommentReader commentReader;
 
     public Comment create(Long memberId, Long postId, Comment parentComment, CommentCreateRequest request, String clientIp) {
         int depth = parentComment == null ? 0 : parentComment.getDepth() + 1;
@@ -34,8 +36,16 @@ public class CommentWriter {
         return commentRepository.save(comment);
     }
 
-    public void update(Comment comment, CommentUpdateRequest request) {
+    public void update(Long memberId, Long commentId, CommentUpdateRequest request) {
+        Comment comment = commentReader.readActiveOrThrow(commentId);
+        validateUpdatePermission(memberId, comment);
         comment.updateContent(request.content());
+    }
+
+    private void validateUpdatePermission(Long memberId, Comment comment) {
+        if (!comment.isAuthor(memberId)) {
+            throw new ForbiddenException(CommentExceptionMessage.COMMENT_UPDATE_ACCESS_DENIED.getMessage());
+        }
     }
 
     public void delete(Comment comment) {

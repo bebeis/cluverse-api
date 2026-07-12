@@ -69,6 +69,8 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                 1,
                 20,
                 true,
+                10,
+                true,
                 false
         ));
 
@@ -115,6 +117,8 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                                 fieldWithPath("data.page").type(JsonFieldType.NUMBER).description("현재 페이지. 날짜 기반 조회 시 null").optional(),
                                 fieldWithPath("data.size").type(JsonFieldType.NUMBER).description("페이지 크기"),
                                 fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부"),
+                                fieldWithPath("data.lastPage").type(JsonFieldType.NUMBER).description("현재 페이지 블록에서 렌더링할 마지막 페이지 번호. 날짜 기반 조회 시 null").optional(),
+                                fieldWithPath("data.hasNextBlock").type(JsonFieldType.BOOLEAN).description("다음 페이지 블록 존재 여부. 날짜 기반 조회 시 null").optional(),
                                 fieldWithPath("data.dateBased").type(JsonFieldType.BOOLEAN).description("날짜 기반 조회 여부")
                         )
                 ));
@@ -146,6 +150,8 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                 1,
                 20,
                 true,
+                2,
+                false,
                 false
         ));
 
@@ -190,6 +196,8 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                                 fieldWithPath("data.page").type(JsonFieldType.NUMBER).description("현재 페이지"),
                                 fieldWithPath("data.size").type(JsonFieldType.NUMBER).description("페이지 크기"),
                                 fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부"),
+                                fieldWithPath("data.lastPage").type(JsonFieldType.NUMBER).description("현재 페이지 블록에서 렌더링할 마지막 페이지 번호"),
+                                fieldWithPath("data.hasNextBlock").type(JsonFieldType.BOOLEAN).description("다음 페이지 블록 존재 여부"),
                                 fieldWithPath("data.dateBased").type(JsonFieldType.BOOLEAN).description("날짜 기반 조회 여부 (false)")
                         )
                 ));
@@ -316,6 +324,8 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                                 fieldWithPath("data.page").type(JsonFieldType.NULL).description("페이지 번호 (날짜 기반 조회 시 null)"),
                                 fieldWithPath("data.size").type(JsonFieldType.NUMBER).description("페이지 크기"),
                                 fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부"),
+                                fieldWithPath("data.lastPage").type(JsonFieldType.NULL).description("마지막 페이지 번호 (날짜 기반 조회 시 null)"),
+                                fieldWithPath("data.hasNextBlock").type(JsonFieldType.NULL).description("다음 페이지 블록 존재 여부 (날짜 기반 조회 시 null)"),
                                 fieldWithPath("data.dateBased").type(JsonFieldType.BOOLEAN).description("날짜 기반 조회 여부 (true)")
                         )
                 ));

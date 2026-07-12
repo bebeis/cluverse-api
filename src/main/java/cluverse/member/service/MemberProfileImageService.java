@@ -1,13 +1,13 @@
 package cluverse.member.service;
 
 import cluverse.common.exception.BadRequestException;
+import cluverse.member.exception.MemberExceptionMessage;
 import cluverse.member.service.request.MemberProfileImagePresignedUrlRequest;
 import cluverse.member.service.response.MemberProfileImagePresignedUrlResponse;
 import cluverse.post.client.PostImageStorageClient;
 import cluverse.post.client.PresignedUploadResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,7 +16,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class MemberProfileImageService {
 
     private static final int PRESIGNED_URL_EXPIRE_MINUTES = 10;
@@ -46,7 +45,7 @@ public class MemberProfileImageService {
     private String createFileKey(Long memberId, String contentType) {
         String extension = CONTENT_TYPE_EXTENSION_MAP.get(contentType);
         if (extension == null) {
-            throw new BadRequestException("지원하지 않는 이미지 형식입니다.");
+            throw new BadRequestException(MemberExceptionMessage.UNSUPPORTED_IMAGE_CONTENT_TYPE.getMessage());
         }
 
         LocalDate today = LocalDate.now();

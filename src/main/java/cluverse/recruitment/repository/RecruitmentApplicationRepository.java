@@ -2,6 +2,8 @@ package cluverse.recruitment.repository;
 
 import cluverse.recruitment.domain.RecruitmentApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,4 +15,8 @@ public interface RecruitmentApplicationRepository extends JpaRepository<Recruitm
     List<RecruitmentApplication> findAllByApplicantIdOrderByCreatedAtDesc(Long applicantId);
 
     List<RecruitmentApplication> findAllByRecruitmentIdOrderByCreatedAtDesc(Long recruitmentId);
+
+    @Query("SELECT DISTINCT application FROM RecruitmentApplication application "
+            + "LEFT JOIN FETCH application.answers WHERE application.id = :applicationId")
+    Optional<RecruitmentApplication> findWithAnswersById(@Param("applicationId") Long applicationId);
 }

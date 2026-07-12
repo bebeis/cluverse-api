@@ -3,11 +3,16 @@ package cluverse.recruitment.service.implement;
 import cluverse.common.exception.NotFoundException;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.domain.RecruitmentApplication;
+import cluverse.recruitment.domain.RecruitmentApplicationStatus;
 import cluverse.recruitment.exception.RecruitmentExceptionMessage;
+import cluverse.recruitment.repository.RecruitmentApplicationQueryRepository;
 import cluverse.recruitment.repository.RecruitmentApplicationRepository;
 import cluverse.recruitment.repository.RecruitmentRepository;
+import cluverse.recruitment.repository.dto.ApplicationChatMessageQueryDto;
+import cluverse.recruitment.repository.dto.RecruitmentApplicationSummaryQueryDto;
 import cluverse.recruitment.service.request.RecruitmentApplicationSearchRequest;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +28,7 @@ public class RecruitmentApplicationReader {
 
     private final RecruitmentApplicationRepository recruitmentApplicationRepository;
     private final RecruitmentRepository recruitmentRepository;
+    private final RecruitmentApplicationQueryRepository recruitmentApplicationQueryRepository;
 
     public RecruitmentApplication readOrThrow(Long applicationId) {
         return recruitmentApplicationRepository.findById(applicationId)
@@ -31,8 +37,26 @@ public class RecruitmentApplicationReader {
                 ));
     }
 
+    public RecruitmentApplication readForDetailOrThrow(Long applicationId) {
+        RecruitmentApplication application = recruitmentApplicationRepository.findWithAnswersById(applicationId)
+                .orElseThrow(() -> new NotFoundException(
+                        RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_NOT_FOUND.getMessage()
+                ));
+        // answers는 위 쿼리로 fetch join, statusHistories는 또 다른 bag이라 동시 fetch 불가(MultipleBagFetchException).
+        // getLatestReviewNote()가 접근하므로 트랜잭션 안에서 별도 초기화한다.
+        Hibernate.initialize(application.getStatusHistories());
+        return application;
+    }
+
     public Recruitment readRecruitmentOrThrow(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
+                .orElseThrow(() -> new NotFoundException(RecruitmentExceptionMessage.RECRUITMENT_NOT_FOUND.getMessage()));
+        validateActive(recruitment);
+        return recruitment;
+    }
+
+    public Recruitment readRecruitmentWithFormItemsOrThrow(Long recruitmentId) {
+        Recruitment recruitment = recruitmentRepository.findWithFormItemsById(recruitmentId)
                 .orElseThrow(() -> new NotFoundException(RecruitmentExceptionMessage.RECRUITMENT_NOT_FOUND.getMessage()));
         validateActive(recruitment);
         return recruitment;
@@ -60,6 +84,35 @@ public class RecruitmentApplicationReader {
         }
         return recruitmentRepository.findAllById(recruitmentIds).stream()
                 .collect(Collectors.toMap(Recruitment::getId, recruitment -> recruitment));
+    }
+
+    public List<RecruitmentApplicationSummaryQueryDto> readMyApplicationSummaries(Long applicantId,
+                                                                                 RecruitmentApplicationStatus status,
+                                                                                 int page,
+                                                                                 int size) {
+        return recruitmentApplicationQueryRepository.findMyApplicationSummaries(applicantId, status, page, size);
+    }
+
+    public List<RecruitmentApplicationSummaryQueryDto> readApplicationSummaries(Long recruitmentId,
+                                                                                RecruitmentApplicationStatus status,
+                                                                                int page,
+                                                                                int size) {
+        return recruitmentApplicationQueryRepository.findRecruitmentApplicationSummaries(recruitmentId, status, page, size);
+    }
+
+    public List<ApplicationChatMessageQueryDto> readApplicationMessages(Long applicationId,
+                                                                        Long beforeMessageId,
+                                                                        int limit) {
+        return recruitmentApplicationQueryRepository.findApplicationMessages(applicationId, beforeMessageId, limit);
+    }
+
+    public ApplicationChatMessageQueryDto readApplicationMessageOrThrow(Long applicationId, Long messageId) {
+        ApplicationChatMessageQueryDto message =
+                recruitmentApplicationQueryRepository.findApplicationMessage(applicationId, messageId);
+        if (message == null) {
+            throw new NotFoundException(RecruitmentExceptionMessage.APPLICATION_CHAT_MESSAGE_NOT_FOUND.getMessage());
+        }
+        return message;
     }
 
     private void validateActive(Recruitment recruitment) {

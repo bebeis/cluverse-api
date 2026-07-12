@@ -6,7 +6,6 @@ import cluverse.common.auth.LoginMember;
 import cluverse.member.service.MemberPostQueryService;
 import cluverse.member.service.MemberQueryService;
 import cluverse.member.service.MemberService;
-import cluverse.member.service.MemberUniversityService;
 import cluverse.member.service.MemberProfileImageService;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
@@ -28,7 +27,17 @@ import cluverse.post.service.response.PostPageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -39,7 +48,6 @@ public class MemberController {
 
     private final MemberQueryService memberQueryService;
     private final MemberService memberService;
-    private final MemberUniversityService memberUniversityService;
     private final MemberPostQueryService memberPostQueryService;
     private final MemberProfileImageService memberProfileImageService;
 
@@ -76,7 +84,7 @@ public class MemberController {
     @PutMapping("/me/university")
     public ApiResponse<MemberProfileResponse> updateUniversity(@Login LoginMember loginMember,
                                                                @RequestBody @Valid MemberUniversityUpdateRequest request) {
-        return ApiResponse.ok(memberUniversityService.updateUniversity(loginMember.memberId(), request));
+        return ApiResponse.ok(memberService.updateUniversity(loginMember.memberId(), request.universityId()));
     }
 
     @GetMapping("/me/posts")

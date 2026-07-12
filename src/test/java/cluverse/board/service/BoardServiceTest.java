@@ -74,7 +74,7 @@ class BoardServiceTest {
         );
         Board board = createBoard(101L, BoardType.DEPARTMENT, "컴퓨터공학");
         when(memberReader.isAdmin(1L)).thenReturn(true);
-        when(boardReader.readOrThrow(101L)).thenReturn(board);
+        when(boardWriter.update(101L, request)).thenReturn(board);
 
         // when
         var result = boardService.updateBoard(1L, 101L, request);
@@ -82,24 +82,20 @@ class BoardServiceTest {
         // then
         assertThat(result.boardId()).isEqualTo(101L);
         verify(memberReader).isAdmin(1L);
-        verify(boardReader).readOrThrow(101L);
-        verify(boardWriter).update(board, request);
+        verify(boardWriter).update(101L, request);
     }
 
     @Test
     void 관리자는_게시판을_삭제할_수_있다() {
         // given
-        Board board = createBoard(101L, BoardType.DEPARTMENT, "컴퓨터공학");
         when(memberReader.isAdmin(1L)).thenReturn(true);
-        when(boardReader.readOrThrow(101L)).thenReturn(board);
 
         // when
         boardService.deleteBoard(1L, 101L);
 
         // then
         verify(memberReader).isAdmin(1L);
-        verify(boardReader).readOrThrow(101L);
-        verify(boardWriter).delete(board);
+        verify(boardWriter).delete(101L);
     }
 
     @Test
@@ -119,48 +115,6 @@ class BoardServiceTest {
         assertThatThrownBy(() -> boardService.createBoard(1L, request))
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessage("게시판 관리 권한이 없습니다.");
-    }
-
-    @Test
-    void 그룹_서비스는_그룹_게시판을_생성할_수_있다() {
-        // given
-        Board board = createBoard(201L, BoardType.GROUP, "AI 프로젝트");
-        when(boardWriter.createGroupBoard("AI 프로젝트", "그룹 소개")).thenReturn(board);
-
-        // when
-        Board result = boardService.createGroupBoard("AI 프로젝트", "그룹 소개");
-
-        // then
-        assertThat(result.getId()).isEqualTo(201L);
-        verify(boardWriter).createGroupBoard("AI 프로젝트", "그룹 소개");
-    }
-
-    @Test
-    void 그룹_서비스는_그룹_게시판_메타데이터를_수정할_수_있다() {
-        // given
-        Board board = createBoard(201L, BoardType.GROUP, "AI 프로젝트");
-        when(boardReader.readOrThrow(201L)).thenReturn(board);
-
-        // when
-        boardService.updateGroupBoard(201L, "AI 프로젝트 시즌2", "새 소개");
-
-        // then
-        verify(boardReader).readOrThrow(201L);
-        verify(boardWriter).updateGroupBoard(board, "AI 프로젝트 시즌2", "새 소개");
-    }
-
-    @Test
-    void 그룹_서비스는_그룹_게시판을_비활성화할_수_있다() {
-        // given
-        Board board = createBoard(201L, BoardType.GROUP, "AI 프로젝트");
-        when(boardReader.readOrThrow(201L)).thenReturn(board);
-
-        // when
-        boardService.deactivateGroupBoard(201L);
-
-        // then
-        verify(boardReader).readOrThrow(201L);
-        verify(boardWriter).deactivateGroupBoard(board);
     }
 
     private Board createBoard(Long boardId, BoardType boardType, String name) {

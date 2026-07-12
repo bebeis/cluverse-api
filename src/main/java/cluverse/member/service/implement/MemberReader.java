@@ -155,6 +155,11 @@ public class MemberReader {
                 .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.MEMBER_NOT_FOUND.getMessage()));
     }
 
+    public Member readWithProfileOrThrow(Long memberId) {
+        return memberRepository.findWithProfileById(memberId)
+                .orElseThrow(() -> new NotFoundException(MemberExceptionMessage.MEMBER_NOT_FOUND.getMessage()));
+    }
+
     public boolean isAdmin(Long memberId) {
         return readOrThrow(memberId).isAdmin();
     }
@@ -187,6 +192,14 @@ public class MemberReader {
             return Map.of();
         }
         return memberRepository.findAllById(memberIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Member::getId, member -> member));
+    }
+
+    public Map<Long, Member> readMemberMapWithProfile(Collection<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        return memberRepository.findAllWithProfileByIdIn(memberIds).stream()
                 .collect(java.util.stream.Collectors.toMap(Member::getId, member -> member));
     }
 

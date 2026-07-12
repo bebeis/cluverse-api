@@ -4,9 +4,9 @@ import cluverse.member.domain.Member;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.member.service.request.MemberPostPageRequest;
 import cluverse.post.domain.PostCategory;
-import cluverse.post.repository.PostQueryRepository;
 import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
+import cluverse.post.service.implement.PostReader;
 import cluverse.post.service.response.PostPageResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +29,7 @@ class MemberPostServiceTest {
     private MemberReader memberReader;
 
     @Mock
-    private PostQueryRepository postQueryRepository;
+    private PostReader postReader;
 
     @InjectMocks
     private MemberPostQueryService memberPostQueryService;
@@ -42,7 +42,7 @@ class MemberPostServiceTest {
         MemberPostPageRequest request = new MemberPostPageRequest(1, 20);
 
         when(memberReader.readOrThrow(1L)).thenReturn(member);
-        when(postQueryRepository.findPostPageByAuthor(1L, 1L, 1, 20)).thenReturn(new PostPageQueryResult(
+        when(postReader.readPostPageByAuthor(1L, 1L, 1, 20)).thenReturn(new PostPageQueryResult(
                 List.of(new PostSummaryQueryDto(
                         10L,
                         3L,

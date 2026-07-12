@@ -19,7 +19,7 @@ public class RecruitmentReader {
     private final RecruitmentRepository recruitmentRepository;
 
     public Recruitment readOrThrow(Long recruitmentId) {
-        Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
+        Recruitment recruitment = recruitmentRepository.findWithFormItemsById(recruitmentId)
                 .orElseThrow(() -> new NotFoundException(RecruitmentExceptionMessage.RECRUITMENT_NOT_FOUND.getMessage()));
         validateActive(recruitment);
         return recruitment;

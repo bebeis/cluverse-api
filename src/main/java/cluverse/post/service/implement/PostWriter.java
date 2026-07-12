@@ -1,6 +1,8 @@
 package cluverse.post.service.implement;
 
+import cluverse.common.exception.ForbiddenException;
 import cluverse.post.domain.Post;
+import cluverse.post.exception.PostExceptionMessage;
 import cluverse.post.repository.PostRepository;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostUpdateRequest;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostWriter {
 
     private final PostRepository postRepository;
+    private final PostAccessReader postAccessReader;
 
     public Post create(Long memberId, PostCreateRequest request, String clientIp) {
         Post post = Post.createByMember(
@@ -32,7 +35,9 @@ public class PostWriter {
         return postRepository.save(post);
     }
 
-    public void update(Post post, PostUpdateRequest request) {
+    public void update(Long memberId, Long postId, PostUpdateRequest request) {
+        Post post = postAccessReader.readOrThrow(postId);
+        validateAuthor(memberId, post);
         post.update(
                 request.title(),
                 request.content(),
@@ -45,7 +50,15 @@ public class PostWriter {
         );
     }
 
-    public void delete(Post post) {
+    public void delete(Long memberId, Long postId) {
+        Post post = postAccessReader.readOrThrow(postId);
+        validateAuthor(memberId, post);
         post.delete();
+    }
+
+    private void validateAuthor(Long memberId, Post post) {
+        if (!post.isAuthor(memberId)) {
+            throw new ForbiddenException(PostExceptionMessage.POST_ACCESS_DENIED.getMessage());
+        }
     }
 }

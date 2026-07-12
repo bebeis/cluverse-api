@@ -1,17 +1,12 @@
 package cluverse.recruitment.service;
 
-import cluverse.common.exception.ForbiddenException;
-import cluverse.group.domain.Group;
-import cluverse.group.domain.GroupActivityType;
-import cluverse.group.domain.GroupCategory;
-import cluverse.group.domain.GroupVisibility;
-import cluverse.group.service.implement.GroupReader;
 import cluverse.member.domain.Member;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.recruitment.domain.Recruitment;
 import cluverse.recruitment.service.implement.RecruitmentReader;
 import cluverse.recruitment.service.implement.RecruitmentWriter;
 import cluverse.recruitment.service.request.RecruitmentCreateRequest;
+import cluverse.recruitment.service.request.RecruitmentUpdateRequest;
 import cluverse.recruitment.service.response.RecruitmentDetailResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,9 +33,6 @@ class RecruitmentServiceTest {
     private RecruitmentWriter recruitmentWriter;
 
     @Mock
-    private GroupReader groupReader;
-
-    @Mock
     private MemberReader memberReader;
 
     @InjectMocks
@@ -50,7 +41,6 @@ class RecruitmentServiceTest {
     @Test
     void 모집글_생성시_상세_응답을_반환한다() {
         // given
-        Group group = createGroup(1L, 100L);
         RecruitmentCreateRequest request = new RecruitmentCreateRequest(
                 "백엔드 모집",
                 "스프링 백엔드 모집 공고",
@@ -65,7 +55,6 @@ class RecruitmentServiceTest {
         Recruitment recruitment = createRecruitment(10L, 1L, 100L);
         Member author = createMember(100L, "luna");
 
-        when(groupReader.readOrThrow(1L)).thenReturn(group);
         when(recruitmentWriter.create(100L, 1L, request)).thenReturn(recruitment);
         when(recruitmentReader.readOrThrow(10L)).thenReturn(recruitment);
         when(memberReader.readMemberMap(List.of(100L))).thenReturn(Map.of(100L, author));
@@ -80,44 +69,31 @@ class RecruitmentServiceTest {
     }
 
     @Test
-    void 모집글_생성은_그룹_매니저만_가능하다() {
+    void 모집글_수정시_상세_응답을_반환한다() {
         // given
-        Group group = createGroup(1L, 100L);
-        RecruitmentCreateRequest request = new RecruitmentCreateRequest(
-                "백엔드 모집",
-                "설명",
+        RecruitmentUpdateRequest request = new RecruitmentUpdateRequest(
+                "백엔드 모집 수정",
+                "설명 수정",
                 List.of(),
                 null,
                 null,
                 null,
                 null,
-                null,
+                LocalDateTime.of(2026, 4, 30, 23, 59),
                 List.of()
         );
-        when(groupReader.readOrThrow(1L)).thenReturn(group);
+        Recruitment recruitment = createRecruitment(10L, 1L, 100L);
+        Member author = createMember(100L, "luna");
 
-        // when, then
-        assertThatThrownBy(() -> recruitmentService.createRecruitment(200L, 1L, request))
-                .isInstanceOf(ForbiddenException.class)
-                .hasMessage("모집글 관리 권한이 없습니다.");
-    }
+        when(recruitmentWriter.update(100L, 10L, request)).thenReturn(recruitment);
+        when(memberReader.readMemberMap(List.of(100L))).thenReturn(Map.of(100L, author));
 
-    private Group createGroup(Long groupId, Long ownerId) {
-        Group group = Group.create(
-                11L,
-                "AI 프로젝트",
-                "설명",
-                null,
-                GroupCategory.PROJECT,
-                GroupActivityType.HYBRID,
-                "서울",
-                GroupVisibility.PUBLIC,
-                ownerId,
-                10,
-                List.of()
-        );
-        ReflectionTestUtils.setField(group, "id", groupId);
-        return group;
+        // when
+        RecruitmentDetailResponse result = recruitmentService.updateRecruitment(100L, 10L, request);
+
+        // then
+        assertThat(result.recruitmentId()).isEqualTo(10L);
+        verify(recruitmentWriter).update(100L, 10L, request);
     }
 
     private Recruitment createRecruitment(Long recruitmentId, Long groupId, Long authorId) {

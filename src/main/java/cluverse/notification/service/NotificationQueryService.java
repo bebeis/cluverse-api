@@ -8,13 +8,11 @@ import cluverse.notification.service.response.NotificationPreferenceResponse;
 import cluverse.notification.service.response.NotificationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class NotificationQueryService {
 
     private final NotificationReader notificationReader;

@@ -10,12 +10,10 @@ import cluverse.member.service.MemberService;
 import cluverse.member.service.MemberPostQueryService;
 import cluverse.member.service.MemberProfileImageService;
 import cluverse.member.service.MemberQueryService;
-import cluverse.member.service.MemberUniversityService;
 import cluverse.member.service.request.AddInterestRequest;
 import cluverse.member.service.request.AddMajorRequest;
 import cluverse.member.service.request.MemberNicknameUpdateRequest;
 import cluverse.member.service.request.MemberPasswordUpdateRequest;
-import cluverse.member.service.request.MemberUniversityUpdateRequest;
 import cluverse.member.service.request.UpdateProfileRequest;
 import cluverse.member.service.response.BlockedMemberResponse;
 import cluverse.member.service.response.MemberFollowResponse;
@@ -62,13 +60,12 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     private final MemberQueryService memberQueryService = mock(MemberQueryService.class);
     private final MemberService memberService = mock(MemberService.class);
-    private final MemberUniversityService memberUniversityService = mock(MemberUniversityService.class);
     private final MemberPostQueryService memberPostQueryService = mock(MemberPostQueryService.class);
     private final MemberProfileImageService memberProfileImageService = mock(MemberProfileImageService.class);
 
     @Override
     protected Object initController() {
-        return new MemberController(memberQueryService, memberService, memberUniversityService, memberPostQueryService, memberProfileImageService);
+        return new MemberController(memberQueryService, memberService, memberPostQueryService, memberProfileImageService);
     }
 
     @Test
@@ -305,7 +302,7 @@ class MemberControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 학교_수정() throws Exception {
-        when(memberUniversityService.updateUniversity(anyLong(), any(MemberUniversityUpdateRequest.class)))
+        when(memberService.updateUniversity(anyLong(), anyLong()))
                 .thenReturn(createProfileResponse(1L, true));
 
         mockMvc.perform(put("/api/v1/members/me/university")
@@ -418,6 +415,8 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.page").type(JsonFieldType.NUMBER).description("현재 페이지"),
                                 fieldWithPath("data.size").type(JsonFieldType.NUMBER).description("페이지 크기"),
                                 fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부"),
+                                fieldWithPath("data.lastPage").type(JsonFieldType.NULL).description("마지막 페이지 번호 (내 게시글 목록은 미제공)"),
+                                fieldWithPath("data.hasNextBlock").type(JsonFieldType.NULL).description("다음 페이지 블록 존재 여부 (내 게시글 목록은 미제공)"),
                                 fieldWithPath("data.dateBased").type(JsonFieldType.BOOLEAN).description("날짜 기반 조회 여부 (false)")
                         )
                 ));

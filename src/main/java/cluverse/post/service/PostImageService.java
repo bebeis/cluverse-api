@@ -8,7 +8,6 @@ import cluverse.post.service.request.PostImagePresignedUrlRequest;
 import cluverse.post.service.response.PostImagePresignedUrlResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,7 +16,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class PostImageService {
 
     private static final int PRESIGNED_URL_EXPIRE_MINUTES = 10;
@@ -30,7 +28,6 @@ public class PostImageService {
 
     private final PostImageStorageClient postImageStorageClient;
 
-    @Transactional(readOnly = true)
     public PostImagePresignedUrlResponse createPresignedUrl(
             Long memberId,
             PostImagePresignedUrlRequest request

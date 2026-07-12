@@ -112,7 +112,7 @@ class UniversityServiceTest {
                 false
         );
         when(memberReader.isAdmin(10L)).thenReturn(true);
-        when(universityReader.readOrThrow(1L)).thenReturn(university);
+        when(universityWriter.update(1L, request)).thenReturn(university);
 
         // when
         UniversityDetailResponse result = universityService.updateUniversity(10L, 1L, request);
@@ -120,8 +120,7 @@ class UniversityServiceTest {
         // then
         assertThat(result.universityId()).isEqualTo(1L);
         verify(memberReader).isAdmin(10L);
-        verify(universityReader).readOrThrow(1L);
-        verify(universityWriter).update(university, request);
+        verify(universityWriter).update(1L, request);
     }
 
     @Test

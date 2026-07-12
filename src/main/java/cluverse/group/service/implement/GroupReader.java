@@ -9,6 +9,7 @@ import cluverse.group.repository.GroupRepository;
 import cluverse.group.repository.dto.GroupMemberSummaryQueryDto;
 import cluverse.group.service.request.GroupSearchRequest;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,8 +39,32 @@ public class GroupReader {
                 .orElseThrow(() -> new NotFoundException(GroupExceptionMessage.GROUP_NOT_FOUND.getMessage()));
     }
 
+    public Group readWithMembersOrThrow(Long groupId) {
+        return groupRepository.findWithMembersById(groupId)
+                .orElseThrow(() -> new NotFoundException(GroupExceptionMessage.GROUP_NOT_FOUND.getMessage()));
+    }
+
+    public Group readActiveDetailOrThrow(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .filter(target -> target.getStatus() == GroupStatus.ACTIVE)
+                .orElseThrow(() -> new NotFoundException(GroupExceptionMessage.GROUP_NOT_FOUND.getMessage()));
+        Hibernate.initialize(group.getMembers());
+        Hibernate.initialize(group.getRoles());
+        Hibernate.initialize(group.getInterests());
+        return group;
+    }
+
+    public Group readActiveWithMembersAndRolesOrThrow(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .filter(target -> target.getStatus() == GroupStatus.ACTIVE)
+                .orElseThrow(() -> new NotFoundException(GroupExceptionMessage.GROUP_NOT_FOUND.getMessage()));
+        Hibernate.initialize(group.getMembers());
+        Hibernate.initialize(group.getRoles());
+        return group;
+    }
+
     public List<Group> readGroups(GroupSearchRequest request) {
-        return groupRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
+        List<Group> groups = groupRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
                 .filter(group -> group.getStatus() == GroupStatus.ACTIVE)
                 .filter(group -> request.keyword() == null
                         || group.getName().toLowerCase().contains(request.keyword().toLowerCase()))
@@ -48,12 +73,16 @@ public class GroupReader {
                 .filter(group -> request.region() == null || request.region().equalsIgnoreCase(group.getRegion()))
                 .filter(group -> request.visibility() == null || group.getVisibility() == request.visibility())
                 .toList();
+        groups.forEach(group -> Hibernate.initialize(group.getInterests()));
+        return groups;
     }
 
     public List<Group> readMyGroups(Long memberId) {
-        return groupRepository.findAllByMemberId(memberId).stream()
+        List<Group> groups = groupRepository.findAllByMemberId(memberId).stream()
                 .filter(group -> group.getStatus() == GroupStatus.ACTIVE)
                 .toList();
+        groups.forEach(group -> Hibernate.initialize(group.getMembers()));
+        return groups;
     }
 
     public long countOpenRecruitments(Long groupId) {

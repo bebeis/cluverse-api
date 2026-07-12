@@ -8,11 +8,9 @@ import cluverse.report.service.request.ReportCreateRequest;
 import cluverse.report.service.response.ReportResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ReportService {
 
     private final ReportWriter reportWriter;

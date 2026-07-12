@@ -23,6 +23,7 @@ public enum MemberExceptionMessage {
     PRIMARY_MAJOR_REQUIRED("주전공은 반드시 1개 있어야 합니다."),
     NICKNAME_ALREADY_EXISTS("이미 사용 중인 닉네임입니다."),
     INVALID_PROFILE_VISIBLE_FIELD("유효하지 않은 프로필 공개 필드입니다."),
+    UNSUPPORTED_IMAGE_CONTENT_TYPE("지원하지 않는 이미지 형식입니다."),
     INVALID_PASSWORD("현재 비밀번호가 올바르지 않습니다."),
     PASSWORD_CHANGE_NOT_ALLOWED("비밀번호를 변경할 수 없는 계정입니다.");
 

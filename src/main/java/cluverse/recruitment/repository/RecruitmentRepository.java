@@ -8,12 +8,21 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> {
 
     long countByGroupIdAndStatusAndDeletedAtIsNull(Long groupId, RecruitmentStatus status);
 
     List<Recruitment> findAllByDeletedAtIsNullOrderByCreatedAtDesc();
+
+    @Query("""
+            SELECT DISTINCT recruitment
+            FROM Recruitment recruitment
+            LEFT JOIN FETCH recruitment.formItems
+            WHERE recruitment.id = :recruitmentId
+            """)
+    Optional<Recruitment> findWithFormItemsById(@Param("recruitmentId") Long recruitmentId);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("""

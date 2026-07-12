@@ -2,31 +2,27 @@ package cluverse.reaction.service;
 
 import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.common.exception.UnauthorizedException;
-import cluverse.feed.repository.FeedQueryRepository;
 import cluverse.feed.repository.dto.FeedPageQueryResult;
 import cluverse.feed.service.response.FeedPostSummaryResponse;
+import cluverse.reaction.service.implement.PostReactionReader;
 import cluverse.reaction.service.request.BookmarkedPostSearchRequest;
 import cluverse.reaction.service.response.BookmarkedPostPageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class PostReactionQueryService {
 
-    private final FeedQueryRepository feedQueryRepository;
+    private final PostReactionReader postReactionReader;
 
     public BookmarkedPostPageResponse getBookmarkedPosts(Long memberId, BookmarkedPostSearchRequest request) {
         validateAuthenticated(memberId);
 
-        FeedPageQueryResult queryResult = feedQueryRepository.findBookmarkedFeedPage(
+        FeedPageQueryResult queryResult = postReactionReader.readBookmarkedFeed(
                 memberId,
-                feedQueryRepository.findBlockedMemberIds(memberId),
-                feedQueryRepository.findMyGroupBoardIds(memberId),
                 request.sortOrDefault(),
                 request.pageOrDefault(),
                 request.sizeOrDefault()

@@ -26,6 +26,9 @@ class BoardWriterTest {
     @Mock
     private BoardRepository boardRepository;
 
+    @Mock
+    private BoardReader boardReader;
+
     @InjectMocks
     private BoardWriter boardWriter;
 
@@ -77,10 +80,11 @@ class BoardWriterTest {
         // given
         Board board = Board.create(BoardType.DEPARTMENT, "컴퓨터공학", "설명", null, 0, 1, true);
         ReflectionTestUtils.setField(board, "id", 10L);
+        when(boardReader.readOrThrow(10L)).thenReturn(board);
         when(boardRepository.existsByParentIdAndIsActiveTrue(10L)).thenReturn(true);
 
         // when, then
-        assertThatThrownBy(() -> boardWriter.delete(board))
+        assertThatThrownBy(() -> boardWriter.delete(10L))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("활성 하위 게시판이 존재하여 삭제할 수 없습니다.");
     }
@@ -89,10 +93,12 @@ class BoardWriterTest {
     void 게시판_수정시_메타데이터를_변경한다() {
         // given
         Board board = Board.create(BoardType.INTEREST, "AI", "설명", null, 0, 1, true);
+        ReflectionTestUtils.setField(board, "id", 20L);
         BoardUpdateRequest request = new BoardUpdateRequest("AI/ML", "새 설명", 3, false);
+        when(boardReader.readOrThrow(20L)).thenReturn(board);
 
         // when
-        boardWriter.update(board, request);
+        boardWriter.update(20L, request);
 
         // then
         assertThat(board.getName()).isEqualTo("AI/ML");

@@ -4,16 +4,16 @@ import cluverse.board.service.implement.BoardReader;
 import cluverse.board.domain.BoardType;
 import cluverse.comment.service.implement.CommentReader;
 import cluverse.comment.service.response.CommentLastRepliedPost;
-import cluverse.common.exception.ForbiddenException;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.meta.service.implement.PostMetaWriter;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
-import cluverse.post.repository.PostQueryRepository;
+import cluverse.post.service.implement.PostReader;
 import cluverse.post.repository.dto.PostDetailQueryDto;
 import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
 import cluverse.post.service.implement.PostAccessReader;
+import cluverse.post.service.implement.PostCreationProcessor;
 import cluverse.post.service.implement.PostWriter;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
@@ -36,7 +36,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,7 +49,7 @@ class PostServiceV1Test {
     private PostWriter postWriter;
 
     @Mock
-    private PostQueryRepository postQueryRepository;
+    private PostReader postReader;
 
     @Mock
     private BoardReader boardReader;
@@ -64,6 +63,9 @@ class PostServiceV1Test {
     @Mock
     private CommentReader commentReader;
 
+    @Mock
+    private PostCreationProcessor postCreationProcessor;
+
     @InjectMocks
     private PostQueryService postQueryService;
 
@@ -74,13 +76,14 @@ class PostServiceV1Test {
     void 게시글_목록_조회시_서비스가_정렬된_ID_순서대로_응답을_조립한다() {
         // given
         PostSearchRequest request = new PostSearchRequest(3L, null, PostSortType.LATEST, 1, 20, null);
-        when(postQueryRepository.findPostPage(99L, request)).thenReturn(new PostPageQueryResult(
+        when(postReader.readPostPage(99L, request)).thenReturn(new PostPageQueryResult(
                 List.of(
                         createPostSummaryQueryDto(2L, 20L, false),
                         createPostSummaryQueryDto(1L, 10L, false)
                 ),
                 true
         ));
+        when(postReader.countPostsUpTo(request, 201L)).thenReturn(201L);
 
         // when
         PostPageResponse response = postQueryService.getPosts(99L, request);
@@ -89,8 +92,28 @@ class PostServiceV1Test {
         assertThat(response.posts()).extracting("postId").containsExactly(2L, 1L);
         assertThat(response.hasNext()).isTrue();
         assertThat(response.page()).isEqualTo(1);
+        assertThat(response.lastPage()).isEqualTo(10);
+        assertThat(response.hasNextBlock()).isTrue();
         assertThat(response.dateBased()).isFalse();
         verify(boardReader).validateReadable(99L, 3L);
+    }
+
+    @Test
+    void 게시글_수가_카운트_상한_미만이면_실제_마지막_페이지를_계산한다() {
+        // given
+        PostSearchRequest request = new PostSearchRequest(3L, null, PostSortType.LATEST, 1, 20, null);
+        when(postReader.readPostPage(99L, request)).thenReturn(new PostPageQueryResult(
+                List.of(createPostSummaryQueryDto(2L, 20L, false)),
+                false
+        ));
+        when(postReader.countPostsUpTo(request, 201L)).thenReturn(35L);
+
+        // when
+        PostPageResponse response = postQueryService.getPosts(99L, request);
+
+        // then
+        assertThat(response.lastPage()).isEqualTo(2);
+        assertThat(response.hasNextBlock()).isFalse();
     }
 
     @Test
@@ -98,7 +121,7 @@ class PostServiceV1Test {
         // given
         LocalDate date = LocalDate.of(2024, 1, 15);
         PostSearchRequest request = new PostSearchRequest(3L, null, null, null, 20, date);
-        when(postQueryRepository.findPostPageByDate(99L, request)).thenReturn(new PostPageQueryResult(
+        when(postReader.readPostPageByDate(99L, request)).thenReturn(new PostPageQueryResult(
                 List.of(
                         createPostSummaryQueryDto(5L, 20L, false),
                         createPostSummaryQueryDto(4L, 20L, false)
@@ -112,6 +135,8 @@ class PostServiceV1Test {
         // then
         assertThat(response.posts()).extracting("postId").containsExactly(5L, 4L);
         assertThat(response.page()).isNull();
+        assertThat(response.lastPage()).isNull();
+        assertThat(response.hasNextBlock()).isNull();
         assertThat(response.dateBased()).isTrue();
         assertThat(response.hasNext()).isFalse();
         verify(boardReader).validateReadable(99L, 3L);
@@ -121,10 +146,11 @@ class PostServiceV1Test {
     void 게시글_검색시_검색_결과를_응답으로_조립한다() {
         // given
         PostKeywordSearchRequest request = new PostKeywordSearchRequest(3L, "스프링", 1, 20);
-        when(postQueryRepository.findPostPageByKeyword(99L, request)).thenReturn(new PostPageQueryResult(
+        when(postReader.readPostPageByKeyword(99L, request)).thenReturn(new PostPageQueryResult(
                 List.of(createPostSummaryQueryDto(10L, 20L, false)),
                 true
         ));
+        when(postReader.countPostsByKeywordUpTo(request, 201L)).thenReturn(35L);
 
         // when
         PostPageResponse response = postQueryService.searchPosts(99L, request);
@@ -132,6 +158,8 @@ class PostServiceV1Test {
         // then
         assertThat(response.posts()).extracting("postId").containsExactly(10L);
         assertThat(response.page()).isEqualTo(1);
+        assertThat(response.lastPage()).isEqualTo(2);
+        assertThat(response.hasNextBlock()).isFalse();
         assertThat(response.hasNext()).isTrue();
         assertThat(response.dateBased()).isFalse();
         verify(boardReader).validateReadable(99L, 3L);
@@ -142,7 +170,7 @@ class PostServiceV1Test {
         // given
         Post post = createPost(10L, 3L, 1L, "익명 질문", true);
         when(postAccessReader.readOrThrow(10L)).thenReturn(post);
-        when(postQueryRepository.findPostDetail(2L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
+        when(postReader.readPostDetail(2L, 10L)).thenReturn(createAnonymousPostDetailQueryDto());
 
         // when
         PostDetailResponse response = postQueryService.readPost(2L, 10L);
@@ -169,8 +197,7 @@ class PostServiceV1Test {
     }
 
     @Test
-    void 작성자가_아니면_게시글을_수정할_수_없다() {
-        Post post = createPost(10L, 3L, 1L, "원본 글", false);
+    void 게시글_수정은_Writer에_위임하고_게시글ID를_반환한다() {
         PostUpdateRequest request = new PostUpdateRequest(
                 "수정 제목",
                 "수정 본문",
@@ -182,10 +209,17 @@ class PostServiceV1Test {
                 List.of()
         );
 
-        when(postAccessReader.readOrThrow(10L)).thenReturn(post);
+        Long result = postService.updatePost(1L, 10L, request);
 
-        assertThatThrownBy(() -> postService.updatePost(2L, 10L, request))
-                .isInstanceOf(ForbiddenException.class);
+        assertThat(result).isEqualTo(10L);
+        verify(postWriter).update(1L, 10L, request);
+    }
+
+    @Test
+    void 게시글_삭제는_Writer에_위임한다() {
+        postService.deletePost(1L, 10L);
+
+        verify(postWriter).delete(1L, 10L);
     }
 
     @Test
@@ -198,7 +232,7 @@ class PostServiceV1Test {
     }
 
     @Test
-    void 게시글_작성시_게시판_쓰기_권한을_검증한다() {
+    void 게시글_작성은_Processor에_위임하고_생성된_ID를_반환한다() {
         // given
         PostCreateRequest request = new PostCreateRequest(
                 3L,
@@ -211,17 +245,14 @@ class PostServiceV1Test {
                 true,
                 List.of()
         );
-        Post post = createPost(10L, 3L, 1L, "제목", false);
-        when(memberReader.isVerified(1L)).thenReturn(true);
-        when(postWriter.create(1L, request, "127.0.0.1")).thenReturn(post);
+        when(postCreationProcessor.create(1L, request, "127.0.0.1")).thenReturn(10L);
 
         // when
         Long postId = postService.createPost(1L, request, "127.0.0.1");
 
         // then
         assertThat(postId).isEqualTo(10L);
-        verify(boardReader).validateWritable(1L, true, 3L);
-        verify(postMetaWriter).createViewCount(10L);
+        verify(postCreationProcessor).create(1L, request, "127.0.0.1");
     }
 
     @Test
