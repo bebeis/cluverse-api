@@ -100,4 +100,17 @@ class AuthProcessorTest {
                 .isInstanceOf(UnauthorizedException.class);
         verify(authWriter, never()).updateLastLogin(any(), any());
     }
+
+    @Test
+    void 탈퇴한_회원은_OAuth_로그인할_수_없다() {
+        OAuthUserInfo userInfo = new OAuthUserInfo("provider-id-123", "test@example.com", "testuser");
+        Member member = mock(Member.class);
+        when(authReader.findBySocialAccount(OAuthProvider.KAKAO, "provider-id-123")).thenReturn(Optional.of(member));
+        when(member.isActive()).thenReturn(false);
+
+        assertThatThrownBy(() -> authProcessor.loginWithOAuth(userInfo, OAuthProvider.KAKAO, "127.0.0.1"))
+                .isInstanceOf(UnauthorizedException.class);
+        verify(authWriter, never()).updateLastLogin(any(), any());
+        verify(authWriter, never()).registerBySocial(any(), any());
+    }
 }

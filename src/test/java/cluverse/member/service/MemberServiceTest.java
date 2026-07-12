@@ -19,6 +19,7 @@ import cluverse.member.service.response.MemberProfileResponse;
 import cluverse.member.service.response.MemberProfileSummaryResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,6 +29,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -250,7 +252,9 @@ class MemberServiceTest {
         assertThat(result.bio()).isEqualTo("소개");
         assertThat(result.entranceYear()).isEqualTo(2022);
         assertThat(result.postCount()).isZero();
-        verify(memberWriter).updateProfile(1L, request);
+        InOrder inOrder = inOrder(memberWriter, memberReader);
+        inOrder.verify(memberWriter).updateProfile(1L, request);
+        inOrder.verify(memberReader).readWithProfileOrThrow(1L);
     }
 
     @Test
@@ -273,7 +277,9 @@ class MemberServiceTest {
 
         assertThat(result.nickname()).isEqualTo("nova");
         assertThat(result.followerCount()).isEqualTo(3L);
-        verify(memberWriter).updateNickname(1L, "nova");
+        InOrder inOrder = inOrder(memberWriter, memberReader);
+        inOrder.verify(memberWriter).updateNickname(1L, "nova");
+        inOrder.verify(memberReader).readWithProfileOrThrow(1L);
     }
 
     @Test
@@ -307,7 +313,9 @@ class MemberServiceTest {
         assertThat(result.memberId()).isEqualTo(1L);
         assertThat(result.university().universityId()).isEqualTo(10L);
         assertThat(result.university().universityName()).isEqualTo("클루대");
-        verify(memberWriter).updateUniversity(1L, 10L);
+        InOrder inOrder = inOrder(memberWriter, memberReader);
+        inOrder.verify(memberWriter).updateUniversity(1L, 10L);
+        inOrder.verify(memberReader).readWithProfileOrThrow(1L);
     }
 
     @Test
