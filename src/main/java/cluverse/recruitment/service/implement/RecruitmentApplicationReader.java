@@ -110,7 +110,7 @@ public class RecruitmentApplicationReader {
         ApplicationChatMessageQueryDto message =
                 recruitmentApplicationQueryRepository.findApplicationMessage(applicationId, messageId);
         if (message == null) {
-            throw new NotFoundException(RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_NOT_FOUND.getMessage());
+            throw new NotFoundException(RecruitmentExceptionMessage.APPLICATION_CHAT_MESSAGE_NOT_FOUND.getMessage());
         }
         return message;
     }

@@ -98,7 +98,7 @@ public class RecruitmentApplicationProcessor {
 
     private void validateGroupMemberApplicant(Long memberId, Group group) {
         if (group.hasMember(memberId)) {
-            throw new BadRequestException(RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_ALREADY_EXISTS.getMessage());
+            throw new BadRequestException(RecruitmentExceptionMessage.RECRUITMENT_APPLICATION_ALREADY_GROUP_MEMBER.getMessage());
         }
     }
 
