@@ -21,7 +21,8 @@ spring:
     hikari:
       maximum-pool-size: 20
   jpa:
-    defer-datasource-initialization: true
+    # defer-datasource-initialization은 script 초기화(data.sql) 전용 —
+    # 사용하는 곳이 없고 Flyway와 순환 의존(flyway ↔ entityManagerFactory)을 만들어 제거
     hibernate:
       ddl-auto: none
     properties:

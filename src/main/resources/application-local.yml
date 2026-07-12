@@ -10,7 +10,6 @@ spring:
   #    hikari:
   #      maximum-pool-size: 64
   jpa:
-    defer-datasource-initialization: true
     hibernate:
       ddl-auto: none
     properties:

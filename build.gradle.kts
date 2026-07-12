@@ -47,7 +47,8 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:2.0.0")
     implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
-    implementation("org.flywaydb:flyway-core")
+    // Spring Boot 4는 flyway-core만으로는 자동설정이 동작하지 않는다 — starter(spring-boot-flyway 모듈) 필수
+    implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-mysql")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("com.h2database:h2")

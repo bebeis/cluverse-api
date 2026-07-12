@@ -3,11 +3,12 @@ package cluverse.post.controller;
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.auth.Login;
 import cluverse.common.auth.LoginMember;
+import cluverse.post.service.PostListQueryServiceV1;
 import cluverse.post.service.PostQueryService;
 import cluverse.post.service.PostService;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
-import cluverse.post.service.request.PostSearchRequest;
+import cluverse.post.service.request.PostOffsetSearchRequest;
 import cluverse.post.service.request.PostUpdateRequest;
 import cluverse.post.service.response.PostDetailResponse;
 import cluverse.post.service.response.PostPageResponse;
@@ -36,12 +37,17 @@ import java.util.List;
 public class PostControllerV1 {
 
     private final PostQueryService postQueryService;
+    private final PostListQueryServiceV1 postListQueryServiceV1;
     private final PostService postService;
 
+    /**
+     * [V1] 인덱스만 건 원본(naive offset) 목록 조회. 성능 비교 기준(baseline).
+     * 개선판은 /api/v2(deferred join), /api/v3(+ 블록 카운트), /api/v4(커서) 참조.
+     */
     @GetMapping
     public ApiResponse<PostPageResponse> getPostList(@Login LoginMember loginMember,
-                                                     @Valid @ModelAttribute PostSearchRequest request) {
-        return ApiResponse.ok(postQueryService.getPosts(extractMemberId(loginMember), request));
+                                                     @Valid @ModelAttribute PostOffsetSearchRequest request) {
+        return ApiResponse.ok(postListQueryServiceV1.getPosts(extractMemberId(loginMember), request));
     }
 
     @GetMapping("/search")

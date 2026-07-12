@@ -19,6 +19,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
     private static final List<String> PUBLIC_GET_PATH_PATTERNS = List.of(
             "/api/v1/posts",
             "/api/v1/posts/*",
+            // 게시글 목록 조회 버전별 성능 비교 엔드포인트
+            "/api/v2/posts",
+            "/api/v3/posts",
+            "/api/v4/posts",
             "/api/v1/comments",
             "/api/v1/universities",
             "/api/v1/universities/*",
@@ -53,7 +57,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new AuthInterceptor(PUBLIC_GET_PATH_PATTERNS, PROTECTED_GET_PATH_PATTERNS))
-                .addPathPatterns("/api/v1/**")
+                .addPathPatterns("/api/v1/**", "/api/v2/**", "/api/v3/**", "/api/v4/**")
                 .excludePathPatterns(
                         "/api/v1/auth/register",
                         "/api/v1/auth/login",

@@ -1,6 +1,13 @@
 == 게시글 API
 
-=== 게시글 목록 조회
+게시글 목록 조회는 성능 개선 단계를 비교 측정하기 위해 V1~V4 네 가지 버전으로 제공된다.
+
+- V1 (`/api/v1/posts`): 인덱스만 건 원본 오프셋 페이징
+- V2 (`/api/v2/posts`): 커버링 인덱스 + 지연 조인
+- V3 (`/api/v3/posts`): V2 + 페이지 블록 상한 카운트
+- V4 (`/api/v4/posts`): 날짜 앵커 + 커서 기반
+
+=== 게시글 목록 조회 (V1)
 
 ==== 요청
 
@@ -11,6 +18,54 @@ include::{snippets}/posts/get-post-list/query-parameters.adoc[]
 
 include::{snippets}/posts/get-post-list/http-response.adoc[]
 include::{snippets}/posts/get-post-list/response-fields.adoc[]
+
+=== 게시글 목록 조회 (V2)
+
+==== 요청
+
+include::{snippets}/posts/get-post-list-v2/http-request.adoc[]
+include::{snippets}/posts/get-post-list-v2/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/get-post-list-v2/http-response.adoc[]
+include::{snippets}/posts/get-post-list-v2/response-fields.adoc[]
+
+=== 게시글 목록 조회 (V3)
+
+==== 요청
+
+include::{snippets}/posts/get-post-list-v3/http-request.adoc[]
+include::{snippets}/posts/get-post-list-v3/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/get-post-list-v3/http-response.adoc[]
+include::{snippets}/posts/get-post-list-v3/response-fields.adoc[]
+
+=== 날짜 기반 게시글 목록 조회 (V3)
+
+==== 요청
+
+include::{snippets}/posts/get-post-list-by-date/http-request.adoc[]
+include::{snippets}/posts/get-post-list-by-date/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/get-post-list-by-date/http-response.adoc[]
+include::{snippets}/posts/get-post-list-by-date/response-fields.adoc[]
+
+=== 게시글 목록 조회 (V4, 커서)
+
+==== 요청
+
+include::{snippets}/posts/get-post-list-v4/http-request.adoc[]
+include::{snippets}/posts/get-post-list-v4/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/get-post-list-v4/http-response.adoc[]
+include::{snippets}/posts/get-post-list-v4/response-fields.adoc[]
 
 === 게시글 검색
 

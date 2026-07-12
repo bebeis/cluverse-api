@@ -3,7 +3,10 @@ package cluverse.post.repository;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.domain.PostStatus;
 import cluverse.post.repository.dto.PostIdSliceQueryResult;
+import cluverse.post.service.request.PostCursorDirection;
+import cluverse.post.service.request.PostCursorSearchRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
+import cluverse.post.service.request.PostOffsetSearchRequest;
 import cluverse.post.service.request.PostSearchRequest;
 import cluverse.post.service.request.PostSortType;
 import com.querydsl.core.types.OrderSpecifier;
@@ -16,7 +19,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static cluverse.meta.domain.QPostViewCount.postViewCount;
@@ -37,8 +43,21 @@ public class PostPageQueryRepository {
     public PostIdSliceQueryResult findPostPageIds(PostSearchRequest request) {
         int size = request.sizeOrDefault();
         long offset = (long) (request.pageOrDefault() - 1) * size;
-        PostSortType sortType = request.sortOrDefault();
+        return findPostPageIds(request.boardId(), request.category(), request.sortOrDefault(), offset, size);
+    }
 
+    /**
+     * [V2 전용] V3와 같은 커버링 인덱스 id 선정이지만, 측정용으로 페이지 상한이 완화된 요청을 받는다.
+     */
+    public PostIdSliceQueryResult findPostPageIds(PostOffsetSearchRequest request) {
+        return findPostPageIds(
+                request.boardId(), request.category(), request.sortOrDefault(),
+                request.offset(), request.sizeOrDefault()
+        );
+    }
+
+    private PostIdSliceQueryResult findPostPageIds(Long boardId, PostCategory category, PostSortType sortType,
+                                                   long offset, int size) {
         // LATEST 정렬 시 조인 없이 idx_post_board_status_created_id 커버링 인덱스만으로
         // offset 이동이 처리되어야 한다. MySQL은 미사용 LEFT JOIN을 제거하지 않으므로
         // post_view_count 조인은 VIEW_COUNT 정렬일 때만 붙인다. (동적 쿼리 형태로 만들기!)
@@ -51,8 +70,8 @@ public class PostPageQueryRepository {
         List<Long> postIds = postIdQuery
                 .where(
                         activePost(),
-                        boardIdEq(request.boardId()),
-                        categoryEq(request.category())
+                        boardIdEq(boardId),
+                        categoryEq(category)
                 )
                 .orderBy(resolveOrderSpecifiers(sortType))
                 .offset(offset)
@@ -60,6 +79,71 @@ public class PostPageQueryRepository {
                 .fetch();
 
         return toSlice(postIds, size);
+    }
+
+    /**
+     * [V4 전용] 날짜 앵커/커서 기반 id 선정. offset 없이 인덱스에서 시작 지점을 바로 찾는다.
+     * - 진입(date): created_at < date+1일 — (created_at, post_id) <= (그날 마지막, MAX)와 동치
+     * - NEXT(과거로): (created_at, post_id) < 커서 — OR 전개형(QueryDSL은 row constructor 미지원)
+     * - PREV(최신으로): (created_at, post_id) > 커서 — ASC로 커서에 인접한 size건을 뽑은 뒤 최신순으로 뒤집는다
+     */
+    public PostIdSliceQueryResult findPostPageIdsByCursor(PostCursorSearchRequest request) {
+        int size = request.sizeOrDefault();
+        boolean ascending = request.hasCursor() && request.directionOrDefault() == PostCursorDirection.PREV;
+
+        List<Long> postIds = queryFactory.select(post.id)
+                .from(post)
+                .where(
+                        activePost(),
+                        boardIdEq(request.boardId()),
+                        categoryEq(request.category()),
+                        cursorAnchor(request)
+                )
+                .orderBy(ascending
+                        ? new OrderSpecifier<?>[]{post.createdAt.asc(), post.id.asc()}
+                        : new OrderSpecifier<?>[]{post.createdAt.desc(), post.id.desc()})
+                .limit(size + 1L)
+                .fetch();
+
+        PostIdSliceQueryResult slice = toSlice(postIds, size);
+        if (!ascending) {
+            return slice;
+        }
+        List<Long> reversed = new ArrayList<>(slice.postIds());
+        Collections.reverse(reversed);
+        return new PostIdSliceQueryResult(reversed, slice.hasNext());
+    }
+
+    /**
+     * [V4 전용] date 진입 페이지의 hasPrev(더 최신 글 존재) 판단.
+     */
+    public boolean existsPostsNewerThan(Long boardId, PostCategory category, LocalDateTime exclusiveEnd) {
+        return queryFactory.selectOne()
+                .from(post)
+                .where(
+                        activePost(),
+                        boardIdEq(boardId),
+                        categoryEq(category),
+                        post.createdAt.goe(exclusiveEnd)
+                )
+                .fetchFirst() != null;
+    }
+
+    private BooleanExpression cursorAnchor(PostCursorSearchRequest request) {
+        if (request.hasCursor()) {
+            LocalDateTime createdAt = request.cursorCreatedAt();
+            Long postId = request.cursorPostId();
+            return switch (request.directionOrDefault()) {
+                case NEXT -> post.createdAt.lt(createdAt)
+                        .or(post.createdAt.eq(createdAt).and(post.id.lt(postId)));
+                case PREV -> post.createdAt.gt(createdAt)
+                        .or(post.createdAt.eq(createdAt).and(post.id.gt(postId)));
+            };
+        }
+        if (request.isDateAnchored()) {
+            return post.createdAt.lt(request.exclusiveDateEnd());
+        }
+        return null;
     }
 
     public PostIdSliceQueryResult findPostPageIdsByDate(PostSearchRequest request) {
@@ -116,6 +200,22 @@ public class PostPageQueryRepository {
                 .fetch();
 
         return toSlice(postIds, size);
+    }
+
+    /**
+     * [V1/V2 전용] 상한 없는 전체 카운트. 조건에 맞는 인덱스 엔트리를 전부 세므로
+     * 게시글 수에 비례해 느려진다 — V3의 {@link #countPostsUpTo}가 이를 개선한 형태다.
+     */
+    public long countPosts(Long boardId, PostCategory category) {
+        Long count = queryFactory.select(post.count())
+                .from(post)
+                .where(
+                        activePost(),
+                        boardIdEq(boardId),
+                        categoryEq(category)
+                )
+                .fetchOne();
+        return count == null ? 0L : count;
     }
 
     /**
