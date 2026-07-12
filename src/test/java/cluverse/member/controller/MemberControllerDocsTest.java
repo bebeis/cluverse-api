@@ -415,6 +415,8 @@ class MemberControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.page").type(JsonFieldType.NUMBER).description("현재 페이지"),
                                 fieldWithPath("data.size").type(JsonFieldType.NUMBER).description("페이지 크기"),
                                 fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부"),
+                                fieldWithPath("data.lastPage").type(JsonFieldType.NULL).description("마지막 페이지 번호 (내 게시글 목록은 미제공)"),
+                                fieldWithPath("data.hasNextBlock").type(JsonFieldType.NULL).description("다음 페이지 블록 존재 여부 (내 게시글 목록은 미제공)"),
                                 fieldWithPath("data.dateBased").type(JsonFieldType.BOOLEAN).description("날짜 기반 조회 여부 (false)")
                         )
                 ));

@@ -83,6 +83,7 @@ class PostServiceV1Test {
                 ),
                 true
         ));
+        when(postReader.countPostsUpTo(request, 201L)).thenReturn(201L);
 
         // when
         PostPageResponse response = postQueryService.getPosts(99L, request);
@@ -91,8 +92,28 @@ class PostServiceV1Test {
         assertThat(response.posts()).extracting("postId").containsExactly(2L, 1L);
         assertThat(response.hasNext()).isTrue();
         assertThat(response.page()).isEqualTo(1);
+        assertThat(response.lastPage()).isEqualTo(10);
+        assertThat(response.hasNextBlock()).isTrue();
         assertThat(response.dateBased()).isFalse();
         verify(boardReader).validateReadable(99L, 3L);
+    }
+
+    @Test
+    void 게시글_수가_카운트_상한_미만이면_실제_마지막_페이지를_계산한다() {
+        // given
+        PostSearchRequest request = new PostSearchRequest(3L, null, PostSortType.LATEST, 1, 20, null);
+        when(postReader.readPostPage(99L, request)).thenReturn(new PostPageQueryResult(
+                List.of(createPostSummaryQueryDto(2L, 20L, false)),
+                false
+        ));
+        when(postReader.countPostsUpTo(request, 201L)).thenReturn(35L);
+
+        // when
+        PostPageResponse response = postQueryService.getPosts(99L, request);
+
+        // then
+        assertThat(response.lastPage()).isEqualTo(2);
+        assertThat(response.hasNextBlock()).isFalse();
     }
 
     @Test
@@ -114,6 +135,8 @@ class PostServiceV1Test {
         // then
         assertThat(response.posts()).extracting("postId").containsExactly(5L, 4L);
         assertThat(response.page()).isNull();
+        assertThat(response.lastPage()).isNull();
+        assertThat(response.hasNextBlock()).isNull();
         assertThat(response.dateBased()).isTrue();
         assertThat(response.hasNext()).isFalse();
         verify(boardReader).validateReadable(99L, 3L);
@@ -127,6 +150,7 @@ class PostServiceV1Test {
                 List.of(createPostSummaryQueryDto(10L, 20L, false)),
                 true
         ));
+        when(postReader.countPostsByKeywordUpTo(request, 201L)).thenReturn(35L);
 
         // when
         PostPageResponse response = postQueryService.searchPosts(99L, request);
@@ -134,6 +158,8 @@ class PostServiceV1Test {
         // then
         assertThat(response.posts()).extracting("postId").containsExactly(10L);
         assertThat(response.page()).isEqualTo(1);
+        assertThat(response.lastPage()).isEqualTo(2);
+        assertThat(response.hasNextBlock()).isFalse();
         assertThat(response.hasNext()).isTrue();
         assertThat(response.dateBased()).isFalse();
         verify(boardReader).validateReadable(99L, 3L);
