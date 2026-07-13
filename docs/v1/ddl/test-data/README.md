@@ -23,6 +23,7 @@ MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
 - `05_post_seed.sql`
 - `05a_popular_board_post_seed.sql`
 - `05b_popular_board_post_seed_8m.sql`
+- `05c_view_count_optimistic_seed.sql` - 낙관적 락 조회수 실험 테이블(post_view_count_optimistic) 사전 적재
 - `06_comment_seed.sql`
 - `07_follow_seed.sql`
 - `08_block_seed.sql`
@@ -37,9 +38,10 @@ MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
 5. `05_post_seed.sql`
 6. `05a_popular_board_post_seed.sql` (선택)
 7. `05b_popular_board_post_seed_8m.sql` (선택, `05a` 이후)
-8. `06_comment_seed.sql`
-9. `07_follow_seed.sql`
-10. `08_block_seed.sql`
+8. `05c_view_count_optimistic_seed.sql` (선택, 조회수 부하테스트 시 필수 — 05 계열 마지막에)
+9. `06_comment_seed.sql`
+10. `07_follow_seed.sql`
+11. `08_block_seed.sql`
 
 실서비스형 샘플이 필요하면 대량 데이터 스크립트 대신 `09_realistic_korean_seed.sql`만 단독 실행해도 됩니다.
 
@@ -52,6 +54,7 @@ MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
 - `05a_popular_board_post_seed.sql`은 `member` 이후에 실행 가능하며, 일반 게시판 데이터와 함께 쓰려면 `05_post_seed.sql` 다음에 실행하는 것이 좋습니다.
 - `comment`는 `post`, `member`를 참조하므로 `post` 이후에 실행해야 합니다.
 - `follow`, `block`은 `member`만 참조하므로 `member` 이후면 어느 시점에 실행해도 됩니다.
+- `05c_view_count_optimistic_seed.sql`은 `post_view_count`를 그대로 복제하므로 05 계열(05/05a/05b) 중 사용할 시드를 모두 넣은 뒤에 실행해야 합니다. 사전 적재 없이 조회수 V1(낙관적 락) 부하테스트를 돌리면 첫 요청마다 insert 경합이 발생해 측정이 왜곡됩니다.
 
 ## 재실행 주의사항
 

@@ -1,7 +1,7 @@
 package cluverse.post.controller;
 
 import cluverse.common.api.response.ApiResponse;
-import cluverse.post.service.PostViewCountServiceV1;
+import cluverse.post.service.PostViewCountServiceV3;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,14 +9,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * [V1] 낙관적 락(@Version + 재시도) 조회수 증가.
+ * [V3] 원자적 UPDATE 조회수 증가. 운영 방식과 동일한 구현에 위임한다.
  */
 @RestController
-@RequestMapping("/api/v1/posts/{postId}/view-count")
+@RequestMapping("/api/v3/posts/{postId}/view-count")
 @RequiredArgsConstructor
-public class PostViewCountControllerV1 {
+public class PostViewCountControllerV3 {
 
-    private final PostViewCountServiceV1 postViewCountService;
+    private final PostViewCountServiceV3 postViewCountService;
 
     @PostMapping
     public ApiResponse<Void> increaseViewCount(@PathVariable Long postId) {

@@ -34,9 +34,9 @@ class PostMetaServiceTest {
 
     @Test
     void 게시글_조회수_V2_증가를_작성기에_위임한다() {
-        postMetaService.increaseViewCountV2(10L);
+        postMetaService.increaseViewCountOptimistic(10L);
 
-        verify(postMetaWriter).increaseViewCountV2(10L);
+        verify(postMetaWriter).increaseViewCountOptimistic(10L);
     }
 
     @Test

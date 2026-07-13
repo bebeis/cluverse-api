@@ -7,19 +7,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * [V1] 낙관적 락(@Version + 재시도) 조회수 증가.
- * 충돌 시 새 트랜잭션으로 재시도하며, 재시도 소진 시 실패한다.
+ * [V2] 비관적 락(select for update + 더티체킹) 조회수 증가.
+ * 락 획득부터 커밋까지가 락 보유 구간이며, 이 구간의 길이가 측정 대상이다.
  */
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class PostViewCountServiceV1 {
+public class PostViewCountServiceV2 {
 
     private final PostAccessReader postAccessReader;
     private final PostMetaWriter postMetaWriter;
 
     public void increaseViewCount(Long postId) {
         postAccessReader.readOrThrow(postId);
-        postMetaWriter.increaseViewCountOptimistic(postId);
+        postMetaWriter.increaseViewCountPessimistic(postId);
     }
 }

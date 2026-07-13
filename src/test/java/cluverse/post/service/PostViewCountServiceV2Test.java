@@ -18,7 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PostViewCountServiceV1Test {
+class PostViewCountServiceV2Test {
 
     @Mock
     private PostAccessReader postAccessReader;
@@ -27,10 +27,10 @@ class PostViewCountServiceV1Test {
     private PostMetaWriter postMetaWriter;
 
     @InjectMocks
-    private PostViewCountServiceV1 postViewCountService;
+    private PostViewCountServiceV2 postViewCountService;
 
     @Test
-    void V1_조회수_증가시_낙관적_락_방식에_위임한다() {
+    void V2_조회수_증가시_비관적_락_방식에_위임한다() {
         // given
         when(postAccessReader.readOrThrow(10L)).thenReturn(createPost(10L));
 
@@ -39,7 +39,7 @@ class PostViewCountServiceV1Test {
 
         // then
         verify(postAccessReader).readOrThrow(10L);
-        verify(postMetaWriter).increaseViewCountOptimistic(10L);
+        verify(postMetaWriter).increaseViewCountPessimistic(10L);
     }
 
     private Post createPost(Long postId) {

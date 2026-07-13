@@ -30,4 +30,8 @@ public class PostViewCount extends BaseTimeEntity {
     public static PostViewCount of(Long postId, int viewCount) {
         return new PostViewCount(postId, viewCount);
     }
+
+    public void increase() {
+        viewCount += 1;
+    }
 }

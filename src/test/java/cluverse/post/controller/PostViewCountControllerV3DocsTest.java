@@ -1,7 +1,7 @@
 package cluverse.post.controller;
 
 import cluverse.docs.RestDocsSupport;
-import cluverse.post.service.PostViewCountServiceV1;
+import cluverse.post.service.PostViewCountServiceV3;
 import org.junit.jupiter.api.Test;
 import org.springframework.restdocs.payload.JsonFieldType;
 
@@ -15,22 +15,22 @@ import static org.springframework.restdocs.request.RequestDocumentation.paramete
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class PostViewCountControllerV1DocsTest extends RestDocsSupport {
+class PostViewCountControllerV3DocsTest extends RestDocsSupport {
 
-    private final PostViewCountServiceV1 postViewCountService = mock(PostViewCountServiceV1.class);
+    private final PostViewCountServiceV3 postViewCountService = mock(PostViewCountServiceV3.class);
 
     @Override
     protected Object initController() {
-        return new PostViewCountControllerV1(postViewCountService);
+        return new PostViewCountControllerV3(postViewCountService);
     }
 
     @Test
-    void 조회수_V1_증가() throws Exception {
+    void 조회수_V3_증가() throws Exception {
         doNothing().when(postViewCountService).increaseViewCount(10L);
 
-        mockMvc.perform(post("/api/v1/posts/{postId}/view-count", 10L))
+        mockMvc.perform(post("/api/v3/posts/{postId}/view-count", 10L))
                 .andExpect(status().isOk())
-                .andDo(document("posts/increase-view-count-v1",
+                .andDo(document("posts/increase-view-count-v3",
                         pathParameters(
                                 parameterWithName("postId").description("조회수를 증가시킬 게시글 ID")
                         ),

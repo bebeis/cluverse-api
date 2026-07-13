@@ -63,7 +63,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/v1/auth/login",
                         "/api/v1/auth/logout",
                         "/api/v1/auth/oauth/**",
-                        "/actuator/**"
+                        "/actuator/**",
+                        // 조회수 증가 버전별 성능 비교 엔드포인트 — 부하테스트용 비로그인 허용
+                        "/api/v1/posts/*/view-count",
+                        "/api/v2/posts/*/view-count",
+                        "/api/v3/posts/*/view-count"
                 );
     }
 

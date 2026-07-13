@@ -7,19 +7,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * [V1] 낙관적 락(@Version + 재시도) 조회수 증가.
- * 충돌 시 새 트랜잭션으로 재시도하며, 재시도 소진 시 실패한다.
+ * [V3] 원자적 UPDATE 조회수 증가.
+ * 운영 구현({@link PostMetaWriter#increaseViewCount})에 그대로 위임한다.
  */
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class PostViewCountServiceV1 {
+public class PostViewCountServiceV3 {
 
     private final PostAccessReader postAccessReader;
     private final PostMetaWriter postMetaWriter;
 
     public void increaseViewCount(Long postId) {
         postAccessReader.readOrThrow(postId);
-        postMetaWriter.increaseViewCountOptimistic(postId);
+        postMetaWriter.increaseViewCount(postId);
     }
 }

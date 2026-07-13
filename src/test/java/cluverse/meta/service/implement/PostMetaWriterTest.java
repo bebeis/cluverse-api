@@ -3,12 +3,12 @@ package cluverse.meta.service.implement;
 import cluverse.meta.domain.PostBookmarkCount;
 import cluverse.meta.domain.PostCommentCount;
 import cluverse.meta.domain.PostViewCount;
-import cluverse.meta.domain.PostViewCountV2;
+import cluverse.meta.domain.PostViewCountOptimistic;
 import cluverse.meta.repository.PostBookmarkCountRepository;
 import cluverse.meta.repository.PostCommentCountRepository;
 import cluverse.meta.repository.PostLikeCountRepository;
 import cluverse.meta.repository.PostViewCountRepository;
-import cluverse.meta.repository.PostViewCountV2Repository;
+import cluverse.meta.repository.PostViewCountOptimisticRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -40,7 +40,7 @@ class PostMetaWriterTest {
     private PostViewCountRepository postViewCountRepository;
 
     @Mock
-    private PostViewCountV2Repository postViewCountV2Repository;
+    private PostViewCountOptimisticRepository postViewCountOptimisticRepository;
 
     @Mock
     private PlatformTransactionManager transactionManager;
@@ -70,12 +70,12 @@ class PostMetaWriterTest {
     @Test
     void 게시글_조회수_V2는_새_트랜잭션에서_증가시킨다() {
         when(transactionManager.getTransaction(any())).thenReturn(transactionStatus);
-        when(postViewCountV2Repository.findById(10L)).thenReturn(Optional.of(PostViewCountV2.create(10L)));
+        when(postViewCountOptimisticRepository.findById(10L)).thenReturn(Optional.of(PostViewCountOptimistic.create(10L)));
 
-        postMetaWriter.increaseViewCountV2(10L);
+        postMetaWriter.increaseViewCountOptimistic(10L);
 
-        verify(postViewCountV2Repository).findById(10L);
-        verify(postViewCountV2Repository).flush();
+        verify(postViewCountOptimisticRepository).findById(10L);
+        verify(postViewCountOptimisticRepository).flush();
         verify(transactionManager).commit(transactionStatus);
     }
 

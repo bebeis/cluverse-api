@@ -115,6 +115,44 @@ include::{snippets}/posts/read-post/path-parameters.adoc[]
 include::{snippets}/posts/read-post/http-response.adoc[]
 include::{snippets}/posts/read-post/response-fields.adoc[]
 
+=== 게시글 조회수 증가 (V1~V3)
+
+게시글 조회수 증가는 동시성 제어 전략을 비교 측정하기 위해 V1~V3 세 가지 버전으로 제공된다.
+
+- V1 (`/api/v1/posts/{postId}/view-count`): 낙관적 락 (@Version + 재시도)
+- V2 (`/api/v2/posts/{postId}/view-count`): 비관적 락 (select for update)
+- V3 (`/api/v3/posts/{postId}/view-count`): 원자적 UPDATE (운영 방식)
+
+==== 조회수 증가 (V1) 요청
+
+include::{snippets}/posts/increase-view-count-v1/http-request.adoc[]
+include::{snippets}/posts/increase-view-count-v1/path-parameters.adoc[]
+
+==== 조회수 증가 (V1) 응답
+
+include::{snippets}/posts/increase-view-count-v1/http-response.adoc[]
+include::{snippets}/posts/increase-view-count-v1/response-fields.adoc[]
+
+==== 조회수 증가 (V2) 요청
+
+include::{snippets}/posts/increase-view-count-v2/http-request.adoc[]
+include::{snippets}/posts/increase-view-count-v2/path-parameters.adoc[]
+
+==== 조회수 증가 (V2) 응답
+
+include::{snippets}/posts/increase-view-count-v2/http-response.adoc[]
+include::{snippets}/posts/increase-view-count-v2/response-fields.adoc[]
+
+==== 조회수 증가 (V3) 요청
+
+include::{snippets}/posts/increase-view-count-v3/http-request.adoc[]
+include::{snippets}/posts/increase-view-count-v3/path-parameters.adoc[]
+
+==== 조회수 증가 (V3) 응답
+
+include::{snippets}/posts/increase-view-count-v3/http-response.adoc[]
+include::{snippets}/posts/increase-view-count-v3/response-fields.adoc[]
+
 === 게시글 수정
 
 ==== 요청
