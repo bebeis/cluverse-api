@@ -13,6 +13,7 @@ import jakarta.persistence.OptimisticLockException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -72,7 +73,10 @@ public class PostMetaWriter {
 
     /**
      * [V1] 낙관적 락(@Version) 조회수 증가. 버전 충돌 시 새 트랜잭션으로 재시도한다.
+     * 외부 트랜잭션 없이 실행해야 한다 — 외부 트랜잭션이 커넥션을 쥔 채 REQUIRES_NEW가
+     * 두 번째 커넥션을 기다리면 풀 포화 시 데드락이 나고, 재시도 sleep 동안에도 커넥션을 점유한다.
      */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void increaseViewCountOptimistic(Long postId) {
         for (int attempt = 0; attempt < MAX_RETRY_COUNT; attempt++) {
             try {

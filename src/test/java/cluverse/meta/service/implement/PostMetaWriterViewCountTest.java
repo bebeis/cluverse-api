@@ -5,6 +5,7 @@ import cluverse.meta.domain.PostViewCount;
 import cluverse.meta.domain.PostViewCountOptimistic;
 import cluverse.meta.repository.PostViewCountOptimisticRepository;
 import cluverse.meta.repository.PostViewCountRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -28,6 +29,13 @@ class PostMetaWriterViewCountTest {
 
     @Autowired
     private PostViewCountRepository postViewCountRepository;
+
+    // NOT_SUPPORTED 라서 테스트 데이터가 롤백 없이 커밋된다 — 반복 실행 시 PK 충돌 방지
+    @AfterEach
+    void tearDown() {
+        postViewCountOptimisticRepository.deleteAll();
+        postViewCountRepository.deleteAll();
+    }
 
     @Test
     void 낙관적_락_조회수_레코드가_없으면_생성후_증가시킨다() {

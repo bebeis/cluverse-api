@@ -68,7 +68,7 @@ class PostMetaWriterTest {
     }
 
     @Test
-    void 게시글_조회수_V2는_새_트랜잭션에서_증가시킨다() {
+    void 게시글_조회수_낙관적_락은_새_트랜잭션에서_증가시킨다() {
         when(transactionManager.getTransaction(any())).thenReturn(transactionStatus);
         when(postViewCountOptimisticRepository.findById(10L)).thenReturn(Optional.of(PostViewCountOptimistic.create(10L)));
 
