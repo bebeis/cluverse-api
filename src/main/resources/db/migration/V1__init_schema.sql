@@ -1,6 +1,6 @@
 -- ============================================================
 -- Flyway V1 baseline — Cluverse 현재 스키마 (MySQL 8.x)
--- 출처: docs/v1/ddl/cluverse_ddl_v1_2.sql + post_view_count_v2
+-- 출처: docs/v1/ddl/cluverse_ddl_v1_2.sql + post_view_count_optimistic
 -- 기존 운영 DB는 baseline-on-migrate로 미실행 baseline 처리됨.
 -- 신규/로컬 DB는 이 스크립트로 스키마를 생성한다.
 -- ============================================================
@@ -861,15 +861,14 @@ CREATE TABLE campus_event (
   COMMENT='캠퍼스 행사';
 
 -- ------------------------------------------------------------
--- post_view_count_v2 (낙관적 락 조회수 실험 테이블 — 스냅샷 누락분 보강)
--- 출처: docs/v1/ddl/2026-03-20_create_post_view_count_v2.sql
+-- post_view_count_optimistic (낙관적 락 조회수 실험 테이블)
 -- ------------------------------------------------------------
--- 낙관적 락 기반 조회수 증가 성능 비교용 테이블
+-- 낙관적 락 기반 조회수 증가 성능 비교용 테이블 (조회수 증가 API V1)
 -- 목적:
 -- 1. 기존 post_view_count(update set ... where) 경로를 유지한다.
--- 2. 낙관적 락 비교 실험은 post_view_count_v2 테이블에서 독립적으로 수행한다.
+-- 2. 낙관적 락 비교 실험은 post_view_count_optimistic 테이블에서 독립적으로 수행한다.
 
-CREATE TABLE IF NOT EXISTS post_view_count_v2 (
+CREATE TABLE IF NOT EXISTS post_view_count_optimistic (
     post_id      BIGINT   NOT NULL COMMENT '→ post.post_id',
     view_count   INT      NOT NULL DEFAULT 0,
     version      BIGINT   NOT NULL DEFAULT 0,
@@ -877,4 +876,4 @@ CREATE TABLE IF NOT EXISTS post_view_count_v2 (
     updated_at   DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
     PRIMARY KEY (post_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='게시글 조회수 V2(낙관적 락 비교용)';
+  COMMENT='게시글 조회수(낙관적 락 비교용)';

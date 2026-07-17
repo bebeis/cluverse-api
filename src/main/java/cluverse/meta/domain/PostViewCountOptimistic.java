@@ -11,10 +11,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "post_view_count_v2")
+@Table(name = "post_view_count_optimistic")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PostViewCountV2 extends BaseTimeEntity {
+public class PostViewCountOptimistic extends BaseTimeEntity {
 
     @Id
     @Column(name = "post_id")
@@ -27,13 +27,13 @@ public class PostViewCountV2 extends BaseTimeEntity {
     @Column(nullable = false)
     private Long version;
 
-    private PostViewCountV2(Long postId, int viewCount) {
+    private PostViewCountOptimistic(Long postId, int viewCount) {
         this.postId = postId;
         this.viewCount = viewCount;
     }
 
-    public static PostViewCountV2 create(Long postId) {
-        return new PostViewCountV2(postId, 0);
+    public static PostViewCountOptimistic create(Long postId) {
+        return new PostViewCountOptimistic(postId, 0);
     }
 
     public void increase() {

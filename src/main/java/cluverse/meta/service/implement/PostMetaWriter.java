@@ -2,17 +2,18 @@ package cluverse.meta.service.implement;
 
 import cluverse.common.exception.BadRequestException;
 import cluverse.meta.domain.PostViewCount;
-import cluverse.meta.domain.PostViewCountV2;
+import cluverse.meta.domain.PostViewCountOptimistic;
 import cluverse.meta.exception.MetaExceptionMessage;
 import cluverse.meta.repository.PostBookmarkCountRepository;
 import cluverse.meta.repository.PostCommentCountRepository;
 import cluverse.meta.repository.PostLikeCountRepository;
 import cluverse.meta.repository.PostViewCountRepository;
-import cluverse.meta.repository.PostViewCountV2Repository;
+import cluverse.meta.repository.PostViewCountOptimisticRepository;
 import jakarta.persistence.OptimisticLockException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -29,7 +30,7 @@ public class PostMetaWriter {
     private final PostBookmarkCountRepository postBookmarkCountRepository;
     private final PostCommentCountRepository postCommentCountRepository;
     private final PostViewCountRepository postViewCountRepository;
-    private final PostViewCountV2Repository postViewCountV2Repository;
+    private final PostViewCountOptimisticRepository postViewCountOptimisticRepository;
     private final TransactionTemplate requiresNewTransactionTemplate;
 
     public PostMetaWriter(
@@ -37,14 +38,14 @@ public class PostMetaWriter {
             PostBookmarkCountRepository postBookmarkCountRepository,
             PostCommentCountRepository postCommentCountRepository,
             PostViewCountRepository postViewCountRepository,
-            PostViewCountV2Repository postViewCountV2Repository,
+            PostViewCountOptimisticRepository postViewCountOptimisticRepository,
             PlatformTransactionManager transactionManager
     ) {
         this.postLikeCountRepository = postLikeCountRepository;
         this.postBookmarkCountRepository = postBookmarkCountRepository;
         this.postCommentCountRepository = postCommentCountRepository;
         this.postViewCountRepository = postViewCountRepository;
-        this.postViewCountV2Repository = postViewCountV2Repository;
+        this.postViewCountOptimisticRepository = postViewCountOptimisticRepository;
         this.requiresNewTransactionTemplate = new TransactionTemplate(transactionManager);
         this.requiresNewTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
@@ -53,21 +54,40 @@ public class PostMetaWriter {
         postViewCountRepository.save(PostViewCount.of(postId, 0));
     }
 
+    /**
+     * [V3] 원자적 UPDATE 조회수 증가 — 운영 방식.
+     */
     public void increaseViewCount(Long postId) {
         postViewCountRepository.increaseCount(postId);
     }
 
-    public void increaseViewCountV2(Long postId) {
+    /**
+     * [V2] 비관적 락(select for update) 조회수 증가.
+     * 락 획득부터 트랜잭션 커밋까지 레코드 락을 보유한다. UPDATE는 더티체킹으로 커밋 시점에 발행된다.
+     */
+    public void increaseViewCountPessimistic(Long postId) {
+        postViewCountRepository.findByPostIdForUpdate(postId)
+                .orElseThrow(() -> new BadRequestException(MetaExceptionMessage.POST_VIEW_COUNT_NOT_FOUND.getMessage()))
+                .increase();
+    }
+
+    /**
+     * [V1] 낙관적 락(@Version) 조회수 증가. 버전 충돌 시 새 트랜잭션으로 재시도한다.
+     * 외부 트랜잭션 없이 실행해야 한다 — 외부 트랜잭션이 커넥션을 쥔 채 REQUIRES_NEW가
+     * 두 번째 커넥션을 기다리면 풀 포화 시 데드락이 나고, 재시도 sleep 동안에도 커넥션을 점유한다.
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void increaseViewCountOptimistic(Long postId) {
         for (int attempt = 0; attempt < MAX_RETRY_COUNT; attempt++) {
             try {
-                requiresNewTransactionTemplate.executeWithoutResult(status -> increaseViewCountV2Internal(postId));
+                requiresNewTransactionTemplate.executeWithoutResult(status -> increaseViewCountOptimisticInternal(postId));
                 return;
             } catch (ObjectOptimisticLockingFailureException
                      | OptimisticLockException
                      | DataIntegrityViolationException exception) {
                 if (attempt == MAX_RETRY_COUNT - 1) {
                     throw new IllegalStateException(
-                            MetaExceptionMessage.POST_VIEW_COUNT_V2_INCREASE_FAILED.getMessage(),
+                            MetaExceptionMessage.POST_VIEW_COUNT_OPTIMISTIC_INCREASE_FAILED.getMessage(),
                             exception
                     );
                 }
@@ -110,11 +130,11 @@ public class PostMetaWriter {
         }
     }
 
-    private void increaseViewCountV2Internal(Long postId) {
-        PostViewCountV2 postViewCount = postViewCountV2Repository.findById(postId)
-                .orElseGet(() -> postViewCountV2Repository.save(PostViewCountV2.create(postId)));
+    private void increaseViewCountOptimisticInternal(Long postId) {
+        PostViewCountOptimistic postViewCount = postViewCountOptimisticRepository.findById(postId)
+                .orElseGet(() -> postViewCountOptimisticRepository.save(PostViewCountOptimistic.create(postId)));
         postViewCount.increase();
-        postViewCountV2Repository.flush();
+        postViewCountOptimisticRepository.flush();
     }
 
     private void pauseBeforeRetry() {
