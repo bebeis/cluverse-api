@@ -1,6 +1,6 @@
 {
  "uid": "cluverse-infra",
- "title": "Cluverse Infra (MySQL / Redis / Node)",
+ "title": "Cluverse Infra (MySQL / Redis)",
  "tags": [
   "cluverse",
   "loadtest",
@@ -227,6 +227,19 @@
   },
   {
    "id": 5,
+   "type": "row",
+   "title": "MySQL — 쿼리",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 9
+   },
+   "panels": []
+  },
+  {
+   "id": 6,
    "type": "timeseries",
    "title": "QPS (전체 / 명령별)",
    "description": "",
@@ -236,9 +249,9 @@
    },
    "gridPos": {
     "h": 8,
-    "w": 8,
+    "w": 6,
     "x": 0,
-    "y": 9
+    "y": 10
    },
    "fieldConfig": {
     "defaults": {
@@ -289,7 +302,7 @@
    ]
   },
   {
-   "id": 6,
+   "id": 7,
    "type": "timeseries",
    "title": "버퍼풀 히트율",
    "description": "",
@@ -299,9 +312,9 @@
    },
    "gridPos": {
     "h": 8,
-    "w": 8,
-    "x": 8,
-    "y": 9
+    "w": 6,
+    "x": 6,
+    "y": 10
    },
    "fieldConfig": {
     "defaults": {
@@ -345,9 +358,9 @@
    ]
   },
   {
-   "id": 7,
+   "id": 8,
    "type": "timeseries",
-   "title": "Slow queries /s (long_query_time=0.2s)",
+   "title": "버퍼풀 메모리",
    "description": "",
    "datasource": {
     "type": "prometheus",
@@ -355,9 +368,72 @@
    },
    "gridPos": {
     "h": 8,
-    "w": 8,
-    "x": 16,
-    "y": 9
+    "w": 6,
+    "x": 12,
+    "y": 10
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "bytes"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "mysql_global_status_innodb_buffer_pool_bytes_data",
+     "legendFormat": "데이터 적재",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "mysql_global_variables_innodb_buffer_pool_size",
+     "legendFormat": "버퍼풀 크기",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 9,
+   "type": "timeseries",
+   "title": "Slow queries /s (>0.2s)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 6,
+    "x": 18,
+    "y": 10
    },
    "fieldConfig": {
     "defaults": {
@@ -399,22 +475,22 @@
    ]
   },
   {
-   "id": 8,
+   "id": 10,
    "type": "row",
-   "title": "Redis",
+   "title": "MySQL — 호스트 (RDS 콘솔 지표 재현)",
    "collapsed": false,
    "gridPos": {
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 17
+    "y": 18
    },
    "panels": []
   },
   {
-   "id": 9,
+   "id": 11,
    "type": "timeseries",
-   "title": "Commands /s",
+   "title": "CPU 사용률 (CPUUtilization)",
    "description": "",
    "datasource": {
     "type": "prometheus",
@@ -424,7 +500,562 @@
     "h": 8,
     "w": 8,
     "x": 0,
-    "y": 18
+    "y": 19
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "percent",
+     "max": 100,
+     "min": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\",instance_name=\"cluverse-mysql\"}[$__rate_interval]))) * 100",
+     "legendFormat": "CPU %",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 12,
+   "type": "timeseries",
+   "title": "가용 메모리 (FreeableMemory)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 8,
+    "y": 19
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "bytes"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "node_memory_MemAvailable_bytes{instance_name=\"cluverse-mysql\"}",
+     "legendFormat": "가용 메모리",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 13,
+   "type": "timeseries",
+   "title": "디스크 여유 공간 (FreeStorageSpace)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 16,
+    "y": 19
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "bytes"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "node_filesystem_avail_bytes{instance_name=\"cluverse-mysql\",mountpoint=\"/\"}",
+     "legendFormat": "free /",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 14,
+   "type": "timeseries",
+   "title": "디스크 IOPS (Read/Write IOPS)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 0,
+    "y": 27
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "iops"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "sum(rate(node_disk_reads_completed_total{instance_name=\"cluverse-mysql\",device=~\"nvme.*|xvd.*\"}[$__rate_interval]))",
+     "legendFormat": "read",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "sum(rate(node_disk_writes_completed_total{instance_name=\"cluverse-mysql\",device=~\"nvme.*|xvd.*\"}[$__rate_interval]))",
+     "legendFormat": "write",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 15,
+   "type": "timeseries",
+   "title": "디스크 처리량 (Read/Write Throughput)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 8,
+    "y": 27
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "Bps"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "sum(rate(node_disk_read_bytes_total{instance_name=\"cluverse-mysql\",device=~\"nvme.*|xvd.*\"}[$__rate_interval]))",
+     "legendFormat": "read",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "sum(rate(node_disk_written_bytes_total{instance_name=\"cluverse-mysql\",device=~\"nvme.*|xvd.*\"}[$__rate_interval]))",
+     "legendFormat": "write",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 16,
+   "type": "timeseries",
+   "title": "디스크 평균 지연 (Read/Write Latency)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 16,
+    "y": 27
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "s"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "sum(rate(node_disk_read_time_seconds_total{instance_name=\"cluverse-mysql\",device=~\"nvme.*|xvd.*\"}[$__rate_interval])) / sum(rate(node_disk_reads_completed_total{instance_name=\"cluverse-mysql\",device=~\"nvme.*|xvd.*\"}[$__rate_interval]))",
+     "legendFormat": "read",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "sum(rate(node_disk_write_time_seconds_total{instance_name=\"cluverse-mysql\",device=~\"nvme.*|xvd.*\"}[$__rate_interval])) / sum(rate(node_disk_writes_completed_total{instance_name=\"cluverse-mysql\",device=~\"nvme.*|xvd.*\"}[$__rate_interval]))",
+     "legendFormat": "write",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 17,
+   "type": "timeseries",
+   "title": "디스크 큐 (DiskQueueDepth)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 0,
+    "y": 35
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "sum(node_disk_io_now{instance_name=\"cluverse-mysql\",device=~\"nvme.*|xvd.*\"})",
+     "legendFormat": "진행 중 I/O",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "sum(rate(node_disk_io_time_weighted_seconds_total{instance_name=\"cluverse-mysql\",device=~\"nvme.*|xvd.*\"}[$__rate_interval]))",
+     "legendFormat": "평균 큐 길이",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 18,
+   "type": "timeseries",
+   "title": "네트워크 (NetworkThroughput)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 8,
+    "y": 35
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "Bps"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "sum(rate(node_network_receive_bytes_total{instance_name=\"cluverse-mysql\",device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]))",
+     "legendFormat": "rx",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "sum(rate(node_network_transmit_bytes_total{instance_name=\"cluverse-mysql\",device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]))",
+     "legendFormat": "tx",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 19,
+   "type": "timeseries",
+   "title": "커넥션 (DatabaseConnections)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 16,
+    "y": 35
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "mysql_global_status_threads_connected",
+     "legendFormat": "connected",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "mysql_global_variables_max_connections",
+     "legendFormat": "max_connections",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 20,
+   "type": "row",
+   "title": "Redis",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 43
+   },
+   "panels": []
+  },
+  {
+   "id": 21,
+   "type": "timeseries",
+   "title": "Commands /s",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 6,
+    "x": 0,
+    "y": 44
    },
    "fieldConfig": {
     "defaults": {
@@ -466,7 +1097,7 @@
    ]
   },
   {
-   "id": 10,
+   "id": 22,
    "type": "timeseries",
    "title": "Keyspace 히트율",
    "description": "",
@@ -476,9 +1107,9 @@
    },
    "gridPos": {
     "h": 8,
-    "w": 8,
-    "x": 8,
-    "y": 18
+    "w": 6,
+    "x": 6,
+    "y": 44
    },
    "fieldConfig": {
     "defaults": {
@@ -522,7 +1153,7 @@
    ]
   },
   {
-   "id": 11,
+   "id": 23,
    "type": "timeseries",
    "title": "메모리 / 클라이언트",
    "description": "",
@@ -532,9 +1163,9 @@
    },
    "gridPos": {
     "h": 8,
-    "w": 8,
-    "x": 16,
-    "y": 18
+    "w": 6,
+    "x": 12,
+    "y": 44
    },
    "fieldConfig": {
     "defaults": {
@@ -585,32 +1216,19 @@
    ]
   },
   {
-   "id": 12,
-   "type": "row",
-   "title": "Node (EC2 인스턴스별)",
-   "collapsed": false,
-   "gridPos": {
-    "h": 1,
-    "w": 24,
-    "x": 0,
-    "y": 26
-   },
-   "panels": []
-  },
-  {
-   "id": 13,
+   "id": 24,
    "type": "timeseries",
-   "title": "CPU 사용률",
-   "description": "t3 크레딧 소진/포화 판단",
+   "title": "호스트 CPU / 가용 메모리 %",
+   "description": "",
    "datasource": {
     "type": "prometheus",
     "uid": "${DS_PROM}"
    },
    "gridPos": {
     "h": 8,
-    "w": 8,
-    "x": 0,
-    "y": 27
+    "w": 6,
+    "x": 18,
+    "y": 44
    },
    "fieldConfig": {
     "defaults": {
@@ -647,227 +1265,18 @@
       "type": "prometheus",
       "uid": "${DS_PROM}"
      },
-     "expr": "(1 - avg by(instance_name) (rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval]))) * 100",
-     "legendFormat": "{{instance_name}}",
+     "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\",instance_name=\"cluverse-redis\"}[$__rate_interval]))) * 100",
+     "legendFormat": "CPU %",
      "refId": "A"
-    }
-   ]
-  },
-  {
-   "id": 14,
-   "type": "timeseries",
-   "title": "가용 메모리 비율",
-   "description": "",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "${DS_PROM}"
-   },
-   "gridPos": {
-    "h": 8,
-    "w": 8,
-    "x": 8,
-    "y": 27
-   },
-   "fieldConfig": {
-    "defaults": {
-     "color": {
-      "mode": "palette-classic"
-     },
-     "custom": {
-      "drawStyle": "line",
-      "lineWidth": 2,
-      "fillOpacity": 12,
-      "showPoints": "never",
-      "spanNulls": true
-     },
-     "unit": "percent",
-     "max": 100,
-     "min": 0
     },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "multi",
-     "sort": "desc"
-    }
-   },
-   "targets": [
     {
      "datasource": {
       "type": "prometheus",
       "uid": "${DS_PROM}"
      },
-     "expr": "node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100",
-     "legendFormat": "{{instance_name}}",
-     "refId": "A"
-    }
-   ]
-  },
-  {
-   "id": 15,
-   "type": "timeseries",
-   "title": "디스크 IO 시간 비율",
-   "description": "",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "${DS_PROM}"
-   },
-   "gridPos": {
-    "h": 8,
-    "w": 8,
-    "x": 16,
-    "y": 27
-   },
-   "fieldConfig": {
-    "defaults": {
-     "color": {
-      "mode": "palette-classic"
-     },
-     "custom": {
-      "drawStyle": "line",
-      "lineWidth": 2,
-      "fillOpacity": 12,
-      "showPoints": "never",
-      "spanNulls": true
-     },
-     "unit": "percent"
-    },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "multi",
-     "sort": "desc"
-    }
-   },
-   "targets": [
-    {
-     "datasource": {
-      "type": "prometheus",
-      "uid": "${DS_PROM}"
-     },
-     "expr": "rate(node_disk_io_time_seconds_total[$__rate_interval]) * 100",
-     "legendFormat": "{{instance_name}} {{device}}",
-     "refId": "A"
-    }
-   ]
-  },
-  {
-   "id": 16,
-   "type": "timeseries",
-   "title": "네트워크 수신",
-   "description": "",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "${DS_PROM}"
-   },
-   "gridPos": {
-    "h": 8,
-    "w": 12,
-    "x": 0,
-    "y": 35
-   },
-   "fieldConfig": {
-    "defaults": {
-     "color": {
-      "mode": "palette-classic"
-     },
-     "custom": {
-      "drawStyle": "line",
-      "lineWidth": 2,
-      "fillOpacity": 12,
-      "showPoints": "never",
-      "spanNulls": true
-     },
-     "unit": "Bps"
-    },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "multi",
-     "sort": "desc"
-    }
-   },
-   "targets": [
-    {
-     "datasource": {
-      "type": "prometheus",
-      "uid": "${DS_PROM}"
-     },
-     "expr": "sum by(instance_name) (rate(node_network_receive_bytes_total{device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]))",
-     "legendFormat": "{{instance_name}} rx",
-     "refId": "A"
-    }
-   ]
-  },
-  {
-   "id": 17,
-   "type": "timeseries",
-   "title": "네트워크 송신",
-   "description": "",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "${DS_PROM}"
-   },
-   "gridPos": {
-    "h": 8,
-    "w": 12,
-    "x": 12,
-    "y": 35
-   },
-   "fieldConfig": {
-    "defaults": {
-     "color": {
-      "mode": "palette-classic"
-     },
-     "custom": {
-      "drawStyle": "line",
-      "lineWidth": 2,
-      "fillOpacity": 12,
-      "showPoints": "never",
-      "spanNulls": true
-     },
-     "unit": "Bps"
-    },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "multi",
-     "sort": "desc"
-    }
-   },
-   "targets": [
-    {
-     "datasource": {
-      "type": "prometheus",
-      "uid": "${DS_PROM}"
-     },
-     "expr": "sum by(instance_name) (rate(node_network_transmit_bytes_total{device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]))",
-     "legendFormat": "{{instance_name}} tx",
-     "refId": "A"
+     "expr": "node_memory_MemAvailable_bytes{instance_name=\"cluverse-redis\"} / node_memory_MemTotal_bytes{instance_name=\"cluverse-redis\"} * 100",
+     "legendFormat": "가용 메모리 %",
+     "refId": "B"
     }
    ]
   }
