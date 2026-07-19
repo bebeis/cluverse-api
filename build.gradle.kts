@@ -85,6 +85,11 @@ tasks.bootJar {
     }
 }
 
+// Dockerfile의 COPY build/libs/*.jar 가 단일 jar를 전제하므로 plain jar는 생성하지 않는다
+tasks.jar {
+    enabled = false
+}
+
 tasks.clean {
     delete(file("src/main/generated"))
 }

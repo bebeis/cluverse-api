@@ -2,6 +2,10 @@
 
 `apply`/`destroy`를 반복해도 DNS·HTTPS가 리셋되지 않도록 state를 두 개로 분리한다.
 
+> **자동화**: 아래 체크리스트는 `script/aws/` 스크립트로 묶여 있다 — 최초 1회 `base-up.sh`,
+> 이후 측정 시작/종료는 `up.sh`/`down.sh` 딸깍이면 된다. `script/aws/README.md` 참고.
+> 아래 절차는 각 단계가 무엇을 하는지 이해용으로 유지한다.
+
 | 스택 | 수명 | 내용 |
 |------|------|------|
 | `base/` | 한 번만 apply, destroy 안 함 | VPC/서브넷/IGW/라우팅(프라이빗 RT는 빈 채로), ALB+리스너+빈 TG, ACM 인증서, alb_sg, ECR |
