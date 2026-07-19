@@ -86,6 +86,9 @@ done
 echo
 log "앱 healthy — https://$DOMAIN 응답 가능"
 
+# ── 4.5) Grafana 대시보드 프로비저닝 (실패해도 진행) ────────────
+"$SCRIPT_DIR/grafana-dashboards.sh" || warn "Grafana 대시보드 프로비저닝 실패 — 나중에 script/aws/grafana-dashboards.sh 재실행"
+
 # ── 5) 시드 적재 ───────────────────────────────────────────────
 if [ "$SEED_PROFILE" != "none" ]; then
   SEED_ARGS=("$SEED_PROFILE" --wait)

@@ -1,6 +1,8 @@
 server:
   forward-headers-strategy: native
   tomcat:
+    mbeanregistry:
+      enabled: true # tomcat_threads_* 메트릭 노출 (Grafana 스레드 포화 패널)
     threads:
       max: 400
     connection-timeout: 120000
@@ -58,6 +60,10 @@ management:
   endpoint:
     health:
       show-details: always  # 상세한 헬스 정보 표시
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true # Grafana histogram_quantile(p95/p99) 계산용 버킷 노출
 
 
 aws:

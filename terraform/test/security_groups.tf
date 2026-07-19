@@ -42,15 +42,15 @@ resource "aws_security_group" "bastion" {
 }
 
 # ---------- ecs_sg ----------
-# bridge + 동적 포트(32768-65535)이므로 ALB에서 동적 포트 범위를 연다.
+# bridge + 고정 호스트 포트 8080 (ecs.tf 주석 참고).
 resource "aws_security_group_rule" "ecs_in_alb_dynamic" {
   type                     = "ingress"
   security_group_id        = aws_security_group.ecs.id
-  from_port                = 32768
-  to_port                  = 65535
+  from_port                = 8080
+  to_port                  = 8080
   protocol                 = "tcp"
   source_security_group_id = local.alb_sg_id
-  description              = "ALB to ECS dynamic host ports"
+  description              = "ALB to ECS app port"
 }
 
 resource "aws_security_group_rule" "ecs_in_monitoring_node_exporter" {
@@ -63,15 +63,15 @@ resource "aws_security_group_rule" "ecs_in_monitoring_node_exporter" {
   description              = "Prometheus scrape node_exporter"
 }
 
-# 앱 컨테이너의 /actuator/prometheus 도 동적 호스트 포트에 물리므로 범위로 연다.
+# 앱 /actuator/prometheus 스크레이프 (고정 8080)
 resource "aws_security_group_rule" "ecs_in_monitoring_app" {
   type                     = "ingress"
   security_group_id        = aws_security_group.ecs.id
-  from_port                = 32768
-  to_port                  = 65535
+  from_port                = 8080
+  to_port                  = 8080
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.monitoring.id
-  description              = "Prometheus scrape app dynamic ports"
+  description              = "Prometheus scrape app port"
 }
 
 resource "aws_security_group_rule" "ecs_out_all" {

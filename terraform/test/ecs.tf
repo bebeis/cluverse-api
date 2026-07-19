@@ -100,9 +100,12 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
   }
 }
 
-# 네트워크 모드: bridge + 동적 호스트 포트(hostPort=0).
+# 네트워크 모드: bridge + 고정 호스트 포트 8080.
 # base의 target group이 target_type="instance"로 만들어져 있으므로 반드시 bridge여야 한다.
 # (awsvpc로 바꾸려면 base의 target_type도 "ip"로 함께 바꿔야 함 — base/alb.tf 주석 참고)
+# hostPort 고정 이유: Prometheus가 EC2 SD로 앱 /actuator/prometheus 를 긁으려면 포트가
+# 예측 가능해야 한다. 이 스택은 ecs_desired_count가 ASG와 서비스에 같이 걸려 인스턴스당
+# 1태스크이므로 고정 포트로 잃는 밀도가 없다. (동적 포트로 되돌리면 앱 메트릭 수집 불가)
 resource "aws_ecs_task_definition" "api" {
   family                   = "cluverse-api"
   requires_compatibilities = ["EC2"]
@@ -117,7 +120,7 @@ resource "aws_ecs_task_definition" "api" {
       essential         = true
       memoryReservation = 512
       portMappings = [
-        { containerPort = 8080, hostPort = 0, protocol = "tcp" }
+        { containerPort = 8080, hostPort = 8080, protocol = "tcp" }
       ]
       environment = [
         # Spring relaxed binding — docker-compose.yml과 동일한 관례로 주입

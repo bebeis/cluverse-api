@@ -15,9 +15,8 @@ mkdir -p /opt/monitoring/grafana/provisioning/datasources
 # ---------- Prometheus 설정 ----------
 # - mysqld/redis exporter는 고정 IP로 static scrape
 # - node_exporter는 EC2 SD(tag:NodeExporter=true)로 자동 발견 (ECS ASG 노드 포함)
-# - 앱(/actuator/prometheus)은 bridge+동적 호스트 포트라 static 설정이 불가.
-#   앱 레벨 메트릭까지 보려면 (1) hostPort를 8080 고정(인스턴스당 1태스크로 제한)하거나
-#   (2) ECS 태스크 디스커버리(prometheus-ecs-discovery 등)를 붙일 것. 지금은 exporter 중심 구성.
+# - 앱(/actuator/prometheus)은 ECS 노드를 EC2 SD로 발견해 고정 호스트 포트 8080으로 scrape
+#   (ecs.tf에서 hostPort=8080 고정 — 인스턴스당 1태스크 전제. 동적 포트로 되돌리면 이 job이 죽는다)
 cat > /opt/monitoring/prometheus.yml <<'EOF'
 global:
   scrape_interval: 15s
@@ -30,6 +29,20 @@ scrape_configs:
   - job_name: redis
     static_configs:
       - targets: ["${redis_ip}:9121"]
+
+  - job_name: spring
+    metrics_path: /actuator/prometheus
+    ec2_sd_configs:
+      - region: ${aws_region}
+        port: 8080
+        filters:
+          - name: tag:Name
+            values: ["cluverse-ecs-node"]
+          - name: instance-state-name
+            values: ["running"]
+    relabel_configs:
+      - source_labels: [__meta_ec2_tag_Name]
+        target_label: instance_name
 
   - job_name: node
     ec2_sd_configs:

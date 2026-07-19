@@ -6,8 +6,9 @@
 ```
 최초 1회   base-up.sh     VPC/ALB/ACM/ECR 생성 (Spaceship DNS 입력 2건만 수동)
 ─────────────────────────────────────────────────────────────
-측정 시작  up.sh          이미지 확보 → apply → 앱 healthy 대기 → 시드 → 접속 안내
+측정 시작  up.sh          이미지 확보 → apply → 앱 healthy 대기 → 대시보드 → 시드 → 접속 안내
 측정 중    tunnel.sh      Grafana/Prometheus/MySQL/Redis SSH 터널
+대시보드   grafana-dashboards.sh  grafana/*.json을 Grafana에 프로비저닝 (up.sh가 자동 호출)
 코드 변경  push-image.sh  bootJar → linux/amd64 빌드 → ECR 푸시 → ECS 재배포
 측정 종료  down.sh        test 전체 destroy + 잔존 과금 리소스 점검
 ```

@@ -12,7 +12,7 @@
 | `test/` | apply/destroy 반복 | NAT(+프라이빗 egress route), ECS on EC2, MySQL EC2, Redis EC2, Prometheus/Grafana EC2, Bastion, SG/IAM/SSM |
 
 - **base → test 참조**: `test/data.tf`의 `terraform_remote_state`(local backend, `../base/terraform.tfstate`). base를 S3 backend로 옮기면 이 설정도 함께 수정.
-- **네트워크 모드 합의**: ECS는 bridge + 동적 호스트 포트 → base의 target group은 `target_type = "instance"`. awsvpc로 바꾸려면 양쪽을 함께 바꿔야 한다 (`base/alb.tf` 주석).
+- **네트워크 모드 합의**: ECS는 bridge + **고정 호스트 포트 8080** → base의 target group은 `target_type = "instance"`. awsvpc로 바꾸려면 양쪽을 함께 바꿔야 한다 (`base/alb.tf` 주석). 8080 고정은 Prometheus가 앱 `/actuator/prometheus`를 EC2 SD로 긁기 위함 — 인스턴스당 1태스크 전제 (`test/ecs.tf` 주석).
 - ALB DNS 이름, ACM 검증 상태, ECR 이미지가 base에 있으므로 test를 아무리 destroy해도 유지된다.
 
 ## 실행 순서 체크리스트
