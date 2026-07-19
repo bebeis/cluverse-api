@@ -9,7 +9,6 @@ dnf -y install mysql-community-server
 
 # RDS Performance Insights를 수동 재현하기 위한 설정:
 #   slow_query_log + 낮은 long_query_time, performance_schema ON
-# loose- 접두사: validate_password 컴포넌트 미로드 시에도 기동 실패하지 않도록
 cat > /etc/my.cnf.d/zz-cluverse.cnf <<'EOF'
 [mysqld]
 bind-address = 0.0.0.0
@@ -18,7 +17,6 @@ slow_query_log_file = /var/lib/mysql/slow.log
 long_query_time = 0.2
 log_slow_admin_statements = 1
 performance_schema = ON
-loose-validate_password.policy = LOW
 EOF
 
 systemctl enable --now mysqld
@@ -49,9 +47,19 @@ test -n "$DB_PASSWORD" || { echo "SSM 비밀번호 조회 실패"; exit 1; }
 # RPM 설치 시 root 임시 비밀번호가 로그에 남는다
 TMP_PW=$(grep 'temporary password' /var/log/mysqld.log | tail -1 | awk '{print $NF}')
 
+# RPM 설치는 validate_password 컴포넌트를 MEDIUM 정책(특수문자 요구)으로 활성화하므로,
+# 영숫자 전용 db_password는 그대로 못 쓴다. 만료 비밀번호 세션에서는 ALTER USER만 허용되니
+# 정책을 충족하는 부트스트랩 비밀번호로 먼저 바꾼 뒤 컴포넌트를 제거하고 실제 비밀번호를 설정한다.
+BOOT_PW='TmpBoot#2026aA'
+mysql --connect-expired-password -uroot -p"$TMP_PW" \
+  -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$BOOT_PW';"
+# 컴포넌트가 없는 환경이면 이 명령만 실패하고 넘어간다 (테스트 스택 전용 DB라 정책 불필요)
+mysql -uroot -p"$BOOT_PW" \
+  -e "UNINSTALL COMPONENT 'file://component_validate_password';" || true
+
 # 앱 DB/유저 + exporter 전용 제한 계정 생성
 # (비밀번호는 변수 validation으로 영숫자만 허용 → SQL/cnf 이스케이프 불필요)
-mysql --connect-expired-password -uroot -p"$TMP_PW" <<SQL
+mysql -uroot -p"$BOOT_PW" <<SQL
 ALTER USER 'root'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
 CREATE DATABASE IF NOT EXISTS ${db_name} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${db_username}'@'%' IDENTIFIED BY '$DB_PASSWORD';
