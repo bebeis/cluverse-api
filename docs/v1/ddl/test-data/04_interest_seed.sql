@@ -1,14 +1,14 @@
 -- ============================================================
 -- Interest seed
 -- Target:
---   - interests: 200 rows
+--   - interest: 200 rows
 --   - interest_major_relation: 600 rows
 --   - member_interests: 100,000 rows
 -- Dependencies:
 --   - Run after 03_major_seed.sql
 -- Includes:
 --   - board (interest range only)
---   - interests
+--   - interest
 --   - interest_major_relation
 --   - member_interests
 -- ============================================================
@@ -31,7 +31,7 @@ WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID
 DELETE FROM interest_major_relation
 WHERE interest_id BETWEEN @INTEREST_START_ID AND @INTEREST_END_ID;
 
-DELETE FROM interests
+DELETE FROM interest
 WHERE interest_id BETWEEN @INTEREST_START_ID AND @INTEREST_END_ID;
 
 DELETE FROM board
@@ -102,7 +102,7 @@ SELECT
 FROM tmp_seed_seq_10000
 WHERE seq < @INTEREST_COUNT;
 
-INSERT INTO interests (
+INSERT INTO interest (
     interest_id,
     board_id,
     name,
@@ -154,7 +154,7 @@ SELECT
     @MAJOR_START_ID + MOD(interest_id - @INTEREST_START_ID, @MAJOR_COUNT) AS major_id,
     NOW() AS created_at,
     NOW() AS updated_at
-FROM interests
+FROM interest
 WHERE interest_id BETWEEN @INTEREST_START_ID AND @INTEREST_END_ID;
 
 INSERT INTO interest_major_relation (
@@ -168,7 +168,7 @@ SELECT
     @MAJOR_START_ID + MOD((interest_id - @INTEREST_START_ID) + 17, @MAJOR_COUNT) AS major_id,
     NOW() AS created_at,
     NOW() AS updated_at
-FROM interests
+FROM interest
 WHERE interest_id BETWEEN @INTEREST_START_ID AND @INTEREST_END_ID;
 
 INSERT INTO interest_major_relation (
@@ -182,7 +182,7 @@ SELECT
     @MAJOR_START_ID + MOD((interest_id - @INTEREST_START_ID) + 43, @MAJOR_COUNT) AS major_id,
     NOW() AS created_at,
     NOW() AS updated_at
-FROM interests
+FROM interest
 WHERE interest_id BETWEEN @INTEREST_START_ID AND @INTEREST_END_ID;
 
 INSERT INTO member_interests (
@@ -206,6 +206,6 @@ FROM member
 WHERE member_id BETWEEN @MEMBER_START_ID AND @MEMBER_END_ID;
 
 ALTER TABLE board AUTO_INCREMENT = 2200201;
-ALTER TABLE interests AUTO_INCREMENT = 3200201;
+ALTER TABLE interest AUTO_INCREMENT = 3200201;
 
 DROP TEMPORARY TABLE IF EXISTS tmp_seed_seq_10000;

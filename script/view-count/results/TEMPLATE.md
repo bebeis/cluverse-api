@@ -17,7 +17,7 @@
 | HikariCP maximumPoolSize | <예: 10> — 핫 레코드 락 대기 시 커넥션 적체와 직결 |
 | 워밍업 여부 | <예: 동일 조건 1회 선행 실행 후 본 측정> |
 | k6 버전 | v0.5x |
-| POST_ID (fixed) | 6000000 |
+| POST_ID (fixed) | 5999999 |
 | POST_ID_MIN ~ MAX (profile) | 5000001 ~ 6000000 |
 
 ## 표 1 — fixed 모드 (단일 핫 레코드 경합)

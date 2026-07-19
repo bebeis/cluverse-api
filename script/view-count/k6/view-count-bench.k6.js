@@ -26,7 +26,7 @@
 //   k6 run -e VERSION=v3 -e POST_MODE=profile -e RATE=300 -e DURATION=1m \
 //          script/view-count/k6/view-count-bench.k6.js
 //
-// [주의] 기본 POST_ID=6000000 (05a 시드의 핫보드 2001001 최신 글).
+// [주의] 기본 POST_ID=5999999 (05a 핫보드 2001001의 ACTIVE 핫 레코드. 최신 글 6000000은 시드 규칙상 DELETED).
 //        profile 모드 기본 범위는 05a(5000001~6000000). 05b까지 넣었다면
 //        -e POST_ID_MAX=13999999 로 범위를 넓힐 수 있다.
 //        V1(낙관) 측정 전 05c 시드(post_view_count_optimistic 사전 적재) 필수.
@@ -50,10 +50,10 @@ if (!['fixed', 'profile'].includes(POST_MODE)) {
 }
 
 // fixed 모드 대상 게시글 (기본 = 05a 핫보드의 최신 글)
-const POST_ID = Number(__ENV.POST_ID || 6000000);
+const POST_ID = Number(__ENV.POST_ID || 5999999);
 // profile 모드 게시글 범위 (기본 = 05a: 5000001~6000000)
 const POST_ID_MIN = Number(__ENV.POST_ID_MIN || 5000001);
-const POST_ID_MAX = Number(__ENV.POST_ID_MAX || 6000000);
+const POST_ID_MAX = Number(__ENV.POST_ID_MAX || 5999999);
 
 const RATE = Number(__ENV.RATE || 100);
 const DURATION = __ENV.DURATION || '1m';

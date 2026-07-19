@@ -9,7 +9,7 @@
 --                트랜잭션으로 재시도한다 (최대 10회, 회당 10ms 대기).
 --
 -- 파라미터:
---   @post_id : 대상 게시글 (핫 레코드 = 05a 시드 최신 글 6000000)
+--   @post_id : 대상 게시글 (핫 레코드 = 5999999 (최신 글 6000000은 시드 규칙상 DELETED))
 --   UPDATE 의 SET/WHERE version 값은 예시 리터럴 — 1)의 SELECT 결과로 바꿔 실험한다.
 --
 -- [확인 포인트]
@@ -19,7 +19,7 @@
 --   * 부하 중 재시도가 얼마나 발생하는지는 k6 의 view_count_retry_exhausted(소진율)와
 --     지연 분포의 10ms 계단(p95/p99), verify-integrity.sql 의 version 증가량으로 관찰.
 -- ---------------------------------------------------------------------------
-SET @post_id = 6000000;
+SET @post_id = 5999999;
 
 EXPLAIN
 SELECT post_id, view_count, version

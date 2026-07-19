@@ -39,10 +39,14 @@ require_aws
 BASTION="$(bastion_ip)"
 MYSQL_IP="$(test_out mysql_private_ip)" || die "mysql_private_ip 출력을 얻지 못했습니다"
 
+# 이미 돌고 있으면 새로 시작하지 않고 기존 진행에 붙는다 (up.sh 재실행 시 중복 방지)
+ALREADY_RUNNING=0
 if ssh_bastion 'pgrep -f "bash run-seed.sh"' >/dev/null 2>&1; then
-  die "이미 시딩이 진행 중입니다 — script/aws/seed.sh --follow 로 확인하세요"
+  ALREADY_RUNNING=1
+  warn "이미 시딩이 진행 중 — 새로 시작하지 않고 기존 진행을 따라갑니다"
 fi
 
+if [ "$ALREADY_RUNNING" = 0 ]; then
 # bastion에서 돌릴 러너 생성 (\$ = bastion 실행 시점에 평가)
 RUNNER="$(mktemp)"
 cat > "$RUNNER" <<EOF
@@ -74,9 +78,11 @@ ssh_bastion 'mkdir -p seed'
 SCP_FILES=()
 for f in "${FILES[@]}"; do SCP_FILES+=("$SEED_SRC/$f"); done
 scp "${SSH_OPTS[@]}" -q "${SCP_FILES[@]}" "$RUNNER" ec2-user@"$BASTION":seed/
-ssh_bastion "cd seed && mv $(basename "$RUNNER") run-seed.sh && rm -f seed.log && nohup bash run-seed.sh >> seed.log 2>&1 < /dev/null &"
+# (nohup … &) 서브셸 래핑: 러너를 완전히 분리해 ssh 세션이 시딩 종료까지 붙잡히지 않게 한다
+ssh_bastion "cd seed && mv $(basename "$RUNNER") run-seed.sh && rm -f seed.log && (nohup bash run-seed.sh >> seed.log 2>&1 < /dev/null &)"
 rm -f "$RUNNER"
-log "시딩 시작 (프로파일: $PROFILE$([ "$EIGHT_M" = 1 ] && echo ' +8m'), bastion에서 백그라운드 실행)"
+log "시딩 시작 (프로파일: $PROFILE$([ "$EIGHT_M" = 1 ] && echo ' +8m' || true), bastion에서 백그라운드 실행)"
+fi # ALREADY_RUNNING=0
 
 if [ "$WAIT" = 1 ]; then
   log "완료 대기 중 — 중단해도 시딩은 bastion에서 계속됩니다 (재확인: seed.sh --follow)"

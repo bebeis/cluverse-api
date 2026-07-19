@@ -11,7 +11,7 @@
 --   3) k6 요약의 성공 요청 수와 대조해 results 표(정합성 열)에 O/X 기록
 --
 -- 파라미터:
---   @post_id : fixed 모드 대상 게시글 (기본 6000000)
+--   @post_id : fixed 모드 대상 게시글 (기본 5999999)
 --
 -- [확인 포인트]
 --   * V1(낙관): version 도 함께 뜬다. version 증가량 == view_count 증가량이며,
@@ -20,7 +20,7 @@
 --   * V2/V3: post_view_count 는 두 버전이 공유하므로, 버전을 바꿔 측정할 때마다
 --     전/후 스냅샷을 새로 떠야 한다.
 -- ---------------------------------------------------------------------------
-SET @post_id = 6000000;
+SET @post_id = 5999999;
 
 -- V1 (낙관적 락) — post_view_count_optimistic
 SELECT post_id, view_count, version, updated_at

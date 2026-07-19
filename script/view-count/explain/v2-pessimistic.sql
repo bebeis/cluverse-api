@@ -7,7 +7,7 @@
 --   2) UPDATE               — 더티체킹 결과. 절대값 대입(SET view_count = ?)
 --
 -- 파라미터:
---   @post_id : 대상 게시글 (핫 레코드 = 05a 시드 최신 글 6000000)
+--   @post_id : 대상 게시글 (핫 레코드 = 5999999 (최신 글 6000000은 시드 규칙상 DELETED))
 --
 -- [확인 포인트]
 --   * 두 쿼리 모두 PRIMARY 키 단건 접근 — 플랜은 V3(원자적 UPDATE)와 동일하다.
@@ -18,7 +18,7 @@
 --   * 락 보유 시간의 차이는 EXPLAIN 이 아니라 부하 중 lock-waits.sql 스냅샷
 --     (data_lock_waits 행 수, Innodb_row_lock_time 델타)로 관찰한다.
 -- ---------------------------------------------------------------------------
-SET @post_id = 6000000;
+SET @post_id = 5999999;
 
 EXPLAIN
 SELECT post_id, view_count
