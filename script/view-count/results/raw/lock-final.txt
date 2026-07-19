@@ -1,0 +1,6 @@
+Variable_name	Value
+Innodb_row_lock_current_waits	0
+Innodb_row_lock_time	4976783
+Innodb_row_lock_time_avg	75
+Innodb_row_lock_time_max	403
+Innodb_row_lock_waits	65746

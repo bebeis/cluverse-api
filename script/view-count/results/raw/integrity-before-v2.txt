@@ -1,0 +1,4 @@
+post_id	view_count	version	updated_at
+5999999	54972	1	2026-07-19 17:46:12
+post_id	view_count	updated_at
+5999999	59768	2026-07-19 13:13:17

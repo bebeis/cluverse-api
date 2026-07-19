@@ -279,5 +279,6 @@ cluverse-key.*
 /docs/blog
 _workspace
 .ai
+/reference
 
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij,macos,visualstudiocode,terraform
