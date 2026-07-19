@@ -3,6 +3,9 @@
 
 set -euo pipefail
 
+# set -e로 죽을 때 위치를 남긴다 (조용한 종료 방지)
+trap 's=$?; printf "\033[1;31m[ERROR]\033[0m %s:%s 에서 실패 (exit %d)\n" "${BASH_SOURCE[0]:-?}" "${LINENO:-?}" "$s" >&2' ERR
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BASE_DIR="$REPO_ROOT/terraform/base"
 TEST_DIR="$REPO_ROOT/terraform/test"

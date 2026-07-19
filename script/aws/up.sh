@@ -45,7 +45,8 @@ fi
 DB_PASSWORD=""
 [ -f "$SECRETS_FILE" ] && DB_PASSWORD="$(sed -n 's/^db_password[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' "$SECRETS_FILE")"
 if [ -z "$DB_PASSWORD" ]; then
-  DB_PASSWORD="$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)"
+  # openssl 사용: pipefail 아래에서 tr|head 파이프라인은 SIGPIPE로 스크립트를 죽인다
+  DB_PASSWORD="$(openssl rand -hex 16)"
   log "db_password 신규 생성 → $SECRETS_FILE (gitignore 대상)"
 fi
 MY_IP="$(my_ip_cidr)"
