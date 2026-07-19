@@ -48,8 +48,12 @@ warn "  Host: api (도메인 $DOMAIN)  →  Value: $ALB_DNS"
 echo
 log "입력을 마치면 그대로 두세요 — HTTPS 도달을 폴링합니다 (DNS 전파까지 수 분)"
 DEADLINE=$((SECONDS + 1800))
-# 타깃이 없으면 ALB가 503을 주는데, TLS 응답이 온 것 자체가 성공이다
-until curl -so /dev/null --max-time 5 "https://$DOMAIN/"; do
+# 로컬 OS의 네거티브 DNS 캐시(레코드 생성 전의 NXDOMAIN, TTL 최대 1시간)를 우회하기 위해
+# 공용 DNS로 IP를 직접 얻어 --resolve로 검사한다.
+# 타깃이 없으면 ALB가 503을 주는데, TLS 응답이 온 것 자체가 성공이다.
+until IP="$(dig +short "$DOMAIN" @8.8.8.8 | grep -m1 -E '^[0-9.]+$')" \
+      && [ -n "$IP" ] \
+      && curl -so /dev/null --max-time 5 --resolve "$DOMAIN:443:$IP" "https://$DOMAIN/"; do
   [ $SECONDS -ge $DEADLINE ] && die "30분 내 HTTPS 미도달 — CNAME 입력값/전파를 확인하세요"
   printf '  %s https://%s 대기 중…\r' "$(date +%H:%M:%S)" "$DOMAIN"
   sleep 20
