@@ -48,15 +48,15 @@
   {
    "id": 2,
    "type": "timeseries",
-   "title": "InnoDB row lock time (ms/s)",
-   "description": "V2 부하 중 치솟고 V3는 0에 가까우면 락 보유 시간 서사 입증",
+   "title": "락 대기 총량 (ms/s)",
+   "description": "초당 쌓이는 대기 시간 총합 — 락 압력의 세기. 1000ms/s 초과 = 상시 1개 이상 대기 중",
    "datasource": {
     "type": "prometheus",
     "uid": "${DS_PROM}"
    },
    "gridPos": {
     "h": 8,
-    "w": 8,
+    "w": 6,
     "x": 0,
     "y": 1
    },
@@ -102,6 +102,60 @@
   {
    "id": 3,
    "type": "timeseries",
+   "title": "평균 락 대기 (대기 발생 쿼리당)",
+   "description": "기다리게 된 쿼리가 평균 얼마나 기다렸나 = 시간총량/대기횟수 (구간 rate 비율)",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 6,
+    "x": 6,
+    "y": 1
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "ms"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "rate(mysql_global_status_innodb_row_lock_time[$__rate_interval]) / rate(mysql_global_status_innodb_row_lock_waits[$__rate_interval])",
+     "legendFormat": "avg wait ms",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "type": "timeseries",
    "title": "Row lock waits",
    "description": "",
    "datasource": {
@@ -110,8 +164,8 @@
    },
    "gridPos": {
     "h": 8,
-    "w": 8,
-    "x": 8,
+    "w": 6,
+    "x": 12,
     "y": 1
    },
    "fieldConfig": {
@@ -163,7 +217,7 @@
    ]
   },
   {
-   "id": 4,
+   "id": 5,
    "type": "timeseries",
    "title": "Threads (running / connected)",
    "description": "",
@@ -173,8 +227,8 @@
    },
    "gridPos": {
     "h": 8,
-    "w": 8,
-    "x": 16,
+    "w": 6,
+    "x": 18,
     "y": 1
    },
    "fieldConfig": {
@@ -226,7 +280,7 @@
    ]
   },
   {
-   "id": 5,
+   "id": 6,
    "type": "row",
    "title": "MySQL — 쿼리",
    "collapsed": false,
@@ -239,7 +293,7 @@
    "panels": []
   },
   {
-   "id": 6,
+   "id": 7,
    "type": "timeseries",
    "title": "QPS (전체 / 명령별)",
    "description": "",
@@ -302,7 +356,7 @@
    ]
   },
   {
-   "id": 7,
+   "id": 8,
    "type": "timeseries",
    "title": "버퍼풀 히트율",
    "description": "",
@@ -358,7 +412,7 @@
    ]
   },
   {
-   "id": 8,
+   "id": 9,
    "type": "timeseries",
    "title": "버퍼풀 메모리",
    "description": "",
@@ -421,7 +475,7 @@
    ]
   },
   {
-   "id": 9,
+   "id": 10,
    "type": "timeseries",
    "title": "Slow queries /s (>0.2s)",
    "description": "",
@@ -475,7 +529,7 @@
    ]
   },
   {
-   "id": 10,
+   "id": 11,
    "type": "row",
    "title": "MySQL — 호스트 (RDS 콘솔 지표 재현)",
    "collapsed": false,
@@ -488,7 +542,7 @@
    "panels": []
   },
   {
-   "id": 11,
+   "id": 12,
    "type": "timeseries",
    "title": "CPU 사용률 (CPUUtilization)",
    "description": "",
@@ -544,7 +598,7 @@
    ]
   },
   {
-   "id": 12,
+   "id": 13,
    "type": "timeseries",
    "title": "가용 메모리 (FreeableMemory)",
    "description": "",
@@ -598,7 +652,7 @@
    ]
   },
   {
-   "id": 13,
+   "id": 14,
    "type": "timeseries",
    "title": "디스크 여유 공간 (FreeStorageSpace)",
    "description": "",
@@ -652,7 +706,7 @@
    ]
   },
   {
-   "id": 14,
+   "id": 15,
    "type": "timeseries",
    "title": "디스크 IOPS (Read/Write IOPS)",
    "description": "",
@@ -715,7 +769,7 @@
    ]
   },
   {
-   "id": 15,
+   "id": 16,
    "type": "timeseries",
    "title": "디스크 처리량 (Read/Write Throughput)",
    "description": "",
@@ -778,7 +832,7 @@
    ]
   },
   {
-   "id": 16,
+   "id": 17,
    "type": "timeseries",
    "title": "디스크 평균 지연 (Read/Write Latency)",
    "description": "",
@@ -841,7 +895,7 @@
    ]
   },
   {
-   "id": 17,
+   "id": 18,
    "type": "timeseries",
    "title": "디스크 큐 (DiskQueueDepth)",
    "description": "",
@@ -904,7 +958,7 @@
    ]
   },
   {
-   "id": 18,
+   "id": 19,
    "type": "timeseries",
    "title": "네트워크 (NetworkThroughput)",
    "description": "",
@@ -967,7 +1021,7 @@
    ]
   },
   {
-   "id": 19,
+   "id": 20,
    "type": "timeseries",
    "title": "커넥션 (DatabaseConnections)",
    "description": "",
@@ -1030,7 +1084,7 @@
    ]
   },
   {
-   "id": 20,
+   "id": 21,
    "type": "row",
    "title": "Redis",
    "collapsed": false,
@@ -1043,7 +1097,7 @@
    "panels": []
   },
   {
-   "id": 21,
+   "id": 22,
    "type": "timeseries",
    "title": "Commands /s",
    "description": "",
@@ -1097,7 +1151,7 @@
    ]
   },
   {
-   "id": 22,
+   "id": 23,
    "type": "timeseries",
    "title": "Keyspace 히트율",
    "description": "",
@@ -1153,7 +1207,7 @@
    ]
   },
   {
-   "id": 23,
+   "id": 24,
    "type": "timeseries",
    "title": "메모리 / 클라이언트",
    "description": "",
@@ -1216,7 +1270,7 @@
    ]
   },
   {
-   "id": 24,
+   "id": 25,
    "type": "timeseries",
    "title": "호스트 CPU / 가용 메모리 %",
    "description": "",
