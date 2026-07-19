@@ -4,7 +4,9 @@ server:
     mbeanregistry:
       enabled: true # tomcat_threads_* 메트릭 노출 (Grafana 스레드 포화 패널)
     threads:
-      max: 400
+      # 유효 동시성은 HikariCP 풀(20)이 상한 — 스레드는 풀 대기 + 비-DB 작업 몫으로 그 몇 배면 충분.
+      # 초과 부하는 앱 안(풀 대기열)이 아니라 accept 큐에서 대기시킨다 (400은 대기열을 앱 안으로 들이는 값이었음)
+      max: 100
     connection-timeout: 120000
   servlet:
     session:
