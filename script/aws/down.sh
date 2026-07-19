@@ -16,7 +16,8 @@ tf_test destroy -auto-approve
 # 시간당 과금 리소스 잔존 점검 (혹시 남았으면 수동 정리 대상)
 NAT="$(aws ec2 describe-nat-gateways --region "$AWS_REGION" \
   --filter Name=state,Values=pending,available --query 'NatGateways[].NatGatewayId' --output text)"
-EIP="$(aws ec2 describe-addresses --region "$AWS_REGION" --query 'Addresses[].PublicIp' --output text)"
+# 미연결 EIP만 점검 — 연결된 EIP는 소유 리소스(base ALB 등)의 점검에 맡긴다
+EIP="$(aws ec2 describe-addresses --region "$AWS_REGION" --query 'Addresses[?AssociationId==null].PublicIp' --output text)"
 EC2="$(aws ec2 describe-instances --region "$AWS_REGION" \
   --filters Name=instance-state-name,Values=pending,running Name=tag:Project,Values=cluverse \
   --query 'Reservations[].Instances[].InstanceId' --output text)"
