@@ -64,6 +64,11 @@ ALTER USER 'root'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
 CREATE DATABASE IF NOT EXISTS ${db_name} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${db_username}'@'%' IDENTIFIED BY '$DB_PASSWORD';
 GRANT ALL PRIVILEGES ON ${db_name}.* TO '${db_username}'@'%';
+-- 부하테스트 락 관찰용 (script/view-count/explain/lock-waits.sql — sys.innodb_lock_waits 등)
+-- sys 뷰는 SECURITY INVOKER라 하위 p_s SELECT + PROCESS + 내부 함수 EXECUTE가 모두 필요하다
+GRANT PROCESS ON *.* TO '${db_username}'@'%';
+GRANT SELECT ON performance_schema.* TO '${db_username}'@'%';
+GRANT SELECT, EXECUTE ON sys.* TO '${db_username}'@'%';
 CREATE USER IF NOT EXISTS 'exporter'@'localhost' IDENTIFIED BY '$DB_PASSWORD' WITH MAX_USER_CONNECTIONS 3;
 GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'localhost';
 FLUSH PRIVILEGES;
