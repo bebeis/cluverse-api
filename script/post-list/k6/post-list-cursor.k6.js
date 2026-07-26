@@ -74,6 +74,14 @@ export const options = {
     },
     thresholds: {
         http_req_failed: ['rate<0.05'],
+        // depth 버킷별 스텝 지연을 summary에 노출하기 위한 표시용 threshold.
+        // (태그별 Trend 는 threshold 로 등록해야 sub-metric 으로 출력된다 — 항상 통과하는 조건)
+        'cursor_step_duration{depth:d01}': ['max>=0'],
+        'cursor_step_duration{depth:d02-05}': ['max>=0'],
+        'cursor_step_duration{depth:d06-10}': ['max>=0'],
+        'cursor_step_duration{depth:d11-25}': ['max>=0'],
+        'cursor_step_duration{depth:d26-50}': ['max>=0'],
+        'cursor_step_duration{depth:d51+}': ['max>=0'],
     },
     summaryTrendStats: ['avg', 'min', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
     tags: {
