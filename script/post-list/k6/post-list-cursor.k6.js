@@ -27,7 +27,7 @@
 //          script/post-list/k6/post-list-cursor.k6.js
 //
 //   # 특정 날짜 앵커로 진입
-//   k6 run -e BOARD_ID=2001001 -e DATE=2024-06-01 -e RATE=100 -e DURATION=2m \
+//   k6 run -e BOARD_ID=2001001 -e DATE=<시드 범위 안 날짜> -e RATE=100 -e DURATION=2m \
 //          script/post-list/k6/post-list-cursor.k6.js
 //
 // [주의] 기본 BOARD_ID 는 핫보드 2001001 (100만+). 저밀도 비교는 -e BOARD_ID=2000001 (README 참고).

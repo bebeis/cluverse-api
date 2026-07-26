@@ -112,8 +112,11 @@ iteration 하나가 사용자 세션 하나입니다: 진입 → 응답의 `next
 # 무앵커(최신) 진입
 k6 run -e RATE=100 -e DURATION=2m script/post-list/k6/post-list-cursor.k6.js
 
-# 날짜 앵커 진입
-k6 run -e DATE=2024-06-01 -e RATE=100 -e DURATION=2m \
+# 날짜 앵커 진입 — 반드시 시드 created_at 범위 안의 날짜여야 한다!
+# (시드는 시딩 시점 기준 최근 2주로 날짜를 만든다. 범위 밖 날짜를 주면 진입 응답이
+#  비어 세션이 이동 없이 끝나고, 실효 rps 가 RATE 와 같아지는 것으로 알 수 있다.)
+# 범위 확인: SELECT MIN(created_at), MAX(created_at) FROM post WHERE board_id=2001001;
+k6 run -e DATE=<범위 안 날짜> -e RATE=100 -e DURATION=2m \
        script/post-list/k6/post-list-cursor.k6.js
 ```
 
