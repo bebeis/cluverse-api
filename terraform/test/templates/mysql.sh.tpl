@@ -17,6 +17,9 @@ slow_query_log_file = /var/lib/mysql/slow.log
 long_query_time = 0.2
 log_slow_admin_statements = 1
 performance_schema = ON
+# SELECT 60초 자동 킬. ALB 타임아웃(60s) 이후에도 살아남는 좀비 쿼리가
+# 부하테스트 사이에 CPU를 점유해 다음 측정을 오염시키는 것을 막는다.
+max_execution_time = 60000
 EOF
 
 systemctl enable --now mysqld
