@@ -3,12 +3,7 @@ package cluverse.post.repository;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.domain.PostStatus;
 import cluverse.post.repository.dto.PostIdSliceQueryResult;
-import cluverse.post.service.request.PostCursorDirection;
-import cluverse.post.service.request.PostCursorSearchRequest;
-import cluverse.post.service.request.PostKeywordSearchRequest;
-import cluverse.post.service.request.PostOffsetSearchRequest;
-import cluverse.post.service.request.PostSearchRequest;
-import cluverse.post.service.request.PostSortType;
+import cluverse.post.service.request.*;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -28,11 +23,6 @@ import java.util.List;
 import static cluverse.meta.domain.QPostViewCount.postViewCount;
 import static cluverse.post.domain.QPost.post;
 
-/**
- * 페이지에 실을 게시글 id 선정과 페이지 블록용 상한 카운트만 담당한다.
- * 선정된 id로 화면 데이터를 프로젝션하는 것은 {@link PostQueryRepository},
- * 둘을 조립하는 것은 PostReader의 몫이다.
- */
 @Repository
 @RequiredArgsConstructor
 public class PostPageQueryRepository {
@@ -83,9 +73,6 @@ public class PostPageQueryRepository {
 
     /**
      * [V4 전용] 날짜 앵커/커서 기반 id 선정. offset 없이 인덱스에서 시작 지점을 바로 찾는다.
-     * - 진입(date): created_at < date+1일 — (created_at, post_id) <= (그날 마지막, MAX)와 동치
-     * - NEXT(과거로): (created_at, post_id) < 커서 — OR 전개형(QueryDSL은 row constructor 미지원)
-     * - PREV(최신으로): (created_at, post_id) > 커서 — ASC로 커서에 인접한 size건을 뽑은 뒤 최신순으로 뒤집는다
      */
     public PostIdSliceQueryResult findPostPageIdsByCursor(PostCursorSearchRequest request) {
         int size = request.sizeOrDefault();

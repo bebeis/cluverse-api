@@ -14,11 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * [V4] 날짜 앵커 + (created_at, post_id) 커서 기반 목록 조회.
- * 겉으로는 페이지 이동처럼 보이지만 offset 없이 인덱스 시작 지점으로 바로 내려간다.
- * 카운트 쿼리 자체가 없다.
- */
 @Service
 @RequiredArgsConstructor
 public class PostListQueryServiceV4 {
@@ -44,10 +39,6 @@ public class PostListQueryServiceV4 {
         );
     }
 
-    /**
-     * hasNext = 더 과거 글 존재. PREV 이동은 커서보다 과거에서 온 것이므로 항상 true,
-     * 그 외(진입/NEXT)는 최신순 조회의 슬라이스 초과분으로 판단한다.
-     */
     private boolean resolveHasNext(PostCursorSearchRequest request, PostPageQueryResult queryResult) {
         if (isPrevMove(request)) {
             return true;
@@ -55,11 +46,6 @@ public class PostListQueryServiceV4 {
         return queryResult.hasNext();
     }
 
-    /**
-     * hasPrev = 더 최신 글 존재. NEXT 이동은 커서 위쪽 페이지에서 온 것이므로 항상 true,
-     * PREV 이동은 슬라이스 초과분, date 진입은 앵커보다 최신 글 존재 여부,
-     * 무앵커 진입(최신 페이지)은 false.
-     */
     private boolean resolveHasPrev(PostCursorSearchRequest request, PostPageQueryResult queryResult) {
         if (request.hasCursor()) {
             return isPrevMove(request) ? queryResult.hasNext() : true;

@@ -9,12 +9,6 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * V4(날짜 앵커 + 커서) 목록 조회 요청.
- * - 진입: date(앵커)로 해당 날짜 이하 최신순 진입. date가 없으면 최신부터.
- * - 이동: 응답의 prevCursor/nextCursor(createdAt, postId)를 그대로 넘긴다.
- * 커서를 opaque 문자열로 감추지 않고 두 필드로 노출한 것은 측정/디버깅 가시성을 위한 선택이다.
- */
 public record PostCursorSearchRequest(
         @NotNull(message = "게시판 ID를 입력해주세요.")
         Long boardId,
@@ -51,11 +45,7 @@ public record PostCursorSearchRequest(
     public boolean isDateAnchored() {
         return date != null;
     }
-
-    /**
-     * 날짜 앵커 진입 조건의 상한(exclusive). created_at < date+1일 00:00은
-     * (created_at, post_id) <= (date 23:59:59.999..., MAX)와 동치이면서 정밀도 이슈가 없다.
-     */
+    
     public LocalDateTime exclusiveDateEnd() {
         return date.plusDays(1).atStartOfDay();
     }
