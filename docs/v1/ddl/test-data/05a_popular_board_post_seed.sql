@@ -211,6 +211,20 @@ SELECT
 FROM post
 WHERE post_id BETWEEN @POPULAR_POST_START_ID AND @POPULAR_POST_END_ID;
 
+INSERT INTO post_comment_count (
+    post_id,
+    comment_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    5 + MOD((post_id - @POPULAR_POST_START_ID + 1) * 13, 500) AS comment_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @POPULAR_POST_START_ID AND @POPULAR_POST_END_ID;
+
 INSERT INTO post_bookmark_count (
     post_id,
     bookmark_count,

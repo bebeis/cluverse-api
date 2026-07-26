@@ -219,6 +219,21 @@ FROM post
 WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID
   AND MOD((post_id - @POST_START_ID + 1) * 7, 300) > 0;
 
+INSERT INTO post_comment_count (
+    post_id,
+    comment_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    MOD((post_id - @POST_START_ID + 1) * 13, 80) AS comment_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID
+  AND MOD((post_id - @POST_START_ID + 1) * 13, 80) > 0;
+
 INSERT INTO post_bookmark_count (
     post_id,
     bookmark_count,

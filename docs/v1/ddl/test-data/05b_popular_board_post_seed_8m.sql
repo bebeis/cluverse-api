@@ -303,6 +303,34 @@ SELECT
 FROM post
 WHERE post_id BETWEEN @SECONDARY_POST_START AND @SECONDARY_POST_END;
 
+INSERT INTO post_comment_count (
+    post_id,
+    comment_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    5 + MOD((post_id - @POPULAR_POST_START + 1) * 13, 500) AS comment_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @POPULAR_POST_START AND @POPULAR_POST_END;
+
+INSERT INTO post_comment_count (
+    post_id,
+    comment_count,
+    created_at,
+    updated_at
+)
+SELECT
+    post_id,
+    1 + MOD((post_id - @SECONDARY_POST_START + 1) * 13, 200) AS comment_count,
+    created_at,
+    updated_at
+FROM post
+WHERE post_id BETWEEN @SECONDARY_POST_START AND @SECONDARY_POST_END;
+
 INSERT INTO post_bookmark_count (
     post_id,
     bookmark_count,
