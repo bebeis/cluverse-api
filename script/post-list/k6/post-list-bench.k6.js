@@ -64,6 +64,9 @@ const RATE = Number(__ENV.RATE || 100);
 const DURATION = __ENV.DURATION || '1m';
 const PRE_ALLOCATED_VUS = Number(__ENV.PRE_ALLOCATED_VUS || 50);
 const MAX_VUS = Number(__ENV.MAX_VUS || Math.max(PRE_ALLOCATED_VUS * 2, 100));
+// 종료 시 미완료 요청 대기 상한. 기본 30s면 진행바가 DURATION+30s로 표시된다.
+// 요청 하나가 수 초를 넘지 않는 벤치라 5s면 충분.
+const GRACEFUL_STOP = __ENV.GRACEFUL_STOP || '5s';
 
 export const options = {
     scenarios: {
@@ -75,6 +78,7 @@ export const options = {
             duration: DURATION,
             preAllocatedVUs: PRE_ALLOCATED_VUS,
             maxVUs: MAX_VUS,
+            gracefulStop: GRACEFUL_STOP,
         },
     },
     // 측정이 목적이므로 threshold 는 관대하게(실패 처리보다 기록 위주). 에러율만 가드.

@@ -12,12 +12,21 @@
 
 ```
 script/post-list/
+  run.sh                        ← k6 실행 래퍼 (웹 대시보드 + HTML 리포트 자동 저장)
   k6/
     lib/traffic-profile.js      ← 페이지 깊이 분포 (수치 단일 출처)
     post-list-bench.k6.js       ← V1~V3 공용 벤치 (profile/fixed 모드)
     post-list-cursor.k6.js      ← V4 커서 세션 플로우
   explain/                      ← 각 버전이 실제 날리는 쿼리의 EXPLAIN 9종
   results/TEMPLATE.md           ← 측정 결과 기록 양식
+```
+
+본 측정에서는 `k6 run ... k6/<스크립트>` 대신 `run.sh bench|cursor ...` 를 권장합니다.
+동일한 k6 인자를 받되, 실시간 웹 대시보드(http://localhost:5665)와
+`results/raw/<날짜시각>-<라벨>.html` 리포트 저장, VU 풀 기본값(100/600)을 자동으로 켭니다.
+
+```bash
+script/post-list/run.sh bench -e VERSION=v1 -e RATE=100 -e DURATION=2m
 ```
 
 ---
@@ -164,7 +173,8 @@ TEMPLATE의 표 1(profile) → 표 2/2-b(fixed·커서) → 표 3(EXPLAIN) 을 �
 | `SIZE` | `20` | 페이지 크기 |
 | `SORT` / `CATEGORY` | - | 정렬(LATEST\|VIEW_COUNT) / 카테고리 필터 |
 | `RATE` / `DURATION` | `100` / `1m` | 초당 요청 수 / 지속 시간 |
-| `PRE_ALLOCATED_VUS` / `MAX_VUS` | 50 / 자동 | VU 풀 크기 |
+| `PRE_ALLOCATED_VUS` / `MAX_VUS` | 50 / 자동 (run.sh: 100 / 600) | VU 풀 크기 |
+| `GRACEFUL_STOP` | `5s` | 종료 시 미완료 요청 대기 상한 (진행바에 DURATION+이 값이 표시됨) |
 
 ### post-list-cursor.k6.js (V4)
 
@@ -173,6 +183,7 @@ TEMPLATE의 표 1(profile) → 표 2/2-b(fixed·커서) → 표 3(EXPLAIN) 을 �
 | `BASE_URL` / `BOARD_ID` / `SIZE` / `RATE` / `DURATION` | 위와 동일 | |
 | `DATE` | - | 날짜 앵커 진입 (`yyyy-MM-dd`). 생략 시 최신 진입 |
 | `CURSOR_MAX_DEPTH` | `100` | 세션당 최대 NEXT 이동 횟수 (분포 샘플의 상한) |
+| `GRACEFUL_STOP` | `30s` | 진행 중 세션 마무리 대기 상한 (짧게 자르면 깊은 depth가 과소 표집) |
 
 ### 공통
 

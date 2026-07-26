@@ -53,6 +53,10 @@ const RATE = Number(__ENV.RATE || 50); // 세션 시작률 (sessions/s)
 const DURATION = __ENV.DURATION || '1m';
 const PRE_ALLOCATED_VUS = Number(__ENV.PRE_ALLOCATED_VUS || 50);
 const MAX_VUS = Number(__ENV.MAX_VUS || Math.max(PRE_ALLOCATED_VUS * 2, 100));
+// 종료 시 진행 중인 세션(커서 워크)이 끝까지 돌 수 있는 대기 상한.
+// 세션 하나가 최대 100 스텝(수 초)이라 bench 와 달리 넉넉히 둔다 — 짧게 자르면
+// 깊은 depth 스텝이 기록에서 잘려 d51+ 버킷이 과소 표집된다.
+const GRACEFUL_STOP = __ENV.GRACEFUL_STOP || '30s';
 
 export const options = {
     scenarios: {
@@ -65,6 +69,7 @@ export const options = {
             duration: DURATION,
             preAllocatedVUs: PRE_ALLOCATED_VUS,
             maxVUs: MAX_VUS,
+            gracefulStop: GRACEFUL_STOP,
         },
     },
     thresholds: {
