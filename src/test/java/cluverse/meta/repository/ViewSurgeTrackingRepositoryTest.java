@@ -1,7 +1,6 @@
 package cluverse.meta.repository;
 
 import cluverse.meta.domain.ViewSurgeTracking;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -22,14 +21,10 @@ class ViewSurgeTrackingRepositoryTest {
     @Autowired
     private ViewSurgeTrackingRepository viewSurgeTrackingRepository;
 
-    @Autowired
-    private EntityManager entityManager;
-
     @Test
     void 급상승_등록_UPSERT는_행이_없으면_생성한다() {
         // when
         int affectedRowCount = viewSurgeTrackingRepository.upsertActivation(10L, NOW, NOW.plusMinutes(5));
-        entityManager.clear();
 
         // then
         assertThat(affectedRowCount).isEqualTo(1);
@@ -46,7 +41,6 @@ class ViewSurgeTrackingRepositoryTest {
 
         // when — 더 이른 만료로 재등록해도 기존 값이 유지된다 (GREATEST)
         viewSurgeTrackingRepository.upsertActivation(10L, NOW, NOW.plusMinutes(3));
-        entityManager.clear();
 
         // then
         assertThat(viewSurgeTrackingRepository.findById(10L))
@@ -62,7 +56,6 @@ class ViewSurgeTrackingRepositoryTest {
 
         // when
         viewSurgeTrackingRepository.upsertActivation(10L, NOW, NOW.plusMinutes(10));
-        entityManager.clear();
 
         // then
         assertThat(viewSurgeTrackingRepository.findById(10L))
@@ -80,7 +73,6 @@ class ViewSurgeTrackingRepositoryTest {
 
         // when
         int updatedRowCount = viewSurgeTrackingRepository.extendExpiryAll(List.of(10L, 11L), NOW.plusMinutes(15));
-        entityManager.clear();
 
         // then
         assertThat(updatedRowCount).isEqualTo(2);
@@ -92,6 +84,22 @@ class ViewSurgeTrackingRepositoryTest {
                 .get()
                 .extracting(ViewSurgeTracking::getExpiresAt)
                 .isEqualTo(NOW.plusMinutes(5));
+    }
+
+    @Test
+    void 더_이른_시각으로_연장을_시도해도_만료가_되감기지_않는다() {
+        // given — 다중 인스턴스 flush 경합: 늦게 커밋된 짧은 만료가 되감으면 안 된다
+        viewSurgeTrackingRepository.upsertActivation(10L, NOW, NOW.plusMinutes(10));
+
+        // when
+        int updatedRowCount = viewSurgeTrackingRepository.extendExpiryAll(List.of(10L), NOW.plusMinutes(3));
+
+        // then
+        assertThat(updatedRowCount).isEqualTo(1);
+        assertThat(viewSurgeTrackingRepository.findById(10L))
+                .get()
+                .extracting(ViewSurgeTracking::getExpiresAt)
+                .isEqualTo(NOW.plusMinutes(10));
     }
 
     @Test

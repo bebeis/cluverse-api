@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -31,5 +32,19 @@ public class ViewSurgeRoutingCache {
             return;
         }
         trackedPostIds = Set.copyOf(postIds);
+    }
+
+    /**
+     * 정리 직전 선제거 — 이 인스턴스에서 정리 중인 글이 삭제된 키를 되살리는 창을 좁힌다.
+     * (다른 인스턴스 캐시는 다음 갱신까지 남는다 — 그 창은 버퍼 키 TTL이 막는다)
+     */
+    public void remove(Long postId) {
+        Set<Long> current = trackedPostIds;
+        if (!current.contains(postId)) {
+            return;
+        }
+        Set<Long> next = new HashSet<>(current);
+        next.remove(postId);
+        trackedPostIds = Set.copyOf(next);
     }
 }

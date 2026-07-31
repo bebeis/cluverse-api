@@ -12,7 +12,7 @@ import java.util.List;
 public interface ViewSurgeTrackingRepository extends JpaRepository<ViewSurgeTracking, Long> {
 
     // VALUES(expires_at) 대신 파라미터 재바인딩 — VALUES()는 MySQL 8.0.20+ deprecated, H2 미지원
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = """
             INSERT INTO view_surge_tracking (post_id, activated_at, expires_at)
             VALUES (:postId, :activatedAt, :expiresAt)
@@ -24,10 +24,11 @@ public interface ViewSurgeTrackingRepository extends JpaRepository<ViewSurgeTrac
             @Param("expiresAt") LocalDateTime expiresAt
     );
 
-    @Modifying
+    // GREATEST: 다중 인스턴스가 각자 계산한 시각으로 동시에 연장할 때 늦은 워커가 만료를 되감지 못하게
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = """
             UPDATE view_surge_tracking
-            SET expires_at = :extendedExpiresAt
+            SET expires_at = GREATEST(expires_at, :extendedExpiresAt)
             WHERE post_id IN (:postIds)
             """, nativeQuery = true)
     int extendExpiryAll(@Param("postIds") List<Long> postIds, @Param("extendedExpiresAt") LocalDateTime extendedExpiresAt);

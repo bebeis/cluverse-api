@@ -9,10 +9,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.QueryTimeoutException;
-import org.springframework.dao.RecoverableDataAccessException;
-import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -105,9 +101,7 @@ public class ViewCountFlushProcessor {
         try {
             postMetaWriter.applyViewCountDeltas(deltas);
         } catch (DataAccessException exception) {
-            // 커밋 여부를 알 수 없는 실패에서 복구하면 같은 증가량이 두 번 반영될 수 있다 —
-            // 확실한 실패에만 되돌리고, 모호하면 한 주기치 유실을 감수한다.
-            if (isRollbackCertain(exception)) {
+            if (WriteBackFailurePolicy.isRollbackCertain(exception)) {
                 deltas.forEach(delta -> pendingViewCountRepository.restore(delta.postId(), delta.delta()));
                 restoredCounter.increment(deltas.size());
             }
@@ -127,10 +121,4 @@ public class ViewCountFlushProcessor {
         extensionCounter.increment(extendedRowCount);
     }
 
-    private boolean isRollbackCertain(DataAccessException exception) {
-        return !(exception instanceof QueryTimeoutException
-                || exception instanceof RecoverableDataAccessException
-                || exception instanceof DataAccessResourceFailureException
-                || exception instanceof TransientDataAccessResourceException);
-    }
 }
