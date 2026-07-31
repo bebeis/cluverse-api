@@ -15,6 +15,12 @@ spring:
     open-in-view: false
   flyway:
     enabled: false               # 테스트는 H2 + Hibernate create-drop 사용, Flyway(MySQL DDL) 미적용
+  data:
+    redis:
+      host: localhost            # Lettuce는 지연 연결 — 컨텍스트 로드에 Redis 서버가 필요 없다
+      port: 6379
+      timeout: 300ms
+      connect-timeout: 300ms
 
 decorator:
   datasource:
@@ -23,6 +29,21 @@ decorator:
 
 app:
   frontend-url: http://localhost:3000
+
+view-surge:
+  window: 10s
+  threshold: 200
+  sustain-threshold: 100
+  tracking-ttl: 5m
+  extension: 5m
+  grace: 15s
+  sample-cache-max-size: 1000
+  sample-cache-ttl: 35s
+  routing-cache-max-size: 1000
+  cleanup-batch-size: 100
+  routing-refresh-interval: 3s
+  flush-interval: 3s
+  cleanup-interval: 10s
 
 aws:
   region: ap-northeast-2

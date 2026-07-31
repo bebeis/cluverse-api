@@ -40,6 +40,16 @@ spring:
     baseline-on-migrate: true    # 기존 운영 스키마는 V1 baseline 처리(미실행), 이후 버전만 적용
     baseline-version: 1
     locations: classpath:db/migration
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}   # docker-compose 레거시 env 이름을 그대로 살리는 매핑
+      port: ${SPRING_REDIS_PORT:6379}
+      timeout: 300ms          # 요청 경로가 Redis 장애에 매달리지 않게 짧게
+      connect-timeout: 300ms
+  task:
+    scheduling:
+      pool:
+        size: 2               # 느린 플러시가 라우팅 캐시 갱신을 굶기지 않게
 
 decorator:
   datasource:
@@ -76,6 +86,24 @@ aws:
 
 app:
   frontend-url: ${FRONTEND_URL:https://cluverse-web.vercel.app}
+
+# 조회수 급상승 감지 + Redis Write-back (조회수 증가 API V4)
+# threshold/sustain-threshold는 V3 단일 레코드 계단 부하 측정에서 역산해 갱신한다.
+# env 오버라이드: VIEW_SURGE_THRESHOLD=50, VIEW_SURGE_WINDOW=5s ... (relaxed binding)
+view-surge:
+  window: 10s
+  threshold: 200
+  sustain-threshold: 100
+  tracking-ttl: 5m
+  extension: 5m
+  grace: 15s
+  sample-cache-max-size: 100000
+  sample-cache-ttl: 35s      # 판정 유효 상한(3×window=30s)보다 약간 길게 — 그 뒤는 어차피 rebaseline
+  routing-cache-max-size: 100000
+  cleanup-batch-size: 100
+  routing-refresh-interval: 3s
+  flush-interval: 3s
+  cleanup-interval: 10s
 
 oauth2:
   kakao:

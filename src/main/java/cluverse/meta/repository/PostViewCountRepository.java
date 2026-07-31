@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import jakarta.persistence.LockModeType;
 import java.util.Optional;
 
-public interface PostViewCountRepository extends JpaRepository<PostViewCount, Long> {
+public interface PostViewCountRepository extends JpaRepository<PostViewCount, Long>, PostViewCountRepositoryCustom {
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = """

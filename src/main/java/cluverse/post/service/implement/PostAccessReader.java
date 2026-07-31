@@ -4,6 +4,7 @@ import cluverse.board.service.implement.BoardReader;
 import cluverse.common.exception.NotFoundException;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.post.domain.Post;
+import cluverse.post.domain.PostStatus;
 import cluverse.post.exception.PostExceptionMessage;
 import cluverse.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,15 @@ public class PostAccessReader {
 
     public void validatePostExists(Long postId) {
         readOrThrow(postId);
+    }
+
+    /**
+     * 존재·ACTIVE만 확인하는 경량 검증 — 조회수 증가처럼 엔티티가 필요 없는 핫패스용.
+     */
+    public void validateActivePost(Long postId) {
+        if (!postRepository.existsByIdAndStatus(postId, PostStatus.ACTIVE)) {
+            throw new NotFoundException(PostExceptionMessage.POST_NOT_FOUND.getMessage());
+        }
     }
 
     public void validateReadablePost(Long memberId, Long postId) {

@@ -9,6 +9,7 @@ import cluverse.meta.repository.PostCommentCountRepository;
 import cluverse.meta.repository.PostLikeCountRepository;
 import cluverse.meta.repository.PostViewCountRepository;
 import cluverse.meta.repository.PostViewCountOptimisticRepository;
+import cluverse.meta.repository.dto.ViewCountDelta;
 import jakarta.persistence.OptimisticLockException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -18,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import java.util.List;
 
 @Component
 @Transactional
@@ -59,6 +62,21 @@ public class PostMetaWriter {
      */
     public void increaseViewCount(Long postId) {
         postViewCountRepository.increaseCount(postId);
+    }
+
+    /**
+     * [V4] 원자적 UPDATE + 증가 후 전역 누적값 반환 — 급상승 감지의 입력.
+     */
+    public long increaseViewCountAndGet(Long postId) {
+        return postViewCountRepository.increaseAndGet(postId)
+                .orElseThrow(() -> new BadRequestException(MetaExceptionMessage.POST_VIEW_COUNT_NOT_FOUND.getMessage()));
+    }
+
+    /**
+     * [V4] Write-back 플러시 — 증가량 배치 반영.
+     */
+    public void applyViewCountDeltas(List<ViewCountDelta> deltas) {
+        postViewCountRepository.increaseByDeltas(deltas);
     }
 
     /**
