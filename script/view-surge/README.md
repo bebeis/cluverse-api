@@ -142,18 +142,18 @@ script/aws/tunnel.sh start                      # Grafana http://localhost:3000
 - [ ] 서버 설정 확인 — `application.yml` 의 `view-surge:` 블록.
       **본 측정은 기본값으로 합니다.** 로컬 스모크에서 낮춰 둔 값이 배포에 섞이지 않았는지 확인.
 
-      | 설정 | 기본값 | 의미 |
-      |------|--------|------|
-      | `view-surge.window` | `10s` | 속도 관측 창 |
-      | `view-surge.threshold` | `200` | 창 안에서 이 건수를 넘으면 급상승 감지 |
-      | `view-surge.sustain-threshold` | `100` | flush 델타가 이 값 이상이면 만료 연장 |
-      | `view-surge.tracking-ttl` / `extension` | `5m` / `5m` | 최초 만료 / 연장 폭 |
-      | `view-surge.grace` | `15s` | 만료 후 정리까지의 유예 |
-      | `routing-refresh-interval` / `flush-interval` / `cleanup-interval` | `3s` / `3s` / `10s` | 스케줄 주기 |
-      | `routing-cache-max-size` / `cleanup-batch-size` | `100000` / `100` | 스캔 LIMIT |
+  | 설정 | 기본값 | 의미 |
+  |------|--------|------|
+  | `view-surge.window` | `10s` | 속도 관측 창 |
+  | `view-surge.threshold` | `200` | 창 안에서 이 건수를 넘으면 급상승 감지 |
+  | `view-surge.sustain-threshold` | `100` | flush 델타가 이 값 이상이면 만료 연장 |
+  | `view-surge.tracking-ttl` / `view-surge.extension` | `5m` / `5m` | 최초 만료 / 연장 폭 |
+  | `view-surge.grace` | `15s` | 만료 후 정리까지의 유예 |
+  | `view-surge.routing-refresh-interval` / `view-surge.flush-interval` / `view-surge.cleanup-interval` | `3s` / `3s` / `10s` | 스케줄 주기 |
+  | `view-surge.routing-cache-max-size` / `view-surge.cleanup-batch-size` | `100000` / `100` | 스캔 LIMIT |
 
-      값을 바꿔서 측정하려면 `--view-surge.threshold=...` 형태의 실행 인자
-      (컨테이너면 `VIEW_SURGE_THRESHOLD` 환경변수)로 덮고, 바꾼 값을 결과 파일에 적습니다.
+  값을 바꿔서 측정하려면 `--view-surge.threshold=...` 형태의 실행 인자
+  (컨테이너면 `VIEW_SURGE_THRESHOLD` 환경변수)로 덮고, 바꾼 값을 결과 파일에 적습니다.
 - [ ] 워밍업 — 본 측정과 같은 조건으로 1회 선행 실행(버퍼 풀·JIT). 이 결과는 버립니다.
       ```bash
       script/view-surge/run.sh bench -e VERSION=v3 -e RATE=100 -e DURATION=1m
@@ -252,7 +252,7 @@ watch -n 2 'redis-cli -h 127.0.0.1 GET view:pending:5999999'
 | `view_surge_activation_total` | 급상승 감지 횟수 |
 | `view_surge_extension_total` | 만료 연장 횟수 (급상승이 유지되고 있다는 신호) |
 | `view_count_redis_path_total` | Redis 경로로 처리된 증가 요청 수 |
-| `view_count_redis_fallback_total{origin="request"\|"flush"}` | Redis 실패로 폴백한 횟수. `origin` 으로 요청 경로/flush 경로 구분 |
+| `view_count_redis_fallback_total{origin="request"\|"flush"\|"cleanup"}` | Redis 실패로 폴백·중단한 횟수. `origin` 으로 요청/flush/정리 경로 구분 |
 | `view_surge_flush_batch_size` (`_count`/`_sum`/`_max`) | flush 한 번이 처리한 게시글 수 |
 | `view_surge_flush_duration_seconds` | flush 소요 시간. flush 주기(3s)에 근접하면 워커가 밀리는 중 |
 | `view_surge_flush_restored_total` | MySQL 반영 실패로 Redis 에 되돌린 증가분 건수 |

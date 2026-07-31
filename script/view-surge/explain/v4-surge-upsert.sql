@@ -19,9 +19,9 @@
 --   * 등록 자체는 급상승 게시글 수만큼만 발생한다(요청마다가 아니다).
 --     부하 중 이 테이블의 행 수가 요청량에 비례해 늘어난다면 감지 조건이
 --     너무 헐거운 것이므로 view-surge.threshold 를 재검토해야 한다.
---   * [B] 의 연장 UPDATE 는 GREATEST 없이 그대로 덮어쓴다. flush 워커 한 곳에서만
---     호출하는 경로라 되감기 경합이 없다는 전제다 — 인스턴스가 늘어 이 전제가
---     깨지면 [A] 처럼 GREATEST 가 필요해진다.
+--   * [B] 의 연장 UPDATE 도 [A] 와 같은 이유로 GREATEST 를 쓴다 — flush 워커는
+--     인스턴스마다 돌므로, 늦게 커밋된 워커의 짧은 만료가 이미 연장된 값을
+--     되감지 못하게 한다. (연장은 IN 절 벌크로 호출된다)
 -- ---------------------------------------------------------------------------
 SET @post_id = 5999999;
 SET @activated_at = NOW();
@@ -38,8 +38,8 @@ INSERT INTO view_surge_tracking (post_id, activated_at, expires_at)
 VALUES (@post_id, @activated_at, @expires_at)
 ON DUPLICATE KEY UPDATE expires_at = GREATEST(expires_at, @expires_at);
 
--- [B] 만료 연장 UPDATE (flush 델타가 sustain-threshold 이상일 때만 호출)
+-- [B] 만료 연장 UPDATE (flush 델타가 sustain-threshold 이상인 글만 IN 절 벌크)
 EXPLAIN
 UPDATE view_surge_tracking
-SET expires_at = @expires_at
-WHERE post_id = @post_id;
+SET expires_at = GREATEST(expires_at, @expires_at)
+WHERE post_id IN (@post_id);

@@ -54,8 +54,9 @@ expires_at() { sql "SELECT expires_at FROM view_surge_tracking WHERE post_id=${S
 redis_path_total() {
     local sum=0 value
     for app in "${APP_CONTAINERS[@]}"; do
+        # wget 실패(순단 등)가 set -e 로 스크립트 전체를 죽이지 않게 흡수하고 0으로 취급
         value=$(docker exec "$app" wget -qO- localhost:8080/actuator/prometheus 2>/dev/null \
-            | awk '/^view_count_redis_path_total/ {print $2}')
+            | awk '/^view_count_redis_path_total/ {print $2}' || true)
         sum=$(python3 -c "print(${sum} + ${value:-0})")
     done
     echo "$sum"
@@ -95,7 +96,9 @@ cond_pending_drained()  { local v; v=$(rcli GET "$PENDING_KEY"); [ -z "$v" ] || 
 cond_key_removed()      { [ "$(rcli EXISTS "$PENDING_KEY")" = "0" ]; }
 
 force_expire() {
-    sql "UPDATE view_surge_tracking SET expires_at = NOW() - INTERVAL 20 SECOND WHERE post_id=${SMOKE_POST_ID};"
+    # MySQL NOW()는 앱 Clock(Asia/Seoul 고정)과 타임존이 다를 수 있다 —
+    # 자기 값 기준 상대 이동이라 어느 존에서도 grace 컷오프를 확실히 지난다
+    sql "UPDATE view_surge_tracking SET expires_at = expires_at - INTERVAL 1 DAY WHERE post_id=${SMOKE_POST_ID};"
 }
 
 # ------------------------------------------------------------
