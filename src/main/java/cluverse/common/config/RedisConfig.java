@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 
 import java.time.Clock;
+import java.time.ZoneId;
 
 @Configuration
 @EnableConfigurationProperties(ViewSurgeProperties.class)
@@ -16,14 +17,26 @@ public class RedisConfig {
 
     @Bean
     public RedisScript<Long> viewCountGetAndResetScript() {
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-        script.setLocation(new ClassPathResource("redis/view_count_get_and_reset.lua"));
-        script.setResultType(Long.class);
-        return script;
+        return longScript("redis/view_count_get_and_reset.lua");
     }
 
     @Bean
+    public RedisScript<Long> viewCountIncreaseScript() {
+        return longScript("redis/view_count_increase.lua");
+    }
+
+    /**
+     * 인스턴스마다 JVM 기본 타임존이 다르면 zone 없는 DATETIME 비교가 어긋난다 — 명시 고정.
+     */
+    @Bean
     public Clock clock() {
-        return Clock.systemDefaultZone();
+        return Clock.system(ZoneId.of("Asia/Seoul"));
+    }
+
+    private RedisScript<Long> longScript(String classPath) {
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+        script.setLocation(new ClassPathResource(classPath));
+        script.setResultType(Long.class);
+        return script;
     }
 }
