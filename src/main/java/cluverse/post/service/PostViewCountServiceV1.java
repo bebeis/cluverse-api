@@ -19,7 +19,7 @@ public class PostViewCountServiceV1 {
     private final PostMetaWriter postMetaWriter;
 
     public void increaseViewCount(Long postId) {
-        postAccessReader.readOrThrow(postId);
+        postAccessReader.validateActivePost(postId);
         postMetaWriter.increaseViewCountOptimistic(postId);
     }
 }

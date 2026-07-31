@@ -9,6 +9,8 @@
 | V2 | `POST /api/v2/posts/{postId}/view-count` | 비관적 락 (select for update + 더티체킹) | `post_view_count` |
 | V3 | `POST /api/v3/posts/{postId}/view-count` | 원자적 UPDATE (운영 방식) | `post_view_count` |
 
+> V4(급상승 감지 + Redis Write-back)의 측정 도구는 `script/view-surge/`에 있습니다 (devlog #5).
+
 ```
 script/view-count/
   k6/

@@ -4,18 +4,23 @@
 # DB 비밀번호는 bastion이 SSM Parameter Store에서 직접 읽는다 (로컬로 노출 없음).
 #
 # 사용법:
-#   script/aws/seed.sh view-count [--8m] [--wait]   # 01~05a(+05b)+05c — post-list 측정까지 커버
-#   script/aws/seed.sh post-list  [--8m] [--wait]   # 01~05a(+05b)
-#   script/aws/seed.sh full       [--8m] [--wait]   # + 06_comment(300만)~08
-#   script/aws/seed.sh --status                     # 마지막 로그 확인
-#   script/aws/seed.sh --follow                     # 로그 실시간 tail
+#   script/aws/seed.sh view-count [--8m] [--30m] [--wait]   # 01~05a(+05b)(+05d)+05c — post-list 측정까지 커버
+#   script/aws/seed.sh post-list  [--8m] [--30m] [--wait]   # 01~05a(+05b)(+05d)
+#   script/aws/seed.sh full       [--8m] [--30m] [--wait]   # + 06_comment(300만)~08
+#   script/aws/seed.sh --status                             # 마지막 로그 확인
+#   script/aws/seed.sh --follow                             # 로그 실시간 tail
+#
+# --8m  : 핫보드 +700만(05b). --30m 과 독립 (id 범위가 겹치지 않는다)
+# --30m : 일반 게시판 +1,600만(05d, post_id 상한 3,000만). 매우 오래 걸리고 디스크를
+#         약 9GB 더 쓴다 — docs/v1/ddl/test-data/05d_post_seed_30m.sql 헤더 참고
 source "$(dirname "$0")/lib.sh"
 
-PROFILE=""; WAIT=0; EIGHT_M=0; ACTION="run"
+PROFILE=""; WAIT=0; EIGHT_M=0; THIRTY_M=0; ACTION="run"
 while [ $# -gt 0 ]; do
   case "$1" in
     post-list|view-count|full) PROFILE="$1"; shift ;;
     --8m)     EIGHT_M=1; shift ;;
+    --30m)    THIRTY_M=1; shift ;;
     --wait)   WAIT=1; shift ;;
     --status) ACTION="status"; shift ;;
     --follow) ACTION="follow"; shift ;;
@@ -32,6 +37,7 @@ SEED_SRC="$REPO_ROOT/docs/v1/ddl/test-data"
 FILES=(01_university_seed.sql 02_member_seed.sql 03_major_seed.sql 04_interest_seed.sql
        05_post_seed.sql 05a_popular_board_post_seed.sql)
 [ "$EIGHT_M" = 1 ] && FILES+=(05b_popular_board_post_seed_8m.sql)
+[ "$THIRTY_M" = 1 ] && FILES+=(05d_post_seed_30m.sql)
 [ "$PROFILE" != "post-list" ] && FILES+=(05c_view_count_optimistic_seed.sql)
 [ "$PROFILE" = "full" ] && FILES+=(06_comment_seed.sql 07_follow_seed.sql 08_block_seed.sql)
 
@@ -81,7 +87,7 @@ scp "${SSH_OPTS[@]}" -q "${SCP_FILES[@]}" "$RUNNER" ec2-user@"$BASTION":seed/
 # (nohup … &) 서브셸 래핑: 러너를 완전히 분리해 ssh 세션이 시딩 종료까지 붙잡히지 않게 한다
 ssh_bastion "cd seed && mv $(basename "$RUNNER") run-seed.sh && rm -f seed.log && (nohup bash run-seed.sh >> seed.log 2>&1 < /dev/null &)"
 rm -f "$RUNNER"
-log "시딩 시작 (프로파일: $PROFILE$([ "$EIGHT_M" = 1 ] && echo ' +8m' || true), bastion에서 백그라운드 실행)"
+log "시딩 시작 (프로파일: $PROFILE$([ "$EIGHT_M" = 1 ] && echo ' +8m' || true)$([ "$THIRTY_M" = 1 ] && echo ' +30m' || true), bastion에서 백그라운드 실행)"
 fi # ALREADY_RUNNING=0
 
 if [ "$WAIT" = 1 ]; then

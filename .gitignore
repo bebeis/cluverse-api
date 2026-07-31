@@ -281,4 +281,8 @@ _workspace
 .ai
 /reference
 
+## k6 웹 대시보드 HTML 리포트 — 재생성 가능한 파생 산출물 (언어 통계 오염 방지)
+## 추적 증거는 results/*.md 와 results/raw/*.txt 로 남긴다
+script/*/results/raw/*.html
+
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij,macos,visualstudiocode,terraform

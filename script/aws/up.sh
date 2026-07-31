@@ -10,14 +10,16 @@
 #   script/aws/up.sh --seed full         # + 06~08 (댓글 300만 — 오래 걸림)
 #   script/aws/up.sh --seed none         # 시드 생략
 #   script/aws/up.sh --8m                # 핫보드 +700만(05b)도 적재
+#   script/aws/up.sh --30m               # 일반 게시판 +1600만(05d)도 적재 (매우 오래 걸림)
 #   script/aws/up.sh --push              # 이미지 강제 재빌드/푸시
 source "$(dirname "$0")/lib.sh"
 
-SEED_PROFILE="view-count"; PUSH=0; EIGHT_M=0
+SEED_PROFILE="view-count"; PUSH=0; EIGHT_M=0; THIRTY_M=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --seed) SEED_PROFILE="${2:?--seed 뒤에 프로파일}"; shift 2 ;;
     --8m)   EIGHT_M=1; shift ;;
+    --30m)  THIRTY_M=1; shift ;;
     --push) PUSH=1; shift ;;
     *) die "알 수 없는 옵션: $1 (사용법은 파일 상단 주석)" ;;
   esac
@@ -93,6 +95,7 @@ log "앱 healthy — https://$DOMAIN 응답 가능"
 if [ "$SEED_PROFILE" != "none" ]; then
   SEED_ARGS=("$SEED_PROFILE" --wait)
   [ "$EIGHT_M" = 1 ] && SEED_ARGS+=(--8m)
+  [ "$THIRTY_M" = 1 ] && SEED_ARGS+=(--30m)
   "$SCRIPT_DIR/seed.sh" "${SEED_ARGS[@]}"
 fi
 
