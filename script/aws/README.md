@@ -18,11 +18,12 @@
 ```bash
 script/aws/up.sh            # 딸깍 — 기본으로 view-count 시드까지 적재 (post-list 측정도 커버)
 script/aws/tunnel.sh start  # Grafana http://localhost:3000
-# … k6 측정 (script/post-list/README.md, script/view-count/README.md) …
+# … k6 측정 (script/post-list/README.md, script/view-count/README.md, script/view-surge/README.md) …
 script/aws/down.sh          # 딸깍 — 시간당 과금 전부 정지
 ```
 
-- `up.sh --seed post-list|view-count|full|none`, `--8m`(핫보드 +700만), `--push`(이미지 재빌드)
+- `up.sh --seed post-list|view-count|full|none`, `--8m`(핫보드 +700만), `--30m`(일반 게시판 +1,600만
+  — post_id 상한 3,000만, 디스크 +약 9GB에 수 시간 소요), `--push`(이미지 재빌드)
 - 시딩은 **bastion에서 nohup으로** 돌아가므로 로컬이 끊겨도 계속됩니다.
   진행 확인: `seed.sh --follow`, 재적재: `seed.sh view-count --wait`
 - 변수 입력은 필요 없습니다. `terraform/test/secrets.auto.tfvars`(gitignore)를 up.sh가 관리합니다
