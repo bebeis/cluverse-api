@@ -1,0 +1,11 @@
+{
+  "options": { "tags": { "version": "v1" } },
+  "metrics": {
+    "popularity_request_duration": {
+      "values": { "avg": 50, "med": 45, "p(90)": 70, "p(95)": 80, "p(99)": 95, "max": 100 }
+    },
+    "popularity_request_success_rate": { "values": { "rate": 0.99 } },
+    "http_reqs": { "values": { "count": 60, "rate": 1 } },
+    "http_req_failed": { "values": { "rate": 0.01 } }
+  }
+}

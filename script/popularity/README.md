@@ -27,6 +27,10 @@ script/popularity/
 
 `run.sh`는 k6 웹 대시보드와 HTML 리포트, summary JSON을 `results/raw/`에 저장합니다. `smoke.sh`는 실험 API가 열렸는지와 두 URL 버전의 기본 계약을 확인합니다. `seed/fixture.sql`은 전용 성능 측정 DB에서만 사용해야 합니다.
 
+summary JSON을 조회수 급상승·로컬맵 결과와 함께 matplotlib 그래프로 모으려면
+`script/measurements/run.sh`를 실행합니다. 공통 CSV 입력 형식은
+`script/measurements/README.md`에 정리되어 있습니다.
+
 V1 기준선의 주기 실행은 API 노출과 별도인 `popularity.baseline-scan-enabled`로 제어합니다. 수동 k6 비교만 수행할 때는 기본값 `false`를 유지합니다.
 
 ## 사전 조건

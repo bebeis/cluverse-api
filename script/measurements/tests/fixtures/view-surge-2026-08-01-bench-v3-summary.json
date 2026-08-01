@@ -1,0 +1,14 @@
+{
+  "options": { "tags": { "version": "v3", "post_mode": "fixed" } },
+  "metrics": {
+    "view_count_duration": {
+      "values": { "avg": 20, "med": 18, "p(90)": 30, "p(95)": 35, "p(99)": 50, "max": 60 }
+    },
+    "view_count_duration{step:r100}": {
+      "values": { "avg": 21, "med": 19, "p(90)": 31, "p(95)": 36, "p(99)": 52, "max": 62 }
+    },
+    "view_count_success_rate": { "values": { "rate": 1.0 } },
+    "http_reqs": { "values": { "count": 6000, "rate": 100 } },
+    "http_req_failed": { "values": { "rate": 0.0 } }
+  }
+}

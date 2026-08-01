@@ -35,6 +35,15 @@ public class PostWriter {
         return postRepository.save(post);
     }
 
+    public Post create(Long memberId, PostCreateRequest request, String clientIp, String clientRequestId) {
+        Post post = Post.createByMember(
+                request.tags(), request.imageUrls(), request.boardId(), memberId, request.title(), request.content(),
+                request.category(), request.isAnonymous(), request.isPinned(), request.isExternalVisible(), clientIp,
+                clientRequestId
+        );
+        return postRepository.saveAndFlush(post);
+    }
+
     public void update(Long memberId, Long postId, PostUpdateRequest request) {
         Post post = postAccessReader.readOrThrow(postId);
         validateAuthor(memberId, post);

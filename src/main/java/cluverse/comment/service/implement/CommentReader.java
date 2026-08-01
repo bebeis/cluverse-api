@@ -41,6 +41,10 @@ public class CommentReader {
         return commentRepository.findById(commentId);
     }
 
+    public Optional<Long> findIdByRequestId(Long memberId, String requestId) {
+        return commentRepository.findByMemberIdAndClientRequestId(memberId, requestId).map(Comment::getId);
+    }
+
     public CommentReactionTargetResponse readReactionTarget(Long commentId) {
         Comment comment = readActiveOrThrow(commentId);
         return new CommentReactionTargetResponse(comment.getPostId(), comment.getId());

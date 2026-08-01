@@ -49,6 +49,11 @@ public class Post extends BaseTimeEntity {
     @OrderBy("displayOrder ASC")
     private List<PostImage> images = new ArrayList<>();
 
+    @Builder.Default
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
+    private List<PostPlace> places = new ArrayList<>();
+
     @Column(nullable = false)
     private Long boardId;
 
@@ -79,6 +84,7 @@ public class Post extends BaseTimeEntity {
 
     private LocalDateTime deletedAt;
     private String clientIp;
+    private String clientRequestId;
 
     public static Post createByMember(List<String> tags, List<String> imageUrls, Long boardId, Long memberId,
                                       String title, String content, PostCategory category, boolean isAnonymous,
@@ -97,6 +103,16 @@ public class Post extends BaseTimeEntity {
 
         post.replaceTags(tags);
         post.replaceImages(imageUrls);
+        return post;
+    }
+
+    public static Post createByMember(List<String> tags, List<String> imageUrls, Long boardId, Long memberId,
+                                      String title, String content, PostCategory category, boolean isAnonymous,
+                                      boolean isPinned, boolean isExternalVisible, String clientIp,
+                                      String clientRequestId) {
+        Post post = createByMember(tags, imageUrls, boardId, memberId, title, content, category,
+                isAnonymous, isPinned, isExternalVisible, clientIp);
+        post.clientRequestId = clientRequestId;
         return post;
     }
 
@@ -133,6 +149,12 @@ public class Post extends BaseTimeEntity {
         return images.stream()
                 .map(PostImage::getImageUrl)
                 .toList();
+    }
+
+    public void addPlace(Long placeId, int displayOrder, Long authorUniversityId,
+                         Long universityCampusId, boolean recommended) {
+        this.places.add(PostPlace.of(
+                this, placeId, displayOrder, authorUniversityId, universityCampusId, recommended));
     }
 
     private void replaceTags(List<String> tags) {

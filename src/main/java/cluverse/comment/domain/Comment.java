@@ -8,6 +8,8 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.OneToOne;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -58,6 +60,12 @@ public class Comment extends BaseTimeEntity {
     @Column(name = "client_ip")
     private String clientIp;
 
+    @Column(name = "client_request_id")
+    private String clientRequestId;
+
+    @OneToOne(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private CommentPlace place;
+
     private Comment(Long postId, Long memberId, Long parentId, int depth, String content,
                     boolean isAnonymous, String clientIp) {
         this.postId = postId;
@@ -75,6 +83,14 @@ public class Comment extends BaseTimeEntity {
     public static Comment createByMember(Long postId, Long memberId, Long parentId, int depth,
                                          String content, boolean isAnonymous, String clientIp) {
         return new Comment(postId, memberId, parentId, depth, content, isAnonymous, clientIp);
+    }
+
+    public static Comment createByMember(Long postId, Long memberId, Long parentId, int depth,
+                                         String content, boolean isAnonymous, String clientIp,
+                                         String clientRequestId) {
+        Comment comment = createByMember(postId, memberId, parentId, depth, content, isAnonymous, clientIp);
+        comment.clientRequestId = clientRequestId;
+        return comment;
     }
 
     public void delete() {
@@ -96,5 +112,9 @@ public class Comment extends BaseTimeEntity {
 
     public boolean isDeleted() {
         return status == CommentStatus.DELETED;
+    }
+
+    public void attachPlace(Long placeId, Long authorUniversityId, Long universityCampusId, boolean recommended) {
+        this.place = CommentPlace.of(this, placeId, authorUniversityId, universityCampusId, recommended);
     }
 }
