@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -31,6 +32,10 @@ public class PostAccessReader {
 
     public List<Post> readPosts(List<Long> postIds) {
         return postRepository.findAllById(postIds);
+    }
+
+    public Optional<Long> findIdByRequestId(Long memberId, String requestId) {
+        return postRepository.findByMemberIdAndClientRequestId(memberId, requestId).map(Post::getId);
     }
 
     public void validatePostExists(Long postId) {

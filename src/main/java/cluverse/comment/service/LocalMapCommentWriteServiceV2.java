@@ -1,6 +1,6 @@
 package cluverse.comment.service;
 
-import cluverse.comment.service.implement.LocalMapCommentReader;
+import cluverse.comment.service.implement.CommentReader;
 import cluverse.comment.service.implement.LocalMapCommentWriteProcessorV2;
 import cluverse.comment.service.request.CommentWithPlaceCreateRequestV2;
 import cluverse.place.domain.SelectedPlace;
@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LocalMapCommentWriteServiceV2 {
 
-    private final LocalMapCommentReader commentReader;
+    private final CommentReader commentReader;
     private final V2PlaceSelectionResolver placeSelectionResolver;
     private final LocalMapCommentWriteProcessorV2 processor;
     private final LocalMapMetricsRecorder metricsRecorder;

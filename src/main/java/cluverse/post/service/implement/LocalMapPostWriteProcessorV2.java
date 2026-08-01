@@ -26,7 +26,6 @@ public class LocalMapPostWriteProcessorV2 {
     private final PlaceWriter placeWriter;
     private final PostWriter postWriter;
     private final PostMetaWriter postMetaWriter;
-    private final PostPlaceWriter postPlaceWriter;
 
     @Transactional
     public Long create(Long memberId, String requestId, PostCreateRequest request,
@@ -38,7 +37,17 @@ public class LocalMapPostWriteProcessorV2 {
 
         Post post = postWriter.create(memberId, request, clientIp, requestId);
         postMetaWriter.createViewCount(post.getId());
-        postPlaceWriter.createAll(post, attachments, places);
+        attachPlaces(post, attachments, places);
         return post.getId();
+    }
+
+    private void attachPlaces(Post post, List<ResolvedPlaceAttachment> attachments, List<Place> places) {
+        for (int index = 0; index < attachments.size(); index++) {
+            ResolvedPlaceAttachment attachment = attachments.get(index);
+            post.addPlace(
+                    places.get(index).getId(), index, attachment.authorUniversityId(),
+                    attachment.universityCampusId(), attachment.recommended()
+            );
+        }
     }
 }

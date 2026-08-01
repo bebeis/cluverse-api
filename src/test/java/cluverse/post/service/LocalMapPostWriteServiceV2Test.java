@@ -3,8 +3,8 @@ package cluverse.post.service;
 import cluverse.place.domain.SelectedPlace;
 import cluverse.place.service.implement.LocalMapMetricsRecorder;
 import cluverse.place.service.implement.V2PlaceSelectionResolver;
-import cluverse.post.service.implement.LocalMapPostReader;
 import cluverse.post.service.implement.LocalMapPostWriteProcessorV2;
+import cluverse.post.service.implement.PostAccessReader;
 import cluverse.post.service.request.PostWithPlacesCreateRequestV2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verify;
 class LocalMapPostWriteServiceV2Test {
 
     @Mock
-    private LocalMapPostReader postReader;
+    private PostAccessReader postReader;
     @Mock
     private V2PlaceSelectionResolver placeSelectionResolver;
     @Mock

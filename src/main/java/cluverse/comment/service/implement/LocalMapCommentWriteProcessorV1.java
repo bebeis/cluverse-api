@@ -29,7 +29,6 @@ public class LocalMapCommentWriteProcessorV1 {
     private final V1PlaceSelectionResolver placeSelectionResolver;
     private final LocalPlaceAttachmentResolver attachmentResolver;
     private final PlaceWriter placeWriter;
-    private final CommentPlaceWriter commentPlaceWriter;
     private final PostMetaWriter postMetaWriter;
 
     @Transactional
@@ -52,7 +51,9 @@ public class LocalMapCommentWriteProcessorV1 {
         if (parent != null) {
             commentWriter.increaseReplyCount(parent.getId());
         }
-        commentPlaceWriter.create(comment, attachment, place);
+        comment.attachPlace(
+                place.getId(), attachment.authorUniversityId(),
+                attachment.universityCampusId(), attachment.recommended());
         return comment.getId();
     }
 
