@@ -2,6 +2,7 @@ package cluverse.common.api;
 
 import cluverse.common.api.response.ApiResponse;
 import cluverse.common.exception.BadRequestException;
+import cluverse.common.exception.ExternalServiceException;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.common.exception.NotFoundException;
 import cluverse.common.exception.UnauthorizedException;
@@ -73,6 +74,13 @@ public class ApiControllerAdvice {
     public ApiResponse<Object> notFoundException(NotFoundException e, HttpServletRequest request) {
         logClientException(HttpStatus.NOT_FOUND, request, e);
         return ApiResponse.notFound(e.getMessage());
+    }
+
+    @ExceptionHandler(ExternalServiceException.class)
+    @ResponseStatus(HttpStatus.BAD_GATEWAY)
+    public ApiResponse<Object> externalServiceException(ExternalServiceException e, HttpServletRequest request) {
+        logClientException(HttpStatus.BAD_GATEWAY, request, e);
+        return ApiResponse.of(HttpStatus.BAD_GATEWAY, e.getMessage(), null);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

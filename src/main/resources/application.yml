@@ -128,6 +128,18 @@ popularity:
   experiment-endpoints-enabled: false
   benchmark-token: ${POPULARITY_BENCHMARK_TOKEN:}
 
+local-map:
+  provider-mode: ${LOCAL_MAP_PROVIDER_MODE:NAVER}
+  provider-base-url: ${NAVER_LOCAL_SEARCH_BASE_URL:https://openapi.naver.com}
+  naver-client-id: ${NAVER_CLIENT_ID:}
+  naver-client-secret: ${NAVER_CLIENT_SECRET:}
+  selection-token-secret: ${LOCAL_MAP_SELECTION_TOKEN_SECRET:}
+  selection-token-ttl: 15m
+  connect-timeout: 500ms
+  read-timeout: 2s
+  experiment-endpoints-enabled: false
+  benchmark-token: ${LOCAL_MAP_BENCHMARK_TOKEN:}
+
 oauth2:
   kakao:
     client-id: ${KAKAO_CLIENT_ID}
