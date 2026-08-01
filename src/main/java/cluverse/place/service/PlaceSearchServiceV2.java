@@ -13,12 +13,11 @@ import org.springframework.stereotype.Service;
 public class PlaceSearchServiceV2 {
 
     private final PlaceSearchClient placeSearchClient;
-    private final PlaceCandidateFactory placeCandidateFactory;
     private final PlaceSelectionTokenManager tokenManager;
 
     public PlaceSearchResponseV2 search(Long memberId, String query) {
         return new PlaceSearchResponseV2(placeSearchClient.search(query).stream()
-                .map(placeCandidateFactory::create)
+                .map(PlaceCandidateFactory::create)
                 .map(candidate -> PlaceSearchItemResponseV2.of(candidate, tokenManager.issue(memberId, candidate)))
                 .toList());
     }

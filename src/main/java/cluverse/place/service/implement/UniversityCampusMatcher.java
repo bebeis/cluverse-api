@@ -2,18 +2,19 @@ package cluverse.place.service.implement;
 
 import cluverse.place.domain.PlaceCandidate;
 import cluverse.university.domain.UniversityCampus;
-import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-@Component
-public class UniversityCampusMatcher {
+public final class UniversityCampusMatcher {
 
     private static final double EARTH_RADIUS_METER = 6_371_000.0;
 
-    public Optional<UniversityCampus> findNearestInRadius(
+    private UniversityCampusMatcher() {
+    }
+
+    public static Optional<UniversityCampus> findNearestInRadius(
             PlaceCandidate candidate,
             List<UniversityCampus> campuses
     ) {
@@ -24,7 +25,7 @@ public class UniversityCampusMatcher {
                 .map(CampusDistance::campus);
     }
 
-    double distanceMeter(PlaceCandidate candidate, UniversityCampus campus) {
+    static double distanceMeter(PlaceCandidate candidate, UniversityCampus campus) {
         double latitude1 = Math.toRadians(candidate.latitude().doubleValue());
         double latitude2 = Math.toRadians(campus.getLatitude().doubleValue());
         double latitudeDelta = latitude2 - latitude1;

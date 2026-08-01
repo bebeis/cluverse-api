@@ -13,8 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UniversityCampusMatcherTest {
 
-    private final UniversityCampusMatcher matcher = new UniversityCampusMatcher();
-
     @Test
     void 반경_안에_있는_가장_가까운_캠퍼스를_선택한다() {
         PlaceCandidate place = candidate("37.5510000", "126.9410000");
@@ -23,7 +21,7 @@ class UniversityCampusMatcherTest {
         UniversityCampus far = UniversityCampus.create(
                 1L, "멀리", new BigDecimal("37.5600000"), new BigDecimal("126.9500000"), 2_000);
 
-        assertThat(matcher.findNearestInRadius(place, List.of(far, near))).contains(near);
+        assertThat(UniversityCampusMatcher.findNearestInRadius(place, List.of(far, near))).contains(near);
     }
 
     @Test
@@ -32,7 +30,7 @@ class UniversityCampusMatcherTest {
         UniversityCampus campus = UniversityCampus.create(
                 1L, "신촌", new BigDecimal("37.5600000"), new BigDecimal("126.9500000"), 100);
 
-        assertThat(matcher.findNearestInRadius(place, List.of(campus))).isEmpty();
+        assertThat(UniversityCampusMatcher.findNearestInRadius(place, List.of(campus))).isEmpty();
     }
 
     private PlaceCandidate candidate(String latitude, String longitude) {

@@ -20,7 +20,6 @@ import java.util.Set;
 public class V1PlaceSelectionResolver {
 
     private final PlaceSearchClient placeSearchClient;
-    private final PlaceCandidateFactory placeCandidateFactory;
 
     public List<SelectedPlace> resolve(List<PlaceSelectionRequestV1> selections) {
         Map<String, List<PlaceCandidate>> candidatesByQuery = new LinkedHashMap<>();
@@ -35,7 +34,7 @@ public class V1PlaceSelectionResolver {
                                   Map<String, List<PlaceCandidate>> candidatesByQuery) {
         List<PlaceCandidate> candidates = candidatesByQuery.computeIfAbsent(
                 selection.query(),
-                query -> placeSearchClient.search(query).stream().map(placeCandidateFactory::create).toList()
+                query -> placeSearchClient.search(query).stream().map(PlaceCandidateFactory::create).toList()
         );
         PlaceCandidate selected = candidates.stream()
                 .filter(candidate -> candidate.sourceFingerprint().equals(selection.sourceFingerprint()))

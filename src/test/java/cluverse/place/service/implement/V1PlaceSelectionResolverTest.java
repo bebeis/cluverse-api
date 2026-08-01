@@ -2,7 +2,6 @@ package cluverse.place.service.implement;
 
 import cluverse.place.client.PlaceSearchClient;
 import cluverse.place.domain.PlaceCandidate;
-import cluverse.place.domain.PlaceCategory;
 import cluverse.place.domain.PlaceProvider;
 import cluverse.place.domain.PlaceSourceCandidate;
 import cluverse.place.service.request.PlaceSelectionRequestV1;
@@ -25,8 +24,6 @@ class V1PlaceSelectionResolverTest {
 
     @Mock
     private PlaceSearchClient placeSearchClient;
-    @Mock
-    private PlaceCandidateFactory placeCandidateFactory;
     @InjectMocks
     private V1PlaceSelectionResolver resolver;
 
@@ -34,15 +31,13 @@ class V1PlaceSelectionResolverTest {
     void 같은_검색어의_여러_장소는_외부_API를_한_번만_호출해_검증한다() {
         PlaceSourceCandidate firstSource = source("첫 장소");
         PlaceSourceCandidate secondSource = source("둘째 장소");
-        PlaceCandidate first = candidate("first", "첫 장소");
-        PlaceCandidate second = candidate("second", "둘째 장소");
+        PlaceCandidate first = PlaceCandidateFactory.create(firstSource);
+        PlaceCandidate second = PlaceCandidateFactory.create(secondSource);
         given(placeSearchClient.search("연세대 맛집")).willReturn(List.of(firstSource, secondSource));
-        given(placeCandidateFactory.create(firstSource)).willReturn(first);
-        given(placeCandidateFactory.create(secondSource)).willReturn(second);
 
         var result = resolver.resolve(List.of(
-                new PlaceSelectionRequestV1("연세대 맛집", "first", true),
-                new PlaceSelectionRequestV1("연세대 맛집", "second", false)
+                new PlaceSelectionRequestV1("연세대 맛집", first.sourceFingerprint(), true),
+                new PlaceSelectionRequestV1("연세대 맛집", second.sourceFingerprint(), false)
         ));
 
         assertThat(result).extracting(value -> value.candidate().name())
@@ -53,13 +48,6 @@ class V1PlaceSelectionResolverTest {
     private PlaceSourceCandidate source(String name) {
         return new PlaceSourceCandidate(
                 PlaceProvider.NAVER, name, "음식점", "주소", "도로명",
-                new BigDecimal("37.5500000"), new BigDecimal("126.9400000"), null
-        );
-    }
-
-    private PlaceCandidate candidate(String fingerprint, String name) {
-        return new PlaceCandidate(
-                PlaceProvider.NAVER, fingerprint, name, PlaceCategory.FOOD, "음식점", "주소", "도로명",
                 new BigDecimal("37.5500000"), new BigDecimal("126.9400000"), null
         );
     }

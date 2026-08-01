@@ -17,7 +17,6 @@ public class LocalPlaceAttachmentResolver {
 
     private final MemberReader memberReader;
     private final UniversityCampusReader universityCampusReader;
-    private final UniversityCampusMatcher universityCampusMatcher;
 
     public List<ResolvedPlaceAttachment> resolve(Long memberId, List<SelectedPlace> places) {
         Member member = memberReader.readOrThrow(memberId);
@@ -34,7 +33,7 @@ public class LocalPlaceAttachmentResolver {
                                              List<UniversityCampus> campuses, boolean verified) {
         Long campusId = null;
         if (verified && selected.recommended() && selected.candidate().category().isLocalMapEligible()) {
-            campusId = universityCampusMatcher.findNearestInRadius(selected.candidate(), campuses)
+            campusId = UniversityCampusMatcher.findNearestInRadius(selected.candidate(), campuses)
                     .map(UniversityCampus::getId)
                     .orElse(null);
         }

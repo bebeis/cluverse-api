@@ -8,16 +8,15 @@ import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class PlaceFingerprintGeneratorTest {
-
-    private final PlaceFingerprintGenerator generator = new PlaceFingerprintGenerator();
+class PlaceCandidateFactoryTest {
 
     @Test
     void 공백과_대소문자가_달라도_같은_장소_fingerprint를_만든다() {
         PlaceSourceCandidate first = candidate("  Cluverse   Cafe  ", "서울 광진구  1", "37.1234000");
         PlaceSourceCandidate second = candidate("cluverse cafe", "서울 광진구 1", "37.1234");
 
-        assertThat(generator.generate(first)).isEqualTo(generator.generate(second));
+        assertThat(PlaceCandidateFactory.create(first).sourceFingerprint())
+                .isEqualTo(PlaceCandidateFactory.create(second).sourceFingerprint());
     }
 
     @Test
@@ -25,7 +24,8 @@ class PlaceFingerprintGeneratorTest {
         PlaceSourceCandidate first = candidate("클루버스 카페", "서울 광진구 1", "37.1234000");
         PlaceSourceCandidate second = candidate("클루버스 카페", "서울 광진구 2", "37.1235000");
 
-        assertThat(generator.generate(first)).isNotEqualTo(generator.generate(second));
+        assertThat(PlaceCandidateFactory.create(first).sourceFingerprint())
+                .isNotEqualTo(PlaceCandidateFactory.create(second).sourceFingerprint());
     }
 
     private PlaceSourceCandidate candidate(String name, String roadAddress, String latitude) {
