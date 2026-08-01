@@ -10,5 +10,6 @@ OUTPUT_DIR="${OUTPUT_DIR:-script/measurements/results/$(date +%F-%H%M%S)}"
   --input script/popularity/results/raw \
   --input script/view-surge/results/raw \
   --input script/local-map/results/raw \
+  --input script/comment-pagination/results/raw \
   --output-dir "$OUTPUT_DIR" \
   "$@"

@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from plot_results import collect, discover_inputs, extract_csv, extract_k6_summary, quantile
+from plot_results import collect, discover_inputs, extract_comment_count, extract_csv, extract_k6_summary, quantile
 
 
 class PlotResultsTest(unittest.TestCase):
@@ -79,12 +79,18 @@ class PlotResultsTest(unittest.TestCase):
     def test_분위수는_선형_보간한다(self):
         self.assertAlmostEqual(3.7, quantile([1, 2, 3, 4], 0.9))
 
-    def test_세_실험_fixture를_한꺼번에_수집한다(self):
+    def test_네_실험_fixture를_한꺼번에_수집한다(self):
         fixture_directory = Path(__file__).resolve().parent / "fixtures"
 
         rows = collect(discover_inputs([str(fixture_directory)]), None, None)
 
-        self.assertEqual({"popularity", "view-surge", "local-map"}, {row.experiment for row in rows})
+        self.assertEqual(
+            {"popularity", "view-surge", "local-map", "comment-pagination"},
+            {row.experiment for row in rows},
+        )
+
+    def test_댓글_수_시나리오를_그래프_x축으로_변환한다(self):
+        self.assertEqual(1000, extract_comment_count("comments=1000,tree_shape=mixed"))
 
     def value(self, rows, metric, stat):
         return next(row.value for row in rows if row.metric == metric and row.stat == stat)

@@ -1,0 +1,21 @@
+{
+  "options": {
+    "tags": {
+      "version": "v2",
+      "comments": "1000",
+      "tree_shape": "mixed",
+      "cursor_position": "first"
+    }
+  },
+  "metrics": {
+    "comment_api_duration": {
+      "values": { "avg": 8, "med": 7, "p(90)": 11, "p(95)": 13, "p(99)": 18, "max": 22 }
+    },
+    "detail_screen_duration": {
+      "values": { "avg": 10, "med": 9, "p(90)": 14, "p(95)": 17, "p(99)": 23, "max": 30 }
+    },
+    "http_reqs": { "values": { "count": 200, "rate": 20 } },
+    "http_req_failed": { "values": { "rate": 0 } },
+    "comment_request_success": { "values": { "rate": 1 } }
+  }
+}
