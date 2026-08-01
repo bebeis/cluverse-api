@@ -1,3 +1,4 @@
+-- 캡처 확인점: Table scan on comment_tree의 actual rows/loops, Sort, Materialize
 SET @post_id = COALESCE(@post_id, 1);
 SET @as_of = COALESCE(@as_of, CURRENT_TIMESTAMP);
 SET @snapshot_max_comment_id = COALESCE(

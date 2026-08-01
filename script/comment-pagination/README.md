@@ -67,10 +67,35 @@ AUTH_TOKEN='test-member-jwt' script/comment-pagination/run.sh write-root
 AUTH_TOKEN='test-member-jwt' PARENT_COMMENT_ID=101 script/comment-pagination/run.sh write-reply
 ```
 
+## 캡처할 화면
+
+실행 결과는 블로그에 바로 캡처할 수 있는 HTML과, 수치를 다시 계산할 수 있는 JSON/CSV를 함께 남긴다.
+
+1. **k6 HTML 리포트**: 댓글 API p95·p99, 화면 완료 p95·p99, 실패율과 dropped iteration을 캡처한다.
+2. **EXPLAIN ANALYZE 터미널**: 개선 전의 CTE 구체화·정렬과 개선 후의 `idx_comment_post_path` 범위 조회 노드를 캡처한다.
+3. **Grafana 대시보드**: 같은 실행 시간 범위의 API p95·p99와 Hikari pending을 한 화면에서 캡처한다.
+4. **matplotlib 그래프**: 댓글 수 100·1,000·5,000의 지연 시간과 actual rows 변화 추세를 캡처한다.
+
+캡처에는 실행 조건이 같이 보여야 한다. `run.sh`가 콘솔 첫 줄에 mode, version, 댓글 수, 트리 모양, rate, duration, limit, cursor 위치를 출력하고 같은 내용을 `*-console.txt`로 보관한다. Grafana는 실행 직후 절대 시간 범위를 해당 실행 구간으로 고정한 뒤 캡처한다.
+
+EXPLAIN은 각 SQL 파일 상단의 변수를 같은 fixture 조건으로 맞춘 뒤 실행한다.
+
+```bash
+mysql -h127.0.0.1 -ucluverse_user -p cluverse_v2 \
+  < script/comment-pagination/explain/v1-recursive-page.sql \
+  | tee script/comment-pagination/results/raw/before-explain.txt
+
+mysql -h127.0.0.1 -ucluverse_user -p cluverse_v2 \
+  < script/comment-pagination/explain/v2-path-range.sql \
+  | tee script/comment-pagination/results/raw/after-explain.txt
+```
+
 ## 결과 파일
 
-한 번 실행할 때 원본 두 개를 함께 남긴다.
+한 번 실행할 때 캡처·재현 원본 네 개를 함께 남긴다.
 
+- `results/raw/*.html`: 캡처용 k6 웹 대시보드 리포트
+- `results/raw/*-console.txt`: 실행 조건과 k6 종료 요약 원본
 - `results/raw/*-summary.json`: k6 summary와 p95·p99
 - `results/raw/*-timeseries.csv`: k6 시계열
 

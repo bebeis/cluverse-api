@@ -48,7 +48,11 @@ fi
 
 SUMMARY="results/raw/${NAME}-summary.json"
 TIMESERIES="results/raw/${NAME}-timeseries.csv"
+REPORT="results/raw/${NAME}.html"
+CONSOLE="results/raw/${NAME}-console.txt"
 export BASE_URL POST_ID VERSION COMMENT_COUNT TREE_SHAPE
+export K6_WEB_DASHBOARD="${K6_WEB_DASHBOARD:-true}"
+export K6_WEB_DASHBOARD_EXPORT="${K6_WEB_DASHBOARD_EXPORT:-$REPORT}"
 
 if [[ "$MODE" == "write-root" ]]; then
   export WRITE_KIND="root"
@@ -69,12 +73,19 @@ for name in VERSION AUTH_TOKEN RATE DURATION LIMIT CURSOR_STEPS PRE_ALLOCATED_VU
   fi
 done
 
-k6 run \
-  --summary-export "$SUMMARY" \
-  --out "csv=${TIMESERIES}" \
-  "${K6_ENV[@]}" \
-  "$@" \
-  "$K6_SCRIPT"
+{
+  echo "[comment-pagination] mode=${MODE} version=${VERSION:-comparison}"
+  echo "[condition] base_url=${BASE_URL} post_id=${POST_ID} comments=${COMMENT_COUNT} tree_shape=${TREE_SHAPE}"
+  echo "[condition] rate=${RATE:-script-default} duration=${DURATION:-script-default} limit=${LIMIT:-script-default} cursor_steps=${CURSOR_STEPS:-0}"
+  k6 run \
+    --summary-export "$SUMMARY" \
+    --out "csv=${TIMESERIES}" \
+    "${K6_ENV[@]}" \
+    "$@" \
+    "$K6_SCRIPT"
+} 2>&1 | tee "$CONSOLE"
 
+echo "capture HTML: script/comment-pagination/${REPORT}"
+echo "console text: script/comment-pagination/${CONSOLE}"
 echo "summary JSON: script/comment-pagination/${SUMMARY}"
 echo "timeseries CSV: script/comment-pagination/${TIMESERIES}"
