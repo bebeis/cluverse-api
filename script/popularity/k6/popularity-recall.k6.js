@@ -25,6 +25,10 @@ const CHECK_POST_IDS = parseIds(__ENV.CHECK_POST_IDS, 'CHECK_POST_IDS');
 const expectedSet = new Set(EXPECTED_POST_IDS);
 const scopeSet = new Set(CHECK_POST_IDS);
 
+if (SIZE < scopeSet.size) {
+    throw new Error(`SIZE(${SIZE})는 CHECK_POST_IDS 개수(${scopeSet.size}) 이상이어야 합니다.`);
+}
+
 for (const postId of expectedSet) {
     if (!scopeSet.has(postId)) throw new Error(`기대 ID ${postId}가 CHECK_POST_IDS에 없습니다.`);
 }

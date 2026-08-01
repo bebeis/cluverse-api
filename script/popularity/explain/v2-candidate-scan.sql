@@ -8,7 +8,7 @@ FROM popularity_candidate pc
 WHERE pc.next_check_at <= @now
 ORDER BY pc.next_check_at, pc.post_id
 LIMIT 500
-FOR UPDATE;
+FOR UPDATE SKIP LOCKED;
 
 START TRANSACTION;
 SELECT pc.post_id
@@ -16,8 +16,8 @@ FROM popularity_candidate pc
 WHERE pc.next_check_at <= @now
 ORDER BY pc.next_check_at, pc.post_id
 LIMIT 500
-FOR UPDATE;
+FOR UPDATE SKIP LOCKED;
 ROLLBACK;
 
 -- 확인: idx(next_check_at, post_id) range 접근, filesort 부재, 반환 행 수가 batch_size 이하인지.
--- 현재 구현은 SKIP LOCKED가 없으므로 다중 워커에서는 락 대기 시간도 함께 기록한다.
+-- 다중 워커에서는 잠긴 행을 기다리지 않고 건너뛰는지와 워커 수별 처리량을 함께 기록한다.

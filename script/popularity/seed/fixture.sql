@@ -6,6 +6,7 @@ SET @fixture_member_id = 9100000000;
 SET @busy_board_id = 9100000000;
 SET @quiet_board_id = 9100000001;
 
+DELETE FROM popularity_finalization_claim WHERE post_id BETWEEN 9100000001 AND 9100000005;
 DELETE FROM popular_post WHERE post_id BETWEEN 9100000001 AND 9100000005;
 DELETE FROM popularity_candidate WHERE post_id BETWEEN 9100000001 AND 9100000005;
 

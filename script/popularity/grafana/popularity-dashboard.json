@@ -150,12 +150,49 @@
       ],
       "title": "배치 실행 지연",
       "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "ops", "min": 0 }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "id": 9,
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "sum by (reason) (rate(popularity_finalization_pending_loss_risk_total[$__rate_interval]))",
+          "legendFormat": "pending loss risk {{reason}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(popularity_candidate_evaluation_failures_total[$__rate_interval]))",
+          "legendFormat": "candidate evaluation failure",
+          "refId": "B"
+        }
+      ],
+      "title": "재검사 실패와 조회수 유실 위험",
+      "type": "timeseries"
     }
   ],
   "refresh": "5s",
   "schemaVersion": 39,
   "tags": ["cluverse", "popularity", "benchmark"],
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Prometheus",
+        "name": "DS_PROMETHEUS",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
+  },
   "time": { "from": "now-30m", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
