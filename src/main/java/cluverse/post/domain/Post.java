@@ -49,6 +49,11 @@ public class Post extends BaseTimeEntity {
     @OrderBy("displayOrder ASC")
     private List<PostImage> images = new ArrayList<>();
 
+    @Builder.Default
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
+    private List<PostPlace> places = new ArrayList<>();
+
     @Column(nullable = false)
     private Long boardId;
 
@@ -144,6 +149,12 @@ public class Post extends BaseTimeEntity {
         return images.stream()
                 .map(PostImage::getImageUrl)
                 .toList();
+    }
+
+    public void addPlace(Long placeId, int displayOrder, Long authorUniversityId,
+                         Long universityCampusId, boolean recommended) {
+        this.places.add(PostPlace.of(
+                this, placeId, displayOrder, authorUniversityId, universityCampusId, recommended));
     }
 
     private void replaceTags(List<String> tags) {

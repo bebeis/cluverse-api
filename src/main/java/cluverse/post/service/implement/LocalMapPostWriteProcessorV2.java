@@ -38,7 +38,7 @@ public class LocalMapPostWriteProcessorV2 {
 
         Post post = postWriter.create(memberId, request, clientIp, requestId);
         postMetaWriter.createViewCount(post.getId());
-        postPlaceWriter.createAll(post.getId(), attachments, places);
+        postPlaceWriter.createAll(post, attachments, places);
         return post.getId();
     }
 }

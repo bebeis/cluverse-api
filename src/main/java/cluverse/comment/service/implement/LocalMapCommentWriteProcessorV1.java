@@ -52,7 +52,7 @@ public class LocalMapCommentWriteProcessorV1 {
         if (parent != null) {
             commentWriter.increaseReplyCount(parent.getId());
         }
-        commentPlaceWriter.create(comment.getId(), attachment, place);
+        commentPlaceWriter.create(comment, attachment, place);
         return comment.getId();
     }
 
