@@ -56,6 +56,16 @@ V1과 V2는 같은 RATE, DURATION, 애플리케이션/DB 자원, stub 지연으�
 
 `explain/`은 지도 집계와 장소 콘텐츠 조회의 실행 계획을 확인한다. 조회 성능은 이번 V1/V2 비교 변수가 아니지만, 원본 연결 집계가 병목이 되는지 판단할 근거로 남긴다.
 
+k6 summary JSON과 Prometheus CSV를 인기글·조회수 급상승 결과와 함께 matplotlib로 그리려면 다음을 실행한다.
+
+```bash
+script/measurements/run.sh
+```
+
+Prometheus의 DB 트랜잭션 p95/p99와 Hikari 최대값은
+`script/measurements/csv/TEMPLATE.csv` 형식으로 저장한다. 구체적인 예시는
+`script/measurements/csv/local-map-example.csv`에 있다.
+
 ## 4. 실제 네이버 계약 canary
 
 실제 연동은 지연이나 처리량을 측정하지 않고 인증 헤더, 한글 검색, 응답 매핑, 좌표 변환, 선택 토큰 발급만 확인한다. 실행 중 비-200 응답이 한 번이라도 발생하면 재시도 없이 중단한다. 애플리케이션은 네이버 429도 502 외부 서비스 오류로 변환하므로 canary는 모든 비-200을 동일하게 즉시 중단한다.

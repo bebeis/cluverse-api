@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# k6 실행 래퍼 — 웹 대시보드 실시간 보기(localhost:5665) + HTML 리포트 저장을 기본으로 켠다.
-# 리포트는 results/raw/<날짜시각>-<bench|lifecycle>[-vN].html 로 자동 저장된다.
+# k6 실행 래퍼 — 웹 대시보드 실시간 보기(localhost:5665) + HTML/summary JSON 저장을 기본으로 켠다.
+# HTML은 <라벨>.html, JSON은 <라벨>-summary.json 형태로 results/raw에 저장된다.
 #
 # 사용법: k6 인자를 그대로 뒤에 붙인다.
 #   script/view-surge/run.sh bench     -e VERSION=v3 -e RATE=300 -e DURATION=1m
@@ -28,13 +28,16 @@ for arg in "$@"; do
 done
 
 mkdir -p results/raw
-REPORT="results/raw/$(date +%F-%H%M%S)-$LABEL.html"
+STAMP="$(date +%F-%H%M%S)"
+REPORT="results/raw/$STAMP-$LABEL.html"
+SUMMARY="results/raw/$STAMP-$LABEL-summary.json"
 
 export K6_WEB_DASHBOARD=true
 export K6_WEB_DASHBOARD_EXPORT="$REPORT"
 export PRE_ALLOCATED_VUS="${PRE_ALLOCATED_VUS:-100}"
 export MAX_VUS="${MAX_VUS:-600}"
 
-k6 run "$@" "$SCRIPT"
+k6 run --summary-export "$SUMMARY" "$@" "$SCRIPT"
 echo
 echo "HTML 리포트 저장됨: script/view-surge/$REPORT"
+echo "summary JSON 저장됨: script/view-surge/$SUMMARY"

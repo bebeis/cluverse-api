@@ -28,7 +28,8 @@ script/view-surge/
 
 본 측정에서는 `k6 run ... k6/<스크립트>` 대신 `run.sh bench|lifecycle ...` 를 권장합니다.
 동일한 k6 인자를 받되, 실시간 웹 대시보드(http://localhost:5665)와
-`results/raw/<날짜시각>-<라벨>.html` 리포트 저장, VU 풀 기본값(100/600)을 자동으로 켭니다.
+`results/raw/<날짜시각>-<라벨>.html` 리포트, matplotlib 집계용
+`results/raw/<날짜시각>-<라벨>-summary.json` 저장, VU 풀 기본값(100/600)을 자동으로 켭니다.
 
 ```bash
 script/view-surge/run.sh bench -e VERSION=v3 -e RATE=300 -e DURATION=1m
@@ -111,6 +112,14 @@ script/view-surge/run.sh bench -e VERSION=v4 -e RATE=5 -e DURATION=10s
 script/view-surge/run.sh lifecycle -e RAMP_UP=10s -e SUSTAIN=30s \
        -e DECAY=10s -e COOL=30s -e TAIL=30s -e RAMP_TARGET=50
 ```
+
+인기글·로컬맵 결과와 함께 matplotlib 그래프로 모으려면 측정 후 다음을 실행합니다.
+
+```bash
+script/measurements/run.sh
+```
+
+공통 CSV 스키마와 반복 측정 집계 방법은 `script/measurements/README.md`를 참고합니다.
 
 `view_count_success_rate` 가 100%에 가깝고 `hot_duration` 에 값이 찍히면 성공입니다.
 부하를 멈추고 30초쯤 뒤 (a)의 추적 행과 (b)의 Redis 키가 **사라져 있으면** 정리까지 정상입니다.
