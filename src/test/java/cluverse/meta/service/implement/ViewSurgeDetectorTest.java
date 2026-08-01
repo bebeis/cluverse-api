@@ -1,6 +1,8 @@
 package cluverse.meta.service.implement;
 
 import cluverse.meta.properties.ViewSurgeProperties;
+import cluverse.popularity.service.implement.PopularityPromotionInvoker;
+import cluverse.popularity.domain.PopularityTrigger;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,9 @@ class ViewSurgeDetectorTest {
     @Mock
     private ViewSurgeTrackingWriter viewSurgeTrackingWriter;
 
+    @Mock
+    private PopularityPromotionInvoker popularityPromotionInvoker;
+
     private MutableClock clock;
     private ViewSurgeDetector viewSurgeDetector;
 
@@ -37,6 +42,7 @@ class ViewSurgeDetectorTest {
         viewSurgeDetector = new ViewSurgeDetector(
                 createProperties(),
                 viewSurgeTrackingWriter,
+                popularityPromotionInvoker,
                 clock,
                 new SimpleMeterRegistry()
         );
@@ -75,6 +81,7 @@ class ViewSurgeDetectorTest {
 
         // then
         verify(viewSurgeTrackingWriter).activate(eq(10L), any(Instant.class));
+        verify(popularityPromotionInvoker).tryEvaluate(10L, PopularityTrigger.SURGE_ACTIVATED);
     }
 
     @Test

@@ -3,6 +3,8 @@ package cluverse.meta.service.implement;
 import cluverse.meta.properties.ViewSurgeProperties;
 import cluverse.meta.repository.PendingViewCountRepository;
 import cluverse.meta.repository.dto.ViewCountDelta;
+import cluverse.popularity.domain.PopularityTrigger;
+import cluverse.popularity.service.implement.PopularityPromotionInvoker;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -30,6 +32,7 @@ public class ViewCountFlushProcessor {
     private final ViewSurgeTrackingWriter viewSurgeTrackingWriter;
     private final PendingViewCountRepository pendingViewCountRepository;
     private final PostMetaWriter postMetaWriter;
+    private final PopularityPromotionInvoker popularityPromotionInvoker;
     private final ViewSurgeProperties properties;
     private final Timer flushTimer;
     private final DistributionSummary batchSizeSummary;
@@ -42,6 +45,7 @@ public class ViewCountFlushProcessor {
             ViewSurgeTrackingWriter viewSurgeTrackingWriter,
             PendingViewCountRepository pendingViewCountRepository,
             PostMetaWriter postMetaWriter,
+            PopularityPromotionInvoker popularityPromotionInvoker,
             ViewSurgeProperties properties,
             MeterRegistry meterRegistry
     ) {
@@ -49,6 +53,7 @@ public class ViewCountFlushProcessor {
         this.viewSurgeTrackingWriter = viewSurgeTrackingWriter;
         this.pendingViewCountRepository = pendingViewCountRepository;
         this.postMetaWriter = postMetaWriter;
+        this.popularityPromotionInvoker = popularityPromotionInvoker;
         this.properties = properties;
         this.flushTimer = meterRegistry.timer("view_surge.flush.duration");
         this.batchSizeSummary = meterRegistry.summary("view_surge.flush.batch_size");
@@ -72,6 +77,10 @@ public class ViewCountFlushProcessor {
         }
         batchSizeSummary.record(deltas.size());
         applyOrRestore(deltas);
+        popularityPromotionInvoker.tryEvaluateAll(
+                deltas.stream().map(ViewCountDelta::postId).toList(),
+                PopularityTrigger.VIEW_WRITE_BACK
+        );
         extendSustained(deltas);
     }
 

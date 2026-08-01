@@ -105,6 +105,29 @@ view-surge:
   flush-interval: 3s
   cleanup-interval: 10s
 
+popularity:
+  default-promotion-score: 100
+  default-like-gate: 5
+  default-comment-gate: 3
+  score-like-weight: 3
+  score-comment-weight: 2
+  score-view-weight: 1
+  promotion-window: 48h
+  policy-sample-window: 7d
+  policy-percentile: 0.98
+  policy-min-sample-size: 100
+  policy-smoothing-ratio: 0.30
+  policy-cache-refresh-interval: 1m
+  v1-scan-interval: 1m
+  baseline-scan-enabled: false
+  scan-chunk-size: 1000
+  candidate-recheck-interval: 30s
+  candidate-batch-size: 500
+  finalization-interval: 30s
+  finalization-batch-size: 500
+  experiment-endpoints-enabled: false
+  benchmark-token: ${POPULARITY_BENCHMARK_TOKEN:}
+
 oauth2:
   kakao:
     client-id: ${KAKAO_CLIENT_ID}

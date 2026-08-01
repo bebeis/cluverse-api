@@ -1,6 +1,8 @@
 package cluverse.meta.service.implement;
 
 import cluverse.meta.properties.ViewSurgeProperties;
+import cluverse.popularity.domain.PopularityTrigger;
+import cluverse.popularity.service.implement.PopularityPromotionInvoker;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.core.instrument.Counter;
@@ -23,6 +25,7 @@ public class ViewSurgeDetector {
 
     private final ViewSurgeProperties properties;
     private final ViewSurgeTrackingWriter viewSurgeTrackingWriter;
+    private final PopularityPromotionInvoker popularityPromotionInvoker;
     private final Clock clock;
     private final Cache<Long, ViewSample> sampleCache;
     private final long windowMillis;
@@ -33,11 +36,13 @@ public class ViewSurgeDetector {
     public ViewSurgeDetector(
             ViewSurgeProperties properties,
             ViewSurgeTrackingWriter viewSurgeTrackingWriter,
+            PopularityPromotionInvoker popularityPromotionInvoker,
             Clock clock,
             MeterRegistry meterRegistry
     ) {
         this.properties = properties;
         this.viewSurgeTrackingWriter = viewSurgeTrackingWriter;
+        this.popularityPromotionInvoker = popularityPromotionInvoker;
         this.clock = clock;
         this.sampleCache = Caffeine.newBuilder()
                 .maximumSize(properties.sampleCacheMaxSize())
@@ -78,6 +83,7 @@ public class ViewSurgeDetector {
 
         if (newCount - sample.startCount() >= properties.threshold()) {
             viewSurgeTrackingWriter.activate(postId, clock.instant());
+            popularityPromotionInvoker.tryEvaluate(postId, PopularityTrigger.SURGE_ACTIVATED);
             activationCounter.increment();
         }
     }

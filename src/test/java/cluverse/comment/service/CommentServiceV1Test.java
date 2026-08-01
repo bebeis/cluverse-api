@@ -16,6 +16,8 @@ import cluverse.comment.service.response.CommentResponse;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.meta.service.implement.PostMetaWriter;
 import cluverse.post.service.implement.PostAccessReader;
+import cluverse.popularity.service.implement.PopularityPromotionInvoker;
+import cluverse.popularity.domain.PopularityTrigger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -48,6 +50,9 @@ class CommentServiceV1Test {
 
     @Mock
     private CommentProcessor commentProcessor;
+
+    @Mock
+    private PopularityPromotionInvoker popularityPromotionInvoker;
 
     @InjectMocks
     private CommentQueryService commentQueryService;
@@ -88,6 +93,7 @@ class CommentServiceV1Test {
         // then
         assertThat(commentId).isEqualTo(101L);
         verify(commentProcessor).createComment(1L, 10L, request, "127.0.0.1");
+        verify(popularityPromotionInvoker).tryEvaluate(10L, PopularityTrigger.COMMENT);
     }
 
     @Test
