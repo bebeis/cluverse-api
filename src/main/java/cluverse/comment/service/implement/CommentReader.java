@@ -1,6 +1,7 @@
 package cluverse.comment.service.implement;
 
 import cluverse.comment.domain.Comment;
+import cluverse.comment.domain.CommentPageCursor;
 import cluverse.comment.exception.CommentExceptionMessage;
 import cluverse.comment.repository.CommentQueryRepository;
 import cluverse.comment.repository.CommentRepository;
@@ -54,8 +55,18 @@ public class CommentReader {
         return commentQueryRepository.findRecentCommentRepliedPosts(size);
     }
 
-    public CommentPageQueryResult readCommentPage(Long viewerId, CommentPageRequest request) {
-        return commentQueryRepository.findCommentPage(viewerId, request);
+    public long readMaxCommentId() {
+        return commentQueryRepository.findMaxCommentId();
+    }
+
+    public CommentPageQueryResult readCommentPageV1(Long viewerId, CommentPageRequest request,
+                                                    CommentPageCursor cursor) {
+        return commentQueryRepository.findCommentPageV1(viewerId, request, cursor);
+    }
+
+    public CommentPageQueryResult readCommentPageV2(Long viewerId, CommentPageRequest request,
+                                                    CommentPageCursor cursor) {
+        return commentQueryRepository.findCommentPageV2(viewerId, request, cursor);
     }
 
     public CommentQueryDto readComment(Long viewerId, Long commentId) {

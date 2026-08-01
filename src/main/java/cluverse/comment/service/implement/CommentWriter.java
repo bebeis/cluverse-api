@@ -33,7 +33,9 @@ public class CommentWriter {
                 request.isAnonymous(),
                 clientIp
         );
-        return commentRepository.save(comment);
+        Comment savedComment = commentRepository.saveAndFlush(comment);
+        savedComment.assignPath(parentComment);
+        return savedComment;
     }
 
     public Comment create(Long memberId, Long postId, Comment parentComment, CommentCreateRequest request,
@@ -44,7 +46,9 @@ public class CommentWriter {
                 postId, memberId, parentComment == null ? null : parentComment.getId(), depth,
                 request.content(), request.isAnonymous(), clientIp, clientRequestId
         );
-        return commentRepository.saveAndFlush(comment);
+        Comment savedComment = commentRepository.saveAndFlush(comment);
+        savedComment.assignPath(parentComment);
+        return savedComment;
     }
 
     public void update(Long memberId, Long commentId, CommentUpdateRequest request) {

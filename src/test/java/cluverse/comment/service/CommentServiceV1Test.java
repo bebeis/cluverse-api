@@ -1,6 +1,7 @@
 package cluverse.comment.service;
 
 import cluverse.comment.domain.CommentStatus;
+import cluverse.comment.domain.CommentPageCursor;
 import cluverse.comment.repository.dto.CommentPageQueryResult;
 import cluverse.comment.repository.dto.CommentQueryDto;
 import cluverse.comment.service.implement.CommentProcessor;
@@ -63,18 +64,21 @@ class CommentServiceV1Test {
     @Test
     void 댓글_목록_조회시_쿼리_결과를_응답으로_조립한다() {
         // given
-        CommentPageRequest request = new CommentPageRequest(10L, null, 0, 20);
-        when(commentReader.readCommentPage(99L, request)).thenReturn(new CommentPageQueryResult(
+        CommentPageRequest request = new CommentPageRequest(10L, null, null, 20);
+        when(commentReader.readMaxCommentId()).thenReturn(200L);
+        when(commentReader.readCommentPageV1(eq(99L), eq(request), any(CommentPageCursor.class)))
+                .thenReturn(new CommentPageQueryResult(
                 List.of(createCommentQueryDto(101L, null, 0, true, false)),
-                true
-        ));
+                true,
+                "20260315100000-00000000000000000101"
+                ));
 
         // when
-        CommentPageResponse response = commentQueryService.getComments(99L, request);
+        CommentPageResponse response = commentQueryService.getCommentsV1(99L, request);
 
         // then
         assertThat(response.comments()).extracting(CommentResponse::commentId).containsExactly(101L);
-        assertThat(response.offset()).isEqualTo(0);
+        assertThat(response.nextCursor()).isNotBlank();
         assertThat(response.limit()).isEqualTo(20);
         assertThat(response.hasNext()).isTrue();
         assertThat(response.comments().getFirst().author().nickname()).isEqualTo("익명");

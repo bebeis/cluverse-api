@@ -12,6 +12,18 @@ include::{snippets}/comments/get-comments/query-parameters.adoc[]
 include::{snippets}/comments/get-comments/http-response.adoc[]
 include::{snippets}/comments/get-comments/response-fields.adoc[]
 
+=== 개선된 댓글 목록 조회
+
+==== 요청
+
+include::{snippets}/comments-v2/get-comments/http-request.adoc[]
+include::{snippets}/comments-v2/get-comments/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/comments-v2/get-comments/http-response.adoc[]
+include::{snippets}/comments-v2/get-comments/response-fields.adoc[]
+
 === 대댓글 목록 조회
 
 ==== 요청

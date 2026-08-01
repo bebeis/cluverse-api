@@ -15,11 +15,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Comment extends BaseTimeEntity {
+
+    private static final DateTimeFormatter PATH_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,6 +66,9 @@ public class Comment extends BaseTimeEntity {
 
     @Column(name = "client_request_id")
     private String clientRequestId;
+
+    @Column(length = 255)
+    private String path;
 
     @OneToOne(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     private CommentPlace place;
@@ -116,5 +123,22 @@ public class Comment extends BaseTimeEntity {
 
     public void attachPlace(Long placeId, Long authorUniversityId, Long universityCampusId, boolean recommended) {
         this.place = CommentPlace.of(this, placeId, authorUniversityId, universityCampusId, recommended);
+    }
+
+    public void assignPath(Comment parentComment) {
+        if (id == null || getCreatedAt() == null) {
+            throw new IllegalStateException("댓글 저장 이후에 path를 생성할 수 있습니다.");
+        }
+        String pathSegment = PATH_TIME_FORMATTER.format(getCreatedAt())
+                + "-"
+                + String.format(Locale.ROOT, "%020d", id);
+        if (parentComment == null) {
+            this.path = pathSegment;
+            return;
+        }
+        if (parentComment.path == null || parentComment.path.isBlank()) {
+            throw new IllegalStateException("부모 댓글의 path가 필요합니다.");
+        }
+        this.path = parentComment.path + "/" + pathSegment;
     }
 }
