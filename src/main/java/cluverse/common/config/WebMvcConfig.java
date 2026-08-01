@@ -23,6 +23,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
             "/api/v2/posts",
             "/api/v3/posts",
             "/api/v4/posts",
+            // 인기글 승격 구조별 결과 비교 엔드포인트
+            "/api/v1/popular-posts/**",
+            "/api/v2/popular-posts/**",
             "/api/v1/comments",
             "/api/v1/universities",
             "/api/v1/universities/*",
@@ -68,7 +71,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/v1/posts/*/view-count",
                         "/api/v2/posts/*/view-count",
                         "/api/v3/posts/*/view-count",
-                        "/api/v4/posts/*/view-count"
+                        "/api/v4/posts/*/view-count",
+                        // 실험 쓰기는 컨트롤러의 X-Benchmark-Token으로 별도 보호한다
+                        "/api/v1/popular-posts/promotion-runs",
+                        "/api/v2/popular-posts/*/promotion-checks"
                 );
     }
 

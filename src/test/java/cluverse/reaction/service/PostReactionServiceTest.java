@@ -4,6 +4,8 @@ import cluverse.feed.repository.dto.FeedPageQueryResult;
 import cluverse.feed.repository.dto.FeedPostQueryDto;
 import cluverse.board.domain.BoardType;
 import cluverse.post.domain.PostCategory;
+import cluverse.popularity.service.implement.PopularityPromotionInvoker;
+import cluverse.popularity.domain.PopularityTrigger;
 import cluverse.reaction.service.implement.PostReactionProcessor;
 import cluverse.reaction.service.implement.PostReactionReader;
 import cluverse.reaction.service.request.BookmarkedPostSearchRequest;
@@ -31,6 +33,9 @@ class PostReactionServiceTest {
     private PostReactionProcessor postReactionProcessor;
 
     @Mock
+    private PopularityPromotionInvoker popularityPromotionInvoker;
+
+    @Mock
     private PostReactionReader postReactionReader;
 
     @InjectMocks
@@ -46,6 +51,7 @@ class PostReactionServiceTest {
 
         // then
         verify(postReactionProcessor).likePost(1L, 10L);
+        verify(popularityPromotionInvoker).tryEvaluate(10L, PopularityTrigger.LIKE);
         assertThat(response).isEqualTo(PostLikeResponse.like(10L));
     }
 

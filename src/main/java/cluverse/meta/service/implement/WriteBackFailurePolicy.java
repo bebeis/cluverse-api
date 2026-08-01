@@ -11,12 +11,12 @@ import org.springframework.dao.TransientDataAccessResourceException;
  * 커밋 여부가 모호한 실패에서 복구(restore)하면 같은 증가량이 두 번 반영될 수 있다 —
  * 롤백이 확실한 실패에만 복구하고, 모호하면 한 주기치 유실을 감수한다.
  */
-final class WriteBackFailurePolicy {
+public final class WriteBackFailurePolicy {
 
     private WriteBackFailurePolicy() {
     }
 
-    static boolean isRollbackCertain(DataAccessException exception) {
+    public static boolean isRollbackCertain(DataAccessException exception) {
         return !(exception instanceof QueryTimeoutException
                 || exception instanceof RecoverableDataAccessException
                 || exception instanceof DataAccessResourceFailureException

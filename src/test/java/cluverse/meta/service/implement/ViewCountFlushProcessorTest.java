@@ -3,6 +3,8 @@ package cluverse.meta.service.implement;
 import cluverse.meta.properties.ViewSurgeProperties;
 import cluverse.meta.repository.PendingViewCountRepository;
 import cluverse.meta.repository.dto.ViewCountDelta;
+import cluverse.popularity.service.implement.PopularityPromotionInvoker;
+import cluverse.popularity.domain.PopularityTrigger;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,9 @@ class ViewCountFlushProcessorTest {
     @Mock
     private PostMetaWriter postMetaWriter;
 
+    @Mock
+    private PopularityPromotionInvoker popularityPromotionInvoker;
+
     private ViewCountFlushProcessor viewCountFlushProcessor;
 
     @BeforeEach
@@ -50,6 +55,7 @@ class ViewCountFlushProcessorTest {
                 viewSurgeTrackingWriter,
                 pendingViewCountRepository,
                 postMetaWriter,
+                popularityPromotionInvoker,
                 createProperties(),
                 new SimpleMeterRegistry()
         );
@@ -69,6 +75,10 @@ class ViewCountFlushProcessorTest {
                 new ViewCountDelta(1L, 50L),
                 new ViewCountDelta(3L, 30L)
         ));
+        verify(popularityPromotionInvoker).tryEvaluateAll(
+                List.of(1L, 3L),
+                PopularityTrigger.VIEW_WRITE_BACK
+        );
     }
 
     @Test
