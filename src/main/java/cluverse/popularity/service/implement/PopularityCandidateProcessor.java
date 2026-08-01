@@ -1,12 +1,10 @@
 package cluverse.popularity.service.implement;
 
-import cluverse.popularity.domain.PopularityCandidate;
 import cluverse.popularity.domain.PopularityTrigger;
-import cluverse.popularity.properties.PopularityProperties;
 import cluverse.popularity.repository.PopularityCandidateRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -14,26 +12,33 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class PopularityCandidateProcessor {
 
     private final PopularityCandidateRepository popularityCandidateRepository;
+    private final PopularityCandidateClaimer popularityCandidateClaimer;
     private final PopularityPromotionProcessorV2 popularityPromotionProcessorV2;
-    private final PopularityProperties properties;
     private final Clock clock;
     private final PopularityMetricsRecorder popularityMetricsRecorder;
 
-    @Transactional
     public int processDue() {
         LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), clock.getZone());
-        List<PopularityCandidate> candidates = popularityCandidateRepository.findDueForUpdate(
-                now,
-                properties.candidateBatchSize()
-        );
-        for (PopularityCandidate candidate : candidates) {
-            popularityMetricsRecorder.candidateLag(candidate.getNextCheckAt(), now);
-            popularityPromotionProcessorV2.evaluate(candidate.getPostId(), PopularityTrigger.CANDIDATE_RECHECK);
+        List<PopularityCandidateClaim> claims = popularityCandidateClaimer.claimDue(now);
+        int processed = 0;
+        for (PopularityCandidateClaim claim : claims) {
+            popularityMetricsRecorder.candidateLag(claim.dueAt(), now);
+            try {
+                popularityPromotionProcessorV2.evaluate(
+                        claim.postId(),
+                        PopularityTrigger.CANDIDATE_RECHECK
+                );
+                processed++;
+            } catch (RuntimeException exception) {
+                popularityMetricsRecorder.candidateEvaluationFailed();
+                log.warn("인기글 후보 재검사 실패: postId={}", claim.postId(), exception);
+            }
         }
         popularityMetricsRecorder.candidateQueueSize(popularityCandidateRepository.count());
-        return candidates.size();
+        return processed;
     }
 }

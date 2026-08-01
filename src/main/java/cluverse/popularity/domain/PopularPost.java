@@ -26,7 +26,6 @@ import java.time.LocalDateTime;
         ),
         indexes = {
                 @Index(name = "idx_popular_recent", columnList = "algorithm_version,finalized_at,promoted_at,post_id"),
-                @Index(name = "idx_popular_finalize", columnList = "algorithm_version,finalized_at,finalize_at,post_id"),
                 @Index(name = "idx_popular_ranking", columnList = "algorithm_version,finalized_at,score,post_id"),
                 @Index(name = "idx_popular_finalize_due", columnList = "finalized_at,finalize_at,post_id"),
                 @Index(name = "idx_popular_finalize_post", columnList = "post_id,finalized_at,finalize_at")

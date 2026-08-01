@@ -20,17 +20,26 @@ class PopularityExperimentAuthorizerTest {
     }
 
     @Test
-    void 토큰이_설정되지_않은_로컬_환경은_실험_실행을_허용한다() {
+    void 설정된_토큰과_요청_토큰이_같으면_실험_실행을_허용한다() {
+        PopularityExperimentAuthorizer authorizer = new PopularityExperimentAuthorizer(properties("expected"));
+
+        assertThatCode(() -> authorizer.authorize("expected")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void 토큰이_설정되지_않으면_실험_실행을_거부한다() {
         PopularityExperimentAuthorizer authorizer = new PopularityExperimentAuthorizer(properties(""));
 
-        assertThatCode(() -> authorizer.authorize(null)).doesNotThrowAnyException();
+        assertThatThrownBy(() -> authorizer.authorize(null))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("벤치마크 토큰이 설정되지 않았습니다.");
     }
 
     private PopularityProperties properties(String token) {
         return new PopularityProperties(
                 100L, 5, 3, 3, 2, 1,
                 Duration.ofHours(48), Duration.ofDays(7), 0.98, 100, 0.30,
-                Duration.ofMinutes(1), Duration.ofMinutes(1), 1_000,
+                Duration.ofMinutes(1), Duration.ofMinutes(1), false, 1_000,
                 Duration.ofSeconds(30), 500,
                 Duration.ofSeconds(30), 500,
                 true, token

@@ -17,7 +17,7 @@ public class PopularityExperimentAuthorizer {
     public void authorize(String token) {
         String expected = properties.benchmarkToken();
         if (expected == null || expected.isBlank()) {
-            return;
+            throw new ForbiddenException("벤치마크 토큰이 설정되지 않았습니다.");
         }
         byte[] actualBytes = token == null ? new byte[0] : token.getBytes(StandardCharsets.UTF_8);
         if (!MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), actualBytes)) {

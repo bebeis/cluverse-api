@@ -59,6 +59,7 @@ popularity:
   policy-smoothing-ratio: 0.30
   policy-cache-refresh-interval: 1m
   v1-scan-interval: 1m
+  baseline-scan-enabled: false
   scan-chunk-size: 1000
   candidate-recheck-interval: 30s
   candidate-batch-size: 500

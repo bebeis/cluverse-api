@@ -23,7 +23,6 @@ CREATE TABLE popular_post (
     PRIMARY KEY (popular_post_id),
     UNIQUE KEY uk_popular_post_version_post (algorithm_version, post_id),
     INDEX idx_popular_recent (algorithm_version, finalized_at, promoted_at DESC, post_id DESC),
-    INDEX idx_popular_finalize (algorithm_version, finalized_at, finalize_at, post_id),
     INDEX idx_popular_ranking (algorithm_version, finalized_at, score DESC, post_id DESC),
     INDEX idx_popular_finalize_due (finalized_at, finalize_at, post_id),
     INDEX idx_popular_finalize_post (post_id, finalized_at, finalize_at)

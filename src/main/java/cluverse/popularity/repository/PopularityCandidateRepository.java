@@ -38,7 +38,7 @@ public interface PopularityCandidateRepository extends JpaRepository<PopularityC
             WHERE next_check_at <= :now
             ORDER BY next_check_at, post_id
             LIMIT :limit
-            FOR UPDATE
+            FOR UPDATE SKIP LOCKED
             """, nativeQuery = true)
     List<PopularityCandidate> findDueForUpdate(@Param("now") LocalDateTime now, @Param("limit") int limit);
 

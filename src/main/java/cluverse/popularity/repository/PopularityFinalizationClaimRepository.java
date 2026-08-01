@@ -19,8 +19,8 @@ public interface PopularityFinalizationClaimRepository extends JpaRepository<Pop
             )
             ON DUPLICATE KEY UPDATE
                 claim_token = CASE WHEN claimed_at < :staleBefore THEN :claimToken ELSE claim_token END,
-                claimed_at = CASE WHEN claimed_at < :staleBefore THEN :claimedAt ELSE claimed_at END,
-                updated_at = CASE WHEN claimed_at < :staleBefore THEN :claimedAt ELSE updated_at END
+                updated_at = CASE WHEN claimed_at < :staleBefore THEN :claimedAt ELSE updated_at END,
+                claimed_at = CASE WHEN claimed_at < :staleBefore THEN :claimedAt ELSE claimed_at END
             """, nativeQuery = true)
     int tryClaim(
             @Param("postId") Long postId,

@@ -61,11 +61,12 @@ public class PopularityFinalizationProcessor {
     }
 
     private int finalizePost(Long postId, List<PopularPost> targets, LocalDateTime now) {
-        LocalDateTime staleBefore = now.minus(
+        LocalDateTime claimedAt = now();
+        LocalDateTime staleBefore = claimedAt.minus(
                 properties.finalizationInterval().multipliedBy(CLAIM_TIMEOUT_MULTIPLIER)
         );
         String claimToken = UUID.randomUUID().toString();
-        if (!popularityFinalizationClaimWriter.claim(postId, claimToken, now, staleBefore)) {
+        if (!popularityFinalizationClaimWriter.claim(postId, claimToken, claimedAt, staleBefore)) {
             return 0;
         }
 
@@ -117,11 +118,21 @@ public class PopularityFinalizationProcessor {
                     pendingViewCountRepository.restore(postId, pending);
                 } catch (DataAccessException restoreException) {
                     exception.addSuppressed(restoreException);
+                    recordPendingLossRisk("RESTORE_FAILED");
                 }
+            } else {
+                recordPendingLossRisk("ROLLBACK_UNCERTAIN");
             }
             log.warn("인기글 최종화 pending 반영 실패: postId={}", postId, exception);
             return false;
         }
+    }
+
+    private void recordPendingLossRisk(String reason) {
+        meterRegistry.counter(
+                "popularity.finalization.pending.loss.risk",
+                "reason", reason
+        ).increment();
     }
 
     private LocalDateTime now() {

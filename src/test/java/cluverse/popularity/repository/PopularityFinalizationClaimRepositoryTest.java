@@ -41,5 +41,6 @@ class PopularityFinalizationClaimRepositoryTest {
 
         // then
         assertThat(repository.existsByPostIdAndClaimToken(1L, "worker-b")).isTrue();
+        assertThat(repository.findById(1L).orElseThrow().getUpdatedAt()).isEqualTo(NOW);
     }
 }

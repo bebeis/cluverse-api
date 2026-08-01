@@ -152,7 +152,11 @@ public class PopularityQueryRepository {
     }
 
     private OrderSpecifier<?>[] resolveOrder(PopularPostSortType sort, boolean finalized) {
-        if (finalized && sort == PopularPostSortType.SCORE) {
+        if (!finalized) {
+            // 진행 중인 인기글은 최종화 전까지 score가 null이므로 승격 시각으로만 정렬한다.
+            return new OrderSpecifier<?>[]{popularPost.promotedAt.desc(), popularPost.postId.desc()};
+        }
+        if (sort == PopularPostSortType.SCORE) {
             return new OrderSpecifier<?>[]{popularPost.score.desc(), popularPost.postId.desc()};
         }
         return new OrderSpecifier<?>[]{popularPost.promotedAt.desc(), popularPost.postId.desc()};

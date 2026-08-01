@@ -21,7 +21,7 @@ public class PopularityBatchProcessorV1 {
     private final Clock clock;
     private final MeterRegistry meterRegistry;
 
-    public int run() {
+    public synchronized int run() {
         return meterRegistry.timer("popularity.batch.duration", "version", PopularityAlgorithmVersion.V1.name())
                 .record(this::scanAll);
     }

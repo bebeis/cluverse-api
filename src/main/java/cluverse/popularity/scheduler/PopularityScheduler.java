@@ -50,7 +50,7 @@ public class PopularityScheduler {
             initialDelayString = "1m"
     )
     public void runBaselineScan() {
-        if (properties.experimentEndpointsEnabled()) {
+        if (properties.baselineScanEnabled()) {
             runSafely("인기글 전체 집계 기준선", popularityBatchProcessorV1::run);
         }
     }

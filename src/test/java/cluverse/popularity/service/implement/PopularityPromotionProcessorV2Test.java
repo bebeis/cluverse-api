@@ -63,6 +63,7 @@ class PopularityPromotionProcessorV2Test {
                 0.30,
                 Duration.ofMinutes(1),
                 Duration.ofMinutes(1),
+                false,
                 1_000,
                 Duration.ofSeconds(30),
                 500,
@@ -122,6 +123,25 @@ class PopularityPromotionProcessorV2Test {
                 PopularityTrigger.CANDIDATE_RECHECK
         );
         inOrder.verify(popularityCandidateWriter).remove(1L);
+    }
+
+    @Test
+    void V1_기준선_승격은_V2_후보_상태를_변경하지_않는다() {
+        // given
+        PopularitySnapshot snapshot = snapshot(5, 0, 90);
+        when(popularityPolicyReader.read(10L)).thenReturn(policy(100, 5, 3));
+
+        // when
+        processor.evaluateBaseline(snapshot);
+
+        // then
+        verify(popularPostWriter).promote(
+                PopularityAlgorithmVersion.V1,
+                snapshot,
+                policy(100, 5, 3),
+                PopularityTrigger.PERIODIC_SCAN
+        );
+        verify(popularityCandidateWriter, never()).remove(any());
     }
 
     @Test

@@ -64,4 +64,8 @@ public class PopularityMetricsRecorder {
     public void candidateQueueSize(long size) {
         candidateQueueSize.set(size);
     }
+
+    public void candidateEvaluationFailed() {
+        meterRegistry.counter("popularity.candidate.evaluation.failures").increment();
+    }
 }
