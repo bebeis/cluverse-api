@@ -79,6 +79,7 @@ public class Post extends BaseTimeEntity {
 
     private LocalDateTime deletedAt;
     private String clientIp;
+    private String clientRequestId;
 
     public static Post createByMember(List<String> tags, List<String> imageUrls, Long boardId, Long memberId,
                                       String title, String content, PostCategory category, boolean isAnonymous,
@@ -97,6 +98,16 @@ public class Post extends BaseTimeEntity {
 
         post.replaceTags(tags);
         post.replaceImages(imageUrls);
+        return post;
+    }
+
+    public static Post createByMember(List<String> tags, List<String> imageUrls, Long boardId, Long memberId,
+                                      String title, String content, PostCategory category, boolean isAnonymous,
+                                      boolean isPinned, boolean isExternalVisible, String clientIp,
+                                      String clientRequestId) {
+        Post post = createByMember(tags, imageUrls, boardId, memberId, title, content, category,
+                isAnonymous, isPinned, isExternalVisible, clientIp);
+        post.clientRequestId = clientRequestId;
         return post;
     }
 

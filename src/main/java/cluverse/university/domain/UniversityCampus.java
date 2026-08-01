@@ -39,4 +39,19 @@ public class UniversityCampus extends BaseTimeEntity {
 
     @Column(nullable = false)
     private boolean isActive;
+
+    private UniversityCampus(Long universityId, String name, BigDecimal latitude, BigDecimal longitude,
+                             int localRadiusMeter, boolean isActive) {
+        this.universityId = universityId;
+        this.name = name;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.localRadiusMeter = localRadiusMeter;
+        this.isActive = isActive;
+    }
+
+    public static UniversityCampus create(Long universityId, String name, BigDecimal latitude,
+                                          BigDecimal longitude, int localRadiusMeter) {
+        return new UniversityCampus(universityId, name, latitude, longitude, localRadiusMeter, true);
+    }
 }

@@ -32,8 +32,8 @@ public class PlaceSelectionTokenManager {
     private final Clock clock;
 
     @Autowired
-    public PlaceSelectionTokenManager(LocalMapProperties properties, ObjectMapper objectMapper) {
-        this(properties, objectMapper, Clock.systemUTC());
+    public PlaceSelectionTokenManager(LocalMapProperties properties) {
+        this(properties, new ObjectMapper(), Clock.systemUTC());
     }
 
     PlaceSelectionTokenManager(LocalMapProperties properties, ObjectMapper objectMapper, Clock clock) {

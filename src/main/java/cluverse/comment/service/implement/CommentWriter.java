@@ -36,6 +36,17 @@ public class CommentWriter {
         return commentRepository.save(comment);
     }
 
+    public Comment create(Long memberId, Long postId, Comment parentComment, CommentCreateRequest request,
+                          String clientIp, String clientRequestId) {
+        int depth = parentComment == null ? 0 : parentComment.getDepth() + 1;
+        validateDepth(depth);
+        Comment comment = Comment.createByMember(
+                postId, memberId, parentComment == null ? null : parentComment.getId(), depth,
+                request.content(), request.isAnonymous(), clientIp, clientRequestId
+        );
+        return commentRepository.saveAndFlush(comment);
+    }
+
     public void update(Long memberId, Long commentId, CommentUpdateRequest request) {
         Comment comment = commentReader.readActiveOrThrow(commentId);
         validateUpdatePermission(memberId, comment);
