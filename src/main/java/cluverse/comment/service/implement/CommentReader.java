@@ -14,6 +14,7 @@ import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -40,6 +41,17 @@ public class CommentReader {
 
     public Optional<Comment> read(Long commentId) {
         return commentRepository.findById(commentId);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Comment readForUpdateOrThrow(Long commentId) {
+        return readForUpdate(commentId)
+                .orElseThrow(() -> new NotFoundException(CommentExceptionMessage.COMMENT_NOT_FOUND.getMessage()));
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Optional<Comment> readForUpdate(Long commentId) {
+        return commentRepository.findByIdForUpdate(commentId);
     }
 
     public Optional<Long> findIdByRequestId(Long memberId, String requestId) {
@@ -74,7 +86,7 @@ public class CommentReader {
     }
 
     public boolean hasChildren(Comment comment) {
-        return commentRepository.existsByParentId(comment.getId());
+        return commentRepository.existsByPostIdAndParentId(comment.getPostId(), comment.getId());
     }
 
     public void validateBelongsToPost(Comment comment, Long postId) {

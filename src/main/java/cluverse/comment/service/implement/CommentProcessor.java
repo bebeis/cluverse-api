@@ -36,7 +36,7 @@ public class CommentProcessor {
     }
 
     public Long deleteComment(Long memberId, Long commentId) {
-        Comment comment = commentReader.readOrThrow(commentId);
+        Comment comment = commentReader.readForUpdateOrThrow(commentId);
         validateDeletePermission(memberId, comment);
         if (comment.isActive()) {
             delete(comment);
@@ -49,7 +49,7 @@ public class CommentProcessor {
             return null;
         }
 
-        Comment parentComment = commentReader.readOrThrow(parentCommentId);
+        Comment parentComment = commentReader.readForUpdateOrThrow(parentCommentId);
         commentReader.validateBelongsToPost(parentComment, postId);
         commentReader.validateReplyWritable(parentComment);
         return parentComment;
@@ -82,7 +82,7 @@ public class CommentProcessor {
     }
 
     private void deleteParentIfRemovable(Long parentId) {
-        commentReader.read(parentId)
+        commentReader.readForUpdate(parentId)
                 .filter(Comment::isDeleted)
                 .filter(parent -> !commentReader.hasChildren(parent))
                 .ifPresent(this::deletePhysically);
