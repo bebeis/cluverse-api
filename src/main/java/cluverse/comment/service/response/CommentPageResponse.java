@@ -4,7 +4,7 @@ import java.util.List;
 
 public record CommentPageResponse(
         List<CommentResponse> comments,
-        int offset,
+        String nextCursor,
         int limit,
         boolean hasNext
 ) {

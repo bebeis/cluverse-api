@@ -1,5 +1,6 @@
 package cluverse.comment.repository;
 
+import cluverse.comment.domain.CommentPageCursor;
 import cluverse.comment.domain.CommentStatus;
 import cluverse.comment.exception.CommentExceptionMessage;
 import cluverse.comment.repository.dto.CommentPageQueryResult;
@@ -7,8 +8,6 @@ import cluverse.comment.repository.dto.CommentQueryDto;
 import cluverse.comment.service.request.CommentPageRequest;
 import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.common.exception.NotFoundException;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -19,9 +18,10 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.LinkedHashMap;
 import java.util.List;
-
-import static cluverse.comment.domain.QComment.comment;
+import java.util.Map;
+import java.util.Objects;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,24 +29,31 @@ public class CommentQueryRepository {
 
     private static final int MAX_DEPTH = 5;
 
-    private final JPAQueryFactory queryFactory;
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    public CommentPageQueryResult findCommentPage(Long viewerId, CommentPageRequest request) {
-        List<Long> rootCommentIds = findPagedRootCommentIds(request.postId(), request.parentCommentId(),
-                request.offset(), request.limit() + 1);
+    public long findMaxCommentId() {
+        Long maxCommentId = jdbcTemplate.queryForObject(
+                "SELECT COALESCE(MAX(comment_id), 0) FROM comment",
+                Long.class
+        );
+        return maxCommentId == null ? 0L : maxCommentId;
+    }
 
-        boolean hasNext = rootCommentIds.size() > request.limit();
-        if (hasNext) {
-            rootCommentIds = rootCommentIds.subList(0, request.limit());
-        }
+    public CommentPageQueryResult findCommentPageV1(Long viewerId, CommentPageRequest request,
+                                                     CommentPageCursor cursor) {
+        List<CommentPageEntry> entries = findRecursivePageEntries(request, cursor, request.limit() + 1);
+        return createPageResult(viewerId, entries, request.limit());
+    }
 
-        return new CommentPageQueryResult(readCommentTree(viewerId, rootCommentIds), hasNext);
+    public CommentPageQueryResult findCommentPageV2(Long viewerId, CommentPageRequest request,
+                                                     CommentPageCursor cursor) {
+        List<CommentPageEntry> entries = findPathPageEntries(request, cursor, request.limit() + 1);
+        return createPageResult(viewerId, entries, request.limit());
     }
 
     public CommentQueryDto findComment(Long viewerId, Long commentId) {
-        List<CommentQueryDto> comments = readCommentTree(viewerId, List.of(commentId));
+        List<CommentQueryDto> comments = readComments(viewerId, List.of(commentId));
         if (comments.isEmpty()) {
             throw new NotFoundException(CommentExceptionMessage.COMMENT_NOT_FOUND.getMessage());
         }
@@ -71,122 +78,176 @@ public class CommentQueryRepository {
         ), size);
     }
 
-    private List<Long> findPagedRootCommentIds(Long postId, Long parentCommentId, int offset, int limit) {
-        return queryFactory.select(comment.id)
-                .from(comment)
-                .where(
-                        comment.postId.eq(postId),
-                        parentIdEq(parentCommentId)
-                )
-                .orderBy(comment.createdAt.asc(), comment.id.asc())
-                .offset(offset)
-                .limit(limit)
-                .fetch();
-    }
-
-    private BooleanExpression parentIdEq(Long parentCommentId) {
-        return parentCommentId == null ? comment.parentId.isNull() : comment.parentId.eq(parentCommentId);
-    }
-
-    private List<CommentQueryDto> readCommentTree(Long viewerId, List<Long> rootCommentIds) {
-        if (rootCommentIds.isEmpty()) {
-            return List.of();
-        }
-
+    private List<CommentPageEntry> findRecursivePageEntries(CommentPageRequest request,
+                                                             CommentPageCursor cursor,
+                                                             int pageSize) {
+        String anchorParentCondition = request.parentCommentId() == null
+                ? "c.parent_id IS NULL"
+                : "c.parent_id = :parentCommentId";
+        String anchorSortPath = request.parentCommentId() == null
+                ? pathSegment("c")
+                : "CONCAT(:parentPath, '/', " + pathSegment("c") + ")";
+        String cursorCondition = cursor.hasPath() ? "WHERE sort_path > :cursorPath" : "";
         String sql = """
-                WITH RECURSIVE comment_tree (
-                    comment_id,
-                    post_id,
-                    member_id,
-                    parent_id,
-                    depth,
-                    content,
-                    status,
-                    is_anonymous,
-                    like_count,
-                    reply_count,
-                    created_at,
-                    updated_at,
-                    root_created_at,
-                    root_comment_id,
-                    sort_path
-                ) AS (
+                WITH RECURSIVE comment_tree (comment_id, depth, sort_path) AS (
                     SELECT
                         c.comment_id,
-                        c.post_id,
-                        c.member_id,
-                        c.parent_id,
                         c.depth,
-                        c.content,
-                        c.status,
-                        c.is_anonymous,
-                        c.like_count,
-                        c.reply_count,
-                        c.created_at,
-                        c.updated_at,
-                        c.created_at AS root_created_at,
-                        c.comment_id AS root_comment_id,
-                        CAST(LPAD(CAST(c.comment_id AS CHAR), 20, '0') AS CHAR(512)) AS sort_path
+                        CAST(%s AS CHAR(255)) AS sort_path
                     FROM comment c
-                    WHERE c.comment_id IN (:rootCommentIds)
+                    WHERE c.post_id = :postId
+                      AND %s
+                      AND c.created_at <= :asOf
+                      AND c.comment_id <= :snapshotMaxCommentId
 
                     UNION ALL
 
                     SELECT
                         child.comment_id,
-                        child.post_id,
-                        child.member_id,
-                        child.parent_id,
                         child.depth,
-                        child.content,
-                        child.status,
-                        child.is_anonymous,
-                        child.like_count,
-                        child.reply_count,
-                        child.created_at,
-                        child.updated_at,
-                        tree.root_created_at,
-                        tree.root_comment_id,
-                        CONCAT(tree.sort_path, '/', LPAD(CAST(child.comment_id AS CHAR), 20, '0')) AS sort_path
+                        CONCAT(RTRIM(parent.sort_path), '/', %s)
                     FROM comment child
-                    JOIN comment_tree tree ON child.parent_id = tree.comment_id
-                    WHERE child.depth <= :maxDepth
+                    JOIN comment_tree parent ON child.parent_id = parent.comment_id
+                    WHERE child.post_id = :postId
+                      AND child.depth <= :maxDepth
+                      AND child.created_at <= :asOf
+                      AND child.comment_id <= :snapshotMaxCommentId
                 )
+                SELECT comment_id, sort_path
+                FROM comment_tree
+                %s
+                ORDER BY sort_path
+                LIMIT :pageSize
+                """.formatted(anchorSortPath, anchorParentCondition, pathSegment("child"), cursorCondition);
+
+        MapSqlParameterSource parameters = pageParameters(request, cursor, pageSize)
+                .addValue("maxDepth", MAX_DEPTH);
+        if (request.parentCommentId() != null) {
+            parameters.addValue("parentPath", findPath(request.parentCommentId()));
+        }
+        return namedParameterJdbcTemplate.query(sql, parameters, pageEntryRowMapper());
+    }
+
+    private List<CommentPageEntry> findPathPageEntries(CommentPageRequest request,
+                                                        CommentPageCursor cursor,
+                                                        int pageSize) {
+        String cursorCondition = cursor.hasPath() ? "AND path > :cursorPath" : "";
+        String parentCondition = "";
+        MapSqlParameterSource parameters = pageParameters(request, cursor, pageSize);
+        if (request.parentCommentId() != null) {
+            String parentPath = findPath(request.parentCommentId());
+            parentCondition = "AND path LIKE :parentPathPrefix";
+            parameters.addValue("parentPathPrefix", parentPath + "/%");
+        }
+
+        String sql = """
+                SELECT comment_id, path AS sort_path
+                FROM comment
+                WHERE post_id = :postId
+                  AND path IS NOT NULL
+                  AND created_at <= :asOf
+                  AND comment_id <= :snapshotMaxCommentId
+                  %s
+                  %s
+                ORDER BY path
+                LIMIT :pageSize
+                """.formatted(parentCondition, cursorCondition);
+
+        return namedParameterJdbcTemplate.query(sql, parameters, pageEntryRowMapper());
+    }
+
+    private String findPath(Long commentId) {
+        String sql = "SELECT path FROM comment WHERE comment_id = ?";
+        List<String> paths = jdbcTemplate.query(sql, (resultSet, rowNum) -> resultSet.getString("path"), commentId);
+        if (paths.isEmpty() || paths.getFirst() == null || paths.getFirst().isBlank()) {
+            throw new NotFoundException(CommentExceptionMessage.COMMENT_NOT_FOUND.getMessage());
+        }
+        return paths.getFirst();
+    }
+
+    private String pathSegment(String alias) {
+        return "CONCAT("
+                + "REPLACE(REPLACE(REPLACE(RTRIM(CAST(" + alias
+                + ".created_at AS CHAR(19))), '-', ''), ':', ''), ' ', ''), '-', "
+                + "LPAD(RTRIM(CAST(" + alias + ".comment_id AS CHAR(20))), 20, '0'))";
+    }
+
+    private MapSqlParameterSource pageParameters(CommentPageRequest request,
+                                                  CommentPageCursor cursor,
+                                                  int pageSize) {
+        return new MapSqlParameterSource()
+                .addValue("postId", request.postId())
+                .addValue("parentCommentId", request.parentCommentId(), Types.BIGINT)
+                .addValue("cursorPath", cursor.path())
+                .addValue("asOf", cursor.asOf())
+                .addValue("snapshotMaxCommentId", cursor.snapshotMaxCommentId())
+                .addValue("pageSize", pageSize);
+    }
+
+    private CommentPageQueryResult createPageResult(Long viewerId,
+                                                     List<CommentPageEntry> entries,
+                                                     int limit) {
+        boolean hasNext = entries.size() > limit;
+        List<CommentPageEntry> selectedEntries = hasNext ? entries.subList(0, limit) : entries;
+        List<Long> commentIds = selectedEntries.stream()
+                .map(CommentPageEntry::commentId)
+                .toList();
+        Map<Long, CommentQueryDto> commentsById = new LinkedHashMap<>();
+        readComments(viewerId, commentIds).forEach(comment -> commentsById.put(comment.commentId(), comment));
+        List<CommentQueryDto> comments = commentIds.stream()
+                .map(commentsById::get)
+                .filter(Objects::nonNull)
+                .toList();
+        String lastPath = selectedEntries.isEmpty() ? null : selectedEntries.getLast().sortPath();
+        return new CommentPageQueryResult(comments, hasNext, lastPath);
+    }
+
+    private List<CommentQueryDto> readComments(Long viewerId, List<Long> commentIds) {
+        if (commentIds.isEmpty()) {
+            return List.of();
+        }
+
+        String sql = """
                 SELECT
-                    tree.comment_id,
-                    tree.post_id,
-                    tree.parent_id,
-                    tree.depth,
-                    tree.content,
-                    tree.status,
-                    tree.is_anonymous,
-                    tree.like_count,
-                    tree.reply_count,
+                    comment.comment_id,
+                    comment.post_id,
+                    comment.parent_id,
+                    comment.depth,
+                    comment.content,
+                    comment.status,
+                    comment.is_anonymous,
+                    comment.like_count,
+                    comment.reply_count,
                     member.member_id AS author_member_id,
                     member.nickname AS author_nickname,
                     member_profile.profile_image_url AS author_profile_image_url,
                     CASE WHEN comment_like.comment_like_id IS NULL THEN FALSE ELSE TRUE END AS liked_by_me,
                     CASE WHEN block.block_id IS NULL THEN FALSE ELSE TRUE END AS blocked_author,
-                    tree.created_at,
-                    tree.updated_at
-                FROM comment_tree tree
-                JOIN member ON member.member_id = tree.member_id
+                    comment.created_at,
+                    comment.updated_at
+                FROM comment
+                JOIN member ON member.member_id = comment.member_id
                 LEFT JOIN member_profile ON member_profile.member_id = member.member_id
                 LEFT JOIN comment_like
-                    ON comment_like.comment_id = tree.comment_id
+                    ON comment_like.comment_id = comment.comment_id
                    AND comment_like.member_id = :viewerId
                 LEFT JOIN block
                     ON block.blocker_id = :viewerId
-                   AND block.blocked_id = tree.member_id
-                ORDER BY tree.root_created_at ASC, tree.root_comment_id ASC, tree.sort_path ASC
+                   AND block.blocked_id = comment.member_id
+                WHERE comment.comment_id IN (:commentIds)
                 """;
 
         MapSqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("rootCommentIds", rootCommentIds)
-                .addValue("maxDepth", MAX_DEPTH)
+                .addValue("commentIds", commentIds)
                 .addValue("viewerId", viewerId, Types.BIGINT);
-
         return namedParameterJdbcTemplate.query(sql, parameters, commentRowMapper());
+    }
+
+    private RowMapper<CommentPageEntry> pageEntryRowMapper() {
+        return (resultSet, rowNum) -> new CommentPageEntry(
+                resultSet.getLong("comment_id"),
+                resultSet.getString("sort_path")
+        );
     }
 
     private RowMapper<CommentQueryDto> commentRowMapper() {
@@ -213,5 +274,8 @@ public class CommentQueryRepository {
     private Long getLong(ResultSet resultSet, String columnLabel) throws SQLException {
         long value = resultSet.getLong(columnLabel);
         return resultSet.wasNull() ? null : value;
+    }
+
+    private record CommentPageEntry(Long commentId, String sortPath) {
     }
 }

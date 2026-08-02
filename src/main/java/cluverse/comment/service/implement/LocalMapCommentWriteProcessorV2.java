@@ -48,7 +48,7 @@ public class LocalMapCommentWriteProcessorV2 {
         if (parentCommentId == null) {
             return null;
         }
-        Comment parent = commentReader.readOrThrow(parentCommentId);
+        Comment parent = commentReader.readForUpdateOrThrow(parentCommentId);
         commentReader.validateBelongsToPost(parent, postId);
         commentReader.validateReplyWritable(parent);
         return parent;

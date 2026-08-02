@@ -1,5 +1,6 @@
 package cluverse.comment.service;
 
+import cluverse.comment.domain.CommentPageCursor;
 import cluverse.comment.domain.CommentStatus;
 import cluverse.comment.repository.dto.CommentPageQueryResult;
 import cluverse.comment.repository.dto.CommentQueryDto;
@@ -15,11 +16,12 @@ import cluverse.comment.service.response.CommentPageResponse;
 import cluverse.comment.service.response.CommentResponse;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.meta.service.implement.PostMetaWriter;
-import cluverse.post.service.implement.PostAccessReader;
-import cluverse.popularity.service.implement.PopularityPromotionInvoker;
 import cluverse.popularity.domain.PopularityTrigger;
+import cluverse.popularity.service.implement.PopularityPromotionInvoker;
+import cluverse.post.service.implement.PostAccessReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -63,22 +65,30 @@ class CommentServiceV1Test {
     @Test
     void 댓글_목록_조회시_쿼리_결과를_응답으로_조립한다() {
         // given
-        CommentPageRequest request = new CommentPageRequest(10L, null, 0, 20);
-        when(commentReader.readCommentPage(99L, request)).thenReturn(new CommentPageQueryResult(
+        CommentPageRequest request = new CommentPageRequest(10L, null, null, 20);
+        when(commentReader.readMaxCommentId()).thenReturn(200L);
+        when(commentReader.readCommentPageV1(eq(99L), eq(request), any(CommentPageCursor.class)))
+                .thenReturn(new CommentPageQueryResult(
                 List.of(createCommentQueryDto(101L, null, 0, true, false)),
-                true
-        ));
+                true,
+                "20260315100000-00000000000000000101"
+                ));
 
         // when
-        CommentPageResponse response = commentQueryService.getComments(99L, request);
+        CommentPageResponse response = commentQueryService.getCommentsV1(99L, request);
 
         // then
         assertThat(response.comments()).extracting(CommentResponse::commentId).containsExactly(101L);
-        assertThat(response.offset()).isEqualTo(0);
+        assertThat(response.nextCursor()).isNotBlank();
         assertThat(response.limit()).isEqualTo(20);
         assertThat(response.hasNext()).isTrue();
         assertThat(response.comments().getFirst().author().nickname()).isEqualTo("익명");
         verify(postAccessReader).validateReadablePost(99L, 10L);
+        ArgumentCaptor<CommentPageCursor> cursorCaptor = ArgumentCaptor.forClass(CommentPageCursor.class);
+        verify(commentReader).readCommentPageV1(eq(99L), eq(request), cursorCaptor.capture());
+        assertThat(cursorCaptor.getValue().path()).isEmpty();
+        assertThat(cursorCaptor.getValue().snapshotMaxCommentId()).isEqualTo(200L);
+        assertThat(cursorCaptor.getValue().asOf()).isNotNull();
     }
 
     @Test

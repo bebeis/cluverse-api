@@ -1,6 +1,7 @@
 package cluverse.comment.service.implement;
 
 import cluverse.comment.domain.Comment;
+import cluverse.comment.domain.CommentStatus;
 import cluverse.comment.service.request.CommentCreateRequest;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.member.service.implement.MemberReader;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -52,7 +54,7 @@ class CommentProcessorTest {
         CommentCreateRequest request = new CommentCreateRequest(100L, "대댓글입니다.", false);
         Comment parentComment = createComment(100L, 10L, 2L, null, 0);
         Comment createdComment = createComment(101L, 10L, 1L, 100L, 1);
-        when(commentReader.readOrThrow(100L)).thenReturn(parentComment);
+        when(commentReader.readForUpdateOrThrow(100L)).thenReturn(parentComment);
         when(commentWriter.create(1L, 10L, parentComment, request, "127.0.0.1")).thenReturn(createdComment);
 
         // when
@@ -69,7 +71,7 @@ class CommentProcessorTest {
     void 작성자도_관리자도_아니면_댓글을_삭제할_수_없다() {
         // given
         Comment comment = createComment(101L, 10L, 2L, null, 0);
-        when(commentReader.readOrThrow(101L)).thenReturn(comment);
+        when(commentReader.readForUpdateOrThrow(101L)).thenReturn(comment);
         when(memberReader.isAdmin(1L)).thenReturn(false);
 
         // when & then
@@ -78,17 +80,24 @@ class CommentProcessorTest {
     }
 
     @Test
-    void 자식이_있는_댓글을_삭제하면_soft_delete만_수행한다() {
+    void 자식이_있는_댓글을_삭제하면_path를_유지하고_soft_delete만_수행한다() {
         // given
         Comment comment = createComment(101L, 10L, 1L, null, 0);
-        when(commentReader.readOrThrow(101L)).thenReturn(comment);
+        when(commentReader.readForUpdateOrThrow(101L)).thenReturn(comment);
         when(commentReader.hasChildren(comment)).thenReturn(true);
+        doAnswer(invocation -> {
+            ((Comment) invocation.getArgument(0)).delete();
+            return null;
+        }).when(commentWriter).delete(comment);
+        String path = comment.getPath();
 
         // when
         Long postId = commentProcessor.deleteComment(1L, 101L);
 
         // then
         assertThat(postId).isEqualTo(10L);
+        assertThat(comment.getStatus()).isEqualTo(CommentStatus.DELETED);
+        assertThat(comment.getPath()).isEqualTo(path);
         verify(commentWriter).delete(comment);
         verify(commentWriter, never()).remove(any());
         verify(postMetaWriter, never()).decreaseCommentCount(anyLong());
@@ -99,9 +108,9 @@ class CommentProcessorTest {
         // given
         Comment child = createComment(102L, 10L, 1L, 101L, 1);
         Comment deletedParent = createDeletedComment(101L, 10L, 1L, null, 0);
-        when(commentReader.readOrThrow(102L)).thenReturn(child);
+        when(commentReader.readForUpdateOrThrow(102L)).thenReturn(child);
         when(commentReader.hasChildren(child)).thenReturn(false);
-        when(commentReader.read(101L)).thenReturn(Optional.of(deletedParent));
+        when(commentReader.readForUpdate(101L)).thenReturn(Optional.of(deletedParent));
         when(commentReader.hasChildren(deletedParent)).thenReturn(false);
 
         // when
@@ -119,6 +128,7 @@ class CommentProcessorTest {
         ReflectionTestUtils.setField(comment, "id", commentId);
         ReflectionTestUtils.setField(comment, "createdAt", LocalDateTime.of(2026, 3, 15, 10, 0));
         ReflectionTestUtils.setField(comment, "updatedAt", LocalDateTime.of(2026, 3, 15, 10, 0));
+        ReflectionTestUtils.setField(comment, "path", "20260315100000-" + String.format("%020d", commentId));
         return comment;
     }
 

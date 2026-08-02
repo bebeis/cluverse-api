@@ -38,7 +38,7 @@ public class CommentController {
     @GetMapping
     public ApiResponse<CommentPageResponse> getComments(@Login LoginMember loginMember,
                                                         @Valid @ModelAttribute CommentPageRequest request) {
-        return ApiResponse.ok(commentQueryService.getComments(extractMemberId(loginMember), request));
+        return ApiResponse.ok(commentQueryService.getCommentsV1(extractMemberId(loginMember), request));
     }
 
     @PostMapping

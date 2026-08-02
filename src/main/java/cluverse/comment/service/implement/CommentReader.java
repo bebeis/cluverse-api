@@ -1,6 +1,7 @@
 package cluverse.comment.service.implement;
 
 import cluverse.comment.domain.Comment;
+import cluverse.comment.domain.CommentPageCursor;
 import cluverse.comment.exception.CommentExceptionMessage;
 import cluverse.comment.repository.CommentQueryRepository;
 import cluverse.comment.repository.CommentRepository;
@@ -13,6 +14,7 @@ import cluverse.common.exception.BadRequestException;
 import cluverse.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -41,6 +43,17 @@ public class CommentReader {
         return commentRepository.findById(commentId);
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Comment readForUpdateOrThrow(Long commentId) {
+        return readForUpdate(commentId)
+                .orElseThrow(() -> new NotFoundException(CommentExceptionMessage.COMMENT_NOT_FOUND.getMessage()));
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Optional<Comment> readForUpdate(Long commentId) {
+        return commentRepository.findByIdForUpdate(commentId);
+    }
+
     public Optional<Long> findIdByRequestId(Long memberId, String requestId) {
         return commentRepository.findByMemberIdAndClientRequestId(memberId, requestId).map(Comment::getId);
     }
@@ -54,8 +67,18 @@ public class CommentReader {
         return commentQueryRepository.findRecentCommentRepliedPosts(size);
     }
 
-    public CommentPageQueryResult readCommentPage(Long viewerId, CommentPageRequest request) {
-        return commentQueryRepository.findCommentPage(viewerId, request);
+    public long readMaxCommentId() {
+        return commentQueryRepository.findMaxCommentId();
+    }
+
+    public CommentPageQueryResult readCommentPageV1(Long viewerId, CommentPageRequest request,
+                                                    CommentPageCursor cursor) {
+        return commentQueryRepository.findCommentPageV1(viewerId, request, cursor);
+    }
+
+    public CommentPageQueryResult readCommentPageV2(Long viewerId, CommentPageRequest request,
+                                                    CommentPageCursor cursor) {
+        return commentQueryRepository.findCommentPageV2(viewerId, request, cursor);
     }
 
     public CommentQueryDto readComment(Long viewerId, Long commentId) {
@@ -63,7 +86,7 @@ public class CommentReader {
     }
 
     public boolean hasChildren(Comment comment) {
-        return commentRepository.existsByParentId(comment.getId());
+        return commentRepository.existsByPostIdAndParentId(comment.getPostId(), comment.getId());
     }
 
     public void validateBelongsToPost(Comment comment, Long postId) {

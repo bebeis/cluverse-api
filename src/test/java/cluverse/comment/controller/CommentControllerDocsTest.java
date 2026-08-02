@@ -50,9 +50,9 @@ class CommentControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 댓글_목록_조회() throws Exception {
-        when(commentQueryService.getComments(anyLong(), any())).thenReturn(new CommentPageResponse(
+        when(commentQueryService.getCommentsV1(anyLong(), any())).thenReturn(new CommentPageResponse(
                 List.of(createCommentResponse(101L, null, 0, false, true)),
-                0,
+                "next-comment-cursor",
                 20,
                 true
         ));
@@ -60,7 +60,6 @@ class CommentControllerDocsTest extends RestDocsSupport {
         mockMvc.perform(get("/api/v1/comments")
                         .session(createSession())
                         .queryParam("postId", "10")
-                        .queryParam("offset", "0")
                         .queryParam("limit", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.comments[0].commentId").value(101))
@@ -68,7 +67,7 @@ class CommentControllerDocsTest extends RestDocsSupport {
                         queryParameters(
                                 parameterWithName("postId").description("댓글을 조회할 게시글 ID"),
                                 parameterWithName("parentCommentId").description("특정 부모 댓글의 하위 댓글만 조회할 때 사용하는 부모 댓글 ID").optional(),
-                                parameterWithName("offset").description("조회 시작 위치").optional(),
+                                parameterWithName("cursor").description("다음 페이지 조회 커서").optional(),
                                 parameterWithName("limit").description("조회할 댓글 수").optional()
                         ),
                         responseFields(
@@ -93,7 +92,7 @@ class CommentControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.comments[].author.profileImageUrl").type(JsonFieldType.STRING).description("작성자 프로필 이미지 URL").optional(),
                                 fieldWithPath("data.comments[].createdAt").type(JsonFieldType.STRING).description("작성 시각"),
                                 fieldWithPath("data.comments[].updatedAt").type(JsonFieldType.STRING).description("수정 시각"),
-                                fieldWithPath("data.offset").type(JsonFieldType.NUMBER).description("요청 offset"),
+                                fieldWithPath("data.nextCursor").type(JsonFieldType.STRING).description("다음 페이지 조회 커서"),
                                 fieldWithPath("data.limit").type(JsonFieldType.NUMBER).description("요청 limit"),
                                 fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부")
                         )
@@ -102,9 +101,9 @@ class CommentControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 비회원도_댓글_목록을_조회할_수_있다() throws Exception {
-        when(commentQueryService.getComments(isNull(), any())).thenReturn(new CommentPageResponse(
+        when(commentQueryService.getCommentsV1(isNull(), any())).thenReturn(new CommentPageResponse(
                 List.of(),
-                0,
+                null,
                 20,
                 false
         ));
@@ -117,9 +116,9 @@ class CommentControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 대댓글_목록_조회() throws Exception {
-        when(commentQueryService.getComments(anyLong(), any())).thenReturn(new CommentPageResponse(
+        when(commentQueryService.getCommentsV1(anyLong(), any())).thenReturn(new CommentPageResponse(
                 List.of(createCommentResponse(201L, 101L, 1, false, false)),
-                20,
+                null,
                 20,
                 false
         ));
@@ -128,7 +127,6 @@ class CommentControllerDocsTest extends RestDocsSupport {
                         .session(createSession())
                         .queryParam("postId", "10")
                         .queryParam("parentCommentId", "101")
-                        .queryParam("offset", "20")
                         .queryParam("limit", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.comments[0].parentCommentId").value(101))
@@ -136,7 +134,7 @@ class CommentControllerDocsTest extends RestDocsSupport {
                         queryParameters(
                                 parameterWithName("postId").description("게시글 ID"),
                                 parameterWithName("parentCommentId").description("대댓글을 조회할 부모 댓글 ID"),
-                                parameterWithName("offset").description("조회 시작 위치").optional(),
+                                parameterWithName("cursor").description("다음 페이지 조회 커서").optional(),
                                 parameterWithName("limit").description("조회할 대댓글 수").optional()
                         ),
                         responseFields(
@@ -161,7 +159,7 @@ class CommentControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.comments[].author.profileImageUrl").type(JsonFieldType.STRING).description("작성자 프로필 이미지 URL").optional(),
                                 fieldWithPath("data.comments[].createdAt").type(JsonFieldType.STRING).description("작성 시각"),
                                 fieldWithPath("data.comments[].updatedAt").type(JsonFieldType.STRING).description("수정 시각"),
-                                fieldWithPath("data.offset").type(JsonFieldType.NUMBER).description("요청 offset"),
+                                fieldWithPath("data.nextCursor").type(JsonFieldType.NULL).description("다음 페이지 조회 커서"),
                                 fieldWithPath("data.limit").type(JsonFieldType.NUMBER).description("요청 limit"),
                                 fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부")
                         )
