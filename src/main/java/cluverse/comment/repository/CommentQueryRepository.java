@@ -21,6 +21,7 @@ import java.sql.Types;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Repository
 @RequiredArgsConstructor
@@ -83,18 +84,16 @@ public class CommentQueryRepository {
         String anchorParentCondition = request.parentCommentId() == null
                 ? "c.parent_id IS NULL"
                 : "c.parent_id = :parentCommentId";
+        String anchorSortPath = request.parentCommentId() == null
+                ? pathSegment("c")
+                : "CONCAT(:parentPath, '/', " + pathSegment("c") + ")";
         String cursorCondition = cursor.hasPath() ? "WHERE sort_path > :cursorPath" : "";
         String sql = """
                 WITH RECURSIVE comment_tree (comment_id, depth, sort_path) AS (
                     SELECT
                         c.comment_id,
                         c.depth,
-                        CAST(
-                            CONCAT(
-                                RTRIM(CAST(c.created_at AS CHAR(19))), '-',
-                                LPAD(RTRIM(CAST(c.comment_id AS CHAR(20))), 20, '0')
-                            ) AS CHAR(255)
-                        ) AS sort_path
+                        CAST(%s AS CHAR(255)) AS sort_path
                     FROM comment c
                     WHERE c.post_id = :postId
                       AND %s
@@ -106,11 +105,7 @@ public class CommentQueryRepository {
                     SELECT
                         child.comment_id,
                         child.depth,
-                        CONCAT(
-                            RTRIM(parent.sort_path), '/',
-                            RTRIM(CAST(child.created_at AS CHAR(19))), '-',
-                            LPAD(RTRIM(CAST(child.comment_id AS CHAR(20))), 20, '0')
-                        )
+                        CONCAT(RTRIM(parent.sort_path), '/', %s)
                     FROM comment child
                     JOIN comment_tree parent ON child.parent_id = parent.comment_id
                     WHERE child.post_id = :postId
@@ -123,10 +118,13 @@ public class CommentQueryRepository {
                 %s
                 ORDER BY sort_path
                 LIMIT :pageSize
-                """.formatted(anchorParentCondition, cursorCondition);
+                """.formatted(anchorSortPath, anchorParentCondition, pathSegment("child"), cursorCondition);
 
         MapSqlParameterSource parameters = pageParameters(request, cursor, pageSize)
                 .addValue("maxDepth", MAX_DEPTH);
+        if (request.parentCommentId() != null) {
+            parameters.addValue("parentPath", findPath(request.parentCommentId()));
+        }
         return namedParameterJdbcTemplate.query(sql, parameters, pageEntryRowMapper());
     }
 
@@ -146,6 +144,7 @@ public class CommentQueryRepository {
                 SELECT comment_id, path AS sort_path
                 FROM comment
                 WHERE post_id = :postId
+                  AND path IS NOT NULL
                   AND created_at <= :asOf
                   AND comment_id <= :snapshotMaxCommentId
                   %s
@@ -160,10 +159,17 @@ public class CommentQueryRepository {
     private String findPath(Long commentId) {
         String sql = "SELECT path FROM comment WHERE comment_id = ?";
         List<String> paths = jdbcTemplate.query(sql, (resultSet, rowNum) -> resultSet.getString("path"), commentId);
-        if (paths.isEmpty()) {
+        if (paths.isEmpty() || paths.getFirst() == null || paths.getFirst().isBlank()) {
             throw new NotFoundException(CommentExceptionMessage.COMMENT_NOT_FOUND.getMessage());
         }
         return paths.getFirst();
+    }
+
+    private String pathSegment(String alias) {
+        return "CONCAT("
+                + "REPLACE(REPLACE(REPLACE(RTRIM(CAST(" + alias
+                + ".created_at AS CHAR(19))), '-', ''), ':', ''), ' ', ''), '-', "
+                + "LPAD(RTRIM(CAST(" + alias + ".comment_id AS CHAR(20))), 20, '0'))";
     }
 
     private MapSqlParameterSource pageParameters(CommentPageRequest request,
@@ -190,6 +196,7 @@ public class CommentQueryRepository {
         readComments(viewerId, commentIds).forEach(comment -> commentsById.put(comment.commentId(), comment));
         List<CommentQueryDto> comments = commentIds.stream()
                 .map(commentsById::get)
+                .filter(Objects::nonNull)
                 .toList();
         String lastPath = selectedEntries.isEmpty() ? null : selectedEntries.getLast().sortPath();
         return new CommentPageQueryResult(comments, hasNext, lastPath);

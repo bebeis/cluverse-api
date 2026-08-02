@@ -2,10 +2,11 @@ package cluverse.comment.repository;
 
 import cluverse.comment.domain.Comment;
 import cluverse.comment.domain.CommentPageCursor;
-import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.comment.repository.dto.CommentPageQueryResult;
 import cluverse.comment.service.request.CommentPageRequest;
+import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.common.config.QuerydslConfig;
+import cluverse.common.exception.NotFoundException;
 import cluverse.member.domain.Block;
 import cluverse.member.domain.Member;
 import cluverse.member.repository.BlockRepository;
@@ -17,10 +18,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
-import java.util.List;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @Import({CommentQueryRepository.class, QuerydslConfig.class})
@@ -79,6 +81,7 @@ class CommentQueryRepositoryTest {
                 .doesNotContain(root2.getId());
         assertThat(after.comments()).extracting("commentId")
                 .containsExactlyElementsOf(before.comments().stream().map(comment -> comment.commentId()).toList());
+        assertThat(after.lastPath()).isEqualTo(before.lastPath());
         assertThat(before.comments()).filteredOn(comment -> comment.commentId().equals(child1.getId()))
                 .singleElement()
                 .extracting("likedByMe")
@@ -87,6 +90,99 @@ class CommentQueryRepositoryTest {
                 .singleElement()
                 .extracting("blockedAuthor")
                 .isEqualTo(true);
+    }
+
+    @Test
+    void 하위_트리에서도_개선_전후_커서를_서로_이어_사용할_수_있다() {
+        // given
+        Member author = memberRepository.save(Member.createSocialMember("subtree-author"));
+        Comment root = saveComment(11L, author.getId(), null, 0, "root");
+        Comment child1 = saveComment(11L, author.getId(), root, 1, "child-1");
+        Comment depth2 = saveComment(11L, author.getId(), child1, 2, "depth-2");
+        Comment child2 = saveComment(11L, author.getId(), root, 1, "child-2");
+        CommentPageRequest request = new CommentPageRequest(11L, root.getId(), null, 2);
+        CommentPageCursor initialCursor = CommentPageCursor.first(
+                LocalDateTime.now().plusSeconds(1),
+                commentQueryRepository.findMaxCommentId()
+        );
+        CommentPageQueryResult beforeFirstPage = commentQueryRepository.findCommentPageV1(
+                author.getId(), request, initialCursor
+        );
+        CommentPageQueryResult afterFirstPage = commentQueryRepository.findCommentPageV2(
+                author.getId(), request, initialCursor
+        );
+
+        // when
+        CommentPageQueryResult beforeCursorOnAfter = commentQueryRepository.findCommentPageV2(
+                author.getId(), request, nextCursor(initialCursor, beforeFirstPage)
+        );
+        CommentPageQueryResult afterCursorOnBefore = commentQueryRepository.findCommentPageV1(
+                author.getId(), request, nextCursor(initialCursor, afterFirstPage)
+        );
+
+        // then
+        assertThat(beforeFirstPage.comments()).extracting("commentId")
+                .containsExactly(child1.getId(), depth2.getId());
+        assertThat(afterFirstPage.comments()).extracting("commentId")
+                .containsExactly(child1.getId(), depth2.getId());
+        assertThat(beforeFirstPage.lastPath()).isEqualTo(afterFirstPage.lastPath());
+        assertThat(beforeCursorOnAfter.comments()).extracting("commentId").containsExactly(child2.getId());
+        assertThat(afterCursorOnBefore.comments()).extracting("commentId").containsExactly(child2.getId());
+    }
+
+    @Test
+    void path가_없는_댓글은_V2_페이지에서_제외한다() {
+        // given
+        Member author = memberRepository.save(Member.createSocialMember("null-path-author"));
+        commentRepository.saveAndFlush(Comment.createByMember(
+                40L, author.getId(), null, 0, "path 없음", false, "127.0.0.1"
+        ));
+        CommentPageRequest request = new CommentPageRequest(40L, null, null, 20);
+        CommentPageCursor cursor = CommentPageCursor.first(
+                LocalDateTime.now().plusSeconds(1),
+                commentQueryRepository.findMaxCommentId()
+        );
+
+        // when
+        CommentPageQueryResult result = commentQueryRepository.findCommentPageV2(author.getId(), request, cursor);
+
+        // then
+        assertThat(result.comments()).isEmpty();
+    }
+
+    @Test
+    void 부모_댓글의_path가_없으면_하위_트리를_조회할_수_없다() {
+        // given
+        Member author = memberRepository.save(Member.createSocialMember("missing-parent-path-author"));
+        Comment parent = commentRepository.saveAndFlush(Comment.createByMember(
+                50L, author.getId(), null, 0, "부모", false, "127.0.0.1"
+        ));
+        CommentPageRequest request = new CommentPageRequest(50L, parent.getId(), null, 20);
+        CommentPageCursor cursor = CommentPageCursor.first(
+                LocalDateTime.now().plusSeconds(1),
+                commentQueryRepository.findMaxCommentId()
+        );
+
+        // when & then
+        assertThatThrownBy(() -> commentQueryRepository.findCommentPageV2(author.getId(), request, cursor))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void 상세_조회에서_사라진_댓글은_페이지_결과에서_제외한다() {
+        // given
+        Comment comment = saveComment(60L, Long.MAX_VALUE, null, 0, "작성자 없음");
+        CommentPageRequest request = new CommentPageRequest(60L, null, null, 20);
+        CommentPageCursor cursor = CommentPageCursor.first(
+                LocalDateTime.now().plusSeconds(1),
+                comment.getId()
+        );
+
+        // when
+        CommentPageQueryResult result = commentQueryRepository.findCommentPageV2(null, request, cursor);
+
+        // then
+        assertThat(result.comments()).isEmpty();
     }
 
     @Test

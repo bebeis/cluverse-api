@@ -1,7 +1,7 @@
 package cluverse.comment.service;
 
-import cluverse.comment.domain.CommentStatus;
 import cluverse.comment.domain.CommentPageCursor;
+import cluverse.comment.domain.CommentStatus;
 import cluverse.comment.repository.dto.CommentPageQueryResult;
 import cluverse.comment.repository.dto.CommentQueryDto;
 import cluverse.comment.service.implement.CommentProcessor;
@@ -16,11 +16,12 @@ import cluverse.comment.service.response.CommentPageResponse;
 import cluverse.comment.service.response.CommentResponse;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.meta.service.implement.PostMetaWriter;
-import cluverse.post.service.implement.PostAccessReader;
-import cluverse.popularity.service.implement.PopularityPromotionInvoker;
 import cluverse.popularity.domain.PopularityTrigger;
+import cluverse.popularity.service.implement.PopularityPromotionInvoker;
+import cluverse.post.service.implement.PostAccessReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -83,6 +84,11 @@ class CommentServiceV1Test {
         assertThat(response.hasNext()).isTrue();
         assertThat(response.comments().getFirst().author().nickname()).isEqualTo("익명");
         verify(postAccessReader).validateReadablePost(99L, 10L);
+        ArgumentCaptor<CommentPageCursor> cursorCaptor = ArgumentCaptor.forClass(CommentPageCursor.class);
+        verify(commentReader).readCommentPageV1(eq(99L), eq(request), cursorCaptor.capture());
+        assertThat(cursorCaptor.getValue().path()).isEmpty();
+        assertThat(cursorCaptor.getValue().snapshotMaxCommentId()).isEqualTo(200L);
+        assertThat(cursorCaptor.getValue().asOf()).isNotNull();
     }
 
     @Test

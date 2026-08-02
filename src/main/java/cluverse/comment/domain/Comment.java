@@ -24,6 +24,7 @@ import java.util.Locale;
 public class Comment extends BaseTimeEntity {
 
     private static final DateTimeFormatter PATH_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    static final int MAX_PATH_LENGTH = 255;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -133,12 +134,19 @@ public class Comment extends BaseTimeEntity {
                 + "-"
                 + String.format(Locale.ROOT, "%020d", id);
         if (parentComment == null) {
-            this.path = pathSegment;
+            assignValidatedPath(pathSegment);
             return;
         }
         if (parentComment.path == null || parentComment.path.isBlank()) {
             throw new IllegalStateException("부모 댓글의 path가 필요합니다.");
         }
-        this.path = parentComment.path + "/" + pathSegment;
+        assignValidatedPath(parentComment.path + "/" + pathSegment);
+    }
+
+    private void assignValidatedPath(String generatedPath) {
+        if (generatedPath.length() > MAX_PATH_LENGTH) {
+            throw new IllegalStateException("댓글 path 길이는 255자를 초과할 수 없습니다.");
+        }
+        this.path = generatedPath;
     }
 }

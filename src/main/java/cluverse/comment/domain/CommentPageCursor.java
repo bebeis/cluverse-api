@@ -15,7 +15,6 @@ public record CommentPageCursor(
 ) {
 
     private static final String DELIMITER = "\n";
-    private static final int MAX_PATH_LENGTH = 255;
 
     public CommentPageCursor {
         path = path == null ? "" : path;
@@ -58,7 +57,8 @@ public record CommentPageCursor(
     }
 
     private static void validate(String path, LocalDateTime asOf, long snapshotMaxCommentId) {
-        if (asOf == null || snapshotMaxCommentId < 0 || path.length() > MAX_PATH_LENGTH || path.contains(DELIMITER)) {
+        if (asOf == null || snapshotMaxCommentId < 0
+                || path.length() > Comment.MAX_PATH_LENGTH || path.contains(DELIMITER)) {
             throw invalidCursor();
         }
     }
