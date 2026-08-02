@@ -27,6 +27,23 @@ function headers() {
     : { Accept: 'application/json' };
 }
 
+function parseSuccessPayload(response, version) {
+  const contentType = String(response.headers['Content-Type'] || '').toLowerCase();
+  if (response.status !== 200 || !contentType.includes('application/json')) {
+    exec.test.abort(`${version} 조회 실패: ${response.status} ${response.body}`);
+  }
+  try {
+    const payload = response.json();
+    if (Number(payload.code) !== 200) {
+      exec.test.abort(`${version} 조회 실패: ${response.status} ${response.body}`);
+    }
+    return payload;
+  } catch (error) {
+    exec.test.abort(`${version} 조회 실패: ${response.status} ${response.body}`);
+    return null;
+  }
+}
+
 function readAll(version) {
   const ids = [];
   const seen = new Set();
@@ -37,17 +54,15 @@ function readAll(version) {
       `${BASE_URL}/api/${version}/comments?postId=${POST_ID}&limit=${LIMIT}${cursorQuery}`,
       { headers: headers(), tags: { name: `comment_correctness_${version}` } },
     );
-    if (response.status !== 200 || Number(response.json('code')) !== 200) {
-      exec.test.abort(`${version} 조회 실패: ${response.status} ${response.body}`);
-    }
-    const comments = response.json('data.comments') || [];
+    const payload = parseSuccessPayload(response, version);
+    const comments = payload.data.comments || [];
     for (const comment of comments) {
       if (seen.has(comment.commentId)) exec.test.abort(`${version} 중복 댓글: ${comment.commentId}`);
       seen.add(comment.commentId);
       ids.push(comment.commentId);
     }
-    if (!response.json('data.hasNext')) return ids;
-    cursor = response.json('data.nextCursor') || '';
+    if (!payload.data.hasNext) return ids;
+    cursor = payload.data.nextCursor || '';
     if (!cursor) exec.test.abort(`${version} hasNext=true인데 nextCursor가 없습니다.`);
   }
   exec.test.abort(`${version} MAX_PAGES=${MAX_PAGES}를 초과했습니다.`);

@@ -53,6 +53,8 @@ script/comment-pagination/run.sh read v2
 script/comment-pagination/run.sh correctness
 ```
 
+`correctness`는 두 API가 각각 첫 페이지에서 조회 경계를 생성하므로 댓글 쓰기 부하와 동시에 실행하지 않는다. 고정된 fixture에서만 실행해 조회 알고리즘의 ID·순서 차이만 검증한다.
+
 중간 또는 후반 cursor를 측정할 때는 준비 단계에서 넘길 페이지 수를 지정한다.
 
 ```bash
@@ -65,6 +67,14 @@ CURSOR_STEPS=10 script/comment-pagination/run.sh read v2
 ```bash
 AUTH_TOKEN='test-member-jwt' script/comment-pagination/run.sh write-root
 AUTH_TOKEN='test-member-jwt' PARENT_COMMENT_ID=101 script/comment-pagination/run.sh write-reply
+```
+
+쓰기 실행이 만든 댓글은 콘솔에 출력되는 `run_id`로 식별한다. 실행 후 해당 ID를 지정해 댓글과 반정규화 카운트를 정리한다.
+
+```sql
+SET @benchmark_post_id = 100;
+SET @benchmark_run_id = '2026-08-02-120000-write-root-v2';
+SOURCE script/comment-pagination/seed/reset.sql;
 ```
 
 ## 캡처할 화면

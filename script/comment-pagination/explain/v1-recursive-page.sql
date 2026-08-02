@@ -6,6 +6,10 @@ SET @snapshot_max_comment_id = COALESCE(
     (SELECT COALESCE(MAX(comment_id), 0) FROM comment)
 );
 SET @cursor_path = COALESCE(@cursor_path, '');
+SET @parent_path = COALESCE(
+    (SELECT path FROM comment WHERE comment_id = @parent_comment_id),
+    ''
+);
 
 EXPLAIN ANALYZE
 WITH RECURSIVE comment_tree (comment_id, depth, sort_path) AS (
@@ -14,7 +18,11 @@ WITH RECURSIVE comment_tree (comment_id, depth, sort_path) AS (
         c.depth,
         CAST(
             CONCAT(
-                RTRIM(CAST(c.created_at AS CHAR(19))), '-',
+                CASE
+                    WHEN @parent_comment_id IS NULL THEN ''
+                    ELSE CONCAT(@parent_path, '/')
+                END,
+                DATE_FORMAT(c.created_at, '%Y%m%d%H%i%s'), '-',
                 LPAD(RTRIM(CAST(c.comment_id AS CHAR(20))), 20, '0')
             ) AS CHAR(255)
         ) AS sort_path
@@ -34,7 +42,7 @@ WITH RECURSIVE comment_tree (comment_id, depth, sort_path) AS (
         child.depth,
         CONCAT(
             RTRIM(parent.sort_path), '/',
-            RTRIM(CAST(child.created_at AS CHAR(19))), '-',
+            DATE_FORMAT(child.created_at, '%Y%m%d%H%i%s'), '-',
             LPAD(RTRIM(CAST(child.comment_id AS CHAR(20))), 20, '0')
         )
     FROM comment child
@@ -46,6 +54,6 @@ WITH RECURSIVE comment_tree (comment_id, depth, sort_path) AS (
 )
 SELECT comment_id, sort_path
 FROM comment_tree
-WHERE @cursor_path = '' OR sort_path > @cursor_path
+WHERE sort_path > @cursor_path
 ORDER BY sort_path
 LIMIT 101;

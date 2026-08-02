@@ -22,6 +22,11 @@ BEGIN
     DECLARE parent_path VARCHAR(255);
     DECLARE generated_path VARCHAR(255);
     DECLARE generated_at DATETIME;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
 
     IF tree_shape NOT IN ('flat', 'wide', 'mixed') THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'tree_shape은 flat, wide, mixed 중 하나여야 합니다.';

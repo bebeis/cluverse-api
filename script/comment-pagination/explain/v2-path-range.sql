@@ -13,6 +13,6 @@ FROM comment
 WHERE post_id = @post_id
   AND created_at <= @as_of
   AND comment_id <= @snapshot_max_comment_id
-  AND (@cursor_path = '' OR path > @cursor_path)
+  AND path > @cursor_path
 ORDER BY path
 LIMIT 101;

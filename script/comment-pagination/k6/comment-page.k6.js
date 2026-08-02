@@ -54,7 +54,20 @@ function headers() {
 }
 
 function apiOk(response) {
-  return response.status === 200 && Number(response.json('code')) === 200;
+  if (response.status !== 200) return false;
+  try {
+    return Number(response.json('code')) === 200;
+  } catch (error) {
+    return false;
+  }
+}
+
+function respectsLimit(response) {
+  try {
+    return (response.json('data.comments') || []).length <= LIMIT;
+  } catch (error) {
+    return false;
+  }
 }
 
 function commentsUrl(cursor) {
@@ -87,10 +100,14 @@ export function readPage(data) {
   ]);
   const postResponse = responses[0];
   const commentResponse = responses[1];
-  const ok = check(commentResponse, {
+  const commentsOk = check(commentResponse, {
     'comment ApiResponse success': apiOk,
-    'comment response respects limit': (response) => (response.json('data.comments') || []).length <= LIMIT,
-  }) && apiOk(postResponse);
+    'comment response respects limit': respectsLimit,
+  });
+  const postOk = check(postResponse, {
+    'post detail ApiResponse success': apiOk,
+  });
+  const ok = commentsOk && postOk;
 
   commentDuration.add(commentResponse.timings.duration);
   detailScreenDuration.add(Math.max(postResponse.timings.duration, commentResponse.timings.duration));

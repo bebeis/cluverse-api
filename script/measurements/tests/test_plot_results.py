@@ -10,7 +10,15 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from plot_results import collect, discover_inputs, extract_comment_count, extract_csv, extract_k6_summary, quantile
+from plot_results import (
+    collect,
+    discover_inputs,
+    extract_comment_count,
+    extract_csv,
+    extract_k6_summary,
+    is_first_cursor_position,
+    quantile,
+)
 
 
 class PlotResultsTest(unittest.TestCase):
@@ -91,6 +99,11 @@ class PlotResultsTest(unittest.TestCase):
 
     def test_댓글_수_시나리오를_그래프_x축으로_변환한다(self):
         self.assertEqual(1000, extract_comment_count("comments=1000,tree_shape=mixed"))
+
+    def test_댓글_규모_그래프는_첫_커서_위치만_사용한다(self):
+        self.assertTrue(is_first_cursor_position("comments=1000,cursor_position=first"))
+        self.assertFalse(is_first_cursor_position("comments=1000,cursor_position=page-10"))
+        self.assertFalse(is_first_cursor_position("comments=1000"))
 
     def value(self, rows, metric, stat):
         return next(row.value for row in rows if row.metric == metric and row.stat == stat)

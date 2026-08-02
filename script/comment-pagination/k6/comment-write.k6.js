@@ -9,6 +9,7 @@ const WRITE_KIND = __ENV.WRITE_KIND || 'root';
 const PARENT_COMMENT_ID = __ENV.PARENT_COMMENT_ID ? Number(__ENV.PARENT_COMMENT_ID) : null;
 const RATE = Number(__ENV.RATE || 2);
 const DURATION = __ENV.DURATION || '30s';
+const RUN_ID = __ENV.RUN_ID || 'manual';
 
 if (!POST_ID) throw new Error('POST_ID가 필요합니다.');
 if (!AUTH_TOKEN) throw new Error('AUTH_TOKEN이 필요합니다.');
@@ -39,7 +40,7 @@ const writeSuccess = new Rate('comment_write_success');
 export default function () {
   const body = JSON.stringify({
     parentCommentId: WRITE_KIND === 'reply' ? PARENT_COMMENT_ID : null,
-    content: `댓글 path 쓰기 측정 ${WRITE_KIND}`,
+    content: `comment-pagination-benchmark:${RUN_ID}:${WRITE_KIND}`,
     isAnonymous: false,
   });
   const response = http.post(`${BASE_URL}/api/v1/comments?postId=${POST_ID}`, body, {
@@ -51,7 +52,14 @@ export default function () {
     tags: { name: `comment_write_${WRITE_KIND}` },
   });
   const ok = check(response, {
-    'comment write success': (value) => value.status === 201 && Number(value.json('code')) === 201,
+    'comment write success': (value) => {
+      if (value.status !== 201) return false;
+      try {
+        return Number(value.json('code')) === 201;
+      } catch (error) {
+        return false;
+      }
+    },
   });
   writeDuration.add(response.timings.duration);
   writeSuccess.add(ok);

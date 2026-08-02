@@ -24,7 +24,8 @@ case "$MODE" in
     K6_SCRIPT="k6/comment-write.k6.js"
     ;;
   *)
-    echo "사용법: run.sh read v1|v2|correctness|write-root|write-reply [k6 인자...]" >&2
+    echo "사용법: run.sh read v1|v2 [k6 인자...]" >&2
+    echo "       run.sh correctness|write-root|write-reply [k6 인자...]" >&2
     exit 1
     ;;
 esac
@@ -50,9 +51,11 @@ SUMMARY="results/raw/${NAME}-summary.json"
 TIMESERIES="results/raw/${NAME}-timeseries.csv"
 REPORT="results/raw/${NAME}.html"
 CONSOLE="results/raw/${NAME}-console.txt"
-export BASE_URL POST_ID VERSION COMMENT_COUNT TREE_SHAPE
+RUN_ID="${RUN_ID:-$NAME}"
+export BASE_URL POST_ID VERSION COMMENT_COUNT TREE_SHAPE AUTH_TOKEN RUN_ID
 export K6_WEB_DASHBOARD="${K6_WEB_DASHBOARD:-true}"
 export K6_WEB_DASHBOARD_EXPORT="${K6_WEB_DASHBOARD_EXPORT:-$REPORT}"
+REPORT="$K6_WEB_DASHBOARD_EXPORT"
 
 if [[ "$MODE" == "write-root" ]]; then
   export WRITE_KIND="root"
@@ -67,7 +70,7 @@ K6_ENV=(
   -e "COMMENT_COUNT=${COMMENT_COUNT}"
   -e "TREE_SHAPE=${TREE_SHAPE}"
 )
-for name in VERSION AUTH_TOKEN RATE DURATION LIMIT CURSOR_STEPS PRE_ALLOCATED_VUS MAX_VUS WRITE_KIND PARENT_COMMENT_ID MAX_PAGES; do
+for name in VERSION RATE DURATION LIMIT CURSOR_STEPS PRE_ALLOCATED_VUS MAX_VUS WRITE_KIND PARENT_COMMENT_ID MAX_PAGES RUN_ID; do
   if [[ -n "${!name:-}" ]]; then
     K6_ENV+=(-e "${name}=${!name}")
   fi
@@ -76,7 +79,7 @@ done
 {
   echo "[comment-pagination] mode=${MODE} version=${VERSION:-comparison}"
   echo "[condition] base_url=${BASE_URL} post_id=${POST_ID} comments=${COMMENT_COUNT} tree_shape=${TREE_SHAPE}"
-  echo "[condition] rate=${RATE:-script-default} duration=${DURATION:-script-default} limit=${LIMIT:-script-default} cursor_steps=${CURSOR_STEPS:-0}"
+  echo "[condition] rate=${RATE:-script-default} duration=${DURATION:-script-default} limit=${LIMIT:-script-default} cursor_steps=${CURSOR_STEPS:-0} run_id=${RUN_ID}"
   k6 run \
     --summary-export "$SUMMARY" \
     --out "csv=${TIMESERIES}" \
@@ -85,7 +88,7 @@ done
     "$K6_SCRIPT"
 } 2>&1 | tee "$CONSOLE"
 
-echo "capture HTML: script/comment-pagination/${REPORT}"
+echo "capture HTML: ${REPORT}"
 echo "console text: script/comment-pagination/${CONSOLE}"
 echo "summary JSON: script/comment-pagination/${SUMMARY}"
 echo "timeseries CSV: script/comment-pagination/${TIMESERIES}"

@@ -655,6 +655,18 @@ def extract_comment_count(scenario: str) -> int | None:
     return int(match.group(1)) if match else None
 
 
+def scenario_value(scenario: str, key: str) -> str | None:
+    for token in scenario.split(","):
+        name, separator, value = token.partition("=")
+        if separator and name == key:
+            return value
+    return None
+
+
+def is_first_cursor_position(scenario: str) -> bool:
+    return scenario_value(scenario, "cursor_position") == "first"
+
+
 def display_comment_version(version: str) -> str:
     return {"v1": "Before", "v2": "After"}.get(version.lower(), version)
 
@@ -666,6 +678,7 @@ def plot_comment_scale(plt, rows, output_dir, formats) -> list[Path]:
         if row.metric == "api_latency"
         and row.stat in {"p95", "p99"}
         and extract_comment_count(row.scenario) is not None
+        and is_first_cursor_position(row.scenario)
         and any(f"series={series}" in row.scenario for series in ("comment_api_duration", "detail_screen_duration"))
     ]
     if latency_rows:
@@ -706,6 +719,7 @@ def plot_comment_scale(plt, rows, output_dir, formats) -> list[Path]:
         row for row in rows
         if row.metric == "actual_rows"
         and extract_comment_count(row.scenario) is not None
+        and is_first_cursor_position(row.scenario)
     ]
     if actual_rows:
         figure, axis = plt.subplots(figsize=(8, 5.5))
