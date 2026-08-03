@@ -1,6 +1,7 @@
 package cluverse.comment.repository;
 
 import cluverse.comment.domain.Comment;
+import cluverse.comment.domain.CommentStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -18,4 +19,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long>, Comment
     Optional<Comment> findByIdForUpdate(@Param("commentId") Long commentId);
 
     Optional<Comment> findByMemberIdAndClientRequestId(Long memberId, String clientRequestId);
+
+    Optional<Comment> findFirstByPostIdAndStatusNotOrderByCreatedAtDescIdDesc(
+            Long postId,
+            CommentStatus status
+    );
 }

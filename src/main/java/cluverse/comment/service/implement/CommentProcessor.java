@@ -21,12 +21,14 @@ public class CommentProcessor {
     private final MemberReader memberReader;
     private final PostAccessReader postAccessReader;
     private final PostMetaWriter postMetaWriter;
+    private final PostCommentActivityWriter postCommentActivityWriter;
 
     public Long createComment(Long memberId, Long postId, CommentCreateRequest request, String clientIp) {
         postAccessReader.validateWritablePost(memberId, postId);
         Comment parentComment = resolveParentComment(postId, request.parentCommentId());
         Comment comment = commentWriter.create(memberId, postId, parentComment, request, clientIp);
         postMetaWriter.increaseCommentCount(postId);
+        postCommentActivityWriter.reflectCreated(comment);
 
         if (parentComment != null) {
             commentWriter.increaseReplyCount(parentComment.getId());
@@ -40,6 +42,7 @@ public class CommentProcessor {
         validateDeletePermission(memberId, comment);
         if (comment.isActive()) {
             delete(comment);
+            postCommentActivityWriter.reflectDeleted(comment.getPostId(), comment.getId());
         }
         return comment.getPostId();
     }
