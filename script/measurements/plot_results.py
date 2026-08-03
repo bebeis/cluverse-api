@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 
-EXPERIMENTS = ("popularity", "view-surge", "local-map", "comment-pagination")
+EXPERIMENTS = ("popularity", "view-surge", "local-map", "comment-pagination", "home-feed")
 TREND_METRICS = {
     "popularity": (
         "popularity_request_duration",
@@ -36,12 +36,22 @@ TREND_METRICS = {
         "comment_write_duration",
         "http_req_duration",
     ),
+    "home-feed": (
+        "home_recent_posts_duration",
+        "home_comment_write_duration",
+        "http_req_duration",
+    ),
 }
 SUCCESS_METRICS = {
     "popularity": ("popularity_request_success_rate", "popularity_lifecycle_check_success_rate"),
     "view-surge": ("view_count_success_rate", "hot_success_rate"),
     "local-map": ("local_map_write_success",),
     "comment-pagination": ("comment_request_success", "comment_write_success", "comment_page_equivalence"),
+    "home-feed": (
+        "home_recent_posts_success",
+        "home_comment_write_success",
+        "home_recent_posts_equivalence",
+    ),
 }
 CORE_METRICS = {
     "api_latency",
@@ -61,6 +71,8 @@ SERIES_LABELS = {
     "comment_api_duration": "comment API",
     "detail_screen_duration": "detail screen",
     "comment_write_duration": "comment write",
+    "home_recent_posts_duration": "recent posts",
+    "home_comment_write_duration": "comment write",
     "http_req_duration": "HTTP",
 }
 CSV_FIELDS = (
@@ -95,7 +107,7 @@ class Measurement:
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="인기글·조회수 급상승·로컬맵·댓글 페이지 JSON/CSV를 모아 matplotlib 그래프를 생성합니다."
+        description="인기글·조회수 급상승·로컬맵·댓글 페이지·홈 피드 JSON/CSV를 모아 matplotlib 그래프를 생성합니다."
     )
     parser.add_argument("--input", action="append", required=True, help="입력 파일 또는 디렉터리(반복 가능)")
     parser.add_argument("--output-dir", default="script/measurements/results/latest")
@@ -520,6 +532,8 @@ def render(rows: Sequence[Measurement], output_dir: Path, formats: Sequence[str]
             generated.extend(plot_steps(plt, steps, output_dir, formats, experiment))
         if experiment == "comment-pagination":
             generated.extend(plot_comment_scale(plt, experiment_rows, output_dir, formats))
+        if experiment == "home-feed":
+            generated.extend(plot_home_feed_scale(plt, experiment_rows, output_dir, formats))
     return generated
 
 
@@ -671,6 +685,14 @@ def display_comment_version(version: str) -> str:
     return {"v1": "Before", "v2": "After"}.get(version.lower(), version)
 
 
+def display_home_feed_version(version: str) -> str:
+    return {
+        "v1": "Before",
+        "v2": "Intermediate",
+        "v3": "After",
+    }.get(version.lower(), version)
+
+
 def plot_comment_scale(plt, rows, output_dir, formats) -> list[Path]:
     generated: list[Path] = []
     latency_rows = [
@@ -747,6 +769,73 @@ def plot_comment_scale(plt, rows, output_dir, formats) -> list[Path]:
         generated.extend(save_figure(
             figure, plt, output_dir, formats, "comment-pagination-scale-rows"
         ))
+    return generated
+
+
+def plot_home_feed_scale(plt, rows, output_dir, formats) -> list[Path]:
+    generated: list[Path] = []
+    latency_rows = [
+        row for row in rows
+        if row.metric == "api_latency"
+        and row.stat in {"p95", "p99"}
+        and extract_comment_count(row.scenario) is not None
+        and "series=home_recent_posts_duration" in row.scenario
+    ]
+    if latency_rows:
+        figure, axis = plt.subplots(figsize=(8, 5.5))
+        for version in sorted({row.version for row in latency_rows}, key=version_number):
+            for stat in ("p95", "p99"):
+                points = sorted(
+                    (
+                        (extract_comment_count(row.scenario), row.value)
+                        for row in latency_rows
+                        if row.version == version and row.stat == stat
+                    ),
+                    key=lambda point: point[0],
+                )
+                if points:
+                    axis.plot(
+                        [point[0] for point in points],
+                        [point[1] for point in points],
+                        marker="o",
+                        label=f"{display_home_feed_version(version)} {stat}",
+                    )
+        axis.set_title("Recent commented posts API latency")
+        axis.set_xlabel("total comments")
+        axis.set_ylabel("ms")
+        axis.grid(alpha=0.25)
+        axis.legend()
+        figure.tight_layout()
+        generated.extend(save_figure(figure, plt, output_dir, formats, "home-feed-scale-latency"))
+
+    actual_rows = [
+        row for row in rows
+        if row.metric == "actual_rows" and extract_comment_count(row.scenario) is not None
+    ]
+    if actual_rows:
+        figure, axis = plt.subplots(figsize=(8, 5.5))
+        for version in sorted({row.version for row in actual_rows}, key=version_number):
+            points = sorted(
+                (
+                    (extract_comment_count(row.scenario), row.value)
+                    for row in actual_rows
+                    if row.version == version
+                ),
+                key=lambda point: point[0],
+            )
+            axis.plot(
+                [point[0] for point in points],
+                [point[1] for point in points],
+                marker="o",
+                label=display_home_feed_version(version),
+            )
+        axis.set_title("Rows visited by recent-post selection")
+        axis.set_xlabel("total comments")
+        axis.set_ylabel("actual rows")
+        axis.grid(alpha=0.25)
+        axis.legend()
+        figure.tight_layout()
+        generated.extend(save_figure(figure, plt, output_dir, formats, "home-feed-scale-rows"))
     return generated
 
 

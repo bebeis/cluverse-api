@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from plot_results import (
     collect,
     discover_inputs,
+    display_home_feed_version,
     extract_comment_count,
     extract_csv,
     extract_k6_summary,
@@ -87,13 +88,13 @@ class PlotResultsTest(unittest.TestCase):
     def test_분위수는_선형_보간한다(self):
         self.assertAlmostEqual(3.7, quantile([1, 2, 3, 4], 0.9))
 
-    def test_네_실험_fixture를_한꺼번에_수집한다(self):
+    def test_다섯_실험_fixture를_한꺼번에_수집한다(self):
         fixture_directory = Path(__file__).resolve().parent / "fixtures"
 
         rows = collect(discover_inputs([str(fixture_directory)]), None, None)
 
         self.assertEqual(
-            {"popularity", "view-surge", "local-map", "comment-pagination"},
+            {"popularity", "view-surge", "local-map", "comment-pagination", "home-feed"},
             {row.experiment for row in rows},
         )
 
@@ -104,6 +105,19 @@ class PlotResultsTest(unittest.TestCase):
         self.assertTrue(is_first_cursor_position("comments=1000,cursor_position=first"))
         self.assertFalse(is_first_cursor_position("comments=1000,cursor_position=page-10"))
         self.assertFalse(is_first_cursor_position("comments=1000"))
+
+    def test_홈_피드_요약에서_최근_댓글_글_지연을_읽는다(self):
+        fixture = Path(__file__).resolve().parent / "fixtures" / "home-feed-2026-08-03-v2-summary.json"
+
+        rows = extract_k6_summary(fixture, None, None)
+
+        self.assertEqual(12, self.value(rows, "api_latency", "p95"))
+        self.assertEqual(18, self.value(rows, "api_latency", "p99"))
+
+    def test_홈_피드_세_단계_그래프_라벨을_구분한다(self):
+        self.assertEqual("Before", display_home_feed_version("v1"))
+        self.assertEqual("Intermediate", display_home_feed_version("v2"))
+        self.assertEqual("After", display_home_feed_version("v3"))
 
     def value(self, rows, metric, stat):
         return next(row.value for row in rows if row.metric == metric and row.stat == stat)

@@ -1,0 +1,18 @@
+{
+  "options": {
+    "tags": {
+      "version": "v2",
+      "comments": "100000",
+      "commented_posts": "1000",
+      "hot_comment_percent": "20"
+    }
+  },
+  "metrics": {
+    "home_recent_posts_duration": {
+      "values": { "avg": 7, "med": 6, "p(90)": 10, "p(95)": 12, "p(99)": 18, "max": 24 }
+    },
+    "http_reqs": { "values": { "count": 600, "rate": 20 } },
+    "http_req_failed": { "values": { "rate": 0 } },
+    "home_recent_posts_success": { "values": { "rate": 1 } }
+  }
+}

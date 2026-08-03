@@ -1,6 +1,6 @@
 # 성능 측정 결과 통합·시각화
 
-기존 k6 HTML, summary JSON, Grafana 대시보드와 결과 Markdown은 그대로 유지한다. 이 디렉터리는 인기글, 조회수 급상승, 로컬맵, 댓글 페이지 결과를 공통 CSV로 정규화하고 matplotlib 이미지로 그리는 보조 계층이다.
+기존 k6 HTML, summary JSON, Grafana 대시보드와 결과 Markdown은 그대로 유지한다. 이 디렉터리는 인기글, 조회수 급상승, 로컬맵, 댓글 페이지, 홈 최근 댓글 글 결과를 공통 CSV로 정규화하고 matplotlib 이미지로 그리는 보조 계층이다.
 
 ## 지원 입력
 
@@ -32,7 +32,7 @@ python3 -m pip install -r script/measurements/requirements.txt
 
 ## 실행
 
-세 실험의 `results/raw`를 한 번에 읽는다.
+다섯 실험의 `results/raw`를 한 번에 읽는다.
 
 ```bash
 script/measurements/run.sh
@@ -66,5 +66,7 @@ script/measurements/run.sh --aggregate latest --format png --format svg
 - `<experiment>-additional-metrics.png`: Prometheus/Grafana에서 보충한 DB·Hikari·Redis 지표
 - `comment-pagination-scale-latency.png`: 댓글 수별 개선 전·후 댓글 API와 상세 화면 p95/p99
 - `comment-pagination-scale-rows.png`: 댓글 수별 개선 전·후 `actual rows`
+- `home-feed-scale-latency.png`: 댓글 수별 최근 댓글 글 API의 개선 전·중간·후 p95/p99
+- `home-feed-scale-rows.png`: 댓글 수별 세 조회 구조의 `actual rows`
 
 이미지 파일명과 축 라벨은 영문으로 고정해 실행 환경의 한글 폰트 유무가 그래프 생성을 깨뜨리지 않게 한다. 원래 숫자와 출처는 항상 `measurements.csv`에 남는다.
