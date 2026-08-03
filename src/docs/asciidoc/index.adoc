@@ -30,6 +30,8 @@ include::board/index.adoc[]
 
 include::feed/index.adoc[]
 
+include::home/index.adoc[]
+
 include::post/index.adoc[]
 
 include::comment/index.adoc[]
