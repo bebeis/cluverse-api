@@ -148,6 +148,7 @@ class HomeQueryRepositoryTest {
 
         saveCommentAndActivity(olderPost, author, LocalDateTime.of(2026, 8, 3, 10, 0));
         saveCommentAndActivity(latestPost, author, LocalDateTime.of(2026, 8, 3, 12, 0));
+        saveDeletedComment(latestPost, author, LocalDateTime.of(2026, 8, 3, 18, 0));
         saveCommentAndActivity(hiddenGroupPost, author, LocalDateTime.of(2026, 8, 3, 14, 0));
         saveCommentAndActivity(blockedPost, blockedAuthor, LocalDateTime.of(2026, 8, 3, 16, 0));
         blockRepository.save(Block.of(viewer.getId(), blockedAuthor.getId()));
@@ -185,6 +186,20 @@ class HomeQueryRepositoryTest {
         ReflectionTestUtils.setField(savedComment, "createdAt", createdAt);
         ReflectionTestUtils.setField(savedComment, "updatedAt", createdAt);
         activityRepository.saveAndFlush(PostCommentActivity.from(savedComment));
+    }
+
+    private void saveDeletedComment(Post post, Member author, LocalDateTime createdAt) {
+        Comment comment = Comment.createByMember(
+                post.getId(), author.getId(), null, 0, "삭제 댓글", false, "127.0.0.1"
+        );
+        comment.delete();
+        Comment savedComment = commentRepository.saveAndFlush(comment);
+        jdbcTemplate.update(
+                "UPDATE comment SET created_at = ?, updated_at = ?, visible_created_at = NULL WHERE comment_id = ?",
+                Timestamp.valueOf(createdAt),
+                Timestamp.valueOf(createdAt),
+                savedComment.getId()
+        );
     }
 
     private Board board(BoardType type, String name) {

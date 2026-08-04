@@ -24,6 +24,21 @@ import static org.mockito.Mockito.when;
 class HomeReaderTest {
 
     @Test
+    void 최근_댓글_후보가_없으면_빈_목록을_반환한다() {
+        // given
+        HomeQueryRepository repository = mock(HomeQueryRepository.class);
+        HomeReader reader = reader(repository, new SimpleMeterRegistry(), 10);
+        when(repository.findRecentCommentedPostCandidatesV2(11)).thenReturn(List.of());
+
+        // when
+        List<RecentCommentedPostView> result = reader.readRecentCommentedPostsV2(1L, 10);
+
+        // then
+        assertThat(result).isEmpty();
+        verify(repository).findRecentCommentedPostCandidatesV2(11);
+    }
+
+    @Test
     void 인덱스_집계_후보는_캐시하고_접근_권한은_요청마다_확인한다() {
         // given
         HomeQueryRepository repository = mock(HomeQueryRepository.class);

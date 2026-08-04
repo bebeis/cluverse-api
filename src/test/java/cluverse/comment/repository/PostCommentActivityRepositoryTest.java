@@ -3,6 +3,7 @@ package cluverse.comment.repository;
 import cluverse.comment.domain.Comment;
 import cluverse.comment.domain.PostCommentActivity;
 import cluverse.comment.service.implement.PostCommentActivityWriter;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -26,6 +27,9 @@ class PostCommentActivityRepositoryTest {
 
     @Autowired
     private PostCommentActivityWriter activityWriter;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     void 늦게_도착한_과거_댓글은_최신_활동을_뒤로_돌리지_않는다() {
@@ -73,6 +77,8 @@ class PostCommentActivityRepositoryTest {
         // when
         commentRepository.delete(latest);
         activityWriter.reflectDeleted(20L, latest.getId());
+        activityRepository.flush();
+        entityManager.clear();
 
         // then
         PostCommentActivity activity = activityRepository.findById(20L).orElseThrow();
@@ -90,6 +96,8 @@ class PostCommentActivityRepositoryTest {
         // when
         commentRepository.delete(onlyComment);
         activityWriter.reflectDeleted(30L, onlyComment.getId());
+        activityRepository.flush();
+        entityManager.clear();
 
         // then
         assertThat(activityRepository.findById(30L)).isEmpty();

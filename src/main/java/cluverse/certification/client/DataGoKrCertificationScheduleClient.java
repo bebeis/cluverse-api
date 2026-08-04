@@ -4,12 +4,12 @@ import cluverse.certification.domain.CertificationSchedule;
 import cluverse.certification.exception.CertificationExceptionMessage;
 import cluverse.certification.properties.CertificationProperties;
 import cluverse.common.exception.ExternalServiceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.RestClientException;
 
 import java.net.http.HttpClient;
 import java.util.List;
@@ -23,19 +23,32 @@ public class DataGoKrCertificationScheduleClient implements CertificationSchedul
     private final CertificationScheduleMapper mapper;
     private final RestClient restClient;
 
+    @Autowired
     public DataGoKrCertificationScheduleClient(
             CertificationProperties properties,
             CertificationScheduleMapper mapper
     ) {
+        this(properties, mapper, createRestClient(properties));
+    }
+
+    DataGoKrCertificationScheduleClient(
+            CertificationProperties properties,
+            CertificationScheduleMapper mapper,
+            RestClient restClient
+    ) {
+        this.properties = properties;
+        this.mapper = mapper;
+        this.restClient = restClient;
+    }
+
+    private static RestClient createRestClient(CertificationProperties properties) {
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(properties.connectTimeout())
                 .build();
         JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(properties.readTimeout());
 
-        this.properties = properties;
-        this.mapper = mapper;
-        this.restClient = RestClient.builder()
+        return RestClient.builder()
                 .baseUrl(properties.providerBaseUrl())
                 .requestFactory(requestFactory)
                 .build();
@@ -58,7 +71,7 @@ public class DataGoKrCertificationScheduleClient implements CertificationSchedul
                     .body(DataGoKrCertificationResponse.class);
             validateResponse(response);
             return mapper.map(response);
-        } catch (RestClientResponseException | ResourceAccessException exception) {
+        } catch (RestClientException exception) {
             throw unavailable(exception);
         }
     }

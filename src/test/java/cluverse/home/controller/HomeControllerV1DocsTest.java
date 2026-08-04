@@ -46,8 +46,11 @@ class HomeControllerV1DocsTest extends RestDocsSupport {
     @Test
     void 즐겨찾는_게시판_조회() throws Exception {
         when(homeQueryService.getFavoriteBoards(eq(1L), any())).thenReturn(new FavoriteBoardPageResponse(
-                List.of(new FavoriteBoardResponse(10L, BoardType.INTEREST, "AI", null)),
-                10L,
+                List.of(
+                        new FavoriteBoardResponse(10L, BoardType.INTEREST, "AI", null),
+                        new FavoriteBoardResponse(11L, BoardType.DEPARTMENT, "컴퓨터공학", 10L)
+                ),
+                11L,
                 true
         ));
 
@@ -66,7 +69,7 @@ class HomeControllerV1DocsTest extends RestDocsSupport {
                                 fieldWithPath("data.boards[].boardId").type(JsonFieldType.NUMBER).description("게시판 ID"),
                                 fieldWithPath("data.boards[].boardType").type(JsonFieldType.STRING).description("게시판 유형"),
                                 fieldWithPath("data.boards[].name").type(JsonFieldType.STRING).description("게시판 이름"),
-                                fieldWithPath("data.boards[].parentBoardId").type(JsonFieldType.NULL).description("상위 게시판 ID").optional(),
+                                fieldWithPath("data.boards[].parentBoardId").type(JsonFieldType.VARIES).description("상위 게시판 ID, 최상위면 null").optional(),
                                 fieldWithPath("data.nextCursor").type(JsonFieldType.NUMBER).description("다음 커서").optional(),
                                 fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 여부")
                         )
