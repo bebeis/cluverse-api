@@ -1,5 +1,17 @@
 locals {
   cluster_name = "cluverse-test"
+  app_secret_parameter_paths = {
+    KAKAO_CLIENT_ID                  = "/cluverse/test/oauth/kakao/client-id"
+    KAKAO_CLIENT_SECRET              = "/cluverse/test/oauth/kakao/client-secret"
+    KAKAO_REDIRECT_URI               = "/cluverse/test/oauth/kakao/redirect-uri"
+    GOOGLE_CLIENT_ID                 = "/cluverse/test/oauth/google/client-id"
+    GOOGLE_CLIENT_SECRET             = "/cluverse/test/oauth/google/client-secret"
+    GOOGLE_REDIRECT_URI              = "/cluverse/test/oauth/google/redirect-uri"
+    NAVER_CLIENT_ID                  = "/cluverse/test/naver/client-id"
+    NAVER_CLIENT_SECRET              = "/cluverse/test/naver/client-secret"
+    LOCAL_MAP_SELECTION_TOKEN_SECRET = "/cluverse/test/local-map/selection-token-secret"
+    DATA_GO_KR_SERVICE_KEY           = "/cluverse/test/data-go/service-key"
+  }
 }
 
 resource "aws_ecs_cluster" "main" {
@@ -136,9 +148,17 @@ resource "aws_ecs_task_definition" "api" {
         { name = "SPRING_DATA_REDIS_HOST", value = var.redis_private_ip },
         { name = "SPRING_DATA_REDIS_PORT", value = "6379" }
       ]
-      secrets = [
-        { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = aws_ssm_parameter.db_password.arn }
-      ]
+      secrets = concat(
+        [
+          { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = aws_ssm_parameter.db_password.arn }
+        ],
+        [
+          for environment_name, parameter_path in local.app_secret_parameter_paths : {
+            name      = environment_name
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${parameter_path}"
+          }
+        ]
+      )
       logConfiguration = {
         logDriver = "awslogs"
         options = {

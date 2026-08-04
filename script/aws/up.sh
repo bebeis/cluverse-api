@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 측정 세션 시작 "딸깍" 스크립트.
-#   (이미지 없으면 빌드/푸시) → secrets.auto.tfvars 갱신 → test apply
+#   .env 시크릿 SSM 동기화 → (이미지 없으면 빌드/푸시) → secrets.auto.tfvars 갱신 → test apply
 #   → 앱 healthy 대기(Flyway 완료 보장) → 시드 적재 → 접속 안내
 #
 # 사용법:
@@ -12,15 +12,17 @@
 #   script/aws/up.sh --8m                # 핫보드 +700만(05b)도 적재
 #   script/aws/up.sh --30m               # 일반 게시판 +1600만(05d)도 적재 (매우 오래 걸림)
 #   script/aws/up.sh --push              # 이미지 강제 재빌드/푸시
+#   script/aws/up.sh --skip-secret-sync  # SSM에 값이 이미 있을 때 .env 동기화 생략
 source "$(dirname "$0")/lib.sh"
 
-SEED_PROFILE="view-count"; PUSH=0; EIGHT_M=0; THIRTY_M=0
+SEED_PROFILE="view-count"; PUSH=0; EIGHT_M=0; THIRTY_M=0; SYNC_SECRETS=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --seed) SEED_PROFILE="${2:?--seed 뒤에 프로파일}"; shift 2 ;;
     --8m)   EIGHT_M=1; shift ;;
     --30m)  THIRTY_M=1; shift ;;
     --push) PUSH=1; shift ;;
+    --skip-secret-sync) SYNC_SECRETS=0; shift ;;
     *) die "알 수 없는 옵션: $1 (사용법은 파일 상단 주석)" ;;
   esac
 done
@@ -29,6 +31,12 @@ case "$SEED_PROFILE" in post-list|view-count|full|none) ;; *) die "--seed 는 po
 require_aws
 require_base
 [ -f "$SSH_PUB" ] || die "$SSH_PUB 이 없습니다 (bastion 시딩/터널에 필요)"
+
+if [ "$SYNC_SECRETS" = 1 ]; then
+  "$SCRIPT_DIR/sync-secrets.sh"
+else
+  warn ".env → SSM 동기화를 생략합니다. 필수 파라미터가 이미 존재해야 ECS 태스크가 시작됩니다."
+fi
 
 # ── 1) ECR 이미지 확보 ──────────────────────────────────────────
 ECR_URL="$(base_out ecr_repository_url)"
@@ -64,6 +72,27 @@ log "my_ip=$MY_IP 반영"
 tf_init_if_needed "$TEST_DIR"
 log "terraform apply (test) — NAT/ECS/MySQL/Redis/모니터링/bastion 생성"
 tf_test apply -auto-approve
+
+# ── 3.5) SSM 변경값을 새 태스크에 반영 ──────────────────────────
+# ECS secret은 컨테이너 시작 시 한 번 주입되므로 SSM 값을 바꾼 뒤 태스크를 재시작해야 한다.
+log "ECS 강제 재배포 — SSM 시크릿과 latest 이미지 다시 주입"
+aws ecs update-service \
+  --cluster "$ECS_CLUSTER" \
+  --service "$ECS_SERVICE" \
+  --force-new-deployment \
+  --region "$AWS_REGION" >/dev/null
+if ! aws ecs wait services-stable \
+  --cluster "$ECS_CLUSTER" \
+  --services "$ECS_SERVICE" \
+  --region "$AWS_REGION"; then
+  aws ecs describe-services \
+    --cluster "$ECS_CLUSTER" \
+    --services "$ECS_SERVICE" \
+    --region "$AWS_REGION" \
+    --query 'services[0].events[:10].message' \
+    --output text >&2 || true
+  die "ECS 재배포가 안정화되지 않았습니다. 위 서비스 이벤트를 확인하세요."
+fi
 
 # ── 4) 앱 healthy 대기 ─────────────────────────────────────────
 # 타깃그룹 healthy = MySQL 준비 + Spring 부팅 + Flyway 마이그레이션 완료 → 시드 가능 시점
