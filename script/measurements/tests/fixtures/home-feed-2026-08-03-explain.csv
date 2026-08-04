@@ -1,0 +1,4 @@
+experiment,run_id,recorded_at,version,scenario,source,metric,stat,value,unit,input_file
+home-feed,test-before-100000,2026-08-03T00:00:00+09:00,v1,"comments=100000,commented_posts=1000,hot_comment_percent=20",mysql-explain,actual_rows,point,100000,count,v1.txt
+home-feed,test-intermediate-100000,2026-08-03T00:00:00+09:00,v2,"comments=100000,commented_posts=1000,hot_comment_percent=20",mysql-explain,actual_rows,point,1000,count,v2.txt
+home-feed,test-after-100000,2026-08-03T00:00:00+09:00,v3,"comments=100000,commented_posts=1000,hot_comment_percent=20",mysql-explain,actual_rows,point,10,count,v3.txt

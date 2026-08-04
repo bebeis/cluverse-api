@@ -1,0 +1,7 @@
+experiment,run_id,recorded_at,version,scenario,source,metric,stat,value,unit,input_file
+home-feed,replace-run-id,2026-08-03T00:00:00+09:00,v1,"comments=100000,commented_posts=1000,hot_comment_percent=20",mysql-explain,actual_rows,point,0,count,v1-explain.txt
+home-feed,replace-run-id,2026-08-03T00:00:00+09:00,v2,"comments=100000,commented_posts=1000,hot_comment_percent=20",mysql-explain,actual_rows,point,0,count,v2-explain.txt
+home-feed,replace-run-id,2026-08-03T00:00:00+09:00,v2,"comments=100000,commented_posts=1000,hot_comment_percent=20",prometheus,cache_hit_ratio,rate,0,%,grafana-export.csv
+home-feed,replace-run-id,2026-08-03T00:00:00+09:00,v2,"comments=100000,commented_posts=1000,hot_comment_percent=20",prometheus,snapshot_fallback,count,0,count,grafana-export.csv
+home-feed,replace-run-id,2026-08-03T00:00:00+09:00,v3,"comments=100000,commented_posts=1000,hot_comment_percent=20",mysql-explain,actual_rows,point,0,count,v3-explain.txt
+home-feed,replace-run-id,2026-08-03T00:00:00+09:00,v3,"comments=100000,commented_posts=1000,hot_comment_percent=20",mysql-integrity,projection_mismatch,point,0,count,integrity.txt

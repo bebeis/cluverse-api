@@ -140,6 +140,18 @@ local-map:
   experiment-endpoints-enabled: false
   benchmark-token: ${LOCAL_MAP_BENCHMARK_TOKEN:}
 
+certification:
+  provider-base-url: ${CERTIFICATION_PROVIDER_BASE_URL:https://apis.data.go.kr}
+  service-key: ${DATA_GO_KR_SERVICE_KEY:}
+  connect-timeout: 500ms
+  read-timeout: 2s
+  cache-ttl: 12h
+
+home:
+  recent-commented-posts:
+    snapshot-cache-ttl: 1m
+    snapshot-candidate-size: 200
+
 oauth2:
   kakao:
     client-id: ${KAKAO_CLIENT_ID}

@@ -68,6 +68,9 @@ popularity:
   experiment-endpoints-enabled: false
   benchmark-token: ""
 
+certification:
+  service-key: test-key
+
 aws:
   region: ap-northeast-2
   s3:

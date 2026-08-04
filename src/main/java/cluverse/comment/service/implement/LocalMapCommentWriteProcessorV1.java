@@ -30,6 +30,7 @@ public class LocalMapCommentWriteProcessorV1 {
     private final LocalPlaceAttachmentResolver attachmentResolver;
     private final PlaceWriter placeWriter;
     private final PostMetaWriter postMetaWriter;
+    private final PostCommentActivityWriter postCommentActivityWriter;
 
     @Transactional
     public Long create(Long memberId, Long postId, CommentWithPlaceCreateRequestV1 request, String clientIp) {
@@ -48,6 +49,7 @@ public class LocalMapCommentWriteProcessorV1 {
                 ? commentWriter.create(memberId, postId, parent, request, clientIp)
                 : commentWriter.create(memberId, postId, parent, request, clientIp, requestId);
         postMetaWriter.increaseCommentCount(postId);
+        postCommentActivityWriter.reflectCreated(comment);
         if (parent != null) {
             commentWriter.increaseReplyCount(parent.getId());
         }

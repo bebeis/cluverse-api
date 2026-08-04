@@ -6,7 +6,7 @@
 ```
 최초 1회   base-up.sh     VPC/ALB/ACM/ECR 생성 (Spaceship DNS 입력 2건만 수동)
 ─────────────────────────────────────────────────────────────
-측정 시작  up.sh          이미지 확보 → apply → 앱 healthy 대기 → 대시보드 → 시드 → 접속 안내
+측정 시작  up.sh          .env → SSM → 이미지 확보 → apply → 앱 healthy 대기 → 대시보드 → 시드
 측정 중    tunnel.sh      Grafana/Prometheus/MySQL/Redis SSH 터널
 대시보드   grafana-dashboards.sh  grafana/*.json을 Grafana에 프로비저닝 (up.sh가 자동 호출)
 코드 변경  push-image.sh  bootJar → linux/amd64 빌드 → ECR 푸시 → ECS 재배포
@@ -24,6 +24,8 @@ script/aws/down.sh          # 딸깍 — 시간당 과금 전부 정지
 
 - `up.sh --seed post-list|view-count|full|none`, `--8m`(핫보드 +700만), `--30m`(일반 게시판 +1,600만
   — post_id 상한 3,000만, 디스크 +약 9GB에 수 시간 소요), `--push`(이미지 재빌드)
+- 기본 실행은 리포 루트 `.env`의 허용된 키를 `/cluverse/test/...` SSM SecureString으로 먼저 동기화한다.
+  이미 SSM 값이 준비되어 로컬 `.env`를 사용하지 않을 때만 `--skip-secret-sync`를 사용한다.
 - 시딩은 **bastion에서 nohup으로** 돌아가므로 로컬이 끊겨도 계속됩니다.
   진행 확인: `seed.sh --follow`, 재적재: `seed.sh view-count --wait`
 - 변수 입력은 필요 없습니다. `terraform/test/secrets.auto.tfvars`(gitignore)를 up.sh가 관리합니다
@@ -36,6 +38,30 @@ script/aws/down.sh          # 딸깍 — 시간당 과금 전부 정지
 - AWS 자격증명: `aws configure --profile cluverse-terraform` — 스크립트가 이 프로필을 기본으로
   사용한다 (terraform 포함). 다른 프로필을 쓰려면 `AWS_PROFILE=xxx script/aws/up.sh`
 - 리포 루트의 `cluverse-key`/`cluverse-key.pub` (bastion SSH·시딩·터널에 사용)
+
+## 애플리케이션 시크릿
+
+`.env.example`을 복사해 리포 루트 `.env`를 준비한다. `.env`와 `*.tfvars`는 gitignore 대상이다.
+
+```bash
+cp .env.example .env
+openssl rand -hex 32  # LOCAL_MAP_SELECTION_TOKEN_SECRET 값으로 사용
+script/aws/sync-secrets.sh --dry-run
+script/aws/sync-secrets.sh
+```
+
+동기화 대상은 OAuth, 네이버 지역 검색, 장소 선택 토큰 서명, data.go.kr 서비스 키다. 스크립트는
+`.env`를 `source`하지 않고 허용된 키만 읽으며, 값은 로그에 출력하지 않는다. DB 비밀번호는 기존대로
+`secrets.auto.tfvars`에서 생성되어 `/cluverse/test/db/password`에 저장된다.
+
+SSM 애플리케이션 시크릿은 Terraform 외부에서 관리하므로 `down.sh`로 test 스택을 내려도 유지된다.
+실행 중인 ECS 컨테이너는 시작할 때만 SSM 값을 읽는다. `up.sh`는 동기화와 Terraform 적용 후 서비스를
+강제 재배포해 변경값을 반영한다. `sync-secrets.sh`만 단독 실행했다면 별도로 ECS를 재배포해야 한다.
+다른 파일이나 prefix를 검증하려면 다음처럼 실행한다.
+
+```bash
+script/aws/sync-secrets.sh --env-file /path/to/test.env --prefix /cluverse/test --dry-run
+```
 
 ## 비용 메모
 

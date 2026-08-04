@@ -45,6 +45,9 @@ class CommentProcessorTest {
     @Mock
     private PostMetaWriter postMetaWriter;
 
+    @Mock
+    private PostCommentActivityWriter postCommentActivityWriter;
+
     @InjectMocks
     private CommentProcessor commentProcessor;
 
@@ -65,6 +68,7 @@ class CommentProcessorTest {
         verify(postAccessReader).validateWritablePost(1L, 10L);
         verify(postMetaWriter).increaseCommentCount(10L);
         verify(commentWriter).increaseReplyCount(100L);
+        verify(postCommentActivityWriter).reflectCreated(createdComment);
     }
 
     @Test
@@ -101,6 +105,7 @@ class CommentProcessorTest {
         verify(commentWriter).delete(comment);
         verify(commentWriter, never()).remove(any());
         verify(postMetaWriter, never()).decreaseCommentCount(anyLong());
+        verify(postCommentActivityWriter).reflectDeleted(10L, 101L);
     }
 
     @Test
@@ -121,6 +126,7 @@ class CommentProcessorTest {
         verify(commentWriter).decreaseReplyCount(101L);
         verify(commentWriter).remove(deletedParent);
         verify(postMetaWriter, times(2)).decreaseCommentCount(10L);
+        verify(postCommentActivityWriter).reflectDeleted(10L, 102L);
     }
 
     private Comment createComment(Long commentId, Long postId, Long memberId, Long parentId, int depth) {
