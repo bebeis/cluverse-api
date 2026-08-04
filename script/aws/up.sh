@@ -81,18 +81,36 @@ aws ecs update-service \
   --service "$ECS_SERVICE" \
   --force-new-deployment \
   --region "$AWS_REGION" >/dev/null
-if ! aws ecs wait services-stable \
-  --cluster "$ECS_CLUSTER" \
-  --services "$ECS_SERVICE" \
-  --region "$AWS_REGION"; then
-  aws ecs describe-services \
+ECS_WAIT_STARTED=$SECONDS
+ECS_WAIT_DEADLINE=$((SECONDS + 1500))
+while :; do
+  SERVICE_STATE="$(aws ecs describe-services \
     --cluster "$ECS_CLUSTER" \
     --services "$ECS_SERVICE" \
     --region "$AWS_REGION" \
-    --query 'services[0].events[:10].message' \
-    --output text >&2 || true
-  die "ECS 재배포가 안정화되지 않았습니다. 위 서비스 이벤트를 확인하세요."
-fi
+    --query 'services[0].[desiredCount,runningCount,pendingCount,length(deployments)]' \
+    --output text)"
+  read -r DESIRED_COUNT RUNNING_COUNT PENDING_COUNT DEPLOYMENT_COUNT <<< "$SERVICE_STATE"
+  if [ "$RUNNING_COUNT" = "$DESIRED_COUNT" ] \
+    && [ "$PENDING_COUNT" = 0 ] \
+    && [ "$DEPLOYMENT_COUNT" = 1 ]; then
+    break
+  fi
+  if [ $SECONDS -ge $ECS_WAIT_DEADLINE ]; then
+    aws ecs describe-services \
+      --cluster "$ECS_CLUSTER" \
+      --services "$ECS_SERVICE" \
+      --region "$AWS_REGION" \
+      --query 'services[0].events[:10].message' \
+      --output text >&2 || true
+    die "ECS 재배포가 25분 내 안정화되지 않았습니다. 위 서비스 이벤트를 확인하세요."
+  fi
+  printf '  %s ECS desired=%s running=%s pending=%s deployments=%s (%ds 경과)\r' \
+    "$(date +%H:%M:%S)" "$DESIRED_COUNT" "$RUNNING_COUNT" "$PENDING_COUNT" "$DEPLOYMENT_COUNT" \
+    "$((SECONDS - ECS_WAIT_STARTED))"
+  sleep 15
+done
+echo
 
 # ── 4) 앱 healthy 대기 ─────────────────────────────────────────
 # 타깃그룹 healthy = MySQL 준비 + Spring 부팅 + Flyway 마이그레이션 완료 → 시드 가능 시점
