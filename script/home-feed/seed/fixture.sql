@@ -37,7 +37,7 @@ CREATE TEMPORARY TABLE tmp_home_feed_posts (
     post_id BIGINT NOT NULL,
     PRIMARY KEY (ordinal),
     UNIQUE KEY uk_tmp_home_feed_post (post_id)
-) ENGINE=MEMORY;
+) ENGINE=InnoDB;
 
 DROP PROCEDURE IF EXISTS seed_home_feed_fixture;
 
@@ -53,7 +53,6 @@ BEGIN
     DECLARE post_offset INT DEFAULT 0;
     DECLARE comment_offset INT DEFAULT 0;
     DECLARE batch_size INT DEFAULT 10000;
-    DECLARE first_post_id BIGINT;
     DECLARE hot_comment_count INT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -133,14 +132,13 @@ BEGIN
         WHERE seq < LEAST(batch_size, post_count - post_offset)
         ORDER BY seq;
 
-        SET first_post_id = LAST_INSERT_ID();
-        INSERT INTO tmp_home_feed_posts (ordinal, post_id)
-        SELECT post_offset + seq + 1, first_post_id + seq
-        FROM tmp_home_feed_seq_10000
-        WHERE seq < LEAST(batch_size, post_count - post_offset);
-
         SET post_offset = post_offset + batch_size;
     END WHILE;
+
+    INSERT INTO tmp_home_feed_posts (ordinal, post_id)
+    SELECT CAST(SUBSTRING_INDEX(p.title, ' ', -1) AS UNSIGNED), p.post_id
+    FROM post p
+    WHERE p.client_ip = 'benchmark-home-feed';
 
     SET hot_comment_count = FLOOR(comment_count * hot_comment_percent / 100);
     WHILE comment_offset < comment_count DO

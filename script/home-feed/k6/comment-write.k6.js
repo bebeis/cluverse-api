@@ -1,15 +1,15 @@
 import http from 'k6/http';
 import { check } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
+import { authenticatedParams, readBaseUrl, readSessionCookie } from './support.js';
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
-const SESSION_COOKIE = __ENV.SESSION_COOKIE || '';
+const BASE_URL = readBaseUrl();
+const SESSION_COOKIE = readSessionCookie();
 const POST_ID = Number(__ENV.POST_ID || 0);
 const RATE = Number(__ENV.RATE || 2);
 const DURATION = __ENV.DURATION || '30s';
 const RUN_ID = __ENV.RUN_ID || 'manual';
 
-if (!SESSION_COOKIE) throw new Error('SESSION_COOKIE이 필요합니다. 예: JSESSIONID=...');
 if (!POST_ID) throw new Error('POST_ID가 필요합니다.');
 
 export const options = {
@@ -24,6 +24,7 @@ export const options = {
     },
   },
   thresholds: {
+    dropped_iterations: ['count==0'],
     home_comment_write_success: ['rate>0.99'],
     home_comment_write_duration: ['p(95)<3000'],
   },
@@ -42,14 +43,11 @@ export default function () {
       content: `home-feed-benchmark:${RUN_ID}`,
       isAnonymous: false,
     }),
-    {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        Cookie: SESSION_COOKIE,
-      },
-      tags: { name: 'home_comment_write_projection' },
-    },
+    authenticatedParams(
+      SESSION_COOKIE,
+      { name: 'home_comment_write_projection' },
+      true,
+    ),
   );
   const ok = check(response, {
     'comment write success': (value) => {

@@ -27,7 +27,7 @@
 
 ## fixture
 
-전용 DB에서 활성 회원과 공개 게시판 ID를 지정한다. 시드는 제목·IP 표식이 있는 게시글을 새로 만들므로 프로덕션 DB에서는 실행하지 않는다. 적재 중에는 다른 쓰기를 멈춰 다중 행 auto increment가 연속이라는 fixture 전제를 지킨다.
+전용 DB에서 활성 회원과 공개 게시판 ID를 지정한다. 시드는 제목·IP 표식이 있는 게시글을 새로 만들므로 프로덕션 DB에서는 실행하지 않는다. 생성된 게시글 ID는 삽입 후 표식과 ordinal로 다시 조회하므로 auto increment의 연속성에 의존하지 않는다.
 
 ```sql
 SET @benchmark_member_id = 1;

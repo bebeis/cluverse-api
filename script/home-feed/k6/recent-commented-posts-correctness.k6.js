@@ -2,11 +2,10 @@ import http from 'k6/http';
 import exec from 'k6/execution';
 import { check } from 'k6';
 import { Rate } from 'k6/metrics';
+import { authenticatedParams, readBaseUrl, readSessionCookie } from './support.js';
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
-const SESSION_COOKIE = __ENV.SESSION_COOKIE || '';
-
-if (!SESSION_COOKIE) throw new Error('SESSION_COOKIE이 필요합니다. 예: JSESSIONID=...');
+const BASE_URL = readBaseUrl();
+const SESSION_COOKIE = readSessionCookie();
 
 export const options = {
   scenarios: {
@@ -19,10 +18,10 @@ export const options = {
 const equivalence = new Rate('home_recent_posts_equivalence');
 
 function read(version) {
-  const response = http.get(`${BASE_URL}/api/${version}/home/recent-commented-posts`, {
-    headers: { Accept: 'application/json', Cookie: SESSION_COOKIE },
-    tags: { name: `home_recent_posts_correctness_${version}` },
-  });
+  const response = http.get(
+    `${BASE_URL}/api/${version}/home/recent-commented-posts`,
+    authenticatedParams(SESSION_COOKIE, { name: `home_recent_posts_correctness_${version}` }),
+  );
   const contentType = String(response.headers['Content-Type'] || '').toLowerCase();
   if (response.status !== 200 || !contentType.includes('application/json')) {
     exec.test.abort(`${version} 조회 실패: ${response.status} ${response.body}`);

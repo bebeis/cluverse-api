@@ -1,5 +1,3 @@
-SET @benchmark_run_id = COALESCE(@benchmark_run_id, '');
-
 START TRANSACTION;
 
 DELETE activity
