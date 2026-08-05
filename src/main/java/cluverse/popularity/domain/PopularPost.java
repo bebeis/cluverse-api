@@ -66,15 +66,8 @@ public class PopularPost extends BaseTimeEntity {
     @Column(nullable = false)
     private long promotionScoreThreshold;
 
-    @Column(nullable = false)
-    private int likeGateThreshold;
-
-    @Column(nullable = false)
-    private int commentGateThreshold;
-
     private Long score;
     private Long likeCount;
     private Long commentCount;
-    private Long viewCount;
     private LocalDateTime finalizedAt;
 }

@@ -9,7 +9,6 @@ public record PopularPostView(
         long score,
         long likeCount,
         long commentCount,
-        long viewCount,
         LocalDateTime promotedAt,
         LocalDateTime finalizedAt
 ) {

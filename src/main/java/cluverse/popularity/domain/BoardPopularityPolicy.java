@@ -27,12 +27,6 @@ public class BoardPopularityPolicy extends BaseTimeEntity {
     private long promotionScore;
 
     @Column(nullable = false)
-    private int likeGate;
-
-    @Column(nullable = false)
-    private int commentGate;
-
-    @Column(nullable = false)
     private int sampleSize;
 
     @Enumerated(EnumType.STRING)
@@ -45,29 +39,23 @@ public class BoardPopularityPolicy extends BaseTimeEntity {
     public static BoardPopularityPolicy create(
             Long boardId,
             long promotionScore,
-            int likeGate,
-            int commentGate,
             int sampleSize,
             PopularityPolicySource policySource,
             LocalDateTime computedAt
     ) {
         BoardPopularityPolicy policy = new BoardPopularityPolicy();
         policy.boardId = boardId;
-        policy.replace(promotionScore, likeGate, commentGate, sampleSize, policySource, computedAt);
+        policy.replace(promotionScore, sampleSize, policySource, computedAt);
         return policy;
     }
 
     public void replace(
             long promotionScore,
-            int likeGate,
-            int commentGate,
             int sampleSize,
             PopularityPolicySource policySource,
             LocalDateTime computedAt
     ) {
         this.promotionScore = promotionScore;
-        this.likeGate = likeGate;
-        this.commentGate = commentGate;
         this.sampleSize = sampleSize;
         this.policySource = policySource;
         this.computedAt = computedAt;

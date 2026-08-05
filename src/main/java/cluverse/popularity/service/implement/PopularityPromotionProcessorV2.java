@@ -20,7 +20,6 @@ public class PopularityPromotionProcessorV2 {
     private final PopularitySnapshotReader popularitySnapshotReader;
     private final PopularityPolicyReader popularityPolicyReader;
     private final PopularPostWriter popularPostWriter;
-    private final PopularityCandidateWriter popularityCandidateWriter;
     private final PopularityMetricsRecorder popularityMetricsRecorder;
     private final PopularityProperties properties;
     private final Clock clock;
@@ -28,33 +27,31 @@ public class PopularityPromotionProcessorV2 {
     public void evaluateAll(List<Long> postIds, PopularityTrigger trigger) {
         List<PopularitySnapshot> snapshots = popularitySnapshotReader.readAll(postIds);
         for (PopularitySnapshot snapshot : snapshots) {
-            evaluateSnapshot(PopularityAlgorithmVersion.V2, snapshot, trigger, true);
+            evaluateSnapshot(PopularityAlgorithmVersion.V2, snapshot, trigger);
         }
     }
 
     public void evaluate(Long postId, PopularityTrigger trigger) {
         PopularitySnapshot snapshot = popularitySnapshotReader.read(postId);
         if (snapshot == null) {
-            popularityCandidateWriter.remove(postId);
             popularityMetricsRecorder.evaluated(PopularityAlgorithmVersion.V2, trigger, "NOT_FOUND");
             return;
         }
-        evaluateSnapshot(PopularityAlgorithmVersion.V2, snapshot, trigger, true);
+        evaluateSnapshot(PopularityAlgorithmVersion.V2, snapshot, trigger);
     }
 
     public void evaluateBaseline(PopularitySnapshot snapshot) {
-        evaluateSnapshot(PopularityAlgorithmVersion.V1, snapshot, PopularityTrigger.PERIODIC_SCAN, false);
+        evaluateSnapshot(PopularityAlgorithmVersion.V1, snapshot, PopularityTrigger.PERIODIC_SCAN);
     }
 
     private void evaluateSnapshot(
             PopularityAlgorithmVersion version,
             PopularitySnapshot snapshot,
-            PopularityTrigger trigger,
-            boolean trackCandidate
+            PopularityTrigger trigger
     ) {
         long startedAt = System.nanoTime();
         try {
-            evaluateInternal(version, snapshot, trigger, trackCandidate);
+            evaluateInternal(version, snapshot, trigger);
         } finally {
             popularityMetricsRecorder.recordEvaluationDuration(
                     version,
@@ -67,56 +64,36 @@ public class PopularityPromotionProcessorV2 {
     private void evaluateInternal(
             PopularityAlgorithmVersion version,
             PopularitySnapshot snapshot,
-            PopularityTrigger trigger,
-            boolean trackCandidate
+            PopularityTrigger trigger
     ) {
         LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), clock.getZone());
         LocalDateTime expiresAt = snapshot.createdAt().plus(properties.promotionWindow());
         popularityMetricsRecorder.examined(version, 1);
 
         if (!now.isBefore(expiresAt)) {
-            if (trackCandidate) {
-                popularityCandidateWriter.remove(snapshot.postId());
-            }
             popularityMetricsRecorder.evaluated(version, trigger, "EXPIRED");
             return;
         }
 
-        PopularityPolicy policy = popularityPolicyReader.read(snapshot.boardId());
-        boolean gatePassed = snapshot.likeCount() >= policy.likeGate()
-                || snapshot.commentCount() >= policy.commentGate();
-        if (!gatePassed) {
-            popularityMetricsRecorder.evaluated(version, trigger, "GATE_REJECTED");
-            return;
-        }
+        PopularityPolicy policy = version == PopularityAlgorithmVersion.V1
+                ? new PopularityPolicy(properties.defaultPromotionScore())
+                : popularityPolicyReader.read(snapshot.boardId());
 
         long score = calculateScore(snapshot);
         if (score >= policy.promotionScore()) {
             popularPostWriter.promote(version, snapshot, policy, trigger);
-            if (trackCandidate) {
-                popularityCandidateWriter.remove(snapshot.postId());
-            }
             popularityMetricsRecorder.evaluated(version, trigger, "PROMOTED");
             popularityMetricsRecorder.promoted(version, trigger);
             return;
         }
-
-        if (trackCandidate) {
-            LocalDateTime nextCheckAt = now.plus(properties.candidateRecheckInterval());
-            if (trigger == PopularityTrigger.CANDIDATE_RECHECK) {
-                popularityCandidateWriter.reschedule(
-                        snapshot.postId(), snapshot.boardId(), now, nextCheckAt, expiresAt);
-            } else {
-                popularityCandidateWriter.upsert(
-                        snapshot.postId(), snapshot.boardId(), now, nextCheckAt, expiresAt);
-            }
-        }
-        popularityMetricsRecorder.evaluated(version, trigger, "CANDIDATE");
+        popularityMetricsRecorder.evaluated(version, trigger, "BELOW_THRESHOLD");
     }
 
     private long calculateScore(PopularitySnapshot snapshot) {
-        return snapshot.likeCount() * properties.scoreLikeWeight()
-                + snapshot.commentCount() * properties.scoreCommentWeight()
-                + snapshot.viewCount() * properties.scoreViewWeight();
+        return scorePolicy().calculate(snapshot.likeCount(), snapshot.commentCount());
+    }
+
+    private PopularityScore scorePolicy() {
+        return new PopularityScore(properties.scoreLikeWeight(), properties.scoreCommentWeight());
     }
 }

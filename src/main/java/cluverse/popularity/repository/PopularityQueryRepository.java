@@ -18,7 +18,6 @@ import java.util.Optional;
 
 import static cluverse.meta.domain.QPostCommentCount.postCommentCount;
 import static cluverse.meta.domain.QPostLikeCount.postLikeCount;
-import static cluverse.meta.domain.QPostViewCount.postViewCount;
 import static cluverse.popularity.domain.QPopularPost.popularPost;
 import static cluverse.post.domain.QPost.post;
 
@@ -83,13 +82,11 @@ public class PopularityQueryRepository {
                         PopularityPolicySample.class,
                         popularPost.scoreAtPromotion,
                         postLikeCount.likeCount.coalesce(0).longValue(),
-                        postCommentCount.commentCount.coalesce(0).longValue(),
-                        postViewCount.viewCount.coalesce(0).longValue()
+                        postCommentCount.commentCount.coalesce(0).longValue()
                 ))
                 .from(post)
                 .leftJoin(postLikeCount).on(postLikeCount.postId.eq(post.id))
                 .leftJoin(postCommentCount).on(postCommentCount.postId.eq(post.id))
-                .leftJoin(postViewCount).on(postViewCount.postId.eq(post.id))
                 .leftJoin(popularPost).on(
                         popularPost.postId.eq(post.id),
                         popularPost.algorithmVersion.eq(PopularityAlgorithmVersion.V2)
@@ -118,7 +115,6 @@ public class PopularityQueryRepository {
                         popularPost.score.coalesce(popularPost.scoreAtPromotion),
                         popularPost.likeCount.coalesce(0L),
                         popularPost.commentCount.coalesce(0L),
-                        popularPost.viewCount.coalesce(0L),
                         popularPost.promotedAt,
                         popularPost.finalizedAt
                 ))
@@ -142,13 +138,11 @@ public class PopularityQueryRepository {
                         post.boardId,
                         post.createdAt,
                         postLikeCount.likeCount.coalesce(0).longValue(),
-                        postCommentCount.commentCount.coalesce(0).longValue(),
-                        postViewCount.viewCount.coalesce(0).longValue()
+                        postCommentCount.commentCount.coalesce(0).longValue()
                 ))
                 .from(post)
                 .leftJoin(postLikeCount).on(postLikeCount.postId.eq(post.id))
-                .leftJoin(postCommentCount).on(postCommentCount.postId.eq(post.id))
-                .leftJoin(postViewCount).on(postViewCount.postId.eq(post.id));
+                .leftJoin(postCommentCount).on(postCommentCount.postId.eq(post.id));
     }
 
     private OrderSpecifier<?>[] resolveOrder(PopularPostSortType sort, boolean finalized) {

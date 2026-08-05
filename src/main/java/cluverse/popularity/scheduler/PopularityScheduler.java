@@ -2,7 +2,6 @@ package cluverse.popularity.scheduler;
 
 import cluverse.popularity.properties.PopularityProperties;
 import cluverse.popularity.service.implement.PopularityBatchProcessorV1;
-import cluverse.popularity.service.implement.PopularityCandidateProcessor;
 import cluverse.popularity.service.implement.PopularityFinalizationProcessor;
 import cluverse.popularity.service.implement.PopularityPolicyRefreshProcessor;
 import lombok.RequiredArgsConstructor;
@@ -15,19 +14,10 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class PopularityScheduler {
 
-    private final PopularityCandidateProcessor popularityCandidateProcessor;
     private final PopularityFinalizationProcessor popularityFinalizationProcessor;
     private final PopularityPolicyRefreshProcessor popularityPolicyRefreshProcessor;
     private final PopularityBatchProcessorV1 popularityBatchProcessorV1;
     private final PopularityProperties properties;
-
-    @Scheduled(
-            fixedDelayString = "${popularity.candidate-recheck-interval:30s}",
-            initialDelayString = "30s"
-    )
-    public void recheckCandidates() {
-        runSafely("인기글 후보 재검사", popularityCandidateProcessor::processDue);
-    }
 
     @Scheduled(
             fixedDelayString = "${popularity.finalization-interval:30s}",
@@ -38,16 +28,16 @@ public class PopularityScheduler {
     }
 
     @Scheduled(
-            fixedDelayString = "${popularity.policy-cache-refresh-interval:1m}",
-            initialDelayString = "1m"
+            cron = "${popularity.policy-refresh-cron:0 10 1 * * *}",
+            zone = "Asia/Seoul"
     )
     public void refreshPolicies() {
         runSafely("게시판별 인기글 정책 갱신", popularityPolicyRefreshProcessor::refresh);
     }
 
     @Scheduled(
-            fixedDelayString = "${popularity.v1-scan-interval:1m}",
-            initialDelayString = "1m"
+            cron = "${popularity.baseline-scan-cron:0 0 1 * * *}",
+            zone = "Asia/Seoul"
     )
     public void runBaselineScan() {
         if (properties.baselineScanEnabled()) {

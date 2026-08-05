@@ -28,17 +28,13 @@ public class PopularityPolicyReader {
 
     private PopularityPolicy toPolicy(BoardPopularityPolicy policy) {
         return new PopularityPolicy(
-                policy.getPromotionScore(),
-                policy.getLikeGate(),
-                policy.getCommentGate()
+                policy.getPromotionScore()
         );
     }
 
     private PopularityPolicy defaultPolicy() {
         return new PopularityPolicy(
-                properties.defaultPromotionScore(),
-                properties.defaultLikeGate(),
-                properties.defaultCommentGate()
+                properties.defaultPromotionScore()
         );
     }
 }

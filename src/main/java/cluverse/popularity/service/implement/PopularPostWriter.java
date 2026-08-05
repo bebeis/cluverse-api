@@ -36,9 +36,7 @@ public class PopularPostWriter {
                 snapshot.createdAt().plus(properties.promotionWindow()),
                 score(snapshot),
                 trigger,
-                policy.promotionScore(),
-                policy.likeGate(),
-                policy.commentGate()
+                policy.promotionScore()
         );
     }
 
@@ -48,14 +46,12 @@ public class PopularPostWriter {
                 score(snapshot),
                 snapshot.likeCount(),
                 snapshot.commentCount(),
-                snapshot.viewCount(),
                 finalizedAt
         ) == 1;
     }
 
     private long score(PopularitySnapshot snapshot) {
-        return snapshot.likeCount() * properties.scoreLikeWeight()
-                + snapshot.commentCount() * properties.scoreCommentWeight()
-                + snapshot.viewCount() * properties.scoreViewWeight();
+        return new PopularityScore(properties.scoreLikeWeight(), properties.scoreCommentWeight())
+                .calculate(snapshot.likeCount(), snapshot.commentCount());
     }
 }

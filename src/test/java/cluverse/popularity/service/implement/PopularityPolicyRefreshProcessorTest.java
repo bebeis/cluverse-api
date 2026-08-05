@@ -61,10 +61,9 @@ class PopularityPolicyRefreshProcessorTest {
 
     private PopularityProperties properties() {
         return new PopularityProperties(
-                100L, 5, 3, 3, 2, 1,
+                100L, 3, 2,
                 Duration.ofHours(48), Duration.ofDays(7), 0.98, 100, 0.30,
-                Duration.ofMinutes(1), Duration.ofMinutes(1), false, 1_000,
-                Duration.ofSeconds(30), 500,
+                false, 1_000,
                 Duration.ofSeconds(30), 500,
                 false, ""
         );

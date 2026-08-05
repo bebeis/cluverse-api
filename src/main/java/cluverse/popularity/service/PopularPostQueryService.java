@@ -47,7 +47,6 @@ public class PopularPostQueryService {
                 summary.score(),
                 summary.likeCount(),
                 summary.commentCount(),
-                summary.viewCount(),
                 summary.promotedAt(),
                 summary.finalizedAt()
         );

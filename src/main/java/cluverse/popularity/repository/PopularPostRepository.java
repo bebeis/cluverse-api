@@ -18,11 +18,11 @@ public interface PopularPostRepository extends JpaRepository<PopularPost, Long> 
             INSERT INTO popular_post (
                 algorithm_version, post_id, board_id, promoted_at, finalize_at,
                 score_at_promotion, promotion_trigger, promotion_score_threshold,
-                like_gate_threshold, comment_gate_threshold, created_at, updated_at
+                created_at, updated_at
             ) VALUES (
                 :#{#version.name()}, :postId, :boardId, :promotedAt, :finalizeAt,
                 :scoreAtPromotion, :#{#trigger.name()}, :promotionScoreThreshold,
-                :likeGateThreshold, :commentGateThreshold, :promotedAt, :promotedAt
+                :promotedAt, :promotedAt
             )
             ON DUPLICATE KEY UPDATE post_id = :postId
             """, nativeQuery = true)
@@ -34,9 +34,7 @@ public interface PopularPostRepository extends JpaRepository<PopularPost, Long> 
             @Param("finalizeAt") LocalDateTime finalizeAt,
             @Param("scoreAtPromotion") long scoreAtPromotion,
             @Param("trigger") PopularityTrigger trigger,
-            @Param("promotionScoreThreshold") long promotionScoreThreshold,
-            @Param("likeGateThreshold") int likeGateThreshold,
-            @Param("commentGateThreshold") int commentGateThreshold
+            @Param("promotionScoreThreshold") long promotionScoreThreshold
     );
 
     @Query(value = """
@@ -71,7 +69,6 @@ public interface PopularPostRepository extends JpaRepository<PopularPost, Long> 
             set popularPost.score = :score,
                 popularPost.likeCount = :likeCount,
                 popularPost.commentCount = :commentCount,
-                popularPost.viewCount = :viewCount,
                 popularPost.finalizedAt = :finalizedAt
             where popularPost.id = :id
               and popularPost.finalizedAt is null
@@ -81,7 +78,6 @@ public interface PopularPostRepository extends JpaRepository<PopularPost, Long> 
             @Param("score") long score,
             @Param("likeCount") long likeCount,
             @Param("commentCount") long commentCount,
-            @Param("viewCount") long viewCount,
             @Param("finalizedAt") LocalDateTime finalizedAt
     );
 }

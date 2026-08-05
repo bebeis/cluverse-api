@@ -42,7 +42,7 @@ class PopularityPolicyBoardRefreshProcessorTest {
         // given
         PopularityProperties properties = properties(3, 0.5, 0.5);
         when(popularityQueryRepository.findPolicySamples(10L, SAMPLE_START, SAMPLE_END))
-                .thenReturn(List.of(sample(null, 1, 0, 10), sample(null, 2, 0, 20)));
+                .thenReturn(List.of(sample(null, 1, 0), sample(null, 2, 0)));
         when(boardPopularityPolicyRepository.findById(10L)).thenReturn(Optional.empty());
         PopularityPolicyBoardRefreshProcessor processor = processor(properties);
 
@@ -54,11 +54,9 @@ class PopularityPolicyBoardRefreshProcessorTest {
         verify(boardPopularityPolicyRepository).save(captor.capture());
         BoardPopularityPolicy saved = captor.getValue();
         assertThat(saved.getPromotionScore()).isEqualTo(100);
-        assertThat(saved.getLikeGate()).isEqualTo(5);
-        assertThat(saved.getCommentGate()).isEqualTo(3);
         assertThat(saved.getSampleSize()).isEqualTo(2);
         assertThat(saved.getPolicySource()).isEqualTo(PopularityPolicySource.DEFAULT);
-        verify(popularityPolicyCache).put(10L, new PopularityPolicy(100, 5, 3));
+        verify(popularityPolicyCache).put(10L, new PopularityPolicy(100));
     }
 
     @Test
@@ -85,12 +83,12 @@ class PopularityPolicyBoardRefreshProcessorTest {
         // given
         PopularityProperties properties = properties(3, 0.5, 0.5);
         BoardPopularityPolicy existing = BoardPopularityPolicy.create(
-                10L, 30, 3, 1, 10, PopularityPolicySource.DISTRIBUTION, SAMPLE_START
+                10L, 30, 10, PopularityPolicySource.DISTRIBUTION, SAMPLE_START
         );
         when(popularityQueryRepository.findPolicySamples(10L, SAMPLE_START, SAMPLE_END)).thenReturn(List.of(
-                sample(10L, 1, 0, 1_000),
-                sample(50L, 5, 2, 1_000),
-                sample(100L, 10, 4, 1_000)
+                sample(10L, 1, 0),
+                sample(50L, 5, 2),
+                sample(100L, 10, 4)
         ));
         when(boardPopularityPolicyRepository.findById(10L)).thenReturn(Optional.of(existing));
         PopularityPolicyBoardRefreshProcessor processor = processor(properties);
@@ -100,12 +98,10 @@ class PopularityPolicyBoardRefreshProcessorTest {
 
         // then
         assertThat(existing.getPromotionScore()).isEqualTo(40);
-        assertThat(existing.getLikeGate()).isEqualTo(4);
-        assertThat(existing.getCommentGate()).isEqualTo(2);
         assertThat(existing.getSampleSize()).isEqualTo(3);
         assertThat(existing.getPolicySource()).isEqualTo(PopularityPolicySource.DISTRIBUTION);
         verify(boardPopularityPolicyRepository).save(existing);
-        verify(popularityPolicyCache).put(10L, new PopularityPolicy(40, 4, 2));
+        verify(popularityPolicyCache).put(10L, new PopularityPolicy(40));
     }
 
     private PopularityPolicyBoardRefreshProcessor processor(PopularityProperties properties) {
@@ -117,16 +113,15 @@ class PopularityPolicyBoardRefreshProcessorTest {
         );
     }
 
-    private PopularityPolicySample sample(Long scoreAtPromotion, long likes, long comments, long views) {
-        return new PopularityPolicySample(scoreAtPromotion, likes, comments, views);
+    private PopularityPolicySample sample(Long scoreAtPromotion, long likes, long comments) {
+        return new PopularityPolicySample(scoreAtPromotion, likes, comments);
     }
 
     private PopularityProperties properties(int minSampleSize, double percentile, double smoothingRatio) {
         return new PopularityProperties(
-                100L, 5, 3, 3, 2, 1,
+                100L, 3, 2,
                 Duration.ofHours(48), Duration.ofDays(7), percentile, minSampleSize, smoothingRatio,
-                Duration.ofMinutes(1), Duration.ofMinutes(1), false, 1_000,
-                Duration.ofSeconds(30), 500,
+                false, 1_000,
                 Duration.ofSeconds(30), 500,
                 false, ""
         );
