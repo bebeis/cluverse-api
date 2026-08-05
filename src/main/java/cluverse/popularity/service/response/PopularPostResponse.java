@@ -9,7 +9,6 @@ public record PopularPostResponse(
         long score,
         long likeCount,
         long commentCount,
-        long viewCount,
         LocalDateTime promotedAt,
         LocalDateTime finalizedAt
 ) {
@@ -20,7 +19,6 @@ public record PopularPostResponse(
             long score,
             long likeCount,
             long commentCount,
-            long viewCount,
             LocalDateTime promotedAt,
             LocalDateTime finalizedAt
     ) {
@@ -31,7 +29,6 @@ public record PopularPostResponse(
                 score,
                 likeCount,
                 commentCount,
-                viewCount,
                 promotedAt,
                 finalizedAt
         );

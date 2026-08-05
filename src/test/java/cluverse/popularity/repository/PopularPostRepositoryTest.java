@@ -65,9 +65,7 @@ class PopularPostRepositoryTest {
                 NOW.plusHours(47),
                 120,
                 PopularityTrigger.MANUAL,
-                100,
-                5,
-                3
+                100
         );
     }
 }

@@ -1,7 +1,8 @@
 package cluverse.post.service;
 
 import cluverse.board.service.implement.BoardReader;
-import cluverse.meta.service.implement.PostMetaWriter;
+import cluverse.meta.service.implement.TotalViewCountCounter;
+import cluverse.meta.service.implement.ViewCountResult;
 import cluverse.post.domain.Post;
 import cluverse.post.service.implement.PostAccessReader;
 import cluverse.post.service.implement.PostCreationProcessor;
@@ -18,22 +19,17 @@ public class PostService {
     private final PostAccessReader postAccessReader;
     private final PostWriter postWriter;
     private final BoardReader boardReader;
-    private final PostMetaWriter postMetaWriter;
+    private final TotalViewCountCounter totalViewCountCounter;
     private final PostCreationProcessor postCreationProcessor;
 
     public Long createPost(Long memberId, PostCreateRequest request, String clientIp) {
         return postCreationProcessor.create(memberId, request, clientIp);
     }
 
-    public void increaseViewCount(Long memberId, Long postId) {
+    public ViewCountResult countView(Long memberId, Long postId, String cookieId) {
         Post post = postAccessReader.readOrThrow(postId);
         boardReader.validateReadable(memberId, post.getBoardId());
-        postMetaWriter.increaseViewCount(postId);
-    }
-
-    public void increaseViewCount(Long postId) {
-        postAccessReader.readOrThrow(postId);
-        postMetaWriter.increaseViewCount(postId);
+        return totalViewCountCounter.count(postId, cookieId);
     }
 
     public Long updatePost(Long memberId, Long postId, PostUpdateRequest request) {

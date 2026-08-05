@@ -66,7 +66,7 @@ public class PostQueryRepository {
                         post.isPinned,
                         post.isExternalVisible,
                         isMineExpression(memberId),
-                        postViewCount.viewCount.coalesce(0).longValue(),
+                        postViewCount.viewCount.coalesce(0L).longValue(),
                         postLikeCount.likeCount.coalesce(0).longValue(),
                         postCommentCount.commentCount.coalesce(0).longValue(),
                         postBookmarkCount.bookmarkCount.coalesce(0).longValue(),
@@ -124,7 +124,7 @@ public class PostQueryRepository {
                         post.isPinned,
                         post.isExternalVisible,
                         isMineExpression(memberId),
-                        postViewCount.viewCount.coalesce(0).longValue(),
+                        postViewCount.viewCount.coalesce(0L).longValue(),
                         postLikeCount.likeCount.coalesce(0).longValue(),
                         postCommentCount.commentCount.coalesce(0).longValue(),
                         postBookmarkCount.bookmarkCount.coalesce(0).longValue(),
@@ -176,7 +176,7 @@ public class PostQueryRepository {
                         post.isPinned,
                         post.isExternalVisible,
                         isMineExpression(memberId),
-                        postViewCount.viewCount.coalesce(0).longValue(),
+                        postViewCount.viewCount.coalesce(0L).longValue(),
                         postLikeCount.likeCount.coalesce(0).longValue(),
                         postCommentCount.commentCount.coalesce(0).longValue(),
                         postBookmarkCount.bookmarkCount.coalesce(0).longValue(),
@@ -213,7 +213,7 @@ public class PostQueryRepository {
 
     private OrderSpecifier<?>[] resolveOffsetOrderSpecifiers(PostSortType sortType) {
         return switch (sortType) {
-            case VIEW_COUNT -> new OrderSpecifier<?>[]{postViewCount.viewCount.coalesce(0).desc(), post.id.desc()};
+            case VIEW_COUNT -> new OrderSpecifier<?>[]{postViewCount.viewCount.coalesce(0L).desc(), post.id.desc()};
             case LATEST -> new OrderSpecifier<?>[]{post.createdAt.desc(), post.id.desc()};
         };
     }

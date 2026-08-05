@@ -7,7 +7,6 @@ public record PopularitySnapshot(
         Long boardId,
         LocalDateTime createdAt,
         long likeCount,
-        long commentCount,
-        long viewCount
+        long commentCount
 ) {
 }

@@ -1,14 +1,11 @@
 package cluverse.meta.repository;
 
 import cluverse.meta.repository.dto.ViewCountDelta;
+import cluverse.meta.repository.dto.ViewCountSnapshot;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.List;
-import java.util.OptionalLong;
 
 @RequiredArgsConstructor
 public class PostViewCountRepositoryImpl implements PostViewCountRepositoryCustom {
@@ -18,31 +15,11 @@ public class PostViewCountRepositoryImpl implements PostViewCountRepositoryCusto
 
     private final JdbcTemplate jdbcTemplate;
 
-    // LAST_INSERT_ID(expr)는 커넥션 단위 값 — UPDATE와 SELECT를 같은 커넥션에서 실행해야 한다
-    @Override
-    public OptionalLong increaseAndGet(Long postId) {
-        return jdbcTemplate.execute((ConnectionCallback<OptionalLong>) connection -> {
-            try (PreparedStatement update = connection.prepareStatement("""
-                    UPDATE post_view_count
-                    SET view_count = LAST_INSERT_ID(view_count + 1),
-                        updated_at = NOW()
-                    WHERE post_id = ?
-                    """)) {
-                update.setLong(1, postId);
-                if (update.executeUpdate() == 0) {
-                    return OptionalLong.empty();
-                }
-            }
-            try (PreparedStatement select = connection.prepareStatement("SELECT LAST_INSERT_ID()");
-                 ResultSet resultSet = select.executeQuery()) {
-                resultSet.next();
-                return OptionalLong.of(resultSet.getLong(1));
-            }
-        });
-    }
-
     @Override
     public void increaseByDeltas(List<ViewCountDelta> deltas) {
+        if (deltas.isEmpty()) {
+            return;
+        }
         jdbcTemplate.batchUpdate(
                 "UPDATE post_view_count SET view_count = view_count + ?, updated_at = NOW() WHERE post_id = ?",
                 deltas,
@@ -50,6 +27,26 @@ public class PostViewCountRepositoryImpl implements PostViewCountRepositoryCusto
                 (statement, delta) -> {
                     statement.setLong(1, delta.delta());
                     statement.setLong(2, delta.postId());
+                }
+        );
+    }
+
+    @Override
+    public void checkpointViewCounts(List<ViewCountSnapshot> snapshots) {
+        if (snapshots.isEmpty()) {
+            return;
+        }
+        jdbcTemplate.batchUpdate(
+                """
+                UPDATE post_view_count
+                SET view_count = GREATEST(view_count, ?), updated_at = NOW()
+                WHERE post_id = ?
+                """,
+                snapshots,
+                Math.min(snapshots.size(), MAX_BATCH_SIZE),
+                (statement, snapshot) -> {
+                    statement.setLong(1, snapshot.viewCount());
+                    statement.setLong(2, snapshot.postId());
                 }
         );
     }

@@ -115,13 +115,14 @@ include::{snippets}/posts/read-post/path-parameters.adoc[]
 include::{snippets}/posts/read-post/http-response.adoc[]
 include::{snippets}/posts/read-post/response-fields.adoc[]
 
-=== 게시글 조회수 증가 (V1~V3)
+=== 게시글 조회수 증가 (V1~V4)
 
-게시글 조회수 증가는 동시성 제어 전략을 비교 측정하기 위해 V1~V3 세 가지 버전으로 제공된다.
+게시글 조회수 집계 구조를 같은 배포 환경에서 비교 측정하기 위해 V1~V4 네 가지 버전으로 제공된다.
 
-- V1 (`/api/v1/posts/{postId}/view-count`): 낙관적 락 (@Version + 재시도)
-- V2 (`/api/v2/posts/{postId}/view-count`): 비관적 락 (select for update)
-- V3 (`/api/v3/posts/{postId}/view-count`): 원자적 UPDATE (운영 방식)
+- V1 (`/api/v1/posts/{postId}/view-count`): 요청마다 MySQL 원자적 UPDATE
+- V2 (`/api/v2/posts/{postId}/view-count`): Redis 시간 기반 증분과 주기 flush
+- V3 (`/api/v3/posts/{postId}/view-count`): Redis 기준치 기반 증분과 write-back
+- V4 (`/api/v4/posts/{postId}/view-count`): Redis 전체 조회수 카운터와 MySQL 체크포인트
 
 ==== 조회수 증가 (V1) 요청
 
@@ -152,6 +153,16 @@ include::{snippets}/posts/increase-view-count-v3/path-parameters.adoc[]
 
 include::{snippets}/posts/increase-view-count-v3/http-response.adoc[]
 include::{snippets}/posts/increase-view-count-v3/response-fields.adoc[]
+
+==== 조회수 증가 (V4) 요청
+
+include::{snippets}/posts/increase-view-count-v4/http-request.adoc[]
+include::{snippets}/posts/increase-view-count-v4/path-parameters.adoc[]
+
+==== 조회수 증가 (V4) 응답
+
+include::{snippets}/posts/increase-view-count-v4/http-response.adoc[]
+include::{snippets}/posts/increase-view-count-v4/response-fields.adoc[]
 
 === 게시글 수정
 

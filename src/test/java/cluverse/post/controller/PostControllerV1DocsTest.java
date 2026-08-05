@@ -3,6 +3,8 @@ package cluverse.post.controller;
 import cluverse.common.auth.LoginMember;
 import cluverse.docs.RestDocsSupport;
 import cluverse.member.domain.MemberRole;
+import cluverse.meta.service.implement.ViewCountResult;
+import cluverse.meta.service.implement.ViewCountSource;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.service.PostListQueryServiceV1;
 import cluverse.post.service.PostService;
@@ -39,10 +41,11 @@ class PostControllerV1DocsTest extends RestDocsSupport {
     private final PostQueryService postQueryService = mock(PostQueryService.class);
     private final PostListQueryServiceV1 postListQueryServiceV1 = mock(PostListQueryServiceV1.class);
     private final PostService postService = mock(PostService.class);
+    private final ViewCountCookieResolver viewCountCookieResolver = mock(ViewCountCookieResolver.class);
 
     @Override
     protected Object initController() {
-        return new PostControllerV1(postQueryService, postListQueryServiceV1, postService);
+        return new PostControllerV1(postQueryService, postListQueryServiceV1, postService, viewCountCookieResolver);
     }
 
     @Test
@@ -326,7 +329,9 @@ class PostControllerV1DocsTest extends RestDocsSupport {
 
     @Test
     void 게시글_상세_조회() throws Exception {
-        doNothing().when(postService).increaseViewCount(1L, 10L);
+        when(viewCountCookieResolver.resolve(any(), any())).thenReturn("cookie-1");
+        when(postService.countView(1L, 10L, "cookie-1"))
+                .thenReturn(new ViewCountResult(121L, true, ViewCountSource.REDIS_TOTAL));
         when(postQueryService.readPost(1L, 10L)).thenReturn(createPostDetailResponse());
 
         mockMvc.perform(get("/api/v1/posts/{postId}", 10L)
@@ -367,7 +372,7 @@ class PostControllerV1DocsTest extends RestDocsSupport {
                         )
                 ));
 
-        verify(postService).increaseViewCount(1L, 10L);
+        verify(postService).countView(1L, 10L, "cookie-1");
         verify(postQueryService).readPost(1L, 10L);
     }
 

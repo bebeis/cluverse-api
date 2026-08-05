@@ -20,7 +20,6 @@ class PopularityPropertiesTest {
 
             assertThat(properties.promotionWindow()).isEqualTo(Duration.ofHours(48));
             assertThat(properties.policySampleWindow()).isEqualTo(Duration.ofDays(7));
-            assertThat(properties.candidateRecheckInterval()).isEqualTo(Duration.ofSeconds(30));
             assertThat(properties.finalizationInterval()).isEqualTo(Duration.ofSeconds(30));
             assertThat(properties.baselineScanEnabled()).isFalse();
             assertThat(properties.experimentEndpointsEnabled()).isFalse();

@@ -40,7 +40,6 @@ public class PopularPostReader {
                         summary.score(),
                         summary.likeCount(),
                         summary.commentCount(),
-                        summary.viewCount(),
                         summary.promotedAt(),
                         summary.finalizedAt()
                 ))

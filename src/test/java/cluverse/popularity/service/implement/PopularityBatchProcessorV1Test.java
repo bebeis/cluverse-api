@@ -60,15 +60,14 @@ class PopularityBatchProcessorV1Test {
     }
 
     private PopularitySnapshot snapshot(Long postId, LocalDateTime createdAt) {
-        return new PopularitySnapshot(postId, 10L, createdAt, 5, 3, 100);
+        return new PopularitySnapshot(postId, 10L, createdAt, 5, 3);
     }
 
     private PopularityProperties properties(int scanChunkSize) {
         return new PopularityProperties(
-                100L, 5, 3, 3, 2, 1,
+                100L, 3, 2,
                 Duration.ofHours(48), Duration.ofDays(7), 0.98, 100, 0.30,
-                Duration.ofMinutes(1), Duration.ofMinutes(1), false, scanChunkSize,
-                Duration.ofSeconds(30), 500,
+                false, scanChunkSize,
                 Duration.ofSeconds(30), 500,
                 false, ""
         );

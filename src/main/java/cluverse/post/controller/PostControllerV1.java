@@ -14,6 +14,7 @@ import cluverse.post.service.response.PostDetailResponse;
 import cluverse.post.service.response.PostPageResponse;
 import cluverse.post.service.response.PostTitleResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,7 @@ public class PostControllerV1 {
     private final PostQueryService postQueryService;
     private final PostListQueryServiceV1 postListQueryServiceV1;
     private final PostService postService;
+    private final ViewCountCookieResolver viewCountCookieResolver;
 
     /**
      * [V1] 인덱스만 건 원본(naive offset) 목록 조회. 성능 비교 기준(baseline).
@@ -77,10 +79,13 @@ public class PostControllerV1 {
 
     @GetMapping("/{postId}")
     public ApiResponse<PostDetailResponse> readPost(@Login LoginMember loginMember,
-                                                    @PathVariable Long postId) {
+                                                    @PathVariable Long postId,
+                                                    HttpServletRequest request,
+                                                    HttpServletResponse response) {
         Long memberId = extractMemberId(loginMember);
-        postService.increaseViewCount(memberId, postId);
-        return ApiResponse.ok(postQueryService.readPost(memberId, postId));
+        String cookieId = viewCountCookieResolver.resolve(request, response);
+        long currentViewCount = postService.countView(memberId, postId, cookieId).viewCount();
+        return ApiResponse.ok(postQueryService.readPost(memberId, postId).withViewCount(currentViewCount));
     }
 
     @PutMapping("/{postId}")

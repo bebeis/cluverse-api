@@ -326,7 +326,7 @@ public class FeedQueryRepository {
                         likedExpression,
                         bookmarkedExpression,
                         Expressions.asBoolean(false),
-                        ExpressionUtils.as(postViewCount.viewCount.coalesce(0).longValue(), VIEW_COUNT),
+                        ExpressionUtils.as(postViewCount.viewCount.coalesce(0L).longValue(), VIEW_COUNT),
                         ExpressionUtils.as(postLikeCount.likeCount.coalesce(0).longValue(), LIKE_COUNT),
                         ExpressionUtils.as(postCommentCount.commentCount.coalesce(0).longValue(), COMMENT_COUNT),
                         ExpressionUtils.as(postBookmarkCount.bookmarkCount.coalesce(0).longValue(), BOOKMARK_COUNT),
@@ -588,7 +588,7 @@ public class FeedQueryRepository {
         return postLikeCount.likeCount.coalesce(0).longValue().multiply(5L)
                 .add(postCommentCount.commentCount.coalesce(0).longValue().multiply(4L))
                 .add(postBookmarkCount.bookmarkCount.coalesce(0).longValue().multiply(3L))
-                .add(postViewCount.viewCount.coalesce(0).longValue());
+                .add(postViewCount.viewCount.coalesce(0L).longValue());
     }
 
     private OrderSpecifier<?>[] resolveBookmarkedOrderSpecifiers(BookmarkedPostSortType sortType) {

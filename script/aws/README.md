@@ -18,7 +18,7 @@
 ```bash
 script/aws/up.sh            # 딸깍 — 기본으로 view-count 시드까지 적재 (post-list 측정도 커버)
 script/aws/tunnel.sh start  # Grafana http://localhost:3000
-# … k6 측정 (script/post-list/README.md, script/view-count/README.md, script/view-surge/README.md) …
+# … k6 측정 (script/post-list/README.md, script/view-count/README.md, script/popularity/README.md) …
 script/aws/down.sh          # 딸깍 — 시간당 과금 전부 정지
 ```
 

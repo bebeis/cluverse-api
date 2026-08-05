@@ -50,16 +50,12 @@ public class PopularityPolicyBoardRefreshProcessor {
                 .orElseGet(() -> BoardPopularityPolicy.create(
                         boardId,
                         smoothed.promotionScore(),
-                        smoothed.likeGate(),
-                        smoothed.commentGate(),
                         samples.size(),
                         source,
                         computedAt
                 ));
         entity.replace(
                 smoothed.promotionScore(),
-                smoothed.likeGate(),
-                smoothed.commentGate(),
                 samples.size(),
                 source,
                 computedAt
@@ -74,9 +70,7 @@ public class PopularityPolicyBoardRefreshProcessor {
 
     private PopularityPolicy percentilePolicy(List<PopularityPolicySample> samples) {
         return new PopularityPolicy(
-                percentile(samples.stream().map(this::resolveSampleScore).toList()),
-                Math.toIntExact(percentile(samples.stream().map(PopularityPolicySample::likeCount).toList())),
-                Math.toIntExact(percentile(samples.stream().map(PopularityPolicySample::commentCount).toList()))
+                percentile(samples.stream().map(this::resolveSampleScore).toList())
         );
     }
 
@@ -84,9 +78,8 @@ public class PopularityPolicyBoardRefreshProcessor {
         if (sample.scoreAtPromotion() != null) {
             return sample.scoreAtPromotion();
         }
-        return sample.likeCount() * properties.scoreLikeWeight()
-                + sample.commentCount() * properties.scoreCommentWeight()
-                + sample.viewCount() * properties.scoreViewWeight();
+        return new PopularityScore(properties.scoreLikeWeight(), properties.scoreCommentWeight())
+                .calculate(sample.likeCount(), sample.commentCount());
     }
 
     private long percentile(List<Long> values) {
@@ -101,17 +94,13 @@ public class PopularityPolicyBoardRefreshProcessor {
     private PopularityPolicy smooth(BoardPopularityPolicy old, PopularityPolicy calculated) {
         double ratio = properties.policySmoothingRatio();
         return new PopularityPolicy(
-                Math.round(old.getPromotionScore() * (1 - ratio) + calculated.promotionScore() * ratio),
-                (int) Math.round(old.getLikeGate() * (1 - ratio) + calculated.likeGate() * ratio),
-                (int) Math.round(old.getCommentGate() * (1 - ratio) + calculated.commentGate() * ratio)
+                Math.round(old.getPromotionScore() * (1 - ratio) + calculated.promotionScore() * ratio)
         );
     }
 
     private PopularityPolicy defaultPolicy() {
         return new PopularityPolicy(
-                properties.defaultPromotionScore(),
-                properties.defaultLikeGate(),
-                properties.defaultCommentGate()
+                properties.defaultPromotionScore()
         );
     }
 }

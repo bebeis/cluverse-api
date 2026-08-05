@@ -1,0 +1,6 @@
+run,version,workload,requests,achieved_rps,p95_ms,p99_ms,failure_rate
+run-v1-a,v1,hot,6000,100,20,40,0
+run-v1-b,v1,hot,5940,99,22,42,0
+run-v2-a,v2,hot,12000,200,10,20,0
+run-v3-a,v3,hot,15000,250,8,16,0
+run-v4-a,v4,hot,18000,300,5,10,0

@@ -22,7 +22,7 @@ class PostViewCountRepositoryTest {
         assertThat(postViewCountRepository.findById(10L))
                 .get()
                 .extracting(PostViewCount::getViewCount)
-                .isEqualTo(0);
+                .isEqualTo(0L);
     }
 
     @Test
@@ -38,18 +38,6 @@ class PostViewCountRepositoryTest {
         assertThat(postViewCountRepository.findById(10L))
                 .get()
                 .extracting(PostViewCount::getViewCount)
-                .isEqualTo(1);
-    }
-
-    @Test
-    void 게시글_ID로_조회수_레코드를_배타_락으로_조회할_수_있다() {
-        // given
-        postViewCountRepository.save(PostViewCount.of(10L, 0));
-
-        // when // then
-        assertThat(postViewCountRepository.findByPostIdForUpdate(10L))
-                .get()
-                .extracting(PostViewCount::getViewCount)
-                .isEqualTo(0);
+                .isEqualTo(1L);
     }
 }

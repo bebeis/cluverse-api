@@ -20,14 +20,14 @@ public class PostViewCount extends BaseTimeEntity {
     private Long postId;
 
     @Column(nullable = false)
-    private int viewCount;
+    private long viewCount;
 
-    private PostViewCount(Long postId, int viewCount) {
+    private PostViewCount(Long postId, long viewCount) {
         this.postId = postId;
         this.viewCount = viewCount;
     }
 
-    public static PostViewCount of(Long postId, int viewCount) {
+    public static PostViewCount of(Long postId, long viewCount) {
         return new PostViewCount(postId, viewCount);
     }
 

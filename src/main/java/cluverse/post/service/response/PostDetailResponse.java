@@ -59,4 +59,27 @@ public record PostDetailResponse(
                 post.updatedAt()
         );
     }
+
+    public PostDetailResponse withViewCount(long currentViewCount) {
+        return new PostDetailResponse(
+                postId,
+                boardId,
+                board,
+                category,
+                title,
+                content,
+                tags,
+                imageUrls,
+                isAnonymous,
+                isPinned,
+                isExternalVisible,
+                currentViewCount,
+                likeCount,
+                commentCount,
+                bookmarkCount,
+                author,
+                createdAt,
+                updatedAt
+        );
+    }
 }

@@ -19,16 +19,17 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 
-EXPERIMENTS = ("popularity", "view-surge", "local-map", "comment-pagination", "home-feed")
+EXPERIMENTS = ("popularity", "view-count", "local-map", "comment-pagination", "home-feed")
 TREND_METRICS = {
     "popularity": (
+        "popularity_evaluation_duration",
         "popularity_request_duration",
         "popularity_lifecycle_check_duration",
         "popularity_lifecycle_recent_duration",
         "popularity_first_visibility_delay",
         "http_req_duration",
     ),
-    "view-surge": ("view_count_duration", "hot_duration", "http_req_duration"),
+    "view-count": ("view_count_duration", "http_req_duration"),
     "local-map": ("local_map_write_duration", "http_req_duration"),
     "comment-pagination": (
         "comment_api_duration",
@@ -44,7 +45,7 @@ TREND_METRICS = {
 }
 SUCCESS_METRICS = {
     "popularity": ("popularity_request_success_rate", "popularity_lifecycle_check_success_rate"),
-    "view-surge": ("view_count_success_rate", "hot_success_rate"),
+    "view-count": (),
     "local-map": ("local_map_write_success",),
     "comment-pagination": ("comment_request_success", "comment_write_success", "comment_page_equivalence"),
     "home-feed": (
@@ -107,7 +108,7 @@ class Measurement:
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="인기글·조회수 급상승·로컬맵·댓글 페이지·홈 피드 JSON/CSV를 모아 matplotlib 그래프를 생성합니다."
+        description="인기글·조회수·로컬맵·댓글 페이지·홈 피드 JSON/CSV를 모아 matplotlib 그래프를 생성합니다."
     )
     parser.add_argument("--input", action="append", required=True, help="입력 파일 또는 디렉터리(반복 가능)")
     parser.add_argument("--output-dir", default="script/measurements/results/latest")
@@ -199,6 +200,19 @@ def infer_run_kind(path: Path) -> str:
     return ""
 
 
+def infer_workload(path: Path) -> str:
+    lowered = path.stem.lower()
+    for workload in ("hot", "distributed"):
+        if workload in lowered:
+            return f"workload={workload}"
+    return ""
+
+
+def metric_values(metric_data: dict) -> dict:
+    nested = metric_data.get("values")
+    return nested if isinstance(nested, dict) else metric_data
+
+
 def measurement(
     *,
     path: Path,
@@ -235,7 +249,7 @@ def extract_k6_summary(path: Path, experiment_override: str | None, version_over
         raise ValueError(f"k6 summary JSON의 metrics가 없습니다: {path}")
     experiment = infer_experiment(path, experiment_override)
     version = infer_version(path, payload, version_override)
-    base_scenario = combine_scenario(option_scenario(payload), infer_run_kind(path))
+    base_scenario = combine_scenario(option_scenario(payload), infer_run_kind(path), infer_workload(path))
     rows: list[Measurement] = []
 
     preferred = TREND_METRICS[experiment]
@@ -248,7 +262,7 @@ def extract_k6_summary(path: Path, experiment_override: str | None, version_over
             base_name, metric_scenario = parse_tagged_metric(name)
             if base_name not in chosen_trends:
                 continue
-            values = metric_data.get("values", {})
+            values = metric_values(metric_data)
             for stat in ("avg", "med", "p(90)", "p(95)", "p(99)", "max"):
                 if stat in values:
                     rows.append(measurement(
@@ -265,7 +279,13 @@ def extract_k6_summary(path: Path, experiment_override: str | None, version_over
 
     append_k6_scalar(rows, path, experiment, version, base_scenario, metrics, "http_reqs", "rate",
                      "throughput", "rate", "req/s")
-    append_k6_scalar(rows, path, experiment, version, base_scenario, metrics, "http_req_failed", "rate",
+    failure_metric = {
+        "popularity": "popularity_failures",
+        "view-count": "view_count_failures",
+    }.get(experiment, "http_req_failed")
+    if failure_metric not in metrics:
+        failure_metric = "http_req_failed"
+    append_k6_scalar(rows, path, experiment, version, base_scenario, metrics, failure_metric, "rate",
                      "failure_rate", "rate", "%", multiplier=100)
     append_k6_scalar(rows, path, experiment, version, base_scenario, metrics, "dropped_iterations", "count",
                      "dropped_iterations", "count", "count")
@@ -295,7 +315,10 @@ def append_k6_scalar(
     metric_data = metrics.get(source_metric)
     if not isinstance(metric_data, dict):
         return
-    value = metric_data.get("values", {}).get(source_stat)
+    values = metric_values(metric_data)
+    value = values.get(source_stat)
+    if value is None and source_stat == "rate":
+        value = values.get("value")
     if value is None:
         return
     rows.append(measurement(
