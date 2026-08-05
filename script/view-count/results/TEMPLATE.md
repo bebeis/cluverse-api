@@ -11,7 +11,7 @@
 | Git 커밋 | `<git rev-parse --short HEAD>` |
 | 앱 인프라 사양 | ECS on EC2 t3.small ×N / (또는 로컬 <CPU/RAM>) |
 | DB 인프라 사양 | MySQL EC2 t3.small / (또는 로컬) |
-| 시드 규모 | post <100만 / 800만> 건 (05a / 05a+05b), 05c 적재 여부 |
+| 시드 규모 | post <100만 / 800만> 건 (05a / 05a+05b), 조회수 Redis 초기화 여부 |
 | MySQL 버전 | 8.x.x |
 | innodb_buffer_pool_size | <예: 1G> |
 | HikariCP maximumPoolSize | <예: 10> — 핫 레코드 락 대기 시 커넥션 적체와 직결 |

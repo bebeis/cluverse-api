@@ -16,7 +16,7 @@
 ## 일상 사이클
 
 ```bash
-script/aws/up.sh            # 딸깍 — 기본으로 view-count 시드까지 적재 (post-list 측정도 커버)
+script/aws/up.sh            # 딸깍 — 조회수·인기글 비교 시드까지 적재 (post-list 측정도 커버)
 script/aws/tunnel.sh start  # Grafana http://localhost:3000
 # … k6 측정 (script/post-list/README.md, script/view-count/README.md, script/popularity/README.md) …
 script/aws/down.sh          # 딸깍 — 시간당 과금 전부 정지
@@ -28,6 +28,9 @@ script/aws/down.sh          # 딸깍 — 시간당 과금 전부 정지
   이미 SSM 값이 준비되어 로컬 `.env`를 사용하지 않을 때만 `--skip-secret-sync`를 사용한다.
 - 시딩은 **bastion에서 nohup으로** 돌아가므로 로컬이 끊겨도 계속됩니다.
   진행 확인: `seed.sh --follow`, 재적재: `seed.sh view-count --wait`
+- `view-count`와 `full` 프로파일은 MySQL 대량 시드 뒤 인기글 비교 fixture를 적재한다. 적재 전에는
+  조회수 실험용 Redis 키만 `SCAN + UNLINK`로 제거하며 다른 Redis 키는 보존한다.
+- 실제 AWS 작업 없이 대상 SQL과 Redis prefix를 확인하려면 `seed.sh view-count --dry-run`을 사용한다.
 - 변수 입력은 필요 없습니다. `terraform/test/secrets.auto.tfvars`(gitignore)를 up.sh가 관리합니다
   — `db_password`는 최초 1회 자동 생성 후 유지, `my_ip`는 실행 시마다 현재 공인 IP로 갱신,
   `ssh_public_key`는 리포 루트의 `cluverse-key.pub`.

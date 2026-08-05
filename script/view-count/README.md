@@ -44,6 +44,14 @@ done
 
 각 실행은 `results/raw/`에 k6 summary JSON과 캡처용 HTML 대시보드를 만든다. `collect_results.py`가 `results/metrics.csv`에 한 행을 추가한다.
 
+AWS 측정 환경은 `script/aws/seed.sh view-count --wait`가 MySQL 시드를 다시 적재하고 조회수
+실험용 Redis 키를 초기화한다. 로컬이나 이미 열린 Redis 터널에서 Redis 상태만 초기화할 때는
+다음 명령을 사용한다. `FLUSHDB`가 아니라 V2~V4 전용 prefix만 제거한다.
+
+```bash
+script/view-count/reset_redis.sh
+```
+
 ## Redis 상태 캡처
 
 부하 직전과 직후에 같은 명령을 실행한다.

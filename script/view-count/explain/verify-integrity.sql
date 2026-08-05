@@ -14,20 +14,13 @@
 --   @post_id : fixed 모드 대상 게시글 (기본 5999999)
 --
 -- [확인 포인트]
---   * V1(낙관): version 도 함께 뜬다. version 증가량 == view_count 증가량이며,
---     "재시도 끝에 성공한 요청"까지 포함된 총 커밋 횟수다.
---     k6 의 재시도 소진(500) 요청은 증가분에 포함되지 않아야 맞다.
---   * V2/V3: post_view_count 는 두 버전이 공유하므로, 버전을 바꿔 측정할 때마다
---     전/후 스냅샷을 새로 떠야 한다.
+--   * V1~V4는 post_view_count를 공유하므로 버전을 바꿔 측정할 때마다 전/후
+--     스냅샷을 새로 떠야 한다.
+--   * V2/V3 flush와 V4 checkpoint가 끝난 뒤의 MySQL 값을 비교한다.
 -- ---------------------------------------------------------------------------
 SET @post_id = 5999999;
 
--- V1 (낙관적 락) — post_view_count_optimistic
-SELECT post_id, view_count, version, updated_at
-FROM post_view_count_optimistic
-WHERE post_id = @post_id;
-
--- V2 / V3 (비관적 락 / 원자적 UPDATE) — post_view_count 공유
+-- V1~V4 — post_view_count 공유
 SELECT post_id, view_count, updated_at
 FROM post_view_count
 WHERE post_id = @post_id;

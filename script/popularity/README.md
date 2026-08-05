@@ -27,6 +27,9 @@ mysql -h127.0.0.1 -ucluverse_user -p cluverse_v2 < script/popularity/seed/fixtur
 
 fixture는 전역 기준 100인 V1에서는 바쁜 게시판의 글만, 게시판별 기준을 사용하는 V2에서는 조용한 게시판의 점수 21짜리 글도 승격되도록 구성되어 있다. 조회수는 입력 데이터에 포함되지 않는다.
 
+AWS 측정 환경에서는 `script/aws/seed.sh view-count --wait`와 `full` 프로파일이 이 fixture를
+대량 게시글 시드 뒤에 자동으로 적재한다. 위 MySQL 명령은 로컬 실행 또는 fixture만 다시 맞출 때 사용한다.
+
 ## 실행
 
 ```bash

@@ -6,7 +6,7 @@
 # 사용법:
 #   script/aws/up.sh                     # 기본: --seed view-count (post-list 측정까지 커버)
 #   script/aws/up.sh --seed post-list    # 01~05a
-#   script/aws/up.sh --seed view-count   # 01~05a + 05c
+#   script/aws/up.sh --seed view-count   # 01~05a + 인기글 fixture + 조회수 Redis 초기화
 #   script/aws/up.sh --seed full         # + 06~08 (댓글 300만 — 오래 걸림)
 #   script/aws/up.sh --seed none         # 시드 생략
 #   script/aws/up.sh --8m                # 핫보드 +700만(05b)도 적재

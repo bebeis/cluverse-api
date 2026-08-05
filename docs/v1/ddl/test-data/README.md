@@ -24,7 +24,6 @@ MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
 - `05_post_seed.sql`
 - `05a_popular_board_post_seed.sql`
 - `05b_popular_board_post_seed_8m.sql`
-- `05c_view_count_optimistic_seed.sql` - 낙관적 락 조회수 실험 테이블(post_view_count_optimistic) 사전 적재
 - `05d_post_seed_30m.sql` - 일반 게시판(2000001~2000120)에 1,600만 건 추가 → post_id 상한 3,000만
 - `06_comment_seed.sql`
 - `07_follow_seed.sql`
@@ -41,10 +40,9 @@ MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
 6. `05a_popular_board_post_seed.sql` (선택)
 7. `05b_popular_board_post_seed_8m.sql` (선택, `05a` 이후)
 8. `05d_post_seed_30m.sql` (선택, `05` 이후 — `05a`/`05b`와는 순서 무관)
-9. `05c_view_count_optimistic_seed.sql` (선택, 조회수 부하테스트 시 필수 — 05 계열 마지막에)
-10. `06_comment_seed.sql`
-11. `07_follow_seed.sql`
-12. `08_block_seed.sql`
+9. `06_comment_seed.sql`
+10. `07_follow_seed.sql`
+11. `08_block_seed.sql`
 
 실서비스형 샘플이 필요하면 대량 데이터 스크립트 대신 `09_realistic_korean_seed.sql`만 단독 실행해도 됩니다.
 
@@ -70,7 +68,6 @@ MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
 - `comment`는 `post`, `member`를 참조하므로 `post` 이후에 실행해야 합니다.
 - `follow`, `block`은 `member`만 참조하므로 `member` 이후면 어느 시점에 실행해도 됩니다.
 - `05d_post_seed_30m.sql`은 `05_post_seed.sql`이 만든 일반 게시판(`2000001`~`2000120`)에 글만 덧붙이므로 `05` 이후여야 하고, `05a`/`05b`와는 board·post_id 범위가 겹치지 않아 순서를 따지지 않습니다.
-- `05c_view_count_optimistic_seed.sql`은 `post_view_count`를 그대로 복제하므로 05 계열(05/05a/05b/05d) 중 사용할 시드를 모두 넣은 뒤에 실행해야 합니다. 사전 적재 없이 조회수 V1(낙관적 락) 부하테스트를 돌리면 첫 요청마다 insert 경합이 발생해 측정이 왜곡됩니다.
 
 ## 재실행 주의사항
 
@@ -78,7 +75,6 @@ MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
 - 예를 들어 `05_post_seed.sql`을 다시 실행했다면 `06_comment_seed.sql`도 다시 실행해야 합니다.
 - `05a_popular_board_post_seed.sql`을 다시 실행하는 경우에는 `06_comment_seed.sql` 재실행이 필수는 아니지만, 인기 게시판 글에도 댓글 데이터를 붙일 계획이라면 별도 후속 스크립트가 필요합니다.
 - `05b_popular_board_post_seed_8m.sql`은 `05a_popular_board_post_seed.sql`이 만든 인기 게시판을 전제로 하므로, `05a`를 다시 실행했다면 `05b`도 다시 실행하는 편이 안전합니다.
-- `05d_post_seed_30m.sql`을 새로 넣거나 다시 실행했다면 **`05c_view_count_optimistic_seed.sql`을 반드시 다시 실행**해야 합니다. `05c`는 `post_view_count` 전체를 복제하는 방식이라, 05d 이후에 다시 돌리지 않으면 `post_view_count_optimistic`에 1,600만 건이 비어 조회수 V1(낙관적 락) 측정이 첫 요청마다 insert 경합에 걸립니다. 반대로 05c를 먼저 돌린 뒤 05d를 넣으면 삭제된 범위의 optimistic 행이 남을 수 있습니다.
 - 같은 이유로 `02_member_seed.sql`을 다시 실행했다면 `03_major_seed.sql`, `04_interest_seed.sql`, `05_post_seed.sql`, `05a_popular_board_post_seed.sql`, `05b_popular_board_post_seed_8m.sql`, `06_comment_seed.sql`, `07_follow_seed.sql`, `08_block_seed.sql`도 다시 실행하는 것이 안전합니다.
 
 ## ID 범위

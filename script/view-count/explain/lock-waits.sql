@@ -10,12 +10,9 @@
 --   3) 부하 종료 후: 누적 카운터를 다시 실행해 델타 계산 → results 표에 기록
 --
 -- [확인 포인트 — 버전별 예상 관찰]
---   * V1(낙관): 락 대기가 거의 없다. 경합은 대기가 아니라 "0 row UPDATE → 재시도"로
---               나타나므로 이 파일 대신 k6 재시도 메트릭과 version 증가량으로 관찰.
---   * V2(비관): fixed 모드 부하 중 data_lock_waits 에 다수 행이 잡히고,
---               Innodb_row_lock_time 델타가 크다. (락 보유 = select~commit 구간)
---   * V3(원자): 같은 RATE 에서 대기 행이 거의 잡히지 않고 델타도 작다.
---               (락 보유 = UPDATE 문장 실행 순간뿐)
+--   * V1: 요청마다 같은 PK를 UPDATE하므로 핫 게시글에서 행 락 대기가 집중된다.
+--   * V2/V3: 요청 경로는 Redis를 사용하고, flush 시점에만 짧은 UPDATE가 관찰된다.
+--   * V4: checkpoint 시점에만 GREATEST 기반 UPDATE가 관찰된다.
 -- ---------------------------------------------------------------------------
 
 -- [1] 지금 이 순간의 락 대기 체인 (누가 누구를 기다리는가)
@@ -37,7 +34,7 @@ SELECT
     LOCK_STATUS,
     LOCK_DATA
 FROM performance_schema.data_locks
-WHERE OBJECT_NAME IN ('post_view_count', 'post_view_count_optimistic');
+WHERE OBJECT_NAME = 'post_view_count';
 
 -- [4] 누적 카운터 (부하 전/후로 실행해 델타를 계산한다)
 --   Innodb_row_lock_waits       : 락 대기가 발생한 횟수
