@@ -11,7 +11,7 @@ description = "cluverse api server application"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -37,6 +37,7 @@ dependencies {
     implementation(platform("software.amazon.awssdk:bom:2.29.52"))
     implementation("software.amazon.awssdk:s3")
     implementation("software.amazon.awssdk:sts")
+    implementation("software.amazon.awssdk:lambda")
 
     implementation("org.springframework.boot:spring-boot-h2console")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")

@@ -136,7 +136,7 @@ resource "aws_ecs_task_definition" "api" {
       portMappings = [
         { containerPort = 8080, hostPort = 8080, protocol = "tcp" }
       ]
-      environment = [
+      environment = concat([
         # JVM이 cgroup 1536MB를 보고 힙 50% = 768MB로 고정 (Initial=Max: 리사이즈 제거, 측정 재현성).
         # 나머지 ~768MB = 메타스페이스 + 스레드 스택 + 코드캐시 + 다이렉트 버퍼 몫.
         { name = "JAVA_TOOL_OPTIONS", value = "-XX:InitialRAMPercentage=50 -XX:MaxRAMPercentage=50" },
@@ -147,7 +147,13 @@ resource "aws_ecs_task_definition" "api" {
         { name = "SPRING_REDIS_PORT", value = "6379" },
         { name = "SPRING_DATA_REDIS_HOST", value = var.redis_private_ip },
         { name = "SPRING_DATA_REDIS_PORT", value = "6379" }
-      ]
+        ],
+        var.image_upload_experiment_enabled ? [
+          { name = "IMAGE_UPLOAD_EXPERIMENT_ENABLED", value = "true" },
+          { name = "IMAGE_PROCESSOR_LAMBDA_NAME", value = var.image_processor_lambda_name },
+          { name = "AWS_S3_BUCKET_NAME", value = var.image_upload_bucket_name }
+        ] : []
+      )
       secrets = concat(
         [
           { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = aws_ssm_parameter.db_password.arn }
@@ -157,7 +163,13 @@ resource "aws_ecs_task_definition" "api" {
             name      = environment_name
             valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${parameter_path}"
           }
-        ]
+        ],
+        var.image_upload_experiment_enabled ? [
+          {
+            name      = "IMAGE_UPLOAD_BENCHMARK_TOKEN"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${var.image_upload_benchmark_token_parameter_path}"
+          }
+        ] : []
       )
       logConfiguration = {
         logDriver = "awslogs"

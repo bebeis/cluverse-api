@@ -75,6 +75,11 @@ certification:
   experiment-endpoints-enabled: false
   benchmark-token: ""
 
+image-upload-experiment:
+  enabled: false
+  benchmark-token: ""
+  lambda-function-name: ""
+
 aws:
   region: ap-northeast-2
   s3:
