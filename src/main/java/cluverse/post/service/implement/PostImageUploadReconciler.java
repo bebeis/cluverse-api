@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+
 @Component
 @ConditionalOnProperty(prefix = "image-upload-experiment", name = "enabled", havingValue = "true")
 @Slf4j
@@ -55,17 +56,26 @@ public class PostImageUploadReconciler {
     private void failStalePending() {
         LocalDateTime threshold = LocalDateTime.now().minus(properties.stalePendingAfter());
         for (PostImageUpload upload : writer.readStalePending(threshold)) {
-            try {
-                if (!storageManager.compensate(upload)) {
-                    deferCleanup(upload, "stale_pending");
-                    continue;
-                }
-                writer.fail(upload.getId(), "stale pending reconciled");
-                metricsRecorder.reconciled("stale_pending_failed");
-            } catch (RuntimeException exception) {
-                log.warn("stale 이미지 업로드 재조정에 실패했습니다. uploadId={}", upload.getId(), exception);
-                deferCleanup(upload, "stale_pending");
+            if (writer.claimStalePending(upload.getId(), threshold)) {
+                compensateClaimed(upload);
             }
+        }
+        for (PostImageUpload upload : writer.readStaleCompensating(threshold)) {
+            compensateClaimed(upload);
+        }
+    }
+
+    private void compensateClaimed(PostImageUpload upload) {
+        try {
+            if (!storageManager.compensate(upload)) {
+                deferCleanup(upload, "stale_pending");
+                return;
+            }
+            writer.completeCompensation(upload.getId(), "stale pending reconciled");
+            metricsRecorder.reconciled("stale_pending_failed");
+        } catch (RuntimeException exception) {
+            log.warn("stale 이미지 업로드 재조정에 실패했습니다. uploadId={}", upload.getId(), exception);
+            deferCleanup(upload, "stale_pending");
         }
     }
 

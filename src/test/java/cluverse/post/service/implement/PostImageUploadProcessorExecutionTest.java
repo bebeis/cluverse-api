@@ -12,11 +12,15 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -126,6 +130,37 @@ class PostImageUploadProcessorExecutionTest {
 
         assertThat(results).hasSize(4);
         assertThat(maxInFlight).hasValue(1);
+    }
+
+    @Test
+    void V3는_일부_제출이_거절되면_이미_제출한_작업을_기다린_뒤_실패한다() throws Exception {
+        CountDownLatch firstTaskStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirstTask = new CountDownLatch(1);
+        PostImageProcessorClient client = mock(PostImageProcessorClient.class);
+        when(client.process(any())).thenAnswer(invocation -> {
+            firstTaskStarted.countDown();
+            releaseFirstTask.await(2, TimeUnit.SECONDS);
+            return processed(invocation.getArgument(0));
+        });
+        executor = new ThreadPoolExecutor(
+                1,
+                1,
+                0L,
+                TimeUnit.MILLISECONDS,
+                new SynchronousQueue<>(),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+        PostImageUploadProcessorV3 processor = new PostImageUploadProcessorV3(
+                storageClient(), client, mock(PostImageUploadMetricsRecorder.class), executor, new Semaphore(1));
+
+        CompletableFuture<List<ProcessedPostImage>> processing = CompletableFuture.supplyAsync(
+                () -> processor.process(List.of(image(0), image(1)), ImageUploadFailurePoint.NONE));
+
+        assertThat(firstTaskStarted.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(processing).isNotDone();
+        releaseFirstTask.countDown();
+        assertThatThrownBy(processing::join)
+                .hasCauseInstanceOf(RejectedExecutionException.class);
     }
 
     private PreparedPostImage image(int order) {

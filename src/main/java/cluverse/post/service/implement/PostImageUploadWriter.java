@@ -42,9 +42,25 @@ public class PostImageUploadWriter {
 
     @Transactional
     public PostImageUpload complete(Long uploadId, List<ProcessedPostImage> processedImages) {
-        PostImageUpload upload = readById(uploadId);
+        PostImageUpload upload = repository.findByIdForUpdate(uploadId)
+                .orElseThrow(() -> new IllegalStateException("이미지 업로드 작업을 찾을 수 없습니다."));
         upload.complete(processedImages);
         return upload;
+    }
+
+    @Transactional
+    public boolean claimStalePending(Long uploadId, LocalDateTime threshold) {
+        return repository.claimStalePending(
+                uploadId,
+                threshold,
+                PostImageUploadStatus.PENDING,
+                PostImageUploadStatus.COMPENSATING
+        ) == 1;
+    }
+
+    @Transactional
+    public void completeCompensation(Long uploadId, String reason) {
+        readById(uploadId).completeCompensation(reason);
     }
 
     @Transactional
@@ -71,6 +87,14 @@ public class PostImageUploadWriter {
     public List<PostImageUpload> readStalePending(LocalDateTime threshold) {
         return repository.findTop100ByStatusAndUpdatedAtBeforeOrderByUpdatedAtAsc(
                 PostImageUploadStatus.PENDING,
+                threshold
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<PostImageUpload> readStaleCompensating(LocalDateTime threshold) {
+        return repository.findTop100ByStatusAndUpdatedAtBeforeOrderByUpdatedAtAsc(
+                PostImageUploadStatus.COMPENSATING,
                 threshold
         );
     }

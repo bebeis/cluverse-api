@@ -7,7 +7,8 @@ from pathlib import Path
 
 
 OBJECT_QUERY = """
-SELECT u.status, u.staging_cleaned, a.staging_key, a.content_key, a.thumbnail_key
+SELECT u.post_image_upload_id, u.status, u.staging_cleaned,
+       a.staging_key, a.content_key, a.thumbnail_key
 FROM post_image_upload u
 LEFT JOIN post_image_asset a ON a.post_image_upload_id = u.post_image_upload_id
 """
@@ -15,7 +16,7 @@ LEFT JOIN post_image_asset a ON a.post_image_upload_id = u.post_image_upload_id
 STALE_QUERY = """
 SELECT COUNT(*)
 FROM post_image_upload
-WHERE status = 'PENDING'
+WHERE status IN ('PENDING', 'COMPENSATING')
   AND updated_at < NOW(6) - INTERVAL 3 MINUTE
 """
 
@@ -28,14 +29,14 @@ def main():
     args = parser.parse_args()
 
     rows = mysql_rows(OBJECT_QUERY)
-    stale_pending = int(mysql_rows(STALE_QUERY)[0][0])
+    stale_unresolved_uploads = int(mysql_rows(STALE_QUERY)[0][0])
     existing_keys = list_s3_keys(args)
     expected_keys = set()
     completed_outputs = []
     completed_missing_keys = 0
-    cleaned_staging = []
+    completed_staging_cleanup_pending = set()
 
-    for status, staging_cleaned, staging_key, content_key, thumbnail_key in rows:
+    for upload_id, status, staging_cleaned, staging_key, content_key, thumbnail_key in rows:
         if status == "PENDING":
             expected_keys.update(key for key in (staging_key, content_key, thumbnail_key) if key)
         elif status == "COMPLETED":
@@ -45,20 +46,21 @@ def main():
             completed_outputs.extend(key for key in (content_key, thumbnail_key) if key)
             if staging_cleaned == "0" and staging_key:
                 expected_keys.add(staging_key)
-            elif staging_key:
-                cleaned_staging.append(staging_key)
+            if staging_cleaned == "0":
+                completed_staging_cleanup_pending.add(upload_id)
 
     evidence = {
         "completed_missing_objects": completed_missing_keys
         + sum(key not in existing_keys for key in completed_outputs),
         "unexpected_s3_objects": len(existing_keys - expected_keys),
-        "completed_staging_left": sum(key in existing_keys for key in cleaned_staging),
-        "stale_pending": stale_pending,
+        "completed_staging_cleanup_pending": len(completed_staging_cleanup_pending),
+        "stale_unresolved_uploads": stale_unresolved_uploads,
     }
-    print("metric                         count")
-    print("----------------------------- -----")
+    metric_width = max(len("metric"), *(len(name) for name in evidence))
+    print(f"{'metric':<{metric_width}} count")
+    print(f"{'-' * metric_width} -----")
     for name, count in evidence.items():
-        print(f"{name:<29} {count:>5}")
+        print(f"{name:<{metric_width}} {count:>5}")
 
     if args.output:
         args.output.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")

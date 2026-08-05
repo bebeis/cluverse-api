@@ -18,7 +18,7 @@ FROM post_image_upload
 WHERE status = 'COMPLETED'
   AND staging_cleaned = 0;
 
-SELECT COUNT(*) AS stale_pending
+SELECT COUNT(*) AS stale_unresolved_uploads
 FROM post_image_upload
-WHERE status = 'PENDING'
+WHERE status IN ('PENDING', 'COMPENSATING')
   AND updated_at < NOW(6) - INTERVAL 3 MINUTE;

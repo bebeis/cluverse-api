@@ -110,7 +110,19 @@ public class PostImageUpload extends BaseTimeEntity {
     public void fail(String reason) {
         validatePending();
         status = PostImageUploadStatus.FAILED;
-        failureReason = reason == null ? "unknown" : reason.substring(0, Math.min(reason.length(), 500));
+        failureReason = truncateFailureReason(reason);
+    }
+
+    public void completeCompensation(String reason) {
+        if (status != PostImageUploadStatus.COMPENSATING) {
+            throw new IllegalStateException("COMPENSATING 업로드만 보상을 완료할 수 있습니다.");
+        }
+        status = PostImageUploadStatus.FAILED;
+        failureReason = truncateFailureReason(reason);
+    }
+
+    private String truncateFailureReason(String reason) {
+        return reason == null ? "unknown" : reason.substring(0, Math.min(reason.length(), 500));
     }
 
     public void markStagingCleaned() {

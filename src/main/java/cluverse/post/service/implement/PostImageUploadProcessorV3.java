@@ -8,6 +8,7 @@ import cluverse.post.service.request.ImageUploadFailurePoint;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -41,14 +42,26 @@ public class PostImageUploadProcessorV3 extends AbstractPostImageUploadProcessor
             List<PreparedPostImage> images,
             ImageUploadFailurePoint failurePoint
     ) {
-        List<CompletableFuture<ProcessedPostImage>> futures = images.stream()
-                .map(image -> CompletableFuture.supplyAsync(
-                        () -> processWithPermit(image, failurePoint), executor))
-                .toList();
+        List<CompletableFuture<ProcessedPostImage>> futures = new ArrayList<>();
+        RuntimeException submissionFailure = null;
+        for (PreparedPostImage image : images) {
+            try {
+                futures.add(CompletableFuture.supplyAsync(
+                        () -> processWithPermit(image, failurePoint), executor));
+            } catch (RuntimeException exception) {
+                submissionFailure = exception;
+                break;
+            }
+        }
         try {
             CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
-        } catch (RuntimeException exception) {
-            throw unwrapCompletion(exception);
+        } catch (RuntimeException taskFailure) {
+            if (submissionFailure == null) {
+                throw unwrapCompletion(taskFailure);
+            }
+        }
+        if (submissionFailure != null) {
+            throw submissionFailure;
         }
         return futures.stream().map(CompletableFuture::join).toList();
     }
