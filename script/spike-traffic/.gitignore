@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+results/raw/*
+!results/raw/.gitkeep
+results/comparison/*
+!results/comparison/.gitkeep

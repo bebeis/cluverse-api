@@ -72,6 +72,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/v2/posts/*/view-count",
                         "/api/v3/posts/*/view-count",
                         "/api/v4/posts/*/view-count",
+                        // 외부 API 실험은 컨트롤러의 X-Benchmark-Token으로 별도 보호한다
+                        "/api/v1/certification/benchmark-readiness",
+                        "/api/v1/certification/benchmark-cache",
                         // 실험 쓰기는 컨트롤러의 X-Benchmark-Token으로 별도 보호한다
                         "/api/v1/popular-posts/promotion-runs",
                         "/api/v2/popular-posts/*/promotion-checks"

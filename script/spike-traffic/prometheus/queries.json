@@ -1,0 +1,121 @@
+[
+  {
+    "name": "http_rps",
+    "title": "HTTP completed RPS",
+    "group": "slo",
+    "unit": "req/s",
+    "query": "sum(rate(http_server_requests_seconds_count{uri!~\"/actuator.*\"}[1m]))"
+  },
+  {
+    "name": "http_p95_ms",
+    "title": "HTTP p95",
+    "group": "slo",
+    "unit": "ms",
+    "query": "histogram_quantile(0.95, sum by(le) (rate(http_server_requests_seconds_bucket{uri!~\"/actuator.*\"}[1m]))) * 1000"
+  },
+  {
+    "name": "http_p99_ms",
+    "title": "HTTP p99",
+    "group": "slo",
+    "unit": "ms",
+    "query": "histogram_quantile(0.99, sum by(le) (rate(http_server_requests_seconds_bucket{uri!~\"/actuator.*\"}[1m]))) * 1000"
+  },
+  {
+    "name": "http_5xx_percent",
+    "title": "HTTP 5xx ratio",
+    "group": "slo",
+    "unit": "%",
+    "query": "100 * sum(rate(http_server_requests_seconds_count{status=~\"5..\",uri!~\"/actuator.*\"}[1m])) / clamp_min(sum(rate(http_server_requests_seconds_count{uri!~\"/actuator.*\"}[1m])), 0.000001)"
+  },
+  {
+    "name": "hikari_active",
+    "title": "Hikari active",
+    "group": "application",
+    "unit": "connections",
+    "query": "sum(hikaricp_connections_active)"
+  },
+  {
+    "name": "hikari_pending",
+    "title": "Hikari pending",
+    "group": "application",
+    "unit": "requests",
+    "query": "sum(hikaricp_connections_pending)"
+  },
+  {
+    "name": "hikari_acquire_avg_ms",
+    "title": "Connection acquire avg",
+    "group": "application-latency",
+    "unit": "ms",
+    "query": "1000 * sum(rate(hikaricp_connections_acquire_seconds_sum[1m])) / clamp_min(sum(rate(hikaricp_connections_acquire_seconds_count[1m])), 0.000001)"
+  },
+  {
+    "name": "hikari_usage_avg_ms",
+    "title": "Connection usage avg",
+    "group": "application-latency",
+    "unit": "ms",
+    "query": "1000 * sum(rate(hikaricp_connections_usage_seconds_sum[1m])) / clamp_min(sum(rate(hikaricp_connections_usage_seconds_count[1m])), 0.000001)"
+  },
+  {
+    "name": "tomcat_threads_busy",
+    "title": "Tomcat busy threads",
+    "group": "application",
+    "unit": "threads",
+    "query": "sum(tomcat_threads_busy_threads)"
+  },
+  {
+    "name": "app_cpu_percent",
+    "title": "Spring process CPU",
+    "group": "cpu",
+    "unit": "%",
+    "query": "100 * avg(process_cpu_usage{job=\"spring\"})"
+  },
+  {
+    "name": "jvm_gc_pause_ms_per_second",
+    "title": "GC pause",
+    "group": "application-latency",
+    "unit": "ms/s",
+    "query": "1000 * sum(rate(jvm_gc_pause_seconds_sum[1m]))"
+  },
+  {
+    "name": "mysql_qps",
+    "title": "MySQL QPS",
+    "group": "mysql",
+    "unit": "queries/s",
+    "query": "rate(mysql_global_status_queries[1m])"
+  },
+  {
+    "name": "mysql_threads_running",
+    "title": "MySQL running threads",
+    "group": "mysql",
+    "unit": "threads",
+    "query": "mysql_global_status_threads_running"
+  },
+  {
+    "name": "mysql_row_lock_waits_per_second",
+    "title": "MySQL row lock waits",
+    "group": "mysql",
+    "unit": "waits/s",
+    "query": "rate(mysql_global_status_innodb_row_lock_waits[1m])"
+  },
+  {
+    "name": "mysql_cpu_percent",
+    "title": "MySQL host CPU",
+    "group": "cpu",
+    "unit": "%",
+    "query": "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\",instance_name=\"cluverse-mysql\"}[1m])))"
+  },
+  {
+    "name": "redis_commands_per_second",
+    "title": "Redis commands",
+    "group": "redis",
+    "unit": "commands/s",
+    "query": "rate(redis_commands_processed_total[1m])"
+  },
+  {
+    "name": "redis_hit_percent",
+    "title": "Redis keyspace hit ratio",
+    "group": "redis",
+    "unit": "%",
+    "query": "100 * rate(redis_keyspace_hits_total[1m]) / clamp_min(rate(redis_keyspace_hits_total[1m]) + rate(redis_keyspace_misses_total[1m]), 0.000001)"
+  }
+]

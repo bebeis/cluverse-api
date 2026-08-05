@@ -11,10 +11,13 @@ import java.time.Duration;
 @Validated
 @ConfigurationProperties(prefix = "certification")
 public record CertificationProperties(
+        @DefaultValue("DATA_GO_KR") @NotNull CertificationProviderMode providerMode,
         @DefaultValue("https://apis.data.go.kr") String providerBaseUrl,
         @DefaultValue("") @NotBlank String serviceKey,
         @DefaultValue("500ms") @NotNull Duration connectTimeout,
         @DefaultValue("2s") @NotNull Duration readTimeout,
-        @DefaultValue("12h") @NotNull Duration cacheTtl
+        @DefaultValue("12h") @NotNull Duration cacheTtl,
+        @DefaultValue("false") boolean experimentEndpointsEnabled,
+        @DefaultValue("") String benchmarkToken
 ) {
 }

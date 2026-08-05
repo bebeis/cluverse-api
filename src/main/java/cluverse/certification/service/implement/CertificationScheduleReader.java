@@ -47,4 +47,9 @@ public class CertificationScheduleReader {
     private List<CertificationSchedule> readAnnualSchedules(int year) {
         return scheduleCache.get(year, scheduleClient::readSchedules);
     }
+
+    public void evictAll() {
+        scheduleCache.invalidateAll();
+        scheduleCache.cleanUp();
+    }
 }

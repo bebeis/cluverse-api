@@ -69,7 +69,11 @@ popularity:
   benchmark-token: ""
 
 certification:
+  provider-mode: STUB
+  provider-base-url: http://127.0.0.1:19091
   service-key: test-key
+  experiment-endpoints-enabled: false
+  benchmark-token: ""
 
 aws:
   region: ap-northeast-2

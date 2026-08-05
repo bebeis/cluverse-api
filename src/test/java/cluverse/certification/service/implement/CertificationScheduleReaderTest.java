@@ -5,6 +5,7 @@ import cluverse.certification.domain.CertificationDeadline;
 import cluverse.certification.domain.CertificationExamPhase;
 import cluverse.certification.domain.CertificationSchedule;
 import cluverse.certification.properties.CertificationProperties;
+import cluverse.certification.properties.CertificationProviderMode;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -56,6 +58,25 @@ class CertificationScheduleReaderTest {
         verify(client).readSchedules(2027);
     }
 
+    @Test
+    void 캐시를_비우면_연도별_일정을_다시_조회한다() {
+        // given
+        LocalDate today = LocalDate.of(2026, 8, 3);
+        CertificationScheduleClient client = mock(CertificationScheduleClient.class);
+        when(client.readSchedules(2026)).thenReturn(List.of());
+        when(client.readSchedules(2027)).thenReturn(List.of());
+        CertificationScheduleReader reader = new CertificationScheduleReader(client, properties());
+        reader.readUpcomingDeadlines(today, 10);
+
+        // when
+        reader.evictAll();
+        reader.readUpcomingDeadlines(today, 10);
+
+        // then
+        verify(client, times(2)).readSchedules(2026);
+        verify(client, times(2)).readSchedules(2027);
+    }
+
     private CertificationSchedule schedule(
             String description,
             LocalDate writtenEndDate,
@@ -77,11 +98,14 @@ class CertificationScheduleReaderTest {
 
     private CertificationProperties properties() {
         return new CertificationProperties(
+                CertificationProviderMode.STUB,
                 "https://apis.data.go.kr",
                 "test-key",
                 Duration.ofMillis(500),
                 Duration.ofSeconds(2),
-                Duration.ofHours(12)
+                Duration.ofHours(12),
+                false,
+                ""
         );
     }
 }

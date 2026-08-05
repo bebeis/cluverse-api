@@ -141,11 +141,14 @@ local-map:
   benchmark-token: ${LOCAL_MAP_BENCHMARK_TOKEN:}
 
 certification:
+  provider-mode: ${CERTIFICATION_PROVIDER_MODE:DATA_GO_KR}
   provider-base-url: ${CERTIFICATION_PROVIDER_BASE_URL:https://apis.data.go.kr}
   service-key: ${DATA_GO_KR_SERVICE_KEY:}
   connect-timeout: 500ms
   read-timeout: 2s
   cache-ttl: 12h
+  experiment-endpoints-enabled: false
+  benchmark-token: ${CERTIFICATION_BENCHMARK_TOKEN:}
 
 home:
   recent-commented-posts:
