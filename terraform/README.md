@@ -71,6 +71,10 @@
 | `ecs_desired_count` | | `1` | ECS 태스크 수 |
 | `ecs_instance_type` / `db_instance_type` / `redis_instance_type` / `monitoring_instance_type` | | `t3.small`/`t3.small`/`t3.micro`/`t3.small` | 인스턴스 타입 |
 | `container_image_tag` | | `latest` | ECR 이미지 태그 |
+| `image_upload_experiment_enabled` | | `false` | devlog-11 V1~V3 API를 같은 task에서 활성화 |
+| `image_processor_lambda_name` | 실험 시 ✅ | `""` | 세 버전이 공통 호출할 Lambda 함수 이름 |
+| `image_upload_bucket_name` | | `cluverse-images` | staging/output S3 bucket |
+| `image_upload_benchmark_token_parameter_path` | | `/cluverse/test/image-upload/benchmark-token` | benchmark token SSM 경로 |
 
 ## 설계 메모
 

@@ -17,6 +17,11 @@ server:
         secure: true
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+      file-size-threshold: 0
   datasource:
     url: jdbc:mysql://${RDS_ENDPOINT:localhost}:3306/cluverse_v2?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useSSL=false&rewriteBatchedStatements=true
     username: cluverse_user
@@ -154,6 +159,19 @@ home:
   recent-commented-posts:
     snapshot-cache-ttl: 1m
     snapshot-candidate-size: 200
+
+# devlog-11 외부 이미지 프로세서 실행 모델 비교 API. 테스트 배포에서만 명시적으로 활성화한다.
+image-upload-experiment:
+  enabled: false
+  benchmark-token: ${IMAGE_UPLOAD_BENCHMARK_TOKEN:}
+  lambda-function-name: ${IMAGE_PROCESSOR_LAMBDA_NAME:}
+  lambda-endpoint: ${IMAGE_PROCESSOR_LAMBDA_ENDPOINT:}
+  max-file-size: 10MB
+  platform-queue-capacity: 32
+  max-concurrent-remote-calls: 16
+  remote-timeout: 30s
+  stale-pending-after: 3m
+  cleanup-interval: 30s
 
 oauth2:
   kakao:

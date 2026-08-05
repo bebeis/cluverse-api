@@ -80,6 +80,35 @@ variable "container_image_tag" {
   default     = "latest"
 }
 
+variable "image_upload_experiment_enabled" {
+  description = "devlog-11 V1~V3 이미지 업로드 실험 API 활성화 여부"
+  type        = bool
+  default     = false
+}
+
+variable "image_processor_lambda_name" {
+  description = "세 버전이 공통 호출할 외부 이미지 프로세서 Lambda 함수 이름"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = !var.image_upload_experiment_enabled || length(trimspace(var.image_processor_lambda_name)) > 0
+    error_message = "image_upload_experiment_enabled가 true이면 image_processor_lambda_name을 입력해야 합니다."
+  }
+}
+
+variable "image_upload_bucket_name" {
+  description = "staging/content/thumbnail 객체를 저장할 S3 bucket"
+  type        = string
+  default     = "cluverse-images"
+}
+
+variable "image_upload_benchmark_token_parameter_path" {
+  description = "devlog-11 X-Benchmark-Token을 저장한 SSM parameter path"
+  type        = string
+  default     = "/cluverse/test/image-upload/benchmark-token"
+}
+
 variable "ssh_public_key" {
   description = "인스턴스에 심을 SSH 공개키. 빈 문자열이면 키페어 없이 생성(SSM 접근만 가능)."
   type        = string

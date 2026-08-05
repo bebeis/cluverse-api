@@ -1,7 +1,7 @@
 # ECS 관련 IAM 역할 3개는 용도가 다르므로 반드시 분리한다:
 #   (a) ecs_instance  — EC2(컨테이너 인스턴스) 자체의 역할. ECS agent 등록, ECR pull, SSM, CloudWatch agent.
 #   (b) task_execution — ECS가 태스크를 "띄울 때" 쓰는 역할. 이미지 pull, awslogs 로그 전송, SSM 파라미터(secrets) 읽기.
-#   (c) task           — 컨테이너 "안의 앱"이 AWS API를 부를 때 쓰는 역할. (현재 앱은 S3 등 미사용 → 빈 역할)
+#   (c) task           — 컨테이너 "안의 앱"이 AWS API를 부를 때 쓰는 역할. devlog-11 활성화 시 S3/Lambda 최소 권한 추가.
 
 data "aws_iam_policy_document" "ec2_assume" {
   statement {
@@ -75,10 +75,37 @@ resource "aws_iam_role_policy" "task_execution_ssm_params" {
   })
 }
 
-# ---------- (c) Task Role (앱용, 현재 빈 역할) ----------
+# ---------- (c) Task Role (컨테이너 안 애플리케이션의 AWS API 권한) ----------
 resource "aws_iam_role" "task" {
   name               = "cluverse-test-task"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume.json
+}
+
+resource "aws_iam_role_policy" "task_image_upload" {
+  count = var.image_upload_experiment_enabled ? 1 : 0
+
+  name = "devlog11-image-upload"
+  role = aws_iam_role.task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+        Resource = "arn:aws:s3:::${var.image_upload_bucket_name}/image-uploads/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["lambda:InvokeFunction"]
+        Resource = "arn:aws:lambda:${var.aws_region}:${data.aws_caller_identity.current.account_id}:function:${var.image_processor_lambda_name}"
+      }
+    ]
+  })
 }
 
 # ---------- 모니터링 EC2 역할 (Prometheus ec2_sd용 DescribeInstances + SSM) ----------

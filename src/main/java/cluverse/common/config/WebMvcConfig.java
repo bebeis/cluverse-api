@@ -77,7 +77,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/v1/certification/benchmark-cache",
                         // 실험 쓰기는 컨트롤러의 X-Benchmark-Token으로 별도 보호한다
                         "/api/v1/popular-posts/promotion-runs",
-                        "/api/v2/popular-posts/*/promotion-checks"
+                        "/api/v2/popular-posts/*/promotion-checks",
+                        // devlog-11 쓰기 실험은 X-Benchmark-Token으로 별도 보호한다
+                        "/api/v1/image-uploads",
+                        "/api/v2/image-uploads",
+                        "/api/v3/image-uploads"
                 );
     }
 
