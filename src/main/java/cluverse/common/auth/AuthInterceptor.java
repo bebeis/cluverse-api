@@ -4,9 +4,8 @@ import cluverse.auth.exception.AuthExceptionMessage;
 import cluverse.common.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.List;
 
@@ -16,6 +15,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     private static final String OPTIONS_METHOD = "OPTIONS";
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private final LoginMemberExtractor loginMemberExtractor = new LoginMemberExtractor();
     private final List<String> publicGetPathPatterns;
     private final List<String> protectedGetPathPatterns;
 
@@ -29,8 +29,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (isPublicGetRequest(request)) {
             return true;
         }
-        HttpSession session = request.getSession(false);
-        requireAuthenticated(session);
+        requireAuthenticated(request);
         return true;
     }
 
@@ -51,8 +50,8 @@ public class AuthInterceptor implements HandlerInterceptor {
                 .anyMatch(pattern -> pathMatcher.match(pattern, requestUri));
     }
 
-    private void requireAuthenticated(HttpSession session) {
-        if (session == null || session.getAttribute(LoginMemberArgumentResolver.SESSION_KEY) == null) {
+    private void requireAuthenticated(HttpServletRequest request) {
+        if (loginMemberExtractor.extract(request) == null) {
             throw new UnauthorizedException(AuthExceptionMessage.UNAUTHORIZED.getMessage());
         }
     }

@@ -1,10 +1,10 @@
 import http from 'k6/http';
 import { check } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
-import { authenticatedParams, readBaseUrl, readSessionCookie } from './support.js';
+import { authenticatedParams, readBaseUrl, readMemberId } from './support.js';
 
 const BASE_URL = readBaseUrl();
-const SESSION_COOKIE = readSessionCookie();
+const MEMBER_ID = readMemberId();
 const POST_ID = Number(__ENV.POST_ID || 0);
 const RATE = Number(__ENV.RATE || 2);
 const DURATION = __ENV.DURATION || '30s';
@@ -44,7 +44,7 @@ export default function () {
       isAnonymous: false,
     }),
     authenticatedParams(
-      SESSION_COOKIE,
+      MEMBER_ID,
       { name: 'home_comment_write_projection' },
       true,
     ),

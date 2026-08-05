@@ -13,6 +13,24 @@ import static org.mockito.Mockito.mock;
 
 class AuthInterceptorTest {
 
+    @Test
+    void authenticatesMemberIdFromAuthorizationBearer() {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/posts");
+        request.addHeader("Authorization", "Bearer 42");
+
+        assertThatCode(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void rejectsInvalidMemberIdFromAuthorizationBearer() {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/posts");
+        request.addHeader("Authorization", "Bearer invalid");
+
+        assertThatThrownBy(() -> authInterceptor.preHandle(request, mock(HttpServletResponse.class), new Object()))
+                .isInstanceOf(UnauthorizedException.class);
+    }
+
     private final AuthInterceptor authInterceptor = new AuthInterceptor(
             List.of(
                     "/api/v1/posts",

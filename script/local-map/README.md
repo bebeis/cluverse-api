@@ -32,10 +32,10 @@ stub 호출 수는 `curl http://127.0.0.1:19090/_metrics`로 확인한다. V1은
 
 ## 2. smoke와 부하 테스트
 
-인증된 테스트 회원의 JWT와 쓰기 가능한 게시판 ID가 필요하다.
+인증된 테스트 회원의 memberId와 쓰기 가능한 게시판 ID가 필요하다.
 
 ```bash
-export AUTH_TOKEN='test-member-jwt'
+export AUTH_TOKEN=1 # memberId
 export BENCHMARK_TOKEN='local-map-benchmark'
 export BOARD_ID=1
 
@@ -72,7 +72,7 @@ Prometheus의 DB 트랜잭션 p95/p99와 Hikari 최대값은
 
 ```bash
 CONFIRM_NAVER_CANARY=YES \
-AUTH_TOKEN='test-member-jwt' \
+AUTH_TOKEN=1 \
 CALLS=1 QPS=1 \
 script/local-map/real-provider-smoke.sh
 ```

@@ -9,18 +9,18 @@ export function readBaseUrl() {
   return baseUrl;
 }
 
-export function readSessionCookie() {
-  const sessionCookie = __ENV.SESSION_COOKIE || '';
-  if (!sessionCookie) {
-    throw new Error('SESSION_COOKIE이 필요합니다. 예: JSESSIONID=...');
+export function readMemberId() {
+  const memberId = __ENV.MEMBER_ID || '';
+  if (!/^[1-9]\d*$/.test(memberId)) {
+    throw new Error('MEMBER_ID must be a positive number. Example: MEMBER_ID=1');
   }
-  return sessionCookie;
+  return memberId;
 }
 
-export function authenticatedParams(sessionCookie, tags, contentType = false) {
+export function authenticatedParams(memberId, tags, contentType = false) {
   const headers = {
     Accept: 'application/json',
-    Cookie: sessionCookie,
+    Authorization: `Bearer ${memberId}`,
   };
   if (contentType) {
     headers['Content-Type'] = 'application/json';

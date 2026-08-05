@@ -17,7 +17,7 @@
 - MySQL 8.x와 애플리케이션이 실행 중이어야 한다.
 - `POST_ID`는 조회 가능한 게시글이어야 한다.
 - fixture를 직접 만들 때는 해당 게시글 작성자 또는 테스트 회원의 `MEMBER_ID`가 필요하다.
-- 비공개 게시글이면 `AUTH_TOKEN`을 설정한다.
+- 비공개 게시글이면 `AUTH_TOKEN`에 조회할 memberId를 설정한다.
 
 ## fixture 생성
 
@@ -65,8 +65,8 @@ CURSOR_STEPS=10 script/comment-pagination/run.sh read v2
 쓰기 guardrail은 인증이 필요하다. 개선 전 쓰기는 같은 배포에서 안전하게 재현할 수 없으므로, 현재 경로 저장 쓰기의 절대 지연을 루트와 답글로 나눠 남긴다.
 
 ```bash
-AUTH_TOKEN='test-member-jwt' script/comment-pagination/run.sh write-root
-AUTH_TOKEN='test-member-jwt' PARENT_COMMENT_ID=101 script/comment-pagination/run.sh write-reply
+AUTH_TOKEN=1 script/comment-pagination/run.sh write-root
+AUTH_TOKEN=1 PARENT_COMMENT_ID=101 script/comment-pagination/run.sh write-reply
 ```
 
 쓰기 실행이 만든 댓글은 콘솔에 출력되는 `run_id`로 식별한다. 실행 후 해당 ID를 지정해 댓글과 반정규화 카운트를 정리한다.

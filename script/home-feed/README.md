@@ -46,16 +46,14 @@ SOURCE script/home-feed/seed/fixture.sql;
 SOURCE script/home-feed/seed/reset.sql;
 ```
 
-## 세션 준비
+## 인증 준비
 
-Cluverse 인증은 Bearer 토큰이 아니라 HTTP 세션을 사용한다. 브라우저 개발자 도구나 로그인 응답의 `Set-Cookie`에서 세션을 가져와 다음처럼 지정한다.
+부하테스트에서는 별도 로그인 없이 `Authorization: Bearer <memberId>`를 사용한다. fixture에 존재하는 양수 memberId를 지정한다.
 
 ```bash
-export SESSION_COOKIE='JSESSIONID=replace-me'
+export MEMBER_ID=1
 export BASE_URL='http://localhost:8080'
 ```
-
-비밀값은 `k6 -e` 인자로 넘기지 않고 프로세스 환경으로만 전달한다.
 
 ## 실행
 

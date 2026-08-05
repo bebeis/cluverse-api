@@ -1,11 +1,11 @@
 import http from 'k6/http';
 import { check } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
-import { authenticatedParams, readBaseUrl, readSessionCookie } from './support.js';
+import { authenticatedParams, readBaseUrl, readMemberId } from './support.js';
 
 const VERSION = (__ENV.VERSION || '').toLowerCase();
 const BASE_URL = readBaseUrl();
-const SESSION_COOKIE = readSessionCookie();
+const MEMBER_ID = readMemberId();
 const RATE = Number(__ENV.RATE || 20);
 const DURATION = __ENV.DURATION || '30s';
 const COMMENTS = __ENV.COMMENTS || 'unknown';
@@ -45,7 +45,7 @@ export function setup() {
   if (VERSION !== 'v2') return;
   const response = http.get(
     `${BASE_URL}/api/${VERSION}/home/recent-commented-posts`,
-    authenticatedParams(SESSION_COOKIE, { name: 'home_recent_commented_posts_v2_warmup' }),
+    authenticatedParams(MEMBER_ID, { name: 'home_recent_commented_posts_v2_warmup' }),
   );
   if (response.status !== 200) throw new Error(`V2 캐시 예열 실패: ${response.status}`);
 }
@@ -53,7 +53,7 @@ export function setup() {
 export default function () {
   const response = http.get(
     `${BASE_URL}/api/${VERSION}/home/recent-commented-posts`,
-    authenticatedParams(SESSION_COOKIE, { name: `home_recent_commented_posts_${VERSION}` }),
+    authenticatedParams(MEMBER_ID, { name: `home_recent_commented_posts_${VERSION}` }),
   );
   const ok = check(response, {
     'home recent posts success': (value) => {

@@ -2,10 +2,10 @@ import http from 'k6/http';
 import exec from 'k6/execution';
 import { check } from 'k6';
 import { Rate } from 'k6/metrics';
-import { authenticatedParams, readBaseUrl, readSessionCookie } from './support.js';
+import { authenticatedParams, readBaseUrl, readMemberId } from './support.js';
 
 const BASE_URL = readBaseUrl();
-const SESSION_COOKIE = readSessionCookie();
+const MEMBER_ID = readMemberId();
 
 export const options = {
   scenarios: {
@@ -20,7 +20,7 @@ const equivalence = new Rate('home_recent_posts_equivalence');
 function read(version) {
   const response = http.get(
     `${BASE_URL}/api/${version}/home/recent-commented-posts`,
-    authenticatedParams(SESSION_COOKIE, { name: `home_recent_posts_correctness_${version}` }),
+    authenticatedParams(MEMBER_ID, { name: `home_recent_posts_correctness_${version}` }),
   );
   const contentType = String(response.headers['Content-Type'] || '').toLowerCase();
   if (response.status !== 200 || !contentType.includes('application/json')) {
