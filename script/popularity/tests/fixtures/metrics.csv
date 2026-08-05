@@ -1,0 +1,5 @@
+run,version,p95_ms,p99_ms,examined_posts_avg,failure_rate
+run-v1-a,v1,800,1200,100000,0
+run-v1-b,v1,820,1250,100000,0
+run-v2-a,v2,8,15,1,0
+run-v2-b,v2,9,16,1,0

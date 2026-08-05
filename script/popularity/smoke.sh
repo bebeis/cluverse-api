@@ -63,4 +63,4 @@ request GET "/api/v2/popular-posts/history?sort=SCORE"
 
 echo
 echo "기본 API 계약이 통과했습니다."
-echo "중복 요청의 DB 멱등성, 결과 집합 일치, 후보 재검사와 최종화는 recall/fixture 및 DB 조회로 별도 검증하세요."
+echo "중복 승격 멱등성과 V1/V2 결과 차이는 fixture 적재 후 popular_post를 조회해 확인하세요."
