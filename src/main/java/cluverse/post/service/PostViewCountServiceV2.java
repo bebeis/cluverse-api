@@ -1,25 +1,20 @@
 package cluverse.post.service;
 
-import cluverse.meta.service.implement.PostMetaWriter;
+import cluverse.meta.service.implement.DeltaViewCountCounter;
 import cluverse.post.service.implement.PostAccessReader;
+import cluverse.post.service.response.PostViewCountResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-/**
- * [V2] 비관적 락(select for update + 더티체킹) 조회수 증가.
- * 락 획득부터 커밋까지가 락 보유 구간이며, 이 구간의 길이가 측정 대상이다.
- */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class PostViewCountServiceV2 {
 
     private final PostAccessReader postAccessReader;
-    private final PostMetaWriter postMetaWriter;
+    private final DeltaViewCountCounter deltaViewCountCounter;
 
-    public void increaseViewCount(Long postId) {
+    public PostViewCountResponse increaseViewCount(Long postId, String cookieId) {
         postAccessReader.validateActivePost(postId);
-        postMetaWriter.increaseViewCountPessimistic(postId);
+        return PostViewCountResponse.of(postId, deltaViewCountCounter.countTimeBased(postId, cookieId));
     }
 }

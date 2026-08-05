@@ -5,7 +5,9 @@ import cluverse.board.domain.BoardType;
 import cluverse.comment.service.implement.CommentReader;
 import cluverse.comment.service.response.CommentLastRepliedPost;
 import cluverse.member.service.implement.MemberReader;
-import cluverse.meta.service.implement.PostMetaWriter;
+import cluverse.meta.service.implement.TotalViewCountCounter;
+import cluverse.meta.service.implement.ViewCountResult;
+import cluverse.meta.service.implement.ViewCountSource;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.service.implement.PostReader;
@@ -58,7 +60,7 @@ class PostServiceV1Test {
     private MemberReader memberReader;
 
     @Mock
-    private PostMetaWriter postMetaWriter;
+    private TotalViewCountCounter totalViewCountCounter;
 
     @Mock
     private CommentReader commentReader;
@@ -183,17 +185,21 @@ class PostServiceV1Test {
     }
 
     @Test
-    void 게시글_조회수_증가는_meta_서비스에게_위임한다() {
+    void 게시글_조회는_권한_확인_후_전체_카운터에_위임한다() {
         // given
         Post post = createPost(10L, 3L, 1L, "조회수 증가 대상", false);
         when(postAccessReader.readOrThrow(10L)).thenReturn(post);
+        when(totalViewCountCounter.count(10L, "cookie-1"))
+                .thenReturn(new ViewCountResult(101L, true, ViewCountSource.REDIS_TOTAL));
 
         // when
-        postService.increaseViewCount(10L);
+        ViewCountResult result = postService.countView(2L, 10L, "cookie-1");
 
         // then
+        assertThat(result.viewCount()).isEqualTo(101L);
         verify(postAccessReader).readOrThrow(10L);
-        verify(postMetaWriter).increaseViewCount(10L);
+        verify(boardReader).validateReadable(2L, 3L);
+        verify(totalViewCountCounter).count(10L, "cookie-1");
     }
 
     @Test

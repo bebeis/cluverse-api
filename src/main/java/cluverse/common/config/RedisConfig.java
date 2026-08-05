@@ -1,6 +1,6 @@
 package cluverse.common.config;
 
-import cluverse.meta.properties.ViewSurgeProperties;
+import cluverse.meta.properties.ViewCountProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,19 +10,40 @@ import org.springframework.data.redis.core.script.RedisScript;
 
 import java.time.Clock;
 import java.time.ZoneId;
+import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties(ViewSurgeProperties.class)
+@EnableConfigurationProperties(ViewCountProperties.class)
 public class RedisConfig {
 
     @Bean
-    public RedisScript<Long> viewCountGetAndResetScript() {
-        return longScript("redis/view_count_get_and_reset.lua");
+    public RedisScript<List> countDeltaScript() {
+        return listScript("redis/count_delta.lua");
     }
 
     @Bean
-    public RedisScript<Long> viewCountIncreaseScript() {
-        return longScript("redis/view_count_increase.lua");
+    public RedisScript<Long> getAndDeleteScript() {
+        return longScript("redis/get_and_delete.lua");
+    }
+
+    @Bean
+    public RedisScript<List> countTotalScript() {
+        return listScript("redis/count_total.lua");
+    }
+
+    @Bean
+    public RedisScript<Long> unlockScript() {
+        return longScript("redis/unlock.lua");
+    }
+
+    @Bean
+    public RedisScript<Long> deleteInactiveCounterScript() {
+        return longScript("redis/delete_inactive_counter.lua");
+    }
+
+    @Bean
+    public RedisScript<Long> ensureTotalAtLeastScript() {
+        return longScript("redis/ensure_total_at_least.lua");
     }
 
     /**
@@ -37,6 +58,14 @@ public class RedisConfig {
         DefaultRedisScript<Long> script = new DefaultRedisScript<>();
         script.setLocation(new ClassPathResource(classPath));
         script.setResultType(Long.class);
+        return script;
+    }
+
+    @SuppressWarnings("rawtypes")
+    private RedisScript<List> listScript(String classPath) {
+        DefaultRedisScript<List> script = new DefaultRedisScript<>();
+        script.setLocation(new ClassPathResource(classPath));
+        script.setResultType(List.class);
         return script;
     }
 }

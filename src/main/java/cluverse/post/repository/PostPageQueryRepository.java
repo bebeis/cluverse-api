@@ -271,7 +271,7 @@ public class PostPageQueryRepository {
 
     private OrderSpecifier<?>[] resolveOrderSpecifiers(PostSortType sortType) {
         return switch (sortType) {
-            case VIEW_COUNT -> new OrderSpecifier<?>[]{postViewCount.viewCount.coalesce(0).desc(), post.id.desc()};
+            case VIEW_COUNT -> new OrderSpecifier<?>[]{postViewCount.viewCount.coalesce(0L).desc(), post.id.desc()};
             case LATEST -> new OrderSpecifier<?>[]{post.createdAt.desc(), post.id.desc()};
         };
     }

@@ -18,10 +18,6 @@ public class PostMetaService {
         postMetaWriter.increaseViewCount(postId);
     }
 
-    public void increaseViewCountOptimistic(Long postId) {
-        postMetaWriter.increaseViewCountOptimistic(postId);
-    }
-
     public void increaseLikeCount(Long postId) {
         postMetaWriter.increaseLikeCount(postId);
     }

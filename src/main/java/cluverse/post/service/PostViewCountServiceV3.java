@@ -1,25 +1,20 @@
 package cluverse.post.service;
 
-import cluverse.meta.service.implement.PostMetaWriter;
+import cluverse.meta.service.implement.DeltaViewCountCounter;
 import cluverse.post.service.implement.PostAccessReader;
+import cluverse.post.service.response.PostViewCountResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-/**
- * [V3] 원자적 UPDATE 조회수 증가.
- * 운영 구현({@link PostMetaWriter#increaseViewCount})에 그대로 위임한다.
- */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class PostViewCountServiceV3 {
 
     private final PostAccessReader postAccessReader;
-    private final PostMetaWriter postMetaWriter;
+    private final DeltaViewCountCounter deltaViewCountCounter;
 
-    public void increaseViewCount(Long postId) {
+    public PostViewCountResponse increaseViewCount(Long postId, String cookieId) {
         postAccessReader.validateActivePost(postId);
-        postMetaWriter.increaseViewCount(postId);
+        return PostViewCountResponse.of(postId, deltaViewCountCounter.countThreshold(postId, cookieId));
     }
 }

@@ -92,42 +92,31 @@ aws:
 app:
   frontend-url: ${FRONTEND_URL:https://cluverse-web.vercel.app}
 
-# 조회수 급상승 감지 + Redis Write-back (조회수 증가 API V4)
-# threshold/sustain-threshold는 V3 단일 레코드 계단 부하 측정에서 역산해 갱신한다.
-# env 오버라이드: VIEW_SURGE_THRESHOLD=50, VIEW_SURGE_WINDOW=5s ... (relaxed binding)
-view-surge:
-  window: 10s
-  threshold: 200
-  sustain-threshold: 100
-  tracking-ttl: 5m
-  extension: 5m
-  grace: 15s
-  sample-cache-max-size: 100000
-  sample-cache-ttl: 35s      # 판정 유효 상한(3×window=30s)보다 약간 길게 — 그 뒤는 어차피 rebaseline
-  routing-cache-max-size: 100000
-  cleanup-batch-size: 100
-  routing-refresh-interval: 3s
-  flush-interval: 3s
-  cleanup-interval: 10s
+view-count:
+  duplicate-ttl: 30m
+  delta-flush-interval: 1m
+  threshold: 100
+  checkpoint-interval: 1m
+  inactive-after: 30m
+  scan-count: 1000
+  batch-size: 1000
+  initialization-lock-lease: 1s
+  initialization-wait: 10ms
+  initialization-attempts: 5
 
 popularity:
   default-promotion-score: 100
-  default-like-gate: 5
-  default-comment-gate: 3
   score-like-weight: 3
   score-comment-weight: 2
-  score-view-weight: 1
   promotion-window: 48h
   policy-sample-window: 7d
   policy-percentile: 0.98
   policy-min-sample-size: 100
   policy-smoothing-ratio: 0.30
-  policy-cache-refresh-interval: 1m
-  v1-scan-interval: 1m
+  policy-refresh-cron: "0 10 1 * * *"
+  baseline-scan-cron: "0 0 1 * * *"
   baseline-scan-enabled: false
   scan-chunk-size: 1000
-  candidate-recheck-interval: 30s
-  candidate-batch-size: 500
   finalization-interval: 30s
   finalization-batch-size: 500
   experiment-endpoints-enabled: false
