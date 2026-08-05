@@ -94,9 +94,19 @@ class PlotResultsTest(unittest.TestCase):
         rows = collect(discover_inputs([str(fixture_directory)]), None, None)
 
         self.assertEqual(
-            {"popularity", "view-surge", "local-map", "comment-pagination", "home-feed"},
+            {"popularity", "view-count", "local-map", "comment-pagination", "home-feed"},
             {row.experiment for row in rows},
         )
+
+    def test_k6_summary_export의_직접_메트릭_형식을_읽는다(self):
+        fixture = Path(__file__).resolve().parent / "fixtures" / "view-count-2026-08-01-bench-v4-hot-summary.json"
+
+        rows = extract_k6_summary(fixture, None, None)
+
+        self.assertEqual(18, self.value(rows, "api_latency", "p99"))
+        self.assertEqual(50, self.value(rows, "throughput", "rate"))
+        self.assertEqual(0, self.value(rows, "failure_rate", "rate"))
+        self.assertTrue(any("workload=hot" in row.scenario for row in rows))
 
     def test_댓글_수_시나리오를_그래프_x축으로_변환한다(self):
         self.assertEqual(1000, extract_comment_count("comments=1000,tree_shape=mixed"))

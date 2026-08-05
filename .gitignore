@@ -179,6 +179,10 @@ fabric.properties
 hs_err_pid*
 replay_pid*
 
+# Python measurement helpers
+__pycache__/
+*.py[cod]
+
 ### macOS ###
 # General
 .DS_Store
