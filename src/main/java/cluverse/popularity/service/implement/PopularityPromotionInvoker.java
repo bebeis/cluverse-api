@@ -1,6 +1,7 @@
 package cluverse.popularity.service.implement;
 
 import cluverse.popularity.domain.PopularityTrigger;
+import cluverse.popularity.properties.PopularityInlineEvaluationProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,8 +14,12 @@ import java.util.List;
 public class PopularityPromotionInvoker {
 
     private final PopularityPromotionProcessorV2 popularityPromotionProcessorV2;
+    private final PopularityInlineEvaluationProperties inlineEvaluationProperties;
 
     public void tryEvaluate(Long postId, PopularityTrigger trigger) {
+        if (!inlineEvaluationProperties.enabled()) {
+            return;
+        }
         try {
             popularityPromotionProcessorV2.evaluate(postId, trigger);
         } catch (Exception exception) {
@@ -23,6 +28,9 @@ public class PopularityPromotionInvoker {
     }
 
     public void tryEvaluateAll(List<Long> postIds, PopularityTrigger trigger) {
+        if (!inlineEvaluationProperties.enabled()) {
+            return;
+        }
         try {
             popularityPromotionProcessorV2.evaluateAll(postIds, trigger);
         } catch (Exception exception) {

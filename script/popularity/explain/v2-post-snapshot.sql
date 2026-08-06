@@ -1,4 +1,5 @@
-SET @post_id = 5999999;
+-- inline-overhead-fixture.sql의 enabled-like 첫 게시글.
+SET @post_id = 9200001001;
 EXPLAIN ANALYZE
 SELECT p.post_id, p.board_id, p.created_at,
        COALESCE(l.like_count, 0) AS like_count,

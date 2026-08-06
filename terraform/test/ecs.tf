@@ -155,7 +155,8 @@ resource "aws_ecs_task_definition" "api" {
         { name = "SPRING_REDIS_HOST", value = var.redis_private_ip },
         { name = "SPRING_REDIS_PORT", value = "6379" },
         { name = "SPRING_DATA_REDIS_HOST", value = var.redis_private_ip },
-        { name = "SPRING_DATA_REDIS_PORT", value = "6379" }
+        { name = "SPRING_DATA_REDIS_PORT", value = "6379" },
+        { name = "POPULARITY_INLINE_EVALUATION_ENABLED", value = tostring(var.popularity_inline_evaluation_enabled) }
         ],
         var.image_upload_experiment_enabled ? [
           { name = "IMAGE_UPLOAD_EXPERIMENT_ENABLED", value = "true" },

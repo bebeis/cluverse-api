@@ -121,6 +121,8 @@ popularity:
   finalization-batch-size: 500
   experiment-endpoints-enabled: true
   benchmark-token: ${POPULARITY_BENCHMARK_TOKEN:}
+  inline-evaluation:
+    enabled: ${POPULARITY_INLINE_EVALUATION_ENABLED:true}
 
 local-map:
   provider-mode: ${LOCAL_MAP_PROVIDER_MODE:NAVER}

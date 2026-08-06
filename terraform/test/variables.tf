@@ -80,6 +80,12 @@ variable "container_image_tag" {
   default     = "latest"
 }
 
+variable "popularity_inline_evaluation_enabled" {
+  description = "devlog-6 좋아요·댓글 요청의 인라인 인기글 판정 활성화 여부"
+  type        = bool
+  default     = true
+}
+
 variable "image_upload_experiment_enabled" {
   description = "devlog-11 V1~V3 이미지 업로드 실험 API 활성화 여부"
   type        = bool
