@@ -42,6 +42,12 @@ view-count:
   initialization-wait: 1ms
   initialization-attempts: 3
 
+post-list-cache:
+  enabled: true
+  max-entries: 201
+  ttl: 3m
+  warmup-lock-ttl: 2s
+
 popularity:
   default-promotion-score: 100
   score-like-weight: 3

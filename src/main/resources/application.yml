@@ -149,6 +149,12 @@ home:
     snapshot-cache-ttl: 1m
     snapshot-candidate-size: 200
 
+post-list-cache:
+  enabled: ${POST_LIST_CACHE_ENABLED:true}
+  max-entries: 201       # 기본 size=20 기준 1~10페이지 + hasNext 판정 1건
+  ttl: 3m
+  warmup-lock-ttl: 2s
+
 # devlog-11 외부 이미지 프로세서 실행 모델 비교 API. 테스트 배포에서만 명시적으로 활성화한다.
 image-upload-experiment:
   enabled: false
