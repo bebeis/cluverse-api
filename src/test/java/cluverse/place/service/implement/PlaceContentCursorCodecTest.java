@@ -15,7 +15,7 @@ class PlaceContentCursorCodecTest {
     void 콘텐츠의_정렬_키를_왕복한다() {
         LocalDateTime createdAt = LocalDateTime.of(2026, 8, 1, 20, 30, 0);
         PlaceContentQueryResult content = new PlaceContentQueryResult(
-                "POST", 10L, "제목", "내용", 1L, "작성자", createdAt);
+                "POST", 10L, 10L, "제목", "내용", 1L, "작성자", true, createdAt);
 
         PlaceContentCursorCodec.Cursor cursor = PlaceContentCursorCodec.decode(
                 PlaceContentCursorCodec.encode(content));

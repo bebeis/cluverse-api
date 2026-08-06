@@ -49,14 +49,44 @@ class PlaceQueryRepositoryTest {
                     university_campus_id, recommended, created_at, updated_at
                 ) VALUES (400, 300, 200, 0, 1, 10, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 """);
+        jdbcTemplate.update("""
+                INSERT INTO comment (
+                    comment_id, post_id, member_id, depth, content, is_anonymous, status,
+                    like_count, reply_count, created_at, updated_at
+                ) VALUES (
+                    500, 300, 100, 0, '댓글 추천도 좋아요', FALSE, 'ACTIVE',
+                    0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                )
+                """);
+        jdbcTemplate.update("""
+                INSERT INTO comment_place (
+                    comment_place_id, comment_id, place_id, author_university_id,
+                    university_campus_id, recommended, created_at, updated_at
+                ) VALUES (600, 500, 200, 1, 10, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """);
 
         var markers = placeQueryRepository.findMarkers(1L, 10L, PlaceCategory.CAFE);
         var contents = placeQueryRepository.findContents(200L, null, null, null, 10);
 
         assertThat(markers).hasSize(1);
-        assertThat(markers.getFirst().recommendationCount()).isEqualTo(1);
-        assertThat(contents).hasSize(1);
-        assertThat(contents.getFirst().authorId()).isNull();
-        assertThat(contents.getFirst().authorNickname()).isNull();
+        assertThat(markers.getFirst().recommendationCount()).isEqualTo(2);
+        assertThat(contents).hasSize(2);
+        assertThat(contents)
+                .filteredOn(content -> content.contentType().equals("POST"))
+                .singleElement()
+                .satisfies(content -> {
+                    assertThat(content.postId()).isEqualTo(300L);
+                    assertThat(content.isLocalStudent()).isTrue();
+                    assertThat(content.authorId()).isNull();
+                    assertThat(content.authorNickname()).isNull();
+                });
+        assertThat(contents)
+                .filteredOn(content -> content.contentType().equals("COMMENT"))
+                .singleElement()
+                .satisfies(content -> {
+                    assertThat(content.contentId()).isEqualTo(500L);
+                    assertThat(content.postId()).isEqualTo(300L);
+                    assertThat(content.isLocalStudent()).isTrue();
+                });
     }
 }

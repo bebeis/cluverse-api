@@ -114,11 +114,14 @@ public class PlaceQueryRepository {
             int limit
     ) {
         String sql = """
-                SELECT content_type, content_id, title, content, author_id, author_nickname, created_at
+                SELECT content_type, content_id, post_id, title, content, author_id, author_nickname,
+                       is_local_student, created_at
                 FROM (
-                    SELECT 'POST' AS content_type, po.post_id AS content_id, po.title, po.content,
+                    SELECT 'POST' AS content_type, po.post_id AS content_id, po.post_id AS post_id,
+                           po.title, po.content,
                            CASE WHEN po.is_anonymous THEN NULL ELSE po.member_id END AS author_id,
                            CASE WHEN po.is_anonymous THEN NULL ELSE m.nickname END AS author_nickname,
+                           pp.university_campus_id IS NOT NULL AS is_local_student,
                            po.created_at
                     FROM post_place pp
                     JOIN post po ON po.post_id = pp.post_id
@@ -127,9 +130,11 @@ public class PlaceQueryRepository {
                       AND po.status = 'ACTIVE'
                       AND po.is_external_visible = TRUE
                     UNION ALL
-                    SELECT 'COMMENT' AS content_type, co.comment_id AS content_id, NULL AS title, co.content,
+                    SELECT 'COMMENT' AS content_type, co.comment_id AS content_id, co.post_id AS post_id,
+                           NULL AS title, co.content,
                            CASE WHEN co.is_anonymous THEN NULL ELSE co.member_id END AS author_id,
                            CASE WHEN co.is_anonymous THEN NULL ELSE m.nickname END AS author_nickname,
+                           cp.university_campus_id IS NOT NULL AS is_local_student,
                            co.created_at
                     FROM comment_place cp
                     JOIN comment co ON co.comment_id = cp.comment_id
@@ -158,10 +163,12 @@ public class PlaceQueryRepository {
         return jdbcTemplate.query(sql, parameters, (resultSet, rowNumber) -> new PlaceContentQueryResult(
                 resultSet.getString("content_type"),
                 resultSet.getLong("content_id"),
+                resultSet.getLong("post_id"),
                 resultSet.getString("title"),
                 resultSet.getString("content"),
                 resultSet.getObject("author_id", Long.class),
                 resultSet.getString("author_nickname"),
+                resultSet.getBoolean("is_local_student"),
                 resultSet.getTimestamp("created_at").toLocalDateTime()
         ));
     }

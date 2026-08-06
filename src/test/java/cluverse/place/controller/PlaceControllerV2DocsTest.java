@@ -87,10 +87,12 @@ class PlaceControllerV2DocsTest extends RestDocsSupport {
                 List.of(new PlaceContentResponse(
                         PlaceContentType.POST,
                         10L,
+                        10L,
                         "학교 앞 카페 추천",
                         "조용하고 커피가 맛있어요.",
                         2L,
                         "luna",
+                        true,
                         LocalDateTime.of(2026, 8, 1, 12, 0)
                 )),
                 "next-cursor",
@@ -118,10 +120,12 @@ class PlaceControllerV2DocsTest extends RestDocsSupport {
                                 fieldWithPath("data.contents").type(JsonFieldType.ARRAY).description("관련 콘텐츠 목록"),
                                 fieldWithPath("data.contents[].contentType").type(JsonFieldType.STRING).description("콘텐츠 유형"),
                                 fieldWithPath("data.contents[].contentId").type(JsonFieldType.NUMBER).description("콘텐츠 ID"),
+                                fieldWithPath("data.contents[].postId").type(JsonFieldType.NUMBER).description("연결할 부모 게시글 ID"),
                                 fieldWithPath("data.contents[].title").type(JsonFieldType.STRING).description("제목").optional(),
                                 fieldWithPath("data.contents[].content").type(JsonFieldType.STRING).description("내용"),
                                 fieldWithPath("data.contents[].authorId").type(JsonFieldType.NUMBER).description("작성자 ID").optional(),
                                 fieldWithPath("data.contents[].authorNickname").type(JsonFieldType.STRING).description("작성자 닉네임").optional(),
+                                fieldWithPath("data.contents[].isLocalStudent").type(JsonFieldType.BOOLEAN).description("현지 학생 작성 여부"),
                                 fieldWithPath("data.contents[].createdAt").type(JsonFieldType.STRING).description("작성 시각"),
                                 fieldWithPath("data.nextCursor").type(JsonFieldType.STRING).description("다음 페이지 커서").optional(),
                                 fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부")
