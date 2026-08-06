@@ -11,6 +11,13 @@ const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${A
 const tamperedAccepted = new Counter('tampered_token_accepted');
 const idempotentWriteFailures = new Counter('idempotent_write_failures');
 
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (value) => {
+    const random = Math.floor(Math.random() * 16);
+    return (value === 'x' ? random : ((random & 3) | 8)).toString(16);
+  });
+}
+
 export const options = {
   scenarios: {
     tamper: { executor: 'shared-iterations', exec: 'tamper', vus: 1, iterations: 1, maxDuration: '10s' },
@@ -38,8 +45,8 @@ export function setup() {
   const token = search.json('data.places.0.selectionToken');
   return {
     token,
-    tamperRequestId: '11111111-2222-4333-8444-555555555555',
-    idempotencyRequestId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+    tamperRequestId: uuid(),
+    idempotencyRequestId: uuid(),
   };
 }
 

@@ -1,9 +1,0 @@
-experiment,run_id,recorded_at,version,scenario,source,metric,stat,value,unit,input_file
-local-map,2026-08-01-v1,2026-08-01T12:00:00+00:00,v1,stub-delay-300ms,prometheus,db_transaction_latency,p95,320.5,ms,prometheus-export.csv
-local-map,2026-08-01-v1,2026-08-01T12:00:00+00:00,v1,stub-delay-300ms,prometheus,db_transaction_latency,p99,341.2,ms,prometheus-export.csv
-local-map,2026-08-01-v1,2026-08-01T12:00:00+00:00,v1,stub-delay-300ms,prometheus,hikari_active,max,10,count,prometheus-export.csv
-local-map,2026-08-01-v1,2026-08-01T12:00:00+00:00,v1,stub-delay-300ms,prometheus,hikari_pending,max,4,count,prometheus-export.csv
-local-map,2026-08-01-v2,2026-08-01T12:10:00+00:00,v2,stub-delay-300ms,prometheus,db_transaction_latency,p95,18.4,ms,prometheus-export.csv
-local-map,2026-08-01-v2,2026-08-01T12:10:00+00:00,v2,stub-delay-300ms,prometheus,db_transaction_latency,p99,25.8,ms,prometheus-export.csv
-local-map,2026-08-01-v2,2026-08-01T12:10:00+00:00,v2,stub-delay-300ms,prometheus,hikari_active,max,3,count,prometheus-export.csv
-local-map,2026-08-01-v2,2026-08-01T12:10:00+00:00,v2,stub-delay-300ms,prometheus,hikari_pending,max,0,count,prometheus-export.csv

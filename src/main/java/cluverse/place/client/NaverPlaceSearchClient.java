@@ -4,6 +4,7 @@ import cluverse.common.exception.ExternalServiceException;
 import cluverse.place.domain.PlaceSourceCandidate;
 import cluverse.place.exception.PlaceExceptionMessage;
 import cluverse.place.properties.LocalMapProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
@@ -14,6 +15,7 @@ import java.net.http.HttpClient;
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(prefix = "local-map", name = "provider-mode", havingValue = "NAVER", matchIfMissing = true)
 public class NaverPlaceSearchClient implements PlaceSearchClient {
 
     private static final int MAX_DISPLAY_SIZE = 5;

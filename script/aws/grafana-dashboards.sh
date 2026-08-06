@@ -31,7 +31,12 @@ curl -fsS "${AUTH[@]}" -X POST "$GRAFANA/api/folders" \
   -H 'Content-Type: application/json' \
   -d '{"uid":"cluverse","title":"Cluverse"}' >/dev/null 2>&1 || true
 
-for f in "$SCRIPT_DIR"/grafana/*.json; do
+DASHBOARDS=(
+  "$SCRIPT_DIR"/grafana/*.json
+  "$REPO_ROOT"/script/local-map/grafana/*.json
+)
+
+for f in "${DASHBOARDS[@]}"; do
   BODY="$(jq -c '{dashboard: (. + {id: null}), folderUid: "cluverse", overwrite: true}' "$f")"
   RESULT="$(curl -fsS "${AUTH[@]}" -X POST "$GRAFANA/api/dashboards/db" \
     -H 'Content-Type: application/json' -d "$BODY")" \

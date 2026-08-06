@@ -5,6 +5,8 @@ import cluverse.place.properties.PlaceProviderMode;
 public record LocalMapBenchmarkReadinessResponse(
         PlaceProviderMode providerMode,
         boolean experimentEndpointsEnabled,
-        boolean stubProvider
+        boolean stubProvider,
+        long stubDelayMillis,
+        long stubSearchCalls
 ) {
 }

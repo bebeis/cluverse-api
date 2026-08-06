@@ -1,5 +1,0 @@
-experiment,run_id,recorded_at,version,scenario,source,metric,stat,value,unit,input_file
-comment-pagination,replace-run-id,2026-08-02T00:00:00+09:00,v1,"comments=1000,tree_shape=mixed,cursor_position=first",mysql-explain,actual_rows,point,0,count,v1-explain.txt
-comment-pagination,replace-run-id,2026-08-02T00:00:00+09:00,v2,"comments=1000,tree_shape=mixed,cursor_position=first",mysql-explain,actual_rows,point,0,count,v2-explain.txt
-comment-pagination,replace-run-id,2026-08-02T00:00:00+09:00,v1,"comments=1000,tree_shape=mixed,cursor_position=first",prometheus,hikari_pending,max,0,count,prometheus.csv
-comment-pagination,replace-run-id,2026-08-02T00:00:00+09:00,v2,"comments=1000,tree_shape=mixed,cursor_position=first",prometheus,hikari_pending,max,0,count,prometheus.csv

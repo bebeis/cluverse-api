@@ -11,8 +11,9 @@ const AUTH_TOKEN = __ENV.AUTH_TOKEN || '';
 const BENCHMARK_TOKEN = __ENV.BENCHMARK_TOKEN || '';
 const BOARD_ID = Number(__ENV.BOARD_ID || 1);
 const QUERY = __ENV.QUERY || '연세대 카페';
-const RATE = Number(__ENV.RATE || 5);
+const RATE = Number(__ENV.RATE || 20);
 const DURATION = __ENV.DURATION || '30s';
+const STUB_DELAY_MS = Number(__ENV.STUB_DELAY_MS || 300);
 
 if (!AUTH_TOKEN) throw new Error('AUTH_TOKEN이 필요합니다.');
 if (!BENCHMARK_TOKEN) throw new Error('BENCHMARK_TOKEN이 필요합니다.');
@@ -25,16 +26,17 @@ export const options = {
       rate: RATE,
       timeUnit: '1s',
       duration: DURATION,
-      preAllocatedVUs: Number(__ENV.PRE_ALLOCATED_VUS || 20),
-      maxVUs: Number(__ENV.MAX_VUS || 100),
+      preAllocatedVUs: Number(__ENV.PRE_ALLOCATED_VUS || 600),
+      maxVUs: Number(__ENV.MAX_VUS || 3000),
     },
   },
   thresholds: {
-    local_map_write_success: ['rate>0.99'],
-    local_map_write_duration: ['p(95)<3000'],
+    local_map_write_success: ['rate>=0.99'],
+    local_map_write_duration: ['p(99)<1000'],
+    dropped_iterations: ['count==0'],
   },
   summaryTrendStats: ['avg', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
-  tags: { version: VERSION },
+  tags: { version: VERSION, offered_rps: String(RATE), stub_delay_ms: String(STUB_DELAY_MS) },
 };
 
 const writeDuration = new Trend('local_map_write_duration', true);

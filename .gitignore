@@ -183,6 +183,12 @@ replay_pid*
 __pycache__/
 *.py[cod]
 
+# Generated script artifacts and helpers
+/script/**/*.json
+/script/**/*.html
+/script/**/*.py
+/script/**/*.csv
+
 ### macOS ###
 # General
 .DS_Store

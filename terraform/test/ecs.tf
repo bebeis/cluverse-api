@@ -10,6 +10,7 @@ locals {
     NAVER_CLIENT_ID                  = "/cluverse/test/naver/client-id"
     NAVER_CLIENT_SECRET              = "/cluverse/test/naver/client-secret"
     LOCAL_MAP_SELECTION_TOKEN_SECRET = "/cluverse/test/local-map/selection-token-secret"
+    LOCAL_MAP_BENCHMARK_TOKEN        = "/cluverse/test/local-map/selection-token-secret"
     DATA_GO_KR_SERVICE_KEY           = "/cluverse/test/data-go/service-key"
   }
 }
@@ -156,7 +157,10 @@ resource "aws_ecs_task_definition" "api" {
         { name = "SPRING_REDIS_PORT", value = "6379" },
         { name = "SPRING_DATA_REDIS_HOST", value = var.redis_private_ip },
         { name = "SPRING_DATA_REDIS_PORT", value = "6379" },
-        { name = "POPULARITY_INLINE_EVALUATION_ENABLED", value = tostring(var.popularity_inline_evaluation_enabled) }
+        { name = "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE", value = tostring(var.local_map_db_pool_size) },
+        { name = "POPULARITY_INLINE_EVALUATION_ENABLED", value = tostring(var.popularity_inline_evaluation_enabled) },
+        { name = "LOCAL_MAP_PROVIDER_MODE", value = "STUB" },
+        { name = "LOCAL_MAP_EXPERIMENT_ENDPOINTS_ENABLED", value = "true" }
         ],
         var.image_upload_experiment_enabled ? [
           { name = "IMAGE_UPLOAD_EXPERIMENT_ENABLED", value = "true" },

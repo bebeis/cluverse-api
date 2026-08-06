@@ -27,6 +27,7 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
                 :synchronizedAt, :synchronizedAt, :synchronizedAt
             )
             ON DUPLICATE KEY UPDATE
+                place_id = LAST_INSERT_ID(place_id),
                 name = VALUES(name),
                 category = VALUES(category),
                 raw_category = VALUES(raw_category),
@@ -51,4 +52,7 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
             @Param("sourceUrl") String sourceUrl,
             @Param("synchronizedAt") LocalDateTime synchronizedAt
     );
+
+    @Query(value = "SELECT LAST_INSERT_ID()", nativeQuery = true)
+    Long lastInsertedId();
 }

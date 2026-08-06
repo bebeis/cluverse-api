@@ -86,6 +86,17 @@ variable "popularity_inline_evaluation_enabled" {
   default     = true
 }
 
+variable "local_map_db_pool_size" {
+  description = "devlog-8 로컬맵 장기 트랜잭션 비교용 HikariCP 최대 커넥션 수"
+  type        = number
+  default     = 20
+
+  validation {
+    condition     = var.local_map_db_pool_size >= 1 && var.local_map_db_pool_size <= 100
+    error_message = "local_map_db_pool_size는 1~100 사이여야 합니다."
+  }
+}
+
 variable "image_upload_experiment_enabled" {
   description = "devlog-11 V1~V3 이미지 업로드 실험 API 활성화 여부"
   type        = bool

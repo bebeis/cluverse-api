@@ -1,5 +1,0 @@
-experiment,run_id,recorded_at,version,scenario,source,metric,stat,value,unit,input_file
-comment-pagination,test-before-100,2026-08-02T00:00:00+09:00,v1,"comments=100,cursor_position=first",mysql-explain,actual_rows,point,100,count,v1.txt
-comment-pagination,test-after-100,2026-08-02T00:00:00+09:00,v2,"comments=100,cursor_position=first",mysql-explain,actual_rows,point,100,count,v2.txt
-comment-pagination,test-before-1000,2026-08-02T00:00:00+09:00,v1,"comments=1000,cursor_position=first",mysql-explain,actual_rows,point,1000,count,v1.txt
-comment-pagination,test-after-1000,2026-08-02T00:00:00+09:00,v2,"comments=1000,cursor_position=first",mysql-explain,actual_rows,point,101,count,v2.txt

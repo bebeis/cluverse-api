@@ -6,8 +6,10 @@ import cluverse.place.service.implement.LocalMapExperimentAuthorizer;
 import cluverse.place.service.response.LocalMapBenchmarkReadinessResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -24,5 +26,14 @@ public class LocalMapBenchmarkController {
     ) {
         experimentAuthorizer.authorize(benchmarkToken);
         return ApiResponse.ok(benchmarkService.readReadiness());
+    }
+
+    @PostMapping("/benchmark-stub/reset")
+    public ApiResponse<LocalMapBenchmarkReadinessResponse> resetStub(
+            @RequestHeader(value = "X-Benchmark-Token", required = false) String benchmarkToken,
+            @RequestParam long delayMillis
+    ) {
+        experimentAuthorizer.authorize(benchmarkToken);
+        return ApiResponse.ok(benchmarkService.resetStub(delayMillis));
     }
 }
