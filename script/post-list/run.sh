@@ -26,7 +26,10 @@ shift
 LABEL="$KIND"
 [ "$KIND" = "realistic" ] && LABEL="realistic-v3-v4"
 for arg in "$@"; do
-  case "$arg" in VERSION=*) LABEL="$KIND-${arg#VERSION=}" ;; esac
+  case "$arg" in
+    VERSION=*) LABEL="$LABEL-${arg#VERSION=}" ;;
+    CACHE_MODE=*) LABEL="$LABEL-cache-${arg#CACHE_MODE=}" ;;
+  esac
 done
 
 mkdir -p results/raw

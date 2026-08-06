@@ -7,6 +7,7 @@ import cluverse.post.repository.PostQueryRepository;
 import cluverse.post.repository.dto.PostDetailQueryDto;
 import cluverse.post.repository.dto.PostIdSliceQueryResult;
 import cluverse.post.repository.dto.PostPageQueryResult;
+import cluverse.post.repository.dto.PostSummaryQueryDto;
 import cluverse.post.service.request.PostCursorSearchRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
 import cluverse.post.service.request.PostOffsetSearchRequest;
@@ -14,6 +15,8 @@ import cluverse.post.service.request.PostSearchRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -25,6 +28,13 @@ public class PostReader {
 
     public PostPageQueryResult readPostPage(Long memberId, PostSearchRequest request) {
         return toPageResult(memberId, postPageQueryRepository.findPostPageIds(request));
+    }
+
+    public List<PostSummaryQueryDto> readPostSummaries(
+            Long memberId,
+            List<Long> postIds
+    ) {
+        return postQueryRepository.findPostSummaries(memberId, postIds);
     }
 
     /**

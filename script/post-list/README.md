@@ -1,14 +1,28 @@
 # 게시글 목록 조회 V1~V4 성능 측정 도구
 
-게시글 목록 조회 API의 개선 단계(offset → deferred join → 상한 COUNT → 커서)를
+게시글 목록 조회 API의 개선 단계(offset → deferred join → 상한 COUNT → 앞쪽 캐시 → 커서)를
 **같은 트래픽 분포로 측정해 수치로 비교**하기 위한 k6 부하 스크립트 + EXPLAIN SQL 모음입니다.
 
 | 버전 | 엔드포인트 | 개선 포인트 | page 상한 |
 |------|-----------|-------------|-----------|
 | V1 | `GET /api/v1/posts` | naive offset 풀 조인 + 전체 COUNT (비교 기준) | 20000 |
 | V2 | `GET /api/v2/posts` | 커버링 인덱스 deferred join + 전체 COUNT | 20000 |
-| V3 | `GET /api/v3/posts` | V2 + 페이지 블록 상한 COUNT | **500** |
+| V3 | `GET /api/v3/posts` | 앞쪽 최신순 Redis ID 캐시 + V2 + 페이지 블록 상한 COUNT | **200** |
 | V4 | `GET /api/v4/posts` | 날짜 앵커 + 튜플 커서 (offset 제거) | 커서 기반 |
+
+## V3 최신 목록 캐시 구조
+
+실제 탐색 트래픽의 80%가 1~10페이지에 집중되는 분포를 기준으로, V3 최신순 조회의 상위
+201개 게시글 ID를 게시판·카테고리별 Redis Sorted Set에 캐시했다. score는 `createdAt`, member는
+동일 시각 정렬을 보장하도록 19자리로 패딩한 `postId`를 사용한다. 앞쪽 페이지에서는 Redis가
+ID 슬라이스와 상한 카운트 근거를 함께 제공하므로 기존 V3의 ID 선별 쿼리와 상한 COUNT 쿼리를
+생략하고, 최종 노출 대상의 프로젝션·태그 조회만 DB에서 수행한다.
+
+cache-aside 첫 미스에는 최대 201개만 적재하고 짧은 워밍 락으로 동시 재적재를 막는다. Redis
+장애나 락 경합은 기존 V3 DB 경로로 즉시 폴백한다. 게시글 생성·수정·삭제는 트랜잭션 커밋 뒤
+해당 게시판 캐시를 무효화하며, 워밍 도중 쓰기와 겹친 오래된 스냅숏은 버전 비교로 저장을
+거부한다. 성능 수치는 아래 Step 2-b와 결과 템플릿을 사용해 캐시 OFF/ON을 같은 조건에서
+측정하고, 검증 전 수치를 문서에 선반영하지 않는다.
 
 ```
 script/post-list/
@@ -101,8 +115,44 @@ for v in v1 v2; do
            -e RATE=50 -e DURATION=1m script/post-list/k6/post-list-bench.k6.js
   done
 done
-# V3는 page 상한이 500이므로 FIXED_PAGE=1, 100, 500 정도로
+# V3는 page 상한이 200이므로 FIXED_PAGE=1, 100, 200 정도로
 ```
+
+### Step 2-b. V3 앞쪽 최신순 Redis 캐시 TPS 비교
+
+V3의 일반 최신순 조회 중 기본 `size=20` 기준 1~10페이지(상위 201개 ID)를 Redis Sorted Set에
+cache-aside로 보관한다. 캐시는 게시글 본문이나 개인화 값이 아니라 `(createdAt, postId)` 정렬을
+결정하는 ID만 담는다. 캐시 히트 시 MySQL에서 ID를 선별하던 offset·커버링 인덱스 탐색과 상한
+COUNT를 건너뛰고, 최종 노출 20건의 프로젝션·태그 조회만 DB에서 수행한다.
+
+동일 배포 사양에서 캐시만 끄고 켜 앞쪽 페이지의 지속 가능 TPS와 지연을 비교한다. 매 실행 전
+앱을 재시작하고, 캐시 ON 측정은 워밍업 요청을 한 번 보낸 다음 시작한다.
+
+```bash
+# A-1. 터미널 A: 캐시 OFF로 앱 기동
+POST_LIST_CACHE_ENABLED=false ./gradlew bootRun
+# A-2. 터미널 B: 측정
+script/post-list/run.sh bench \
+  -e VERSION=v3 -e CACHE_MODE=off -e MAX_PAGE=10 \
+  -e RATE=300 -e DURATION=5m
+
+# B-1. 터미널 A: 기존 앱 종료 후 캐시 ON으로 재기동
+POST_LIST_CACHE_ENABLED=true ./gradlew bootRun
+# B-2. 터미널 B: 워밍업 → 같은 부하 측정
+curl -fsS 'http://localhost:8080/api/v3/posts?boardId=2001001&page=1&size=20' >/dev/null
+script/post-list/run.sh bench \
+  -e VERSION=v3 -e CACHE_MODE=on -e MAX_PAGE=10 \
+  -e RATE=300 -e DURATION=5m
+```
+
+- `post_list_cache_requests_total{result="hit"}`와 `result="miss|bypass|error"`로 실제 캐시 경로를
+  확인한다. Prometheus에서는 Micrometer 규칙에 따라 counter 이름 뒤에 `_total`이 붙는다.
+- Redis가 느리거나 실패하면 요청은 기존 V3 DB 경로로 폴백한다. 캐시 OFF/ON 모두 성공률,
+  `dropped_iterations`, DB CPU·커넥션 사용률을 함께 기록해야 TPS 증가 원인을 구분할 수 있다.
+- 첫 미스만 DB에서 최대 201개 ID를 읽어 캐시를 채운다. 워밍 락을 얻지 못한 동시 요청은
+  기다리지 않고 DB로 폴백해 캐시 스탬피드 대기열을 만들지 않는다.
+- 게시글 생성·수정·삭제 커밋 뒤에는 해당 게시판의 전체/카테고리 캐시를 무효화한다. 워밍 중
+  쓰기가 겹치면 버전 검증으로 오래된 스냅숏 저장을 거부하며, 무효화 실패 시 3분 TTL로 복구한다.
 
 ### Step 3. V4 커서 세션 플로우
 
@@ -200,10 +250,11 @@ TEMPLATE의 표 1(profile) → 표 2/2-b/2-c(fixed·커서·혼합) → 표 3(EX
 | `BOARD_ID` | `2001001` | 대상 게시판 (기본 = 핫보드) |
 | `PAGE_MODE` | `profile` | `profile`(분포 샘플) \| `fixed`(고정 페이지) |
 | `FIXED_PAGE` | `1` | fixed 모드의 고정 페이지 |
-| `MAX_PAGE` | v3=500, v1/v2=20000 | profile 모드 페이지 상한 |
+| `MAX_PAGE` | v3=200, v1/v2=20000 | profile 모드 페이지 상한 |
 | `SIZE` | `20` | 페이지 크기 |
 | `SORT` / `CATEGORY` | - | 정렬(LATEST\|VIEW_COUNT) / 카테고리 필터 |
 | `RATE` / `DURATION` | `100` / `1m` | 초당 요청 수 / 지속 시간 |
+| `CACHE_MODE` | `unspecified` | 결과 태그/리포트 구분용(`on`\|`off`). 서버 캐시 설정 자체는 바꾸지 않음 |
 | `PRE_ALLOCATED_VUS` / `MAX_VUS` | 50 / 자동 (run.sh: 100 / 600) | VU 풀 크기 |
 | `GRACEFUL_STOP` | `5s` | 종료 시 미완료 요청 대기 상한 (진행바에 DURATION+이 값이 표시됨) |
 
@@ -291,7 +342,8 @@ bench(offset), cursor(depth), realistic(V3/V4 혼합)이 같은 분포를 재사
 | 증상 | 원인/해결 |
 |------|-----------|
 | `VERSION 은 v1\|v2\|v3 중 하나여야 합니다` 에러로 즉시 종료 | bench 스크립트에 `-e VERSION=...` 누락/오타 |
-| 응답이 전부 400 | V3에 `FIXED_PAGE > 500` 을 준 경우 (V3 page 상한 500) |
+| V3 페이지 상한 오류로 즉시 종료 | `MAX_PAGE` 또는 fixed 모드의 `FIXED_PAGE`가 200을 초과함 |
+| 캐시 ON인데 hit가 0 | 서버의 `POST_LIST_CACHE_ENABLED`, `SORT=LATEST`, 요청한 `CATEGORY` 조합의 워밍 여부, 워밍 직후 쓰기 무효화, `PAGE_SEGMENTS`, Prometheus의 `result="hit"` 필터를 확인. `MAX_PAGE>10`은 hit 비율을 낮출 수 있음 |
 | 응답이 전부 404 "존재하지 않는 게시판" | 시드 미적재 또는 `BOARD_ID` 오타 — 05a 시드와 2001001 확인 |
 | 뒷 페이지인데 posts가 빈 배열 | 해당 보드 게시글 수 < offset — 핫보드(2001001)인지 확인 |
 | `import` 문법 에러 | k6 버전이 낮음 — v0.50+ 로 업그레이드 |

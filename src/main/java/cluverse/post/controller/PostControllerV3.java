@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * [V3] deferred join + 페이지 블록 상한 카운트 목록 조회.
+ * [V3] 앞쪽 최신순 Redis ID 캐시 + deferred join + 페이지 블록 상한 카운트 목록 조회.
  * 프로덕션 구현({@link PostQueryService#getPosts})에 그대로 위임한다.
  */
 @RestController

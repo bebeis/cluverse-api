@@ -4,18 +4,22 @@ import cluverse.common.exception.ForbiddenException;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.repository.PostRepository;
+import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostUpdateRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,8 +31,32 @@ class PostWriterTest {
     @Mock
     private PostAccessReader postAccessReader;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private PostWriter postWriter;
+
+    @Test
+    void 게시글을_생성하면_커밋후_목록_캐시를_비우기_위한_이벤트를_발행한다() {
+        PostCreateRequest request = new PostCreateRequest(
+                3L,
+                "새 글",
+                "본문",
+                PostCategory.INFORMATION,
+                List.of("spring"),
+                false,
+                false,
+                true,
+                List.of()
+        );
+        when(postRepository.save(any(Post.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Post result = postWriter.create(1L, request, "127.0.0.1");
+
+        assertThat(result.getBoardId()).isEqualTo(3L);
+        verify(eventPublisher).publishEvent(new PostListChangedEvent(3L));
+    }
 
     @Test
     void 작성자는_게시글을_수정한다() {
@@ -40,6 +68,7 @@ class PostWriterTest {
 
         assertThat(post.getTitle()).isEqualTo("수정 제목");
         assertThat(post.getContent()).isEqualTo("수정 본문");
+        verify(eventPublisher).publishEvent(new PostListChangedEvent(3L));
     }
 
     @Test
@@ -59,6 +88,7 @@ class PostWriterTest {
         postWriter.delete(1L, 10L);
 
         assertThat(post.isActive()).isFalse();
+        verify(eventPublisher).publishEvent(new PostListChangedEvent(3L));
     }
 
     @Test

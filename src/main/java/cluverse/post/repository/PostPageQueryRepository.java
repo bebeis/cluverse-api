@@ -3,8 +3,10 @@ package cluverse.post.repository;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.domain.PostStatus;
 import cluverse.post.repository.dto.PostIdSliceQueryResult;
+import cluverse.post.repository.dto.LatestPostCacheEntry;
 import cluverse.post.service.request.*;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -34,6 +36,27 @@ public class PostPageQueryRepository {
         int size = request.sizeOrDefault();
         long offset = (long) (request.pageOrDefault() - 1) * size;
         return findPostPageIds(request.boardId(), request.category(), request.sortOrDefault(), offset, size);
+    }
+
+    public List<LatestPostCacheEntry> findLatestPostCacheEntries(
+            Long boardId,
+            PostCategory category,
+            int limit
+    ) {
+        return queryFactory.select(Projections.constructor(
+                        LatestPostCacheEntry.class,
+                        post.id,
+                        post.createdAt
+                ))
+                .from(post)
+                .where(
+                        activePost(),
+                        boardIdEq(boardId),
+                        categoryEq(category)
+                )
+                .orderBy(post.createdAt.desc(), post.id.desc())
+                .limit(limit)
+                .fetch();
     }
 
     /**

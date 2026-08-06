@@ -48,10 +48,19 @@
 | V3*  |      |      | —    | —    | —    | —    |
 | V4** | —    | —    | —    | —    | —    | —    |
 
-- \* V3 는 page 상한이 500 이라 page 5000/20000 을 호출할 수 없다(offset 10만/40만 N/A).
+- \* V3 는 page 상한이 200 이라 page 5000/20000 을 호출할 수 없다(offset 10만/40만 N/A).
     V3 의 이득은 표 1(전체 COUNT 제거) 및 EXPLAIN(v3-count)로 본다.
 - \*\* V4 는 **offset 개념이 없다.** 커서 이동은 깊이에 무관하게 비용이 일정하므로
     이 표 대신, 커서 스텝 깊이별 지연을 아래 표 2-b 로 기록한다.
+
+### 표 2-a — V3 최신순 앞쪽 페이지 Redis 캐시 TPS 비교
+
+`MAX_PAGE=10`, `SIZE=20`, 동일 RATE·DURATION에서 `POST_LIST_CACHE_ENABLED`만 바꿔 측정한다.
+
+| 캐시 | RATE(req/s) | 실측 RPS | avg(ms) | p90 | p99 | 에러율 | dropped iterations | DB CPU | Redis hit 비율 |
+|------|-------------|----------|---------|-----|-----|--------|--------------------|--------|----------------|
+| OFF  |             |          |         |     |     |        |                    |        | —              |
+| ON   |             |          |         |     |     |        |                    |        |                |
 
 ### 표 2-b — V4 커서 이동 스텝 깊이별 지연 (offset 무관성 확인)
 
@@ -96,7 +105,7 @@ RATE는 세션 수가 아니라 전체 목표 HTTP RPS다.
 | v2-ids (offset 40만)      |  |  |  |  | Using index? |
 | v2-projection (IN 21개)   |  |  |  |  |  |
 | v2-count                  |  |  |  |  | (= v1-count) |
-| v3-count (cap 10001)      |  |  |  |  |  |
+| v3-count (cap 4001)       |  |  |  |  |  |
 | v4-entry (날짜 앵커)      |  |  |  |  | Using index? |
 | v4-next (커서)            |  |  |  |  |  |
 | v4-prev (커서)            |  |  |  |  | Backward index scan? |
@@ -105,5 +114,6 @@ RATE는 세션 수가 아니라 전체 목표 HTTP RPS다.
 
 - V1 → V2: (deferred join 으로 깊은 offset 프로젝션 비용이 어떻게 줄었는가)
 - V2 → V3: (전체 COUNT → 상한 COUNT 로 꼬리 지연/부하가 어떻게 줄었는가)
+- V3 캐시 OFF → ON: (앞쪽 ID 선별·상한 카운트의 Redis 이전으로 TPS/DB 부하가 얼마나 개선됐는가)
 - V3 → V4: (offset 자체 제거로 깊이 무관 O(1) 이 되었는가, 트레이드오프는)
 - 특이사항 / 재현 시 주의점:

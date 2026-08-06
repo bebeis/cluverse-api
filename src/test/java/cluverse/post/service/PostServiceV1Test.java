@@ -11,6 +11,7 @@ import cluverse.meta.service.implement.ViewCountSource;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.service.implement.PostReader;
+import cluverse.post.service.implement.PostListReader;
 import cluverse.post.repository.dto.PostDetailQueryDto;
 import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
@@ -54,6 +55,9 @@ class PostServiceV1Test {
     private PostReader postReader;
 
     @Mock
+    private PostListReader postListReader;
+
+    @Mock
     private BoardReader boardReader;
 
     @Mock
@@ -78,14 +82,14 @@ class PostServiceV1Test {
     void 게시글_목록_조회시_서비스가_정렬된_ID_순서대로_응답을_조립한다() {
         // given
         PostSearchRequest request = new PostSearchRequest(3L, null, PostSortType.LATEST, 1, 20, null);
-        when(postReader.readPostPage(99L, request)).thenReturn(new PostPageQueryResult(
+        when(postListReader.readPostPage(99L, request, 201L)).thenReturn(new PostPageQueryResult(
                 List.of(
                         createPostSummaryQueryDto(2L, 20L, false),
                         createPostSummaryQueryDto(1L, 10L, false)
                 ),
-                true
+                true,
+                201L
         ));
-        when(postReader.countPostsUpTo(request, 201L)).thenReturn(201L);
 
         // when
         PostPageResponse response = postQueryService.getPosts(99L, request);
@@ -104,7 +108,7 @@ class PostServiceV1Test {
     void 게시글_수가_카운트_상한_미만이면_실제_마지막_페이지를_계산한다() {
         // given
         PostSearchRequest request = new PostSearchRequest(3L, null, PostSortType.LATEST, 1, 20, null);
-        when(postReader.readPostPage(99L, request)).thenReturn(new PostPageQueryResult(
+        when(postListReader.readPostPage(99L, request, 201L)).thenReturn(new PostPageQueryResult(
                 List.of(createPostSummaryQueryDto(2L, 20L, false)),
                 false
         ));
