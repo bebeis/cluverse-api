@@ -78,7 +78,7 @@ function uniformInt(lo, hi) {
 // pickPage(maxPage)
 //   가중치에 따라 세그먼트를 하나 고르고, 그 세그먼트 내부에서 균등하게 페이지를 뽑는다.
 //   - 세그먼트의 to 가 maxPage 를 초과하면 maxPage 로 클램프한다.
-//   - 세그먼트 from 이 maxPage 를 초과하면(예: MAX_PAGE=500 인 V3에서 101~20000 세그먼트)
+//   - 세그먼트 from 이 maxPage 를 초과하면(예: MAX_PAGE=200 인 V3에서 201~20000 세그먼트)
 //     해당 세그먼트는 [from..maxPage] 로 좁혀지며, from>maxPage 면 maxPage 단일값이 된다.
 //   반환: 1 <= page <= maxPage 인 정수
 // ---------------------------------------------------------------------------
