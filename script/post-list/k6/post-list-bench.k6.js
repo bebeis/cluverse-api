@@ -55,10 +55,17 @@ const DATE = __ENV.DATE; // V3 전용 옵션 (yyyy-MM-dd)
 
 // V3 는 page 상한이 200, V1/V2 는 20000
 const DEFAULT_MAX_PAGE = VERSION === 'v3' ? 200 : 20000;
-const MAX_PAGE = Number(__ENV.MAX_PAGE || DEFAULT_MAX_PAGE);
+const configuredMaxPage = Number(__ENV.MAX_PAGE || DEFAULT_MAX_PAGE);
+if (VERSION === 'v3' && configuredMaxPage > DEFAULT_MAX_PAGE) {
+    throw new Error(`V3 MAX_PAGE 는 ${DEFAULT_MAX_PAGE} 이하여야 합니다 (현재: ${configuredMaxPage})`);
+}
+const MAX_PAGE = configuredMaxPage;
 
 const PAGE_MODE = (__ENV.PAGE_MODE || 'profile').toLowerCase();
 const FIXED_PAGE = Number(__ENV.FIXED_PAGE || 1);
+if (VERSION === 'v3' && PAGE_MODE === 'fixed' && FIXED_PAGE > DEFAULT_MAX_PAGE) {
+    throw new Error(`V3 FIXED_PAGE 는 ${DEFAULT_MAX_PAGE} 이하여야 합니다 (현재: ${FIXED_PAGE})`);
+}
 
 const RATE = Number(__ENV.RATE || 100);
 const DURATION = __ENV.DURATION || '1m';

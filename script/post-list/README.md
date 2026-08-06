@@ -300,8 +300,8 @@ bench(offset)와 cursor(depth)가 같은 분포를 재사용합니다.
 | 증상 | 원인/해결 |
 |------|-----------|
 | `VERSION 은 v1\|v2\|v3 중 하나여야 합니다` 에러로 즉시 종료 | bench 스크립트에 `-e VERSION=...` 누락/오타 |
-| 응답이 전부 400 | V3에 `FIXED_PAGE > 200` 을 준 경우 (V3 page 상한 200) |
-| 캐시 ON인데 hit가 0 | `SORT=VIEW_COUNT`, `MAX_PAGE>10`, 다른 category 조합이거나 워밍 직후 쓰기로 무효화됨 |
+| V3 페이지 상한 오류로 즉시 종료 | `MAX_PAGE` 또는 fixed 모드의 `FIXED_PAGE`가 200을 초과함 |
+| 캐시 ON인데 hit가 0 | 서버의 `POST_LIST_CACHE_ENABLED`, `SORT=LATEST`, 요청한 `CATEGORY` 조합의 워밍 여부, 워밍 직후 쓰기 무효화, `PAGE_SEGMENTS`, Prometheus의 `result="hit"` 필터를 확인. `MAX_PAGE>10`은 hit 비율을 낮출 수 있음 |
 | 응답이 전부 404 "존재하지 않는 게시판" | 시드 미적재 또는 `BOARD_ID` 오타 — 05a 시드와 2001001 확인 |
 | 뒷 페이지인데 posts가 빈 배열 | 해당 보드 게시글 수 < offset — 핫보드(2001001)인지 확인 |
 | `import` 문법 에러 | k6 버전이 낮음 — v0.50+ 로 업그레이드 |
