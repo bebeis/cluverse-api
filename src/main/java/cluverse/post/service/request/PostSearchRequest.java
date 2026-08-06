@@ -17,7 +17,7 @@ public record PostSearchRequest(
         PostSortType sort,
 
         @Min(value = 1, message = "페이지는 1 이상이어야 합니다.")
-        @Max(value = 500, message = "페이지는 500 이하여야 합니다. 더 오래된 글은 날짜 기반 조회를 이용해주세요.")
+        @Max(value = 200, message = "페이지는 200 이하여야 합니다. 더 오래된 글은 날짜 기반 조회를 이용해주세요.")
         Integer page,
 
         @Min(value = 1, message = "조회 건수는 1 이상이어야 합니다.")

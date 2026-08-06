@@ -23,7 +23,10 @@ shift
 # -e VERSION=vN 이 있으면 리포트 파일명에 붙인다
 LABEL="$KIND"
 for arg in "$@"; do
-  case "$arg" in VERSION=*) LABEL="$KIND-${arg#VERSION=}" ;; esac
+  case "$arg" in
+    VERSION=*) LABEL="$LABEL-${arg#VERSION=}" ;;
+    CACHE_MODE=*) LABEL="$LABEL-cache-${arg#CACHE_MODE=}" ;;
+  esac
 done
 
 mkdir -p results/raw

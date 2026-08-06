@@ -5,7 +5,7 @@
 // 대상 API (offset 기반 페이지네이션 3세대):
 //   V1  GET /api/v1/posts  — naive offset 풀 조인 + 전체 COUNT
 //   V2  GET /api/v2/posts  — 커버링 인덱스 deferred join + 전체 COUNT
-//   V3  GET /api/v3/posts  — V2 + 페이지 블록 상한 카운트 (page 1~500)
+//   V3  GET /api/v3/posts  — 최신순 앞쪽 Redis ID 캐시 + V2 + 상한 카운트 (page 1~200)
 //
 // 목적: 같은 트래픽 분포(traffic-profile)로 세 버전의 응답시간/처리량을 측정해
 //       "offset 이 깊어질수록 V1 이 무너지고, V2 로 프로젝션 비용이 줄고,
@@ -53,12 +53,19 @@ const SORT = __ENV.SORT; // LATEST | VIEW_COUNT (미지정 시 서버 기본)
 const CATEGORY = __ENV.CATEGORY;
 const DATE = __ENV.DATE; // V3 전용 옵션 (yyyy-MM-dd)
 
-// V3 는 page 상한이 500, V1/V2 는 20000
-const DEFAULT_MAX_PAGE = VERSION === 'v3' ? 500 : 20000;
-const MAX_PAGE = Number(__ENV.MAX_PAGE || DEFAULT_MAX_PAGE);
+// V3 는 page 상한이 200, V1/V2 는 20000
+const DEFAULT_MAX_PAGE = VERSION === 'v3' ? 200 : 20000;
+const configuredMaxPage = Number(__ENV.MAX_PAGE || DEFAULT_MAX_PAGE);
+if (VERSION === 'v3' && configuredMaxPage > DEFAULT_MAX_PAGE) {
+    throw new Error(`V3 MAX_PAGE 는 ${DEFAULT_MAX_PAGE} 이하여야 합니다 (현재: ${configuredMaxPage})`);
+}
+const MAX_PAGE = configuredMaxPage;
 
 const PAGE_MODE = (__ENV.PAGE_MODE || 'profile').toLowerCase();
 const FIXED_PAGE = Number(__ENV.FIXED_PAGE || 1);
+if (VERSION === 'v3' && PAGE_MODE === 'fixed' && FIXED_PAGE > DEFAULT_MAX_PAGE) {
+    throw new Error(`V3 FIXED_PAGE 는 ${DEFAULT_MAX_PAGE} 이하여야 합니다 (현재: ${FIXED_PAGE})`);
+}
 
 const RATE = Number(__ENV.RATE || 100);
 const DURATION = __ENV.DURATION || '1m';
@@ -67,6 +74,7 @@ const MAX_VUS = Number(__ENV.MAX_VUS || Math.max(PRE_ALLOCATED_VUS * 2, 100));
 // 종료 시 미완료 요청 대기 상한. 기본 30s면 진행바가 DURATION+30s로 표시된다.
 // 요청 하나가 수 초를 넘지 않는 벤치라 5s면 충분.
 const GRACEFUL_STOP = __ENV.GRACEFUL_STOP || '5s';
+const CACHE_MODE = (__ENV.CACHE_MODE || 'unspecified').toLowerCase();
 
 export const options = {
     scenarios: {
@@ -89,6 +97,7 @@ export const options = {
     tags: {
         version: VERSION,
         page_mode: PAGE_MODE,
+        cache_mode: CACHE_MODE,
     },
 };
 

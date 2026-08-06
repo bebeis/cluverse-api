@@ -46,6 +46,21 @@ public class RedisConfig {
         return longScript("redis/ensure_total_at_least.lua");
     }
 
+    @Bean
+    public RedisScript<List> readLatestPostIdsScript() {
+        return listScript("redis/read_latest_post_ids.lua");
+    }
+
+    @Bean
+    public RedisScript<Long> replaceLatestPostIdsScript() {
+        return longScript("redis/replace_latest_post_ids.lua");
+    }
+
+    @Bean
+    public RedisScript<Long> invalidateLatestPostIdsScript() {
+        return longScript("redis/invalidate_latest_post_ids.lua");
+    }
+
     /**
      * 인스턴스마다 JVM 기본 타임존이 다르면 zone 없는 DATETIME 비교가 어긋난다 — 명시 고정.
      */

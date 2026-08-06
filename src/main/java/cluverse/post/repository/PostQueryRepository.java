@@ -152,8 +152,9 @@ public class PostQueryRepository {
         Map<Long, List<String>> tagsByPostId = findTagsByPostIds(postIds);
 
         return postIds.stream()
-                .map(postId -> rowByPostId.get(postId)
-                        .toDto(tagsByPostId.getOrDefault(postId, List.of())))
+                .filter(rowByPostId::containsKey)
+                .map(postId -> rowByPostId.get(postId).toDto(
+                        tagsByPostId.getOrDefault(postId, List.of())))
                 .toList();
     }
 
