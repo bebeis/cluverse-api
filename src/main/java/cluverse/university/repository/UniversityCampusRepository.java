@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface UniversityCampusRepository extends JpaRepository<UniversityCampus, Long> {
 
-    List<UniversityCampus> findAllByUniversityIdAndIsActiveTrue(Long universityId);
+    List<UniversityCampus> findAllByUniversityIdAndIsActiveTrueOrderByNameAsc(Long universityId);
 }

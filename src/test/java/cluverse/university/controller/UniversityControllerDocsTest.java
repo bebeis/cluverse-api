@@ -5,6 +5,7 @@ import cluverse.docs.RestDocsSupport;
 import cluverse.member.domain.MemberRole;
 import cluverse.university.service.UniversityService;
 import cluverse.university.service.UniversityQueryService;
+import cluverse.university.service.response.UniversityCampusResponse;
 import cluverse.university.service.response.UniversityDetailResponse;
 import cluverse.university.service.response.UniversitySummaryResponse;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.restdocs.payload.JsonFieldType;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static cluverse.common.auth.LoginMemberArgumentResolver.SESSION_KEY;
@@ -94,6 +96,42 @@ class UniversityControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.universityBadgeImageUrl").type(JsonFieldType.STRING).description("학교 배지 이미지 URL").optional(),
                                 fieldWithPath("data.address").type(JsonFieldType.STRING).description("학교 주소").optional(),
                                 fieldWithPath("data.isActive").type(JsonFieldType.BOOLEAN).description("학교 활성 여부")
+                        )
+                ));
+    }
+
+    @Test
+    void 학교의_활성_캠퍼스_목록_조회() throws Exception {
+        when(universityQueryService.getCampuses(1L)).thenReturn(List.of(
+                new UniversityCampusResponse(
+                        10L,
+                        1L,
+                        "신촌캠퍼스",
+                        new BigDecimal("37.5657840"),
+                        new BigDecimal("126.9385720"),
+                        3000
+                )
+        ));
+
+        mockMvc.perform(get("/api/v1/universities/{universityId}/campuses", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].campusId").value(10L))
+                .andExpect(jsonPath("$.data[0].latitude").value(37.5657840))
+                .andDo(document("universities/get-campuses",
+                        pathParameters(
+                                parameterWithName("universityId").description("캠퍼스를 조회할 학교 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
+                                fieldWithPath("status").type(JsonFieldType.STRING).description("HTTP 상태"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                fieldWithPath("data").type(JsonFieldType.ARRAY).description("활성 캠퍼스 목록"),
+                                fieldWithPath("data[].campusId").type(JsonFieldType.NUMBER).description("캠퍼스 ID"),
+                                fieldWithPath("data[].universityId").type(JsonFieldType.NUMBER).description("학교 ID"),
+                                fieldWithPath("data[].name").type(JsonFieldType.STRING).description("캠퍼스명"),
+                                fieldWithPath("data[].latitude").type(JsonFieldType.NUMBER).description("지도 중심 위도"),
+                                fieldWithPath("data[].longitude").type(JsonFieldType.NUMBER).description("지도 중심 경도"),
+                                fieldWithPath("data[].localRadiusMeter").type(JsonFieldType.NUMBER).description("현지 판정 반경(미터)")
                         )
                 ));
     }

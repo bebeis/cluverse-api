@@ -16,6 +16,6 @@ public class UniversityCampusReader {
     private final UniversityCampusRepository universityCampusRepository;
 
     public List<UniversityCampus> readActiveByUniversityId(Long universityId) {
-        return universityCampusRepository.findAllByUniversityIdAndIsActiveTrue(universityId);
+        return universityCampusRepository.findAllByUniversityIdAndIsActiveTrueOrderByNameAsc(universityId);
     }
 }

@@ -1,7 +1,9 @@
 package cluverse.university.service;
 
+import cluverse.university.service.implement.UniversityCampusReader;
 import cluverse.university.service.implement.UniversityReader;
 import cluverse.university.service.request.UniversitySearchRequest;
+import cluverse.university.service.response.UniversityCampusResponse;
 import cluverse.university.service.response.UniversityDetailResponse;
 import cluverse.university.service.response.UniversitySummaryResponse;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ import java.util.List;
 public class UniversityQueryService {
 
     private final UniversityReader universityReader;
+    private final UniversityCampusReader universityCampusReader;
 
     public List<UniversitySummaryResponse> searchUniversities(UniversitySearchRequest request) {
         return universityReader.search(request);
@@ -21,5 +24,12 @@ public class UniversityQueryService {
 
     public UniversityDetailResponse getUniversity(Long universityId) {
         return UniversityDetailResponse.from(universityReader.readOrThrow(universityId));
+    }
+
+    public List<UniversityCampusResponse> getCampuses(Long universityId) {
+        universityReader.readOrThrow(universityId);
+        return universityCampusReader.readActiveByUniversityId(universityId).stream()
+                .map(UniversityCampusResponse::from)
+                .toList();
     }
 }

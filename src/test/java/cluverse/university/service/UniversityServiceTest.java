@@ -3,12 +3,15 @@ package cluverse.university.service;
 import cluverse.common.exception.ForbiddenException;
 import cluverse.member.service.implement.MemberReader;
 import cluverse.university.domain.University;
+import cluverse.university.domain.UniversityCampus;
+import cluverse.university.service.implement.UniversityCampusReader;
 import cluverse.university.service.implement.UniversityReader;
 import cluverse.university.service.implement.UniversityWriter;
 import cluverse.university.service.request.UniversityCreateRequest;
 import cluverse.university.service.request.UniversitySearchRequest;
 import cluverse.university.service.request.UniversityUpdateRequest;
 import cluverse.university.service.response.UniversityDetailResponse;
+import cluverse.university.service.response.UniversityCampusResponse;
 import cluverse.university.service.response.UniversitySummaryResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +33,9 @@ class UniversityServiceTest {
 
     @Mock
     private UniversityReader universityReader;
+
+    @Mock
+    private UniversityCampusReader universityCampusReader;
 
     @Mock
     private UniversityWriter universityWriter;
@@ -74,6 +80,34 @@ class UniversityServiceTest {
         assertThat(result.universityName()).isEqualTo("클루대학교");
         assertThat(result.emailDomain()).isEqualTo("cluverse.ac.kr");
         verify(universityReader).readOrThrow(1L);
+    }
+
+    @Test
+    void 학교의_활성_캠퍼스를_지도_초기화_정보로_변환한다() {
+        UniversityCampus campus = UniversityCampus.create(
+                1L,
+                "신촌캠퍼스",
+                new java.math.BigDecimal("37.5657840"),
+                new java.math.BigDecimal("126.9385720"),
+                3000
+        );
+        ReflectionTestUtils.setField(campus, "id", 10L);
+        when(universityReader.readOrThrow(1L)).thenReturn(createUniversity(
+                1L, "클루대학교", "cluverse.ac.kr", "badge", "서울", true));
+        when(universityCampusReader.readActiveByUniversityId(1L)).thenReturn(List.of(campus));
+
+        List<UniversityCampusResponse> result = universityQueryService.getCampuses(1L);
+
+        assertThat(result).containsExactly(new UniversityCampusResponse(
+                10L,
+                1L,
+                "신촌캠퍼스",
+                new java.math.BigDecimal("37.5657840"),
+                new java.math.BigDecimal("126.9385720"),
+                3000
+        ));
+        verify(universityReader).readOrThrow(1L);
+        verify(universityCampusReader).readActiveByUniversityId(1L);
     }
 
     @Test

@@ -9,6 +9,7 @@ import cluverse.university.service.request.UniversityCreateRequest;
 import cluverse.university.service.request.UniversitySearchRequest;
 import cluverse.university.service.request.UniversityUpdateRequest;
 import cluverse.university.service.response.UniversityDetailResponse;
+import cluverse.university.service.response.UniversityCampusResponse;
 import cluverse.university.service.response.UniversitySummaryResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,11 @@ public class UniversityController {
     @GetMapping("/{universityId}")
     public ApiResponse<UniversityDetailResponse> getUniversity(@PathVariable Long universityId) {
         return ApiResponse.ok(universityQueryService.getUniversity(universityId));
+    }
+
+    @GetMapping("/{universityId}/campuses")
+    public ApiResponse<List<UniversityCampusResponse>> getCampuses(@PathVariable Long universityId) {
+        return ApiResponse.ok(universityQueryService.getCampuses(universityId));
     }
 
     @PostMapping
