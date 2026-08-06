@@ -20,7 +20,7 @@ spring:
   servlet:
     multipart:
       max-file-size: 10MB
-      max-request-size: 50MB
+      max-request-size: 55MB
       file-size-threshold: 0
   datasource:
     url: jdbc:mysql://${RDS_ENDPOINT:localhost}:3306/cluverse_v2?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useSSL=false&rewriteBatchedStatements=true
@@ -161,6 +161,9 @@ image-upload-experiment:
   remote-timeout: 30s
   stale-pending-after: 3m
   cleanup-interval: 30s
+
+post-image:
+  max-file-size: 10MB
 
 oauth2:
   kakao:

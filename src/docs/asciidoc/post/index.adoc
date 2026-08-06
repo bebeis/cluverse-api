@@ -189,6 +189,18 @@ include::{snippets}/posts/delete-post/path-parameters.adoc[]
 include::{snippets}/posts/delete-post/http-response.adoc[]
 include::{snippets}/posts/delete-post/response-fields.adoc[]
 
+=== 게시글 이미지 multipart 업로드
+
+==== 요청
+
+include::{snippets}/post-images/upload-multipart/http-request.adoc[]
+include::{snippets}/post-images/upload-multipart/request-parts.adoc[]
+
+==== 응답
+
+include::{snippets}/post-images/upload-multipart/http-response.adoc[]
+include::{snippets}/post-images/upload-multipart/response-fields.adoc[]
+
 === 게시글 이미지 업로드용 Presigned URL 발급
 
 ==== 요청

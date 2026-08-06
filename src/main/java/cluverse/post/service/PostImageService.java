@@ -4,7 +4,10 @@ import cluverse.post.client.PostImageStorageClient;
 import cluverse.post.client.PresignedUploadResult;
 import cluverse.common.exception.BadRequestException;
 import cluverse.post.exception.PostExceptionMessage;
+import cluverse.post.service.implement.PostImageUploader;
+import cluverse.post.service.request.PostImageMultipartUploadRequest;
 import cluverse.post.service.request.PostImagePresignedUrlRequest;
+import cluverse.post.service.response.PostImageMultipartUploadResponse;
 import cluverse.post.service.response.PostImagePresignedUrlResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,16 @@ public class PostImageService {
     );
 
     private final PostImageStorageClient postImageStorageClient;
+    private final PostImageUploader postImageUploader;
+
+    public PostImageMultipartUploadResponse upload(
+            Long memberId,
+            PostImageMultipartUploadRequest request
+    ) {
+        return PostImageMultipartUploadResponse.from(
+                postImageUploader.upload(memberId, request.images())
+        );
+    }
 
     public PostImagePresignedUrlResponse createPresignedUrl(
             Long memberId,
