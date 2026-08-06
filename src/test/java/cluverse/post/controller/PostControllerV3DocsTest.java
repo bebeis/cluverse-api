@@ -63,7 +63,7 @@ class PostControllerV3DocsTest extends RestDocsSupport {
                                 parameterWithName("boardId").description("조회할 게시판 ID"),
                                 parameterWithName("category").description("게시글 카테고리").optional(),
                                 parameterWithName("sort").description("정렬 기준 (`LATEST`, `VIEW_COUNT`). 날짜 기반 조회 시 생략").optional(),
-                                parameterWithName("page").description("페이지 번호 (1~500). `date`와 함께 사용 불가").optional(),
+                                parameterWithName("page").description("페이지 번호 (1~200). `date`와 함께 사용 불가").optional(),
                                 parameterWithName("size").description("페이지 크기").optional(),
                                 parameterWithName("date").description("날짜 기반 조회 (`yyyy-MM-dd`). 지정 시 해당 날짜의 글만 조회. `page`와 함께 사용 불가").optional()
                         ),
@@ -98,6 +98,16 @@ class PostControllerV3DocsTest extends RestDocsSupport {
                                 fieldWithPath("data.dateBased").type(JsonFieldType.BOOLEAN).description("날짜 기반 조회 여부")
                         )
                 ));
+    }
+
+    @Test
+    void V3_게시글_목록은_200페이지를_초과할_수_없다() throws Exception {
+        mockMvc.perform(get("/api/v3/posts")
+                        .session(createSession())
+                        .queryParam("boardId", "3")
+                        .queryParam("page", "201")
+                        .queryParam("size", "20"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
