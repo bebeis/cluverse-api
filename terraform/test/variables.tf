@@ -90,11 +90,6 @@ variable "image_processor_lambda_name" {
   description = "세 버전이 공통 호출할 외부 이미지 프로세서 Lambda 함수 이름"
   type        = string
   default     = ""
-
-  validation {
-    condition     = !var.image_upload_experiment_enabled || length(trimspace(var.image_processor_lambda_name)) > 0
-    error_message = "image_upload_experiment_enabled가 true이면 image_processor_lambda_name을 입력해야 합니다."
-  }
 }
 
 variable "image_upload_bucket_name" {

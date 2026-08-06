@@ -17,11 +17,12 @@ script/post-list/
     lib/traffic-profile.js      ← 페이지 깊이 분포 (수치 단일 출처)
     post-list-bench.k6.js       ← V1~V3 공용 벤치 (profile/fixed 모드)
     post-list-cursor.k6.js      ← V4 커서 세션 플로우
+    post-list-realistic.k6.js   ← 최종 V3 offset + V4 cursor 혼합 부하
   explain/                      ← 각 버전이 실제 날리는 쿼리의 EXPLAIN 9종
   results/TEMPLATE.md           ← 측정 결과 기록 양식
 ```
 
-본 측정에서는 `k6 run ... k6/<스크립트>` 대신 `run.sh bench|cursor ...` 를 권장합니다.
+본 측정에서는 `k6 run ... k6/<스크립트>` 대신 `run.sh bench|cursor|realistic ...` 를 권장합니다.
 동일한 k6 인자를 받되, 실시간 웹 대시보드(http://localhost:5665)와
 `results/raw/<날짜시각>-<라벨>.html` 리포트 저장, VU 풀 기본값(100/600)을 자동으로 켭니다.
 
@@ -123,6 +124,33 @@ k6 run -e DATE=<범위 안 날짜> -e RATE=100 -e DURATION=2m \
 관전 포인트: `cursor_step_duration` 이 depth 태그(d01, d02-05, … d51+)별로 나오는데,
 **깊이가 깊어져도 응답 시간이 늘지 않으면** "커서는 O(1)"이 입증된 것입니다. 표 2-b에.
 
+### Step 3-b. 최종 V3/V4 혼합 부하
+
+개별 버전의 개선 효과를 측정한 뒤, 실제 서비스가 사용하는 최종 라우팅을 한 번 더 측정한다.
+일반적인 1~500페이지 요청은 V3로, 날짜를 선택한 과거 글 진입과 이후 이동은 V4로 보낸다.
+
+```bash
+script/post-list/run.sh realistic \
+  -e BASE_URL=https://api.cluverse.cona.team \
+  -e BOARD_ID=2001001 \
+  -e RATE=200 \
+  -e V4_REQUEST_SHARE=0.05 \
+  -e DURATION=10m
+```
+
+- `RATE`는 세션 수가 아니라 **V3와 V4를 합한 목표 HTTP RPS**다. 위 조건은 V3 190 RPS와
+  V4 10 RPS로 나뉜다.
+- `V4_REQUEST_SHARE`는 세션 비율이 아니라 전체 HTTP 요청 중 V4 요청 비율이다. 접근 로그가
+  생기기 전에는 5%를 가정하고, 이후 실제 비율로 교체한다.
+- V4를 담당하는 각 VU는 날짜 진입 응답의 커서를 보관하고 다음 iteration에서 `NEXT` 요청을
+  보낸다. 따라서 V4도 iteration 하나가 HTTP 요청 하나이며 전체 RATE가 부풀지 않는다.
+- 날짜는 기본적으로 실행일 기준 1~14일 전에서 고른다. 고정된 날짜 분포가 필요하면
+  `DATE_ANCHORS=2026-07-24,2026-07-28,...`처럼 시드 범위 안의 날짜를 지정한다.
+- 이 시나리오는 이미 V3/V4를 섞으므로 `VERSION`을 지정하면 즉시 실패한다.
+
+결과에서는 전체 p99와 함께 `post_list_realistic_duration{route:v3_offset|v4_entry|v4_next}`만
+비교한다. `post_list_realistic_requests`의 route별 count로 실제 혼합 비율도 확인한다.
+
 ### Step 4. EXPLAIN 캡처
 
 `explain/*.sql` 은 각 버전이 실제 날리는 쿼리입니다. 파일 상단에 파라미터(`SET @board_id` 등)와
@@ -156,7 +184,7 @@ offset/page를 바꿔 실험하려면 파일 안 숫자를 직접 수정하세�
 
 ### Step 5. 결과 정리
 
-TEMPLATE의 표 1(profile) → 표 2/2-b(fixed·커서) → 표 3(EXPLAIN) 을 채우고,
+TEMPLATE의 표 1(profile) → 표 2/2-b/2-c(fixed·커서·혼합) → 표 3(EXPLAIN) 을 채우고,
 마지막 "관찰/해석" 절에 버전 간 차이를 서술합니다.
 
 ---
@@ -188,6 +216,20 @@ TEMPLATE의 표 1(profile) → 표 2/2-b(fixed·커서) → 표 3(EXPLAIN) 을 �
 | `CURSOR_MAX_DEPTH` | `100` | 세션당 최대 NEXT 이동 횟수 (분포 샘플의 상한) |
 | `GRACEFUL_STOP` | `30s` | 진행 중 세션 마무리 대기 상한 (짧게 자르면 깊은 depth가 과소 표집) |
 
+### post-list-realistic.k6.js (최종 V3/V4 혼합)
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `BASE_URL` / `BOARD_ID` / `SIZE` | 위와 동일 | 대상 서버·게시판·페이지 크기 |
+| `RATE` / `DURATION` | `100` / `1m` | V3+V4 전체 목표 HTTP RPS / 지속 시간 |
+| `V4_REQUEST_SHARE` | `0.05` | 전체 HTTP 요청에서 V4가 차지할 비율 |
+| `V3_MAX_PAGE` | `500` | V3 offset 요청 페이지 상한 |
+| `CURSOR_MAX_DEPTH` | `10` | V4 날짜 진입 후 한 세션의 최대 요청 깊이 |
+| `DATE_DAYS_BACK_MIN/MAX` | `1` / `14` | 날짜 앵커의 실행일 기준 과거 일수 범위 |
+| `DATE_ANCHORS` | - | 쉼표로 구분한 고정 날짜 후보. 지정하면 일수 범위보다 우선 |
+| `CATEGORY` | - | V3/V4에 공통 적용할 카테고리 필터 |
+| `PRE_ALLOCATED_VUS` / `MAX_VUS` | 전체 RATE 기반 자동 | V3/V4 비율에 따라 각 scenario에 분배 |
+
 ### 공통
 
 | 변수 | 설명 |
@@ -200,7 +242,7 @@ TEMPLATE의 표 1(profile) → 표 2/2-b(fixed·커서) → 표 3(EXPLAIN) 을 �
 
 실제 게시판은 조회가 앞페이지에 극단적으로 편중되고, 소수의 깊은 조회가 꼬리 지연(p99)을 만듭니다.
 이 분포를 `k6/lib/traffic-profile.js` **한 곳에서** 세그먼트 가중치로 정의하고,
-bench(offset)와 cursor(depth)가 같은 분포를 재사용합니다.
+bench(offset), cursor(depth), realistic(V3/V4 혼합)이 같은 분포를 재사용합니다.
 
 | 세그먼트(page) | 가중치 | 의미 |
 |----------------|--------|------|

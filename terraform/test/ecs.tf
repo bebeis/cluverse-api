@@ -125,6 +125,15 @@ resource "aws_ecs_task_definition" "api" {
   execution_role_arn       = aws_iam_role.task_execution.arn
   task_role_arn            = aws_iam_role.task.arn
 
+  # Terraform 1.5의 variable validation은 다른 변수를 참조할 수 없으므로
+  # 두 입력값의 관계는 리소스 사전 조건에서 검증한다.
+  lifecycle {
+    precondition {
+      condition     = !var.image_upload_experiment_enabled || length(trimspace(var.image_processor_lambda_name)) > 0
+      error_message = "image_upload_experiment_enabled가 true이면 image_processor_lambda_name을 입력해야 합니다."
+    }
+  }
+
   container_definitions = jsonencode([
     {
       name      = "cluverse-api"
