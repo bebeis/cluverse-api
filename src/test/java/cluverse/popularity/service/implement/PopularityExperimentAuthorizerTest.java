@@ -27,12 +27,10 @@ class PopularityExperimentAuthorizerTest {
     }
 
     @Test
-    void 토큰이_설정되지_않으면_실험_실행을_거부한다() {
+    void 토큰이_설정되지_않으면_실험_실행을_허용한다() {
         PopularityExperimentAuthorizer authorizer = new PopularityExperimentAuthorizer(properties(""));
 
-        assertThatThrownBy(() -> authorizer.authorize(null))
-                .isInstanceOf(ForbiddenException.class)
-                .hasMessage("벤치마크 토큰이 설정되지 않았습니다.");
+        assertThatCode(() -> authorizer.authorize(null)).doesNotThrowAnyException();
     }
 
     private PopularityProperties properties(String token) {

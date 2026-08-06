@@ -22,7 +22,7 @@ class PopularityPropertiesTest {
             assertThat(properties.policySampleWindow()).isEqualTo(Duration.ofDays(7));
             assertThat(properties.finalizationInterval()).isEqualTo(Duration.ofSeconds(30));
             assertThat(properties.baselineScanEnabled()).isFalse();
-            assertThat(properties.experimentEndpointsEnabled()).isFalse();
+            assertThat(properties.experimentEndpointsEnabled()).isTrue();
         });
     }
 }

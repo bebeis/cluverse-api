@@ -15,7 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v2/popular-posts")
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "popularity", name = "experiment-endpoints-enabled", havingValue = "true")
+@ConditionalOnProperty(
+        prefix = "popularity",
+        name = "experiment-endpoints-enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 public class PopularityExperimentControllerV2 {
 
     private final PopularityPromotionServiceV2 popularityPromotionServiceV2;

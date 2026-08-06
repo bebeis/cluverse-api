@@ -27,7 +27,7 @@ public record PopularityProperties(
         @DefaultValue("1000") @Positive int scanChunkSize,
         @DefaultValue("30s") @NotNull Duration finalizationInterval,
         @DefaultValue("500") @Positive int finalizationBatchSize,
-        @DefaultValue("false") boolean experimentEndpointsEnabled,
+        @DefaultValue("true") boolean experimentEndpointsEnabled,
         String benchmarkToken
 ) {
 }

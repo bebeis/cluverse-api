@@ -52,6 +52,27 @@ AWS 측정 환경은 `script/aws/seed.sh view-count --wait`가 MySQL 시드를 �
 script/view-count/reset_redis.sh
 ```
 
+## 표시값 역행 재현
+
+V2·V3의 폐기 사유인 "flush handoff 중 표시 조회수 역행"을 실측으로 남긴다. writer가 단일 게시글에
+새 쿠키로 유효 조회를 쌓는 동안, reader 1 VU가 같은 쿠키를 반복 전송해 표시값만 읽는다
+(중복 판정이라 조회수를 늘리지 않는다). 표시값이 직전 최대치보다 낮아지는 순간을 역행 이벤트로
+집계하고 하락폭과 회복 시간을 기록한다.
+
+```bash
+# V2: delta GETDEL → MySQL 커밋 사이의 역행을 관측
+script/view-count/run.sh regression -e VERSION=v2 -e POST_ID=5999999 -e RATE=200 -e DURATION=5m
+
+# V4 대조군: 같은 부하에서 역행 이벤트 0을 확인
+script/view-count/run.sh regression -e VERSION=v4 -e POST_ID=5999999 -e RATE=200 -e DURATION=5m
+```
+
+- `DURATION`은 delta flush 주기(`view-count.delta-flush-interval`, 기본 1m)를 2회 이상 지나도록 잡는다.
+- 역행 창은 짧으므로 reader는 기본값(간격 0)으로 최대한 자주 읽는다. 읽기 부하를 줄이려면 `-e READER_INTERVAL_MS=50`.
+- 이벤트당 관측 확률은 폴링 밀도에 비례한다. 원격 측정에서 0회가 나오면 `-e READER_VUS=4`로 밀도를 올린다. 여러 VU가 같은 flush를 중복 집계할 수 있으므로 이벤트 수는 존재 증명으로, 블로그 수치는 하락폭·회복 시간을 쓴다.
+- 하락폭은 flush 시점에 쌓인 delta 크기(≈ RATE × flush 주기)에 비례한다. 역행 관측 샘플 수 × 폴링 간격이 노출 시간의 하한이다.
+- 결과는 `results/metrics.csv`에 쌓지 않고 k6 summary JSON과 stdout 요약으로 남긴다.
+
 ## Redis 상태 캡처
 
 부하 직전과 직후에 같은 명령을 실행한다.

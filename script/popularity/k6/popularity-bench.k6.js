@@ -12,7 +12,6 @@ const iterations = Number(__ENV.ITERATIONS || (version === 'v1' ? 3 : 100));
 const vus = Number(__ENV.VUS || (version === 'v1' ? 1 : 10));
 
 if (!['v1', 'v2'].includes(version)) throw new Error('VERSION은 v1 또는 v2여야 합니다.');
-if (!token) throw new Error('BENCHMARK_TOKEN이 필요합니다.');
 
 const evaluationDuration = new Trend('popularity_evaluation_duration', true);
 const examinedPosts = new Trend('popularity_examined_posts');
@@ -28,7 +27,7 @@ export const options = {
 };
 
 function request() {
-  const headers = { 'X-Benchmark-Token': token };
+  const headers = token ? { 'X-Benchmark-Token': token } : {};
   if (version === 'v1') {
     return http.post(`${baseUrl}/api/v1/popular-posts/promotion-runs`, null, { headers, tags: { version } });
   }

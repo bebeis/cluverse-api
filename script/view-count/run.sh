@@ -31,11 +31,13 @@ HTML="$RESULT_DIR/${STAMP}-${LABEL}.html"
 case "$MODE" in
   bench) TEST_FILE="$SCRIPT_DIR/k6/view-count-bench.k6.js" ;;
   correctness) TEST_FILE="$SCRIPT_DIR/k6/view-count-correctness.k6.js" ;;
-  *) echo "usage: $0 bench|correctness [k6 args...]" >&2; exit 2 ;;
+  regression) TEST_FILE="$SCRIPT_DIR/k6/view-count-regression.k6.js" ;;
+  *) echo "usage: $0 bench|correctness|regression [k6 args...]" >&2; exit 2 ;;
 esac
 
 K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT="$HTML" \
   k6 run --summary-export "$SUMMARY" "${K6_ARGS[@]}" "$TEST_FILE"
-python3 "$SCRIPT_DIR/collect_results.py" "$SUMMARY"
+# regression은 metrics.csv 스키마(RPS/p99)와 지표가 달라 summary JSON만 남긴다.
+[[ "$MODE" == "regression" ]] || python3 "$SCRIPT_DIR/collect_results.py" "$SUMMARY"
 echo "summary: $SUMMARY"
 echo "dashboard: $HTML"

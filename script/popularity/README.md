@@ -7,7 +7,8 @@
 | V1 | `POST /api/v1/popular-posts/promotion-runs` | 최근 48시간 글 전체를 읽고 전역 기준으로 선발 |
 | V2 | `POST /api/v2/popular-posts/{postId}/promotion-checks` | 좋아요·댓글이 변한 글 하나를 게시판별 기준으로 판정 |
 
-실험 쓰기 API는 `popularity.experiment-endpoints-enabled=true`인 측정 배포에서만 열리고 `X-Benchmark-Token`으로 보호된다.
+실험 쓰기 API는 기본으로 활성화된다. `POPULARITY_BENCHMARK_TOKEN`을 설정한 환경에서는
+`X-Benchmark-Token`이 일치해야 하며, 토큰을 설정하지 않으면 별도 헤더 없이 호출할 수 있다.
 
 ## 핵심 지표
 
@@ -33,13 +34,14 @@ AWS 측정 환경에서는 `script/aws/seed.sh view-count --wait`와 `full` 프�
 ## 실행
 
 ```bash
-export BENCHMARK_TOKEN='<측정 배포 토큰>'
+# 선택: 배포에 POPULARITY_BENCHMARK_TOKEN을 설정한 경우에만 지정한다.
+# export BENCHMARK_TOKEN='<측정 배포 토큰>'
 
 # V1 배치는 비싸므로 적은 반복으로 완료 시간과 검사량을 잰다.
-script/popularity/run.sh -e VERSION=v1 -e BENCHMARK_TOKEN="$BENCHMARK_TOKEN" -e ITERATIONS=3 -e VUS=1
+script/popularity/run.sh -e VERSION=v1 -e ITERATIONS=3 -e VUS=1
 
 # V2 단건 판정은 충분한 표본으로 p99를 잰다.
-script/popularity/run.sh -e VERSION=v2 -e BENCHMARK_TOKEN="$BENCHMARK_TOKEN" \
+script/popularity/run.sh -e VERSION=v2 \
   -e POST_ID_MIN=5900000 -e POST_ID_MAX=5999999 -e ITERATIONS=1000 -e VUS=20
 ```
 
