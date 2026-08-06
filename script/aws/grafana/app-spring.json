@@ -778,7 +778,7 @@
   {
    "id": 15,
    "type": "row",
-   "title": "호스트 — cluverse-ecs-node (앱 EC2)",
+   "title": "호스트 — ECS 인스턴스별 지표",
    "collapsed": false,
    "gridPos": {
     "h": 1,
@@ -838,8 +838,8 @@
       "type": "prometheus",
       "uid": "${DS_PROM}"
      },
-     "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\",instance_name=\"cluverse-ecs-node\"}[$__rate_interval]))) * 100",
-     "legendFormat": "CPU %",
+     "expr": "(1 - avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\",instance_name=\"cluverse-ecs-node\"}[$__rate_interval]))) * 100",
+     "legendFormat": "{{instance}}",
      "refId": "A"
     }
    ]
@@ -893,7 +893,7 @@
       "uid": "${DS_PROM}"
      },
      "expr": "node_memory_MemAvailable_bytes{instance_name=\"cluverse-ecs-node\"}",
-     "legendFormat": "가용 메모리",
+     "legendFormat": "{{instance}}",
      "refId": "A"
     }
    ]
@@ -946,8 +946,8 @@
       "type": "prometheus",
       "uid": "${DS_PROM}"
      },
-     "expr": "sum(rate(node_network_receive_bytes_total{instance_name=\"cluverse-ecs-node\",device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]))",
-     "legendFormat": "rx",
+     "expr": "sum by(instance) (rate(node_network_receive_bytes_total{instance_name=\"cluverse-ecs-node\",device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]))",
+     "legendFormat": "rx {{instance}}",
      "refId": "A"
     },
     {
@@ -955,9 +955,64 @@
       "type": "prometheus",
       "uid": "${DS_PROM}"
      },
-     "expr": "sum(rate(node_network_transmit_bytes_total{instance_name=\"cluverse-ecs-node\",device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]))",
-     "legendFormat": "tx",
+     "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{instance_name=\"cluverse-ecs-node\",device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]))",
+     "legendFormat": "tx {{instance}}",
      "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 19,
+   "type": "timeseries",
+   "title": "인스턴스별 RPS — ALB 분배 확인",
+   "description": "각 ECS 인스턴스가 실제로 처리한 요청 수를 비교합니다.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "${DS_PROM}"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 24,
+    "x": 0,
+    "y": 44
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true
+     },
+     "unit": "reqps"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "table",
+     "placement": "bottom",
+     "showLegend": true,
+     "calcs": ["mean", "max"]
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROM}"
+     },
+     "expr": "sum by(instance) (rate(http_server_requests_seconds_count{job=\"spring\",uri!~\"/actuator.*\"}[$__rate_interval]))",
+     "legendFormat": "{{instance}}",
+     "refId": "A"
     }
    ]
   }

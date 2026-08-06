@@ -47,7 +47,7 @@ variable "db_username" {
 variable "ecs_desired_count" {
   description = "ECS 서비스 desired task 수"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "ecs_instance_type" {
