@@ -4,7 +4,7 @@
 
 | URL | 차이 |
 |---|---|
-| `POST /api/v1/image-uploads` | 이미지별 staging PUT → Lambda 동기 호출을 순차 실행 |
+| `POST /api/v1/image-uploads` | 이미지별 staging PUT → processor 동기 호출을 순차 실행 |
 | `POST /api/v2/image-uploads` | `CompletableFuture` + 고정 Platform executor로 이미지별 호출을 겹쳐 실행 |
 | `POST /api/v3/image-uploads` | `CompletableFuture` + Virtual Thread executor, Semaphore로 외부 호출 상한 유지 |
 
@@ -17,8 +17,20 @@ DB의 `PENDING → COMPLETED/FAILED`, deterministic object key, requestId 멱등
 ```text
 IMAGE_UPLOAD_EXPERIMENT_ENABLED=true
 IMAGE_UPLOAD_BENCHMARK_TOKEN=...
+IMAGE_UPLOAD_PROCESSOR_MODE=LAMBDA
 IMAGE_PROCESSOR_LAMBDA_NAME=...
 ```
+
+Lambda의 실행 한도와 분리해 실행 모델만 비교할 때는 processor 경계 뒤에 재현 가능한 지연 stub을 둔다. 실제 S3 staging/output과 DB 정합성 흐름은 유지한다.
+
+```text
+IMAGE_UPLOAD_PROCESSOR_MODE=STUB
+IMAGE_UPLOAD_STUB_AVERAGE_DELAY=920ms
+IMAGE_UPLOAD_EXPERIMENT_MAX_CONCURRENT_REMOTE_CALLS=32
+IMAGE_UPLOAD_EXPERIMENT_VIRTUAL_MAX_CONCURRENT_TASKS=32
+```
+
+기본 920ms profile은 requestId와 이미지 순번을 기준으로 900ms 75%, 960ms 20%, 1,040ms 5%이며 가중 평균은 919ms다. stub은 resize·재인코딩 성능을 재현하지 않으므로 실제 Lambda 측정 결과와 분리해 기록한다.
 
 실제 카메라 이미지 fixture를 지정한다. 작은 합성 이미지는 리사이즈/전송 비용을 대표하지 못하므로 저장소에 고정 fixture를 넣지 않았다.
 
@@ -30,6 +42,20 @@ IMAGE_COUNT=3 VUS=4 DURATION=30s \
 PROMETHEUS_URL=http://localhost:9090 \
 ./script/image-upload/run.sh
 ```
+
+배포 설정이 섞인 측정을 막으려면 readiness 기대값과 실행 순서를 함께 고정한다. platform thread 비교에서는 V2 worker가 V3 구간에 남지 않도록 새 JVM에서 V3를 V2보다 먼저 실행한다.
+
+```bash
+EXPECTED_PROCESSOR_MODE=STUB \
+EXPECTED_STUB_AVERAGE_DELAY_MS=920 \
+EXPECTED_MAX_CONCURRENT_REMOTE_CALLS=32 \
+EXPECTED_VIRTUAL_MAX_CONCURRENT_TASKS=32 \
+EXPECTED_PLATFORM_QUEUE_CAPACITY=32 \
+VERSION_ORDER='v1 v3 v2' \
+./script/image-upload/run.sh
+```
+
+상한을 높여 포화 곡선을 볼 때는 배포의 V2 worker, V3 permit, V2 queue와 k6 VU를 함께 기록한다. 예를 들어 인스턴스당 동시성 64를 검증하려면 `EXPECTED_MAX_CONCURRENT_REMOTE_CALLS=64`, `EXPECTED_VIRTUAL_MAX_CONCURRENT_TASKS=64`, `EXPECTED_PLATFORM_QUEUE_CAPACITY=64`, `VUS=64`를 사용한다. V2와 V3 값을 다르게 두면 실행 모델 비교가 아니라 허용 동시성까지 바뀌는 확장성 실험이므로 결과를 분리한다.
 
 각 버전은 warm-up 후 따로 실행된다. `results/<timestamp>/evidence.md`는 캡처용 숫자 표, `latency.svg`는 p95/p99 그래프다.
 

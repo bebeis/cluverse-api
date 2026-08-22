@@ -2,6 +2,7 @@ package cluverse.post.client;
 
 import cluverse.post.domain.ProcessedPostImage;
 import cluverse.post.properties.PostImageUploadProperties;
+import cluverse.post.properties.PostImageProcessorMode;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.unit.DataSize;
 import software.amazon.awssdk.core.SdkBytes;
@@ -49,10 +50,13 @@ class LambdaPostImageProcessorClientTest {
                 new PostImageUploadProperties(
                         true,
                         "token",
+                        PostImageProcessorMode.LAMBDA,
                         "image-processor",
                         "",
+                        Duration.ofMillis(920),
                         DataSize.ofMegabytes(10),
                         32,
+                        16,
                         16,
                         Duration.ofSeconds(30),
                         Duration.ofMinutes(3),

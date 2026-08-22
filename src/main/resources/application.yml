@@ -161,8 +161,10 @@ post-list-cache:
 image-upload-experiment:
   enabled: false
   benchmark-token: ${IMAGE_UPLOAD_BENCHMARK_TOKEN:}
+  processor-mode: ${IMAGE_UPLOAD_PROCESSOR_MODE:LAMBDA}
   lambda-function-name: ${IMAGE_PROCESSOR_LAMBDA_NAME:}
   lambda-endpoint: ${IMAGE_PROCESSOR_LAMBDA_ENDPOINT:}
+  stub-average-delay: ${IMAGE_UPLOAD_STUB_AVERAGE_DELAY:920ms}
   max-file-size: 10MB
   platform-queue-capacity: 32
   max-concurrent-remote-calls: 16

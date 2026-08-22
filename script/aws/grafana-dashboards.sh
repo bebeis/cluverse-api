@@ -34,6 +34,7 @@ curl -fsS "${AUTH[@]}" -X POST "$GRAFANA/api/folders" \
 DASHBOARDS=(
   "$SCRIPT_DIR"/grafana/*.json
   "$REPO_ROOT"/script/local-map/grafana/*.json
+  "$REPO_ROOT"/script/image-upload/grafana/*.json
 )
 
 for f in "${DASHBOARDS[@]}"; do

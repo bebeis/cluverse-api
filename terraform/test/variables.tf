@@ -109,10 +109,60 @@ variable "image_processor_lambda_name" {
   default     = ""
 }
 
+variable "image_upload_processor_mode" {
+  description = "devlog-11 이미지 프로세서 모드: lambda 또는 stub"
+  type        = string
+  default     = "lambda"
+
+  validation {
+    condition     = contains(["lambda", "stub"], lower(var.image_upload_processor_mode))
+    error_message = "image_upload_processor_mode는 lambda 또는 stub이어야 합니다."
+  }
+}
+
+variable "image_upload_stub_average_delay" {
+  description = "stub 이미지 변환 평균 지연(Spring Duration 형식)"
+  type        = string
+  default     = "920ms"
+}
+
 variable "image_upload_bucket_name" {
   description = "staging/content/thumbnail 객체를 저장할 S3 bucket"
   type        = string
   default     = "cluverse-images"
+}
+
+variable "image_upload_max_concurrent_remote_calls" {
+  description = "devlog-11 애플리케이션 인스턴스별 외부 또는 mock 이미지 작업 동시 실행 상한"
+  type        = number
+  default     = 16
+
+  validation {
+    condition     = var.image_upload_max_concurrent_remote_calls >= 1 && var.image_upload_max_concurrent_remote_calls <= 100
+    error_message = "image_upload_max_concurrent_remote_calls는 1~100 사이여야 합니다."
+  }
+}
+
+variable "image_upload_platform_queue_capacity" {
+  description = "devlog-11 V2 platform executor의 대기 queue 용량"
+  type        = number
+  default     = 32
+
+  validation {
+    condition     = var.image_upload_platform_queue_capacity >= 1 && var.image_upload_platform_queue_capacity <= 1000
+    error_message = "image_upload_platform_queue_capacity는 1~1000 사이여야 합니다."
+  }
+}
+
+variable "image_upload_virtual_max_concurrent_tasks" {
+  description = "devlog-11 V1/V3 Semaphore의 애플리케이션 인스턴스별 permit 수"
+  type        = number
+  default     = 16
+
+  validation {
+    condition     = var.image_upload_virtual_max_concurrent_tasks >= 1 && var.image_upload_virtual_max_concurrent_tasks <= 512
+    error_message = "image_upload_virtual_max_concurrent_tasks는 1~512 사이여야 합니다."
+  }
 }
 
 variable "image_upload_benchmark_token_parameter_path" {

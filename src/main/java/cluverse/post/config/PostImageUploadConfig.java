@@ -3,6 +3,7 @@ package cluverse.post.config;
 import cluverse.common.properties.AwsProperties;
 import cluverse.post.properties.PostImageUploadProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
@@ -25,6 +26,12 @@ import java.util.concurrent.TimeUnit;
 public class PostImageUploadConfig {
 
     @Bean
+    @ConditionalOnProperty(
+            prefix = "image-upload-experiment",
+            name = "processor-mode",
+            havingValue = "lambda",
+            matchIfMissing = true
+    )
     LambdaClient postImageLambdaClient(
             AwsProperties awsProperties,
             PostImageUploadProperties properties
@@ -63,7 +70,7 @@ public class PostImageUploadConfig {
 
     @Bean
     Semaphore postImageRemoteCallSemaphore(PostImageUploadProperties properties) {
-        return new Semaphore(properties.maxConcurrentRemoteCalls(), true);
+        return new Semaphore(properties.virtualMaxConcurrentTasks(), true);
     }
 
 }

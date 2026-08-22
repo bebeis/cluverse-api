@@ -2,6 +2,7 @@ package cluverse.post.service.implement;
 
 import cluverse.common.exception.ForbiddenException;
 import cluverse.post.properties.PostImageUploadProperties;
+import cluverse.post.properties.PostImageProcessorMode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +26,8 @@ public class PostImageUploadExperimentAuthorizer {
         if (expected.length == 0 || !MessageDigest.isEqual(expected, actual)) {
             throw new ForbiddenException("벤치마크 토큰이 올바르지 않습니다.");
         }
-        if (properties.lambdaFunctionName() == null || properties.lambdaFunctionName().isBlank()) {
+        if (properties.processorMode() == PostImageProcessorMode.LAMBDA
+                && (properties.lambdaFunctionName() == null || properties.lambdaFunctionName().isBlank())) {
             throw new ForbiddenException("외부 이미지 프로세서가 설정되지 않았습니다.");
         }
     }

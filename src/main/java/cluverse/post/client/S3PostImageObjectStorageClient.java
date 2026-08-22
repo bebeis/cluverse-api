@@ -7,9 +7,11 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.MetadataDirective;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
@@ -37,6 +39,21 @@ public class S3PostImageObjectStorageClient implements PostImageObjectStorageCli
             );
         } catch (RuntimeException exception) {
             throw new ExternalServiceException("이미지 원본을 staging 저장소에 업로드하지 못했습니다.", exception);
+        }
+    }
+
+    @Override
+    public void copy(String sourceKey, String targetKey, String contentType) {
+        try {
+            s3Client.copyObject(CopyObjectRequest.builder()
+                    .copySource(awsProperties.s3().bucket() + "/" + sourceKey)
+                    .destinationBucket(awsProperties.s3().bucket())
+                    .destinationKey(targetKey)
+                    .metadataDirective(MetadataDirective.REPLACE)
+                    .contentType(contentType)
+                    .build());
+        } catch (RuntimeException exception) {
+            throw new ExternalServiceException("mock 이미지 결과 객체를 저장하지 못했습니다.", exception);
         }
     }
 

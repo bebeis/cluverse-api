@@ -37,7 +37,9 @@ public class PostImageUploadPreparer {
                 String contentType = detectContentType(file);
                 Path temporaryFile = Files.createTempFile("cluverse-image-upload-", ".source");
                 try {
-                    file.transferTo(temporaryFile);
+                    // File overload delegates to Servlet Part.write, allowing a same-filesystem move.
+                    // MultipartFile's Path overload copies the full stream into this temporary file.
+                    file.transferTo(temporaryFile.toFile());
                 } catch (IOException | RuntimeException exception) {
                     temporaryFileCleaner.delete(temporaryFile);
                     throw exception;

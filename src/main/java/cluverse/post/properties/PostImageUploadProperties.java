@@ -10,11 +10,14 @@ import java.time.Duration;
 public record PostImageUploadProperties(
         @DefaultValue("false") boolean enabled,
         String benchmarkToken,
+        @DefaultValue("LAMBDA") PostImageProcessorMode processorMode,
         String lambdaFunctionName,
         String lambdaEndpoint,
+        @DefaultValue("920ms") Duration stubAverageDelay,
         @DefaultValue("10MB") DataSize maxFileSize,
         @DefaultValue("32") int platformQueueCapacity,
         @DefaultValue("16") int maxConcurrentRemoteCalls,
+        @DefaultValue("16") int virtualMaxConcurrentTasks,
         @DefaultValue("30s") Duration remoteTimeout,
         @DefaultValue("3m") Duration stalePendingAfter,
         @DefaultValue("30s") Duration cleanupInterval

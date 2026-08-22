@@ -7,6 +7,7 @@ import cluverse.post.properties.PostImageUploadProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.core.exception.ApiCallTimeoutException;
@@ -17,6 +18,12 @@ import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+        prefix = "image-upload-experiment",
+        name = "processor-mode",
+        havingValue = "lambda",
+        matchIfMissing = true
+)
 public class LambdaPostImageProcessorClient implements PostImageProcessorClient {
 
     private final LambdaClient lambdaClient;

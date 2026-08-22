@@ -130,8 +130,12 @@ resource "aws_ecs_task_definition" "api" {
   # 두 입력값의 관계는 리소스 사전 조건에서 검증한다.
   lifecycle {
     precondition {
-      condition     = !var.image_upload_experiment_enabled || length(trimspace(var.image_processor_lambda_name)) > 0
-      error_message = "image_upload_experiment_enabled가 true이면 image_processor_lambda_name을 입력해야 합니다."
+      condition = (
+        !var.image_upload_experiment_enabled
+        || lower(var.image_upload_processor_mode) == "stub"
+        || length(trimspace(var.image_processor_lambda_name)) > 0
+      )
+      error_message = "image_upload_processor_mode가 lambda이면 image_processor_lambda_name을 입력해야 합니다."
     }
   }
 
@@ -164,8 +168,13 @@ resource "aws_ecs_task_definition" "api" {
         ],
         var.image_upload_experiment_enabled ? [
           { name = "IMAGE_UPLOAD_EXPERIMENT_ENABLED", value = "true" },
+          { name = "IMAGE_UPLOAD_PROCESSOR_MODE", value = upper(var.image_upload_processor_mode) },
+          { name = "IMAGE_UPLOAD_STUB_AVERAGE_DELAY", value = var.image_upload_stub_average_delay },
           { name = "IMAGE_PROCESSOR_LAMBDA_NAME", value = var.image_processor_lambda_name },
-          { name = "AWS_S3_BUCKET_NAME", value = var.image_upload_bucket_name }
+          { name = "AWS_S3_BUCKET_NAME", value = var.image_upload_bucket_name },
+          { name = "IMAGE_UPLOAD_EXPERIMENT_MAX_CONCURRENT_REMOTE_CALLS", value = tostring(var.image_upload_max_concurrent_remote_calls) },
+          { name = "IMAGE_UPLOAD_EXPERIMENT_PLATFORM_QUEUE_CAPACITY", value = tostring(var.image_upload_platform_queue_capacity) },
+          { name = "IMAGE_UPLOAD_EXPERIMENT_VIRTUAL_MAX_CONCURRENT_TASKS", value = tostring(var.image_upload_virtual_max_concurrent_tasks) }
         ] : []
       )
       secrets = concat(
@@ -202,6 +211,11 @@ resource "aws_ecs_service" "api" {
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.api.arn
   desired_count   = var.ecs_desired_count
+
+  # t3.small 한 대에는 1536MB API task를 하나만 배치할 수 있다.
+  # 추가 task를 먼저 띄우는 기본 100/200 롤링은 두 노드가 모두 찬 상태에서 교착된다.
+  deployment_minimum_healthy_percent = 50
+  deployment_maximum_percent         = 100
 
   # Spring Boot 부팅이 느려 grace가 짧으면 ALB 헬스체크 실패 → 태스크 무한 재시작.
   # 넉넉하게 180초.
