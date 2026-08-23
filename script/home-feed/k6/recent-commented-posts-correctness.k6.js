@@ -24,11 +24,13 @@ function read(version) {
   );
   const contentType = String(response.headers['Content-Type'] || '').toLowerCase();
   if (response.status !== 200 || !contentType.includes('application/json')) {
+    equivalence.add(false);
     exec.test.abort(`${version} 조회 실패: ${response.status} ${response.body}`);
   }
   try {
     const payload = response.json();
     if (Number(payload.code) !== 200 || !Array.isArray(payload.data)) {
+      equivalence.add(false);
       exec.test.abort(`${version} 응답 형식 오류: ${response.body}`);
     }
     return payload.data.map((post) => ({
@@ -37,6 +39,7 @@ function read(version) {
       lastCommentedAt: post.lastCommentedAt,
     }));
   } catch (error) {
+    equivalence.add(false);
     exec.test.abort(`${version} JSON 파싱 실패: ${response.body}`);
     return [];
   }

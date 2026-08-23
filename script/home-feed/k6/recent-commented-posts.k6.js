@@ -7,25 +7,43 @@ const VERSION = (__ENV.VERSION || '').toLowerCase();
 const BASE_URL = readBaseUrl();
 const MEMBER_ID = readMemberId();
 const RATE = Number(__ENV.RATE || 20);
+const VUS = Number(__ENV.VUS || 4);
 const DURATION = __ENV.DURATION || '30s';
+const EXECUTOR = (__ENV.EXECUTOR || 'constant-arrival-rate').toLowerCase();
+const REQUEST_TIMEOUT = __ENV.REQUEST_TIMEOUT || '60s';
+const GRACEFUL_STOP = __ENV.GRACEFUL_STOP || '30s';
 const COMMENTS = __ENV.COMMENTS || 'unknown';
 const COMMENTED_POSTS = __ENV.COMMENTED_POSTS || 'unknown';
 const HOT_COMMENT_PERCENT = __ENV.HOT_COMMENT_PERCENT || 'unknown';
 
 if (!['v1', 'v2', 'v3'].includes(VERSION)) throw new Error('VERSION은 v1, v2, v3 중 하나여야 합니다.');
-export const options = {
-  scenarios: {
-    read: {
+if (!['constant-arrival-rate', 'constant-vus'].includes(EXECUTOR)) {
+  throw new Error('EXECUTOR는 constant-arrival-rate 또는 constant-vus여야 합니다.');
+}
+
+const scenario = EXECUTOR === 'constant-vus'
+  ? {
+      executor: 'constant-vus',
+      vus: VUS,
+      duration: DURATION,
+      gracefulStop: GRACEFUL_STOP,
+    }
+  : {
       executor: 'constant-arrival-rate',
       rate: RATE,
       timeUnit: '1s',
       duration: DURATION,
       preAllocatedVUs: Number(__ENV.PRE_ALLOCATED_VUS || 20),
       maxVUs: Number(__ENV.MAX_VUS || 100),
-    },
+      gracefulStop: GRACEFUL_STOP,
+    };
+
+export const options = {
+  scenarios: {
+    read: scenario,
   },
   thresholds: {
-    dropped_iterations: ['count==0'],
+    ...(EXECUTOR === 'constant-arrival-rate' ? { dropped_iterations: ['count==0'] } : {}),
     home_recent_posts_success: ['rate>0.99'],
     home_recent_posts_duration: ['p(95)<3000'],
   },
@@ -43,17 +61,27 @@ const success = new Rate('home_recent_posts_success');
 
 export function setup() {
   if (VERSION !== 'v2') return;
+  const params = authenticatedParams(
+    MEMBER_ID,
+    { name: 'home_recent_commented_posts_v2_warmup' },
+  );
+  params.timeout = REQUEST_TIMEOUT;
   const response = http.get(
     `${BASE_URL}/api/${VERSION}/home/recent-commented-posts`,
-    authenticatedParams(MEMBER_ID, { name: 'home_recent_commented_posts_v2_warmup' }),
+    params,
   );
   if (response.status !== 200) throw new Error(`V2 캐시 예열 실패: ${response.status}`);
 }
 
 export default function () {
+  const params = authenticatedParams(
+    MEMBER_ID,
+    { name: `home_recent_commented_posts_${VERSION}` },
+  );
+  params.timeout = REQUEST_TIMEOUT;
   const response = http.get(
     `${BASE_URL}/api/${VERSION}/home/recent-commented-posts`,
-    authenticatedParams(MEMBER_ID, { name: `home_recent_commented_posts_${VERSION}` }),
+    params,
   );
   const ok = check(response, {
     'home recent posts success': (value) => {

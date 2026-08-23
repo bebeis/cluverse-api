@@ -1,0 +1,18 @@
+EXPLAIN
+-> Limit: 10 row(s)  (cost=1.25e+6 rows=0.05) (actual time=5.17..5.24 rows=10 loops=1)
+    -> Nested loop inner join  (cost=1.25e+6 rows=0.05) (actual time=5.17..5.24 rows=10 loops=1)
+        -> Nested loop inner join  (cost=1.21e+6 rows=0.5) (actual time=2.63..2.69 rows=10 loops=1)
+            -> Nested loop antijoin  (cost=820434 rows=5) (actual time=0.699..0.75 rows=10 loops=1)
+                -> Nested loop inner join  (cost=780455 rows=5) (actual time=0.683..0.727 rows=10 loops=1)
+                    -> Covering index scan on activity using idx_post_comment_activity_latest  (cost=0.0269 rows=10) (actual time=0.659..0.663 rows=10 loops=1)
+                    -> Filter: (p.`status` = 'ACTIVE')  (cost=0.976 rows=0.5) (actual time=0.00598..0.00605 rows=1 loops=10)
+                        -> Single-row index lookup on p using PRIMARY (post_id=activity.post_id)  (cost=0.976 rows=1) (actual time=0.00528..0.0053 rows=1 loops=10)
+                -> Single-row index lookup on <subquery2> using <auto_distinct_key> (blocked_id=p.member_id)  (cost=11.2..11.2 rows=1) (actual time=0.00172..0.00172 rows=0 loops=10)
+                    -> Materialize with deduplication  (cost=1.2..1.2 rows=1) (actual time=0.0114..0.0114 rows=0 loops=1)
+                        -> Filter: (bl.blocked_id is not null)  (cost=1.1 rows=1) (actual time=0.00879..0.00879 rows=0 loops=1)
+                            -> Covering index lookup on bl using uk_block (blocker_id=(@viewer_id))  (cost=1.1 rows=1) (actual time=0.00851..0.00851 rows=0 loops=1)
+            -> Filter: ((b.is_active = true) and ((b.board_type <> 'GROUP') or (p.board_id = -1)))  (cost=0.969 rows=0.1) (actual time=0.194..0.194 rows=1 loops=10)
+                -> Single-row index lookup on b using PRIMARY (board_id=p.board_id)  (cost=0.969 rows=1) (actual time=0.193..0.193 rows=1 loops=10)
+        -> Filter: (author.`status` = 'ACTIVE')  (cost=0.999 rows=0.1) (actual time=0.254..0.254 rows=1 loops=10)
+            -> Single-row index lookup on author using PRIMARY (member_id=p.member_id)  (cost=0.999 rows=1) (actual time=0.253..0.253 rows=1 loops=10)
+

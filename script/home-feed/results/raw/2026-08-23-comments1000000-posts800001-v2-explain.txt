@@ -1,0 +1,10 @@
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	c	NULL	index	idx_comment_post_status_created,idx_comment_post_created_latest,idx_comment_post_path,idx_comment_post_parent_created,idx_comment_post_visible_created	idx_comment_post_visible_created	14	NULL	1018770	100.00	Using index; Using temporary; Using filesort
+EXPLAIN
+-> Limit: 201 row(s)  (actual time=1483..1483 rows=201 loops=1)
+    -> Sort: last_commented_at DESC, c.post_id DESC  (actual time=1483..1483 rows=201 loops=1)
+        -> Filter: (`max(c.visible_created_at)` is not null)  (actual time=2.15..1219 rows=801804 loops=1)
+            -> Stream results  (cost=223682 rows=801504) (actual time=2.15..1163 rows=801804 loops=1)
+                -> Group aggregate: max(c.visible_created_at), max(c.visible_created_at)  (cost=223682 rows=801504) (actual time=2.13..659 rows=801804 loops=1)
+                    -> Covering index scan on c using idx_comment_post_visible_created  (cost=121805 rows=1.02e+6) (actual time=2.12..455 rows=1e+6 loops=1)
+

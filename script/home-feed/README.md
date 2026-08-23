@@ -32,13 +32,16 @@
 ```sql
 SET @benchmark_member_id = 1;
 SET @benchmark_board_id = 1;
-SET @benchmark_post_count = 1000;
-SET @benchmark_comment_count = 100000;
+SET @benchmark_post_count = 800001;
+SET @benchmark_comment_count = 1000000;
 SET @benchmark_hot_comment_percent = 20;
 SOURCE script/home-feed/seed/fixture.sql;
 ```
 
-`hot_comment_percent=20`은 전체 댓글의 20%를 한 게시글에 몰아 실제 커뮤니티의 편향을 단순화해 재현한다. 규모 비교는 먼저 10만, 100만 순서로 올리고 DB 여유를 확인한 뒤 확장한다.
+`hot_comment_percent=20`은 전체 댓글의 20%를 한 게시글에 몰아 실제 커뮤니티의 편향을 단순화해 재현한다. V2는 댓글 전체 행 수뿐 아니라 `GROUP BY post_id`로 만들어지는 게시글 그룹 수에 영향을 받는다. 따라서 댓글 100만 건을 게시글 1,000건에만 몰아넣으면 V2의 정렬 비용이 드러나지 않는다. V2의 성장 한계를 확인할 때는 댓글 20만 건을 한 게시글에 집중시키고 나머지 80만 건을 서로 다른 게시글에 한 건씩 배치하는 `댓글 100만 건 / 댓글 게시글 800,001건` 조건을 사용한다.
+
+- V1 timeout 재현: 게시글 1,000건, 댓글 10,000건, 집중도 20%
+- V2→V3 성장 실험: 게시글 800,001건, 댓글 1,000,000건, 집중도 20%
 
 정리는 다음 스크립트로 수행한다.
 
@@ -57,18 +60,32 @@ export BASE_URL='http://localhost:8080'
 
 ## 실행
 
-같은 fixture에서 쓰기 부하 없이 세 단계를 연속 실행한다. 중간 단계는 `setup()`에서 한 번 호출해 후보 캐시를 예열하므로 단일 애플리케이션 인스턴스의 커스텀 지연 지표에는 warm-cache 요청만 포함된다. Caffeine은 인스턴스별 캐시이므로 여러 인스턴스를 측정할 때는 각 인스턴스를 직접 예열하거나 cold miss가 포함됐음을 실행 조건에 기록한다.
+중간 단계는 `setup()`에서 한 번 호출해 후보 캐시를 예열하므로 기본 커스텀 지연 지표에는 warm-cache 요청만 포함된다. Caffeine은 인스턴스별 캐시이므로 여러 인스턴스를 측정할 때는 각 인스턴스를 직접 예열하거나 cold miss가 포함됐음을 실행 조건에 기록한다. V2의 갱신 스파이크를 측정할 때는 `--no-setup`으로 시작하고 cache TTL 1분을 넘겨 실행한다.
 
 ```bash
-export COMMENTS=100000
+# 1단계 fixture: V1 timeout → V2
+export COMMENTS=10000
 export COMMENTED_POSTS=1000
 export HOT_COMMENT_PERCENT=20
 
 script/home-feed/smoke.sh
 script/home-feed/run.sh read v1
 script/home-feed/run.sh read v2
-script/home-feed/run.sh read v3
-script/home-feed/run.sh correctness
+
+# 2단계 fixture로 다시 시딩한 뒤: V2 snapshot → V3
+export COMMENTS=1000000
+export COMMENTED_POSTS=800001
+EXECUTOR=constant-vus VUS=4 DURATION=70s \
+  script/home-feed/run.sh read v2 --no-setup
+EXECUTOR=constant-vus VUS=4 DURATION=60s \
+  script/home-feed/run.sh read v3
+```
+
+응답이 느린 V1에서 고정 도착률이 대기 요청을 무제한으로 늘리지 않도록, 규모 비교에는 같은 동시 사용자 수를 유지하는 closed model을 사용할 수 있다.
+
+```bash
+EXECUTOR=constant-vus VUS=4 DURATION=60s REQUEST_TIMEOUT=90s \
+  script/home-feed/run.sh read v1
 ```
 
 정합성 비교는 고정 fixture에서만 실행한다. 세 조회 사이에 댓글이 생성·삭제되면 서로 다른 스냅숏을 읽으므로 알고리즘 동등성 검증이 아니다.

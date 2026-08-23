@@ -3,6 +3,8 @@ SET @benchmark_board_id = COALESCE(@benchmark_board_id, 1);
 SET @benchmark_post_count = COALESCE(@benchmark_post_count, 1000);
 SET @benchmark_comment_count = COALESCE(@benchmark_comment_count, 100000);
 SET @benchmark_hot_comment_percent = COALESCE(@benchmark_hot_comment_percent, 20);
+SET @benchmark_post_base_time = COALESCE(@benchmark_post_base_time, '2026-08-22 00:00:00');
+SET @benchmark_comment_base_time = COALESCE(@benchmark_comment_base_time, '2026-08-23 00:00:00');
 
 DROP TEMPORARY TABLE IF EXISTS tmp_home_feed_seq_10000;
 CREATE TEMPORARY TABLE tmp_home_feed_seq_10000
@@ -126,8 +128,8 @@ BEGIN
             TRUE,
             'ACTIVE',
             'benchmark-home-feed',
-            DATE_ADD('2026-01-01 00:00:00', INTERVAL post_offset + seq SECOND),
-            DATE_ADD('2026-01-01 00:00:00', INTERVAL post_offset + seq SECOND)
+            DATE_ADD(@benchmark_post_base_time, INTERVAL post_offset + seq SECOND),
+            DATE_ADD(@benchmark_post_base_time, INTERVAL post_offset + seq SECOND)
         FROM tmp_home_feed_seq_10000
         WHERE seq < LEAST(batch_size, post_count - post_offset)
         ORDER BY seq;
@@ -158,8 +160,8 @@ BEGIN
             0,
             0,
             'benchmark-home-feed',
-            DATE_ADD('2026-02-01 00:00:00', INTERVAL comment_offset + sequence.seq SECOND),
-            DATE_ADD('2026-02-01 00:00:00', INTERVAL comment_offset + sequence.seq SECOND),
+            DATE_ADD(@benchmark_comment_base_time, INTERVAL comment_offset + sequence.seq SECOND),
+            DATE_ADD(@benchmark_comment_base_time, INTERVAL comment_offset + sequence.seq SECOND),
             NULL
         FROM tmp_home_feed_seq_10000 sequence
         JOIN tmp_home_feed_posts mapped
