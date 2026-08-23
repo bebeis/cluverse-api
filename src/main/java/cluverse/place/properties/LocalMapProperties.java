@@ -17,8 +17,6 @@ public record LocalMapProperties(
         @DefaultValue("") String selectionTokenSecret,
         @DefaultValue("15m") @NotNull Duration selectionTokenTtl,
         @DefaultValue("500ms") @NotNull Duration connectTimeout,
-        @DefaultValue("2s") @NotNull Duration readTimeout,
-        @DefaultValue("false") boolean experimentEndpointsEnabled,
-        @DefaultValue("") String benchmarkToken
+        @DefaultValue("2s") @NotNull Duration readTimeout
 ) {
 }

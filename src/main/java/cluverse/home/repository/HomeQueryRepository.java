@@ -1,9 +1,7 @@
 package cluverse.home.repository;
 
 import cluverse.group.domain.GroupStatus;
-import cluverse.home.repository.dto.AccessiblePostQueryResult;
 import cluverse.home.repository.dto.HomeBoardQueryResult;
-import cluverse.home.repository.dto.RecentCommentedPostCandidateQueryResult;
 import cluverse.home.repository.dto.RecentCommentedPostQueryResult;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -73,81 +71,7 @@ public class HomeQueryRepository {
                 .fetch();
     }
 
-    public List<RecentCommentedPostQueryResult> findRecentCommentedPostsV1(Long memberId, int limit) {
-        String sql = """
-                SELECT p.post_id, p.title, MAX(c.created_at) AS last_commented_at
-                FROM comment c
-                JOIN post p ON p.post_id = c.post_id
-                JOIN board b ON b.board_id = p.board_id
-                JOIN member author ON author.member_id = p.member_id
-                WHERE c.status <> 'DELETED'
-                """ + RECENT_POST_BASE_CONDITION + """
-                GROUP BY p.post_id, p.title
-                ORDER BY last_commented_at DESC, p.post_id DESC
-                LIMIT :limit
-                """;
-        return readRecentCommentedPosts(sql, memberId, limit);
-    }
-
-    public List<RecentCommentedPostCandidateQueryResult> findRecentCommentedPostCandidatesV2(int limit) {
-        String sql = """
-                SELECT c.post_id, MAX(c.visible_created_at) AS last_commented_at
-                FROM comment c
-                GROUP BY c.post_id
-                HAVING MAX(c.visible_created_at) IS NOT NULL
-                ORDER BY last_commented_at DESC, c.post_id DESC
-                LIMIT :limit
-                """;
-        return jdbcTemplate.query(
-                sql,
-                new MapSqlParameterSource("limit", limit),
-                (resultSet, rowNumber) -> new RecentCommentedPostCandidateQueryResult(
-                        resultSet.getLong("post_id"),
-                        resultSet.getTimestamp("last_commented_at").toLocalDateTime()
-                )
-        );
-    }
-
-    public List<AccessiblePostQueryResult> findAccessiblePostTitles(
-            Long memberId,
-            List<Long> candidatePostIds
-    ) {
-        String sql = """
-                SELECT p.post_id, p.title
-                FROM post p
-                JOIN board b ON b.board_id = p.board_id
-                JOIN member author ON author.member_id = p.member_id
-                WHERE p.post_id IN (:candidatePostIds)
-                """ + RECENT_POST_BASE_CONDITION;
-        MapSqlParameterSource parameters = accessParameters(memberId)
-                .addValue("candidatePostIds", candidatePostIds);
-        return jdbcTemplate.query(sql, parameters, (resultSet, rowNumber) -> new AccessiblePostQueryResult(
-                resultSet.getLong("post_id"),
-                resultSet.getString("title")
-        ));
-    }
-
-    public List<RecentCommentedPostQueryResult> findRecentCommentedPostsV2Fallback(Long memberId, int limit) {
-        String sql = """
-                SELECT p.post_id, p.title, latest.last_commented_at
-                FROM (
-                    SELECT c.post_id, MAX(c.visible_created_at) AS last_commented_at
-                    FROM comment c
-                    GROUP BY c.post_id
-                    HAVING MAX(c.visible_created_at) IS NOT NULL
-                ) latest
-                JOIN post p ON p.post_id = latest.post_id
-                JOIN board b ON b.board_id = p.board_id
-                JOIN member author ON author.member_id = p.member_id
-                WHERE 1 = 1
-                """ + RECENT_POST_BASE_CONDITION + """
-                ORDER BY latest.last_commented_at DESC, latest.post_id DESC
-                LIMIT :limit
-                """;
-        return readRecentCommentedPosts(sql, memberId, limit);
-    }
-
-    public List<RecentCommentedPostQueryResult> findRecentCommentedPostsV3(Long memberId, int limit) {
+        public List<RecentCommentedPostQueryResult> findRecentCommentedPosts(Long memberId, int limit) {
         String sql = """
                 SELECT /*+ JOIN_ORDER(activity, p, b, author) NO_BNL(p, b, author) */
                        p.post_id, p.title, activity.last_commented_at

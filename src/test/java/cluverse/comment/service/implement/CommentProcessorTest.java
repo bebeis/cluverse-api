@@ -84,7 +84,7 @@ class CommentProcessorTest {
     }
 
     @Test
-    void 자식이_있는_댓글을_삭제하면_path를_유지하고_soft_delete만_수행한다() {
+    void 자식이_있는_댓글을_삭제하면_soft_delete만_수행한다() {
         // given
         Comment comment = createComment(101L, 10L, 1L, null, 0);
         when(commentReader.readForUpdateOrThrow(101L)).thenReturn(comment);
@@ -93,7 +93,6 @@ class CommentProcessorTest {
             ((Comment) invocation.getArgument(0)).delete();
             return null;
         }).when(commentWriter).delete(comment);
-        String path = comment.getPath();
 
         // when
         Long postId = commentProcessor.deleteComment(1L, 101L);
@@ -101,7 +100,6 @@ class CommentProcessorTest {
         // then
         assertThat(postId).isEqualTo(10L);
         assertThat(comment.getStatus()).isEqualTo(CommentStatus.DELETED);
-        assertThat(comment.getPath()).isEqualTo(path);
         verify(commentWriter).delete(comment);
         verify(commentWriter, never()).remove(any());
         verify(postMetaWriter, never()).decreaseCommentCount(anyLong());
@@ -134,7 +132,6 @@ class CommentProcessorTest {
         ReflectionTestUtils.setField(comment, "id", commentId);
         ReflectionTestUtils.setField(comment, "createdAt", LocalDateTime.of(2026, 3, 15, 10, 0));
         ReflectionTestUtils.setField(comment, "updatedAt", LocalDateTime.of(2026, 3, 15, 10, 0));
-        ReflectionTestUtils.setField(comment, "path", "20260315100000-" + String.format("%020d", commentId));
         return comment;
     }
 

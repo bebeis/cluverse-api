@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 @Entity
 @Getter
@@ -36,7 +35,7 @@ public class PostCommentActivity extends BaseTimeEntity {
         return new PostCommentActivity(
                 comment.getPostId(),
                 comment.getId(),
-                normalize(comment.getCreatedAt())
+                comment.getCreatedAt()
         );
     }
 
@@ -45,10 +44,6 @@ public class PostCommentActivity extends BaseTimeEntity {
             throw new IllegalArgumentException("같은 게시글의 댓글로만 최근 활동을 교체할 수 있습니다.");
         }
         this.lastCommentId = comment.getId();
-        this.lastCommentedAt = normalize(comment.getCreatedAt());
-    }
-
-    private static LocalDateTime normalize(LocalDateTime createdAt) {
-        return createdAt.truncatedTo(ChronoUnit.SECONDS);
+        this.lastCommentedAt = comment.getCreatedAt();
     }
 }

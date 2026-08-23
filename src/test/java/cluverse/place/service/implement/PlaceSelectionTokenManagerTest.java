@@ -30,9 +30,7 @@ class PlaceSelectionTokenManagerTest {
             "test-selection-token-secret-at-least-32-bytes",
             Duration.ofMinutes(15),
             Duration.ofMillis(500),
-            Duration.ofSeconds(2),
-            false,
-            "benchmark-token"
+            Duration.ofSeconds(2)
     );
     private final PlaceSelectionTokenManager manager = new PlaceSelectionTokenManager(
             properties,

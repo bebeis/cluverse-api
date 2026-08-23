@@ -17,24 +17,9 @@ class PopularityPropertiesTest {
     void 설정이_누락되어도_안전한_기본값으로_바인딩한다() {
         contextRunner.run(context -> {
             PopularityProperties properties = context.getBean(PopularityProperties.class);
-            PopularityInlineEvaluationProperties inlineEvaluationProperties =
-                    context.getBean(PopularityInlineEvaluationProperties.class);
-
             assertThat(properties.promotionWindow()).isEqualTo(Duration.ofHours(48));
             assertThat(properties.policySampleWindow()).isEqualTo(Duration.ofDays(7));
             assertThat(properties.finalizationInterval()).isEqualTo(Duration.ofSeconds(30));
-            assertThat(properties.baselineScanEnabled()).isFalse();
-            assertThat(properties.experimentEndpointsEnabled()).isTrue();
-            assertThat(inlineEvaluationProperties.enabled()).isTrue();
         });
-    }
-
-    @Test
-    void 측정_배포에서_인라인_판정만_비활성화할_수_있다() {
-        contextRunner
-                .withPropertyValues("popularity.inline-evaluation.enabled=false")
-                .run(context -> assertThat(
-                        context.getBean(PopularityInlineEvaluationProperties.class).enabled()
-                ).isFalse());
     }
 }

@@ -22,10 +22,10 @@ public class PostPlaceCompletionProcessor {
 
     @Transactional
     public void complete(Long memberId, Long postId, List<SelectedPlace> selectedPlaces) {
-        Post post = postAccessReader.readOrThrow(postId);
         List<ResolvedPlaceAttachment> attachments = attachmentResolver.resolve(memberId, selectedPlaces);
         List<Place> places = placeWriter.upsertAll(
                 attachments.stream().map(ResolvedPlaceAttachment::candidate).toList());
+        Post post = postAccessReader.readWithPlacesOrThrow(postId);
 
         for (int index = 0; index < attachments.size(); index++) {
             ResolvedPlaceAttachment attachment = attachments.get(index);

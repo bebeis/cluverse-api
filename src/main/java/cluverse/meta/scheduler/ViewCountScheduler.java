@@ -1,6 +1,5 @@
 package cluverse.meta.scheduler;
 
-import cluverse.meta.service.implement.DeltaViewCountCounter;
 import cluverse.meta.service.implement.InactiveCounterEvictor;
 import cluverse.meta.service.implement.LocalViewCountRecovery;
 import cluverse.meta.service.implement.ViewCountCheckpointWorker;
@@ -15,16 +14,10 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ViewCountScheduler {
 
-    private final DeltaViewCountCounter deltaViewCountCounter;
     private final ViewCountCheckpointWorker viewCountCheckpointWorker;
     private final InactiveCounterEvictor inactiveCounterEvictor;
     private final LocalViewCountRecovery localViewCountRecovery;
     private final MeterRegistry meterRegistry;
-
-    @Scheduled(fixedDelayString = "${view-count.delta-flush-interval:1m}", initialDelayString = "1m")
-    public void flushTimeBasedDelta() {
-        run("delta_flush", deltaViewCountCounter::flushTimeBased);
-    }
 
     @Scheduled(fixedDelayString = "${view-count.checkpoint-interval:1m}", initialDelayString = "1m")
     public void checkpointTotalCounters() {

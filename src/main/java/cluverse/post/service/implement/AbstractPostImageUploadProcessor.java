@@ -5,8 +5,7 @@ import cluverse.post.client.PostImageObjectStorageClient;
 import cluverse.post.client.PostImageProcessorClient;
 import cluverse.post.domain.PostImageMetadata;
 import cluverse.post.domain.ProcessedPostImage;
-import cluverse.post.exception.PostImageUploadTimeoutException;
-import cluverse.post.service.request.ImageUploadFailurePoint;
+import cluverse.post.domain.ImageUploadVersion;
 
 abstract class AbstractPostImageUploadProcessor implements PostImageUploadProcessor {
 
@@ -24,35 +23,20 @@ abstract class AbstractPostImageUploadProcessor implements PostImageUploadProces
         this.metricsRecorder = metricsRecorder;
     }
 
-    protected final ProcessedPostImage processOne(
-            PreparedPostImage image,
-            ImageUploadFailurePoint failurePoint
-    ) {
+    protected final ProcessedPostImage processOne(PreparedPostImage image) {
         storageClient.upload(
                 image.command().stagingKey(),
                 image.contentType(),
                 image.path()
         );
-        if (failurePoint == ImageUploadFailurePoint.AFTER_FIRST_OBJECT
-                && image.command().displayOrder() == 0) {
-            throw new InjectedImageUploadFailure("첫 staging 객체 업로드 뒤 실패 주입");
-        }
-        if (failurePoint == ImageUploadFailurePoint.REMOTE_TIMEOUT
-                && image.command().displayOrder() == 0) {
-            throw new PostImageUploadTimeoutException(
-                    "외부 프로세서 timeout 실패 주입",
-                    new IllegalStateException("injected")
-            );
-        }
-
         long startedAt = System.nanoTime();
         ProcessedPostImage result = processorClient.process(image.command());
-        metricsRecorder.remote(version(), System.nanoTime() - startedAt);
+        metricsRecorder.remote(ImageUploadVersion.V3, System.nanoTime() - startedAt);
         return verifyStoredResult(result);
     }
 
     protected final void recordWait(String kind, long elapsedNanos) {
-        metricsRecorder.waitTime(version(), kind, elapsedNanos);
+        metricsRecorder.waitTime(ImageUploadVersion.V3, kind, elapsedNanos);
     }
 
     protected final RuntimeException unwrapCompletion(RuntimeException exception) {
@@ -78,9 +62,4 @@ abstract class AbstractPostImageUploadProcessor implements PostImageUploadProces
                 metadata.objectKey(), metadata.contentType(), metadata.width(), metadata.height(), actualBytes);
     }
 
-    private static final class InjectedImageUploadFailure extends RuntimeException {
-        private InjectedImageUploadFailure(String message) {
-            super(message);
-        }
-    }
 }

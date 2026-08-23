@@ -32,8 +32,6 @@ app:
 
 view-count:
   duplicate-ttl: 30m
-  delta-flush-interval: 1m
-  threshold: 100
   checkpoint-interval: 1m
   inactive-after: 30m
   scan-count: 1000
@@ -41,12 +39,6 @@ view-count:
   initialization-lock-lease: 1s
   initialization-wait: 1ms
   initialization-attempts: 3
-
-post-list-cache:
-  enabled: true
-  max-entries: 201
-  ttl: 3m
-  warmup-lock-ttl: 2s
 
 popularity:
   default-promotion-score: 100
@@ -58,24 +50,14 @@ popularity:
   policy-min-sample-size: 100
   policy-smoothing-ratio: 0.30
   policy-refresh-cron: "0 10 1 * * *"
-  baseline-scan-cron: "0 0 1 * * *"
-  baseline-scan-enabled: false
-  scan-chunk-size: 1000
   finalization-interval: 30s
   finalization-batch-size: 500
-  experiment-endpoints-enabled: false
-  benchmark-token: ""
 
 certification:
-  provider-mode: STUB
   provider-base-url: http://127.0.0.1:19091
   service-key: test-key
-  experiment-endpoints-enabled: false
-  benchmark-token: ""
 
-image-upload-experiment:
-  enabled: false
-  benchmark-token: ""
+post-image-upload:
   lambda-function-name: ""
 
 aws:

@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import static cluverse.post.domain.QPost.post;
 import static cluverse.post.domain.QPostImage.postImage;
+import static cluverse.post.domain.QPostPlace.postPlace;
 
 @Repository
 public class PostRepositoryImpl implements PostRepositoryCustom {
@@ -26,6 +27,17 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         return Optional.ofNullable(
                 queryFactory.selectFrom(post)
                         .leftJoin(post.images, postImage).fetchJoin()
+                        .where(post.id.eq(postId))
+                        .distinct()
+                        .fetchOne()
+        );
+    }
+
+    @Override
+    public Optional<Post> findWithPlacesById(Long postId) {
+        return Optional.ofNullable(
+                queryFactory.selectFrom(post)
+                        .leftJoin(post.places, postPlace).fetchJoin()
                         .where(post.id.eq(postId))
                         .distinct()
                         .fetchOne()

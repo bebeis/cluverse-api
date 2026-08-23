@@ -34,7 +34,7 @@ class PostImageUploadTest {
     @Test
     void 완료된_업로드를_실패로_되돌릴_수_없다() {
         PostImageUpload upload = PostImageUpload.completed(
-                UUID.randomUUID(), ImageUploadVersion.V1, List.of(
+                UUID.randomUUID(), ImageUploadVersion.V3, List.of(
                         PostImageAsset.completedOriginal(0, "content/a.jpg", "image/jpeg", 100)
                 )
         );

@@ -23,11 +23,7 @@ public record PopularityProperties(
         double policyPercentile,
         @DefaultValue("100") @Positive int policyMinSampleSize,
         @DefaultValue("0.30") @DecimalMin("0") @DecimalMax("1") double policySmoothingRatio,
-        @DefaultValue("false") boolean baselineScanEnabled,
-        @DefaultValue("1000") @Positive int scanChunkSize,
         @DefaultValue("30s") @NotNull Duration finalizationInterval,
-        @DefaultValue("500") @Positive int finalizationBatchSize,
-        @DefaultValue("true") boolean experimentEndpointsEnabled,
-        String benchmarkToken
+        @DefaultValue("500") @Positive int finalizationBatchSize
 ) {
 }

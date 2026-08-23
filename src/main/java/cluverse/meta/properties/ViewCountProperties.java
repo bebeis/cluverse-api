@@ -12,8 +12,6 @@ import java.time.Duration;
 @Validated
 public record ViewCountProperties(
         @DefaultValue("30m") @NotNull Duration duplicateTtl,
-        @DefaultValue("1m") @NotNull Duration deltaFlushInterval,
-        @DefaultValue("100") @Positive long threshold,
         @DefaultValue("1m") @NotNull Duration checkpointInterval,
         @DefaultValue("30m") @NotNull Duration inactiveAfter,
         @DefaultValue("1000") @Positive int scanCount,

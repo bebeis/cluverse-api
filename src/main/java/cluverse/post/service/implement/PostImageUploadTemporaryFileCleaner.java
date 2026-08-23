@@ -30,7 +30,7 @@ public class PostImageUploadTemporaryFileCleaner {
         }
     }
 
-    @Scheduled(fixedDelayString = "${image-upload-experiment.cleanup-interval:30s}")
+    @Scheduled(fixedDelayString = "${post-image-upload.cleanup-interval:30s}")
     void retryDeferredDeletes() {
         int retryCount = deferredDeletes.size();
         for (int index = 0; index < retryCount; index++) {

@@ -30,6 +30,13 @@ public class PostAccessReader {
         return post;
     }
 
+    public Post readWithPlacesOrThrow(Long postId) {
+        Post post = postRepository.findWithPlacesById(postId)
+                .orElseThrow(() -> new NotFoundException(PostExceptionMessage.POST_NOT_FOUND.getMessage()));
+        validateActive(post);
+        return post;
+    }
+
     public List<Post> readPosts(List<Long> postIds) {
         return postRepository.findAllById(postIds);
     }

@@ -81,7 +81,7 @@ class PostImageUploadWriterConcurrencyTest {
         completion.get(2, TimeUnit.SECONDS);
 
         assertThat(claim.get(2, TimeUnit.SECONDS)).isFalse();
-        assertThat(writer.read(reserved.getRequestId(), ImageUploadVersion.V1).orElseThrow().getStatus())
+        assertThat(writer.read(reserved.getRequestId(), ImageUploadVersion.V3).orElseThrow().getStatus())
                 .isEqualTo(PostImageUploadStatus.COMPLETED);
     }
 
@@ -98,14 +98,14 @@ class PostImageUploadWriterConcurrencyTest {
         assertThatThrownBy(() -> writer.complete(reserved.getId(), List.of(processed())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("PENDING 업로드만 상태를 변경할 수 있습니다.");
-        assertThat(writer.read(reserved.getRequestId(), ImageUploadVersion.V1).orElseThrow().getStatus())
+        assertThat(writer.read(reserved.getRequestId(), ImageUploadVersion.V3).orElseThrow().getStatus())
                 .isEqualTo(PostImageUploadStatus.COMPENSATING);
     }
 
     private PostImageUpload reserve() {
         return writer.reserve(
                 UUID.randomUUID(),
-                ImageUploadVersion.V1,
+                ImageUploadVersion.V3,
                 List.of(PostImageAsset.plan(
                         0,
                         "image-uploads/request/staging/0",

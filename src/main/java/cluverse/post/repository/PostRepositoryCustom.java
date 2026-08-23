@@ -10,5 +10,7 @@ public interface PostRepositoryCustom {
 
     Optional<Post> findWithImagesById(Long postId);
 
+    Optional<Post> findWithPlacesById(Long postId);
+
     List<Post> findAllWithImagesByIdIn(Collection<Long> postIds);
 }

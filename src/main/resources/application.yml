@@ -94,8 +94,6 @@ app:
 
 view-count:
   duplicate-ttl: 30m
-  delta-flush-interval: 1m
-  threshold: 100
   checkpoint-interval: 1m
   inactive-after: 30m
   scan-count: 1000
@@ -114,15 +112,8 @@ popularity:
   policy-min-sample-size: 100
   policy-smoothing-ratio: 0.30
   policy-refresh-cron: "0 10 1 * * *"
-  baseline-scan-cron: "0 0 1 * * *"
-  baseline-scan-enabled: false
-  scan-chunk-size: 1000
   finalization-interval: 30s
   finalization-batch-size: 500
-  experiment-endpoints-enabled: true
-  benchmark-token: ${POPULARITY_BENCHMARK_TOKEN:}
-  inline-evaluation:
-    enabled: ${POPULARITY_INLINE_EVALUATION_ENABLED:true}
 
 local-map:
   provider-mode: ${LOCAL_MAP_PROVIDER_MODE:NAVER}
@@ -133,38 +124,18 @@ local-map:
   selection-token-ttl: 15m
   connect-timeout: 500ms
   read-timeout: 2s
-  experiment-endpoints-enabled: false
-  benchmark-token: ${LOCAL_MAP_BENCHMARK_TOKEN:}
 
 certification:
-  provider-mode: ${CERTIFICATION_PROVIDER_MODE:DATA_GO_KR}
   provider-base-url: ${CERTIFICATION_PROVIDER_BASE_URL:https://apis.data.go.kr}
   service-key: ${DATA_GO_KR_SERVICE_KEY:}
   connect-timeout: 500ms
   read-timeout: 2s
   cache-ttl: 12h
-  experiment-endpoints-enabled: false
-  benchmark-token: ${CERTIFICATION_BENCHMARK_TOKEN:}
 
-home:
-  recent-commented-posts:
-    snapshot-cache-ttl: 1m
-    snapshot-candidate-size: 200
-
-post-list-cache:
-  enabled: ${POST_LIST_CACHE_ENABLED:true}
-  max-entries: 201       # 기본 size=20 기준 1~10페이지 + hasNext 판정 1건
-  ttl: 3m
-  warmup-lock-ttl: 2s
-
-# devlog-11 외부 이미지 프로세서 실행 모델 비교 API. 테스트 배포에서만 명시적으로 활성화한다.
-image-upload-experiment:
-  enabled: false
-  benchmark-token: ${IMAGE_UPLOAD_BENCHMARK_TOKEN:}
+post-image-upload:
   lambda-function-name: ${IMAGE_PROCESSOR_LAMBDA_NAME:}
   lambda-endpoint: ${IMAGE_PROCESSOR_LAMBDA_ENDPOINT:}
   max-file-size: 10MB
-  platform-queue-capacity: 32
   max-concurrent-remote-calls: 16
   remote-timeout: 30s
   stale-pending-after: 3m

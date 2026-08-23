@@ -6,14 +6,11 @@ import org.springframework.util.unit.DataSize;
 
 import java.time.Duration;
 
-@ConfigurationProperties(prefix = "image-upload-experiment")
+@ConfigurationProperties(prefix = "post-image-upload")
 public record PostImageUploadProperties(
-        @DefaultValue("false") boolean enabled,
-        String benchmarkToken,
         String lambdaFunctionName,
         String lambdaEndpoint,
         @DefaultValue("10MB") DataSize maxFileSize,
-        @DefaultValue("32") int platformQueueCapacity,
         @DefaultValue("16") int maxConcurrentRemoteCalls,
         @DefaultValue("30s") Duration remoteTimeout,
         @DefaultValue("3m") Duration stalePendingAfter,

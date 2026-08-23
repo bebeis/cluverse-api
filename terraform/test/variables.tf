@@ -80,14 +80,8 @@ variable "container_image_tag" {
   default     = "latest"
 }
 
-variable "popularity_inline_evaluation_enabled" {
-  description = "devlog-6 좋아요·댓글 요청의 인라인 인기글 판정 활성화 여부"
-  type        = bool
-  default     = true
-}
-
 variable "local_map_db_pool_size" {
-  description = "devlog-8 로컬맵 장기 트랜잭션 비교용 HikariCP 최대 커넥션 수"
+  description = "API HikariCP 최대 커넥션 수"
   type        = number
   default     = 20
 
@@ -97,14 +91,8 @@ variable "local_map_db_pool_size" {
   }
 }
 
-variable "image_upload_experiment_enabled" {
-  description = "devlog-11 V1~V3 이미지 업로드 실험 API 활성화 여부"
-  type        = bool
-  default     = false
-}
-
 variable "image_processor_lambda_name" {
-  description = "세 버전이 공통 호출할 외부 이미지 프로세서 Lambda 함수 이름"
+  description = "외부 이미지 프로세서 Lambda 함수 이름"
   type        = string
   default     = ""
 }
@@ -113,12 +101,6 @@ variable "image_upload_bucket_name" {
   description = "staging/content/thumbnail 객체를 저장할 S3 bucket"
   type        = string
   default     = "cluverse-images"
-}
-
-variable "image_upload_benchmark_token_parameter_path" {
-  description = "devlog-11 X-Benchmark-Token을 저장한 SSM parameter path"
-  type        = string
-  default     = "/cluverse/test/image-upload/benchmark-token"
 }
 
 variable "ssh_public_key" {

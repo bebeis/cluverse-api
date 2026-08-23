@@ -296,3 +296,6 @@ _workspace
 script/*/results/raw/*.html
 
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij,macos,visualstudiocode,terraform
+# Devlog 비교·측정 자료는 archive/devlog-experiments-2026-08-22에서 관리한다.
+/script/home-feed/
+/script/image-upload/

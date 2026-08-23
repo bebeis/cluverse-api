@@ -8,7 +8,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
-import java.time.temporal.ChronoUnit;
 
 @Repository
 @RequiredArgsConstructor
@@ -21,10 +20,7 @@ public class PostCommentActivityRepositoryImpl implements PostCommentActivityRep
         MapSqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("postId", comment.getPostId())
                 .addValue("lastCommentId", comment.getId())
-                .addValue(
-                        "lastCommentedAt",
-                        Timestamp.valueOf(comment.getCreatedAt().truncatedTo(ChronoUnit.SECONDS))
-                );
+                .addValue("lastCommentedAt", Timestamp.valueOf(comment.getCreatedAt()));
         int updated = updateIfNewer(parameters);
         if (updated > 0) {
             return updated;

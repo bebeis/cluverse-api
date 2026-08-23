@@ -38,7 +38,17 @@ public class CommentController {
     @GetMapping
     public ApiResponse<CommentPageResponse> getComments(@Login LoginMember loginMember,
                                                         @Valid @ModelAttribute CommentPageRequest request) {
-        return ApiResponse.ok(commentQueryService.getCommentsV1(extractMemberId(loginMember), request));
+        return ApiResponse.ok(commentQueryService.getComments(extractMemberId(loginMember), request));
+    }
+
+    @GetMapping("/{commentId}/thread")
+    public ApiResponse<CommentPageResponse> getThread(
+            @Login LoginMember loginMember,
+            @PathVariable Long commentId,
+            @Valid @ModelAttribute CommentPageRequest request
+    ) {
+        return ApiResponse.ok(commentQueryService.getThread(
+                extractMemberId(loginMember), commentId, request));
     }
 
     @PostMapping

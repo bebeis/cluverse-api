@@ -50,7 +50,7 @@ class CommentControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 댓글_목록_조회() throws Exception {
-        when(commentQueryService.getCommentsV1(anyLong(), any())).thenReturn(new CommentPageResponse(
+        when(commentQueryService.getComments(anyLong(), any())).thenReturn(new CommentPageResponse(
                 List.of(createCommentResponse(101L, null, 0, false, true)),
                 "next-comment-cursor",
                 20,
@@ -101,7 +101,7 @@ class CommentControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 비회원도_댓글_목록을_조회할_수_있다() throws Exception {
-        when(commentQueryService.getCommentsV1(isNull(), any())).thenReturn(new CommentPageResponse(
+        when(commentQueryService.getComments(isNull(), any())).thenReturn(new CommentPageResponse(
                 List.of(),
                 null,
                 20,
@@ -116,7 +116,7 @@ class CommentControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 대댓글_목록_조회() throws Exception {
-        when(commentQueryService.getCommentsV1(anyLong(), any())).thenReturn(new CommentPageResponse(
+        when(commentQueryService.getComments(anyLong(), any())).thenReturn(new CommentPageResponse(
                 List.of(createCommentResponse(201L, 101L, 1, false, false)),
                 null,
                 20,

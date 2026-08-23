@@ -19,14 +19,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
     private static final List<String> PUBLIC_GET_PATH_PATTERNS = List.of(
             "/api/v1/posts",
             "/api/v1/posts/*",
-            // 게시글 목록 조회 버전별 성능 비교 엔드포인트
-            "/api/v2/posts",
-            "/api/v3/posts",
-            "/api/v4/posts",
-            // 인기글 승격 구조별 결과 비교 엔드포인트
             "/api/v1/popular-posts/**",
-            "/api/v2/popular-posts/**",
             "/api/v1/comments",
+            "/api/v1/comments/**",
             "/api/v1/universities",
             "/api/v1/universities/*",
             "/api/v1/universities/*/campuses",
@@ -61,30 +56,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new AuthInterceptor(PUBLIC_GET_PATH_PATTERNS, PROTECTED_GET_PATH_PATTERNS))
-                .addPathPatterns("/api/v1/**", "/api/v2/**", "/api/v3/**", "/api/v4/**")
+                .addPathPatterns("/api/v1/**")
                 .excludePathPatterns(
                         "/api/v1/auth/register",
                         "/api/v1/auth/login",
                         "/api/v1/auth/logout",
                         "/api/v1/auth/oauth/**",
                         "/actuator/**",
-                        // 조회수 증가 버전별 성능 비교 엔드포인트 — 부하테스트용 비로그인 허용
-                        "/api/v1/posts/*/view-count",
-                        "/api/v2/posts/*/view-count",
-                        "/api/v3/posts/*/view-count",
-                        "/api/v4/posts/*/view-count",
-                        // 외부 API 실험은 컨트롤러의 X-Benchmark-Token으로 별도 보호한다
-                        "/api/v1/certification/benchmark-readiness",
-                        "/api/v1/certification/benchmark-cache",
-                        "/api/v1/local-map/benchmark-readiness",
-                        "/api/v1/local-map/benchmark-stub/reset",
-                        // 실험 쓰기는 컨트롤러의 X-Benchmark-Token으로 별도 보호한다
-                        "/api/v1/popular-posts/promotion-runs",
-                        "/api/v2/popular-posts/*/promotion-checks",
-                        // devlog-11 쓰기 실험은 X-Benchmark-Token으로 별도 보호한다
-                        "/api/v1/image-uploads",
-                        "/api/v2/image-uploads",
-                        "/api/v3/image-uploads"
+                        "/api/v1/posts/*/view-count"
                 );
     }
 

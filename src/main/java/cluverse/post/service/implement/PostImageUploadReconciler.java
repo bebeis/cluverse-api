@@ -3,14 +3,12 @@ package cluverse.post.service.implement;
 import cluverse.post.domain.PostImageUpload;
 import cluverse.post.properties.PostImageUploadProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
 @Component
-@ConditionalOnProperty(prefix = "image-upload-experiment", name = "enabled", havingValue = "true")
 @Slf4j
 public class PostImageUploadReconciler {
 
@@ -31,7 +29,7 @@ public class PostImageUploadReconciler {
         this.metricsRecorder = metricsRecorder;
     }
 
-    @Scheduled(fixedDelayString = "${image-upload-experiment.cleanup-interval:30s}")
+    @Scheduled(fixedDelayString = "${post-image-upload.cleanup-interval:30s}")
     public void reconcile() {
         cleanupCompletedStaging();
         failStalePending();

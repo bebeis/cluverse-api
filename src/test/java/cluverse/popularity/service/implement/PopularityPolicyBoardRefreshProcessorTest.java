@@ -121,9 +121,7 @@ class PopularityPolicyBoardRefreshProcessorTest {
         return new PopularityProperties(
                 100L, 3, 2,
                 Duration.ofHours(48), Duration.ofDays(7), percentile, minSampleSize, smoothingRatio,
-                false, 1_000,
-                Duration.ofSeconds(30), 500,
-                false, ""
+                Duration.ofSeconds(30), 500
         );
     }
 }

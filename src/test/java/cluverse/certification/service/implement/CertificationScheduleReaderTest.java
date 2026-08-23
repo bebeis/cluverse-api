@@ -5,7 +5,6 @@ import cluverse.certification.domain.CertificationDeadline;
 import cluverse.certification.domain.CertificationExamPhase;
 import cluverse.certification.domain.CertificationSchedule;
 import cluverse.certification.properties.CertificationProperties;
-import cluverse.certification.properties.CertificationProviderMode;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -98,14 +97,11 @@ class CertificationScheduleReaderTest {
 
     private CertificationProperties properties() {
         return new CertificationProperties(
-                CertificationProviderMode.STUB,
                 "https://apis.data.go.kr",
                 "test-key",
                 Duration.ofMillis(500),
                 Duration.ofSeconds(2),
-                Duration.ofHours(12),
-                false,
-                ""
+                Duration.ofHours(12)
         );
     }
 }

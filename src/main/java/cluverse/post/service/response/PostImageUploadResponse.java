@@ -7,7 +7,6 @@ import java.util.UUID;
 
 public record PostImageUploadResponse(
         UUID requestId,
-        String version,
         String status,
         long sourceBytes,
         long outputBytes,
@@ -22,7 +21,6 @@ public record PostImageUploadResponse(
                 : Math.max(0, (sourceBytes - outputBytes) * 100.0 / sourceBytes);
         return new PostImageUploadResponse(
                 upload.getRequestId(),
-                upload.getVersion().value(),
                 upload.getStatus().name(),
                 sourceBytes,
                 outputBytes,

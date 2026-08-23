@@ -71,14 +71,20 @@ public class CommentReader {
         return commentQueryRepository.findMaxCommentId();
     }
 
-    public CommentPageQueryResult readCommentPageV1(Long viewerId, CommentPageRequest request,
-                                                    CommentPageCursor cursor) {
-        return commentQueryRepository.findCommentPageV1(viewerId, request, cursor);
+    public CommentPageQueryResult readCommentPage(Long viewerId, CommentPageRequest request,
+                                                  CommentPageCursor cursor) {
+        return commentQueryRepository.findCommentPage(viewerId, request, cursor);
     }
 
-    public CommentPageQueryResult readCommentPageV2(Long viewerId, CommentPageRequest request,
-                                                    CommentPageCursor cursor) {
-        return commentQueryRepository.findCommentPageV2(viewerId, request, cursor);
+    public CommentPageQueryResult readCommentThreadPage(
+            Long viewerId,
+            Long postId,
+            Long rootCommentId,
+            CommentPageCursor cursor,
+            int limit
+    ) {
+        return commentQueryRepository.findCommentThreadPage(
+                viewerId, postId, rootCommentId, cursor, limit);
     }
 
     public CommentQueryDto readComment(Long viewerId, Long commentId) {

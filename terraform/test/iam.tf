@@ -1,7 +1,7 @@
 # ECS 관련 IAM 역할 3개는 용도가 다르므로 반드시 분리한다:
 #   (a) ecs_instance  — EC2(컨테이너 인스턴스) 자체의 역할. ECS agent 등록, ECR pull, SSM, CloudWatch agent.
 #   (b) task_execution — ECS가 태스크를 "띄울 때" 쓰는 역할. 이미지 pull, awslogs 로그 전송, SSM 파라미터(secrets) 읽기.
-#   (c) task           — 컨테이너 "안의 앱"이 AWS API를 부를 때 쓰는 역할. devlog-11 활성화 시 S3/Lambda 최소 권한 추가.
+#   (c) task           — 컨테이너 안의 앱이 AWS API를 호출할 때 쓰는 역할. 이미지 처리용 S3/Lambda 최소 권한 포함.
 
 data "aws_iam_policy_document" "ec2_assume" {
   statement {
@@ -82,9 +82,7 @@ resource "aws_iam_role" "task" {
 }
 
 resource "aws_iam_role_policy" "task_image_upload" {
-  count = var.image_upload_experiment_enabled ? 1 : 0
-
-  name = "devlog11-image-upload"
+  name = "image-processing"
   role = aws_iam_role.task.id
 
   policy = jsonencode({

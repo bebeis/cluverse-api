@@ -122,7 +122,7 @@ class HomeQueryRepositoryTest {
     }
 
     @Test
-    void 세_단계_최근_댓글_글은_접근_가능한_같은_목록을_반환한다() {
+    void 활동_투영에서_접근_가능한_최근_댓글_글만_조회한다() {
         // given
         Board publicBoard = boardRepository.save(board(BoardType.INTEREST, "백엔드"));
         Board joinedGroupBoard = boardRepository.save(Board.createGroupBoard("참여 그룹", "설명"));
@@ -154,19 +154,11 @@ class HomeQueryRepositoryTest {
         blockRepository.save(Block.of(viewer.getId(), blockedAuthor.getId()));
 
         // when
-        List<RecentCommentedPostQueryResult> before = homeQueryRepository.findRecentCommentedPostsV1(
-                viewer.getId(), 10
-        );
-        List<RecentCommentedPostQueryResult> indexed = homeQueryRepository.findRecentCommentedPostsV2Fallback(
-                viewer.getId(), 10
-        );
-        List<RecentCommentedPostQueryResult> projected = homeQueryRepository.findRecentCommentedPostsV3(
+        List<RecentCommentedPostQueryResult> projected = homeQueryRepository.findRecentCommentedPosts(
                 viewer.getId(), 10
         );
 
         // then
-        assertThat(indexed).containsExactlyElementsOf(before);
-        assertThat(projected).containsExactlyElementsOf(before);
         assertThat(projected).extracting(RecentCommentedPostQueryResult::postId)
                 .containsExactly(latestPost.getId(), olderPost.getId());
     }

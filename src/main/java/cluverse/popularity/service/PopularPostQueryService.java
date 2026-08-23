@@ -15,9 +15,9 @@ public class PopularPostQueryService {
 
     private final PopularPostReader popularPostReader;
 
-    public PopularPostListResponse getRecent(PopularityAlgorithmVersion version, int size) {
+    public PopularPostListResponse getRecent(int size) {
+        PopularityAlgorithmVersion version = PopularityAlgorithmVersion.V2;
         return new PopularPostListResponse(
-                version,
                 PopularPostSortType.LATEST,
                 popularPostReader.readRecent(version, size).stream()
                         .map(summary -> toResponse(summary))
@@ -26,12 +26,11 @@ public class PopularPostQueryService {
     }
 
     public PopularPostListResponse getHistory(
-            PopularityAlgorithmVersion version,
             PopularPostSortType sort,
             int size
     ) {
+        PopularityAlgorithmVersion version = PopularityAlgorithmVersion.V2;
         return new PopularPostListResponse(
-                version,
                 sort,
                 popularPostReader.readHistory(version, sort, size).stream()
                         .map(summary -> toResponse(summary))

@@ -1,7 +1,6 @@
 package cluverse.certification.client;
 
 import cluverse.certification.properties.CertificationProperties;
-import cluverse.certification.properties.CertificationProviderMode;
 import cluverse.common.exception.ExternalServiceException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -20,14 +19,11 @@ class DataGoKrCertificationScheduleClientTest {
     void 지원하지_않는_응답_형식도_외부_서비스_예외로_변환한다() {
         // given
         CertificationProperties properties = new CertificationProperties(
-                CertificationProviderMode.STUB,
                 "https://apis.data.go.kr",
                 "test-key",
                 Duration.ofMillis(500),
                 Duration.ofSeconds(2),
-                Duration.ofHours(12),
-                false,
-                ""
+                Duration.ofHours(12)
         );
         RestClient.Builder restClientBuilder = RestClient.builder()
                 .baseUrl(properties.providerBaseUrl());

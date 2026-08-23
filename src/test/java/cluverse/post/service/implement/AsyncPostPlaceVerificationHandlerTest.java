@@ -3,8 +3,8 @@ package cluverse.post.service.implement;
 import cluverse.place.domain.PlaceCandidate;
 import cluverse.place.domain.SelectedPlace;
 import cluverse.place.service.implement.LocalMapMetricsRecorder;
-import cluverse.place.service.implement.V1PlaceSelectionResolver;
-import cluverse.place.service.request.PlaceSelectionRequestV1;
+import cluverse.place.service.implement.ExternalPlaceVerificationResolver;
+import cluverse.place.service.request.PlaceVerificationRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 class AsyncPostPlaceVerificationHandlerTest {
 
     @Mock
-    private V1PlaceSelectionResolver placeSelectionResolver;
+    private ExternalPlaceVerificationResolver placeVerificationResolver;
     @Mock
     private PostPlaceCompletionProcessor completionProcessor;
     @Mock
@@ -38,8 +38,8 @@ class AsyncPostPlaceVerificationHandlerTest {
         SelectedPlace verified = org.mockito.Mockito.mock(SelectedPlace.class);
         given(candidate.name()).willReturn("연세대 카페");
         given(candidate.sourceFingerprint()).willReturn("fingerprint");
-        given(placeSelectionResolver.resolve(List.of(
-                new PlaceSelectionRequestV1("연세대 카페", "fingerprint", true)
+        given(placeVerificationResolver.resolve(List.of(
+                new PlaceVerificationRequest("연세대 카페", "fingerprint", true)
         ))).willReturn(List.of(verified));
         given(metricsRecorder.recordAsync(org.mockito.ArgumentMatchers.eq("provider"),
                 org.mockito.ArgumentMatchers.<Supplier<List<SelectedPlace>>>any()))
@@ -64,7 +64,7 @@ class AsyncPostPlaceVerificationHandlerTest {
         given(metricsRecorder.recordAsync(org.mockito.ArgumentMatchers.eq("provider"),
                 org.mockito.ArgumentMatchers.<Supplier<List<SelectedPlace>>>any()))
                 .willAnswer(invocation -> ((Supplier<List<SelectedPlace>>) invocation.getArgument(1)).get());
-        given(placeSelectionResolver.resolve(anyList())).willThrow(new IllegalStateException("provider timeout"));
+        given(placeVerificationResolver.resolve(anyList())).willThrow(new IllegalStateException("provider timeout"));
 
         handler.verify(new PostPlaceVerificationRequested(1L, 10L, List.of(pending)));
 

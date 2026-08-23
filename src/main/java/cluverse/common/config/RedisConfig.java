@@ -17,16 +17,6 @@ import java.util.List;
 public class RedisConfig {
 
     @Bean
-    public RedisScript<List> countDeltaScript() {
-        return listScript("redis/count_delta.lua");
-    }
-
-    @Bean
-    public RedisScript<Long> getAndDeleteScript() {
-        return longScript("redis/get_and_delete.lua");
-    }
-
-    @Bean
     public RedisScript<List> countTotalScript() {
         return listScript("redis/count_total.lua");
     }
@@ -44,21 +34,6 @@ public class RedisConfig {
     @Bean
     public RedisScript<Long> ensureTotalAtLeastScript() {
         return longScript("redis/ensure_total_at_least.lua");
-    }
-
-    @Bean
-    public RedisScript<List> readLatestPostIdsScript() {
-        return listScript("redis/read_latest_post_ids.lua");
-    }
-
-    @Bean
-    public RedisScript<Long> replaceLatestPostIdsScript() {
-        return longScript("redis/replace_latest_post_ids.lua");
-    }
-
-    @Bean
-    public RedisScript<Long> invalidateLatestPostIdsScript() {
-        return longScript("redis/invalidate_latest_post_ids.lua");
     }
 
     /**

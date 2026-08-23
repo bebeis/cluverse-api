@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,7 +44,7 @@ class PostCommentActivityRepositoryTest {
         PostCommentActivity activity = activityRepository.findById(10L).orElseThrow();
         assertThat(activity.getLastCommentId()).isEqualTo(latest.getId());
         assertThat(activity.getLastCommentedAt())
-                .isEqualTo(latest.getCreatedAt().truncatedTo(ChronoUnit.SECONDS));
+                .isEqualTo(latest.getCreatedAt());
     }
 
     @Test
@@ -84,7 +83,7 @@ class PostCommentActivityRepositoryTest {
         PostCommentActivity activity = activityRepository.findById(20L).orElseThrow();
         assertThat(activity.getLastCommentId()).isEqualTo(older.getId());
         assertThat(activity.getLastCommentedAt())
-                .isEqualTo(older.getCreatedAt().truncatedTo(ChronoUnit.SECONDS));
+                .isEqualTo(older.getCreatedAt());
     }
 
     @Test

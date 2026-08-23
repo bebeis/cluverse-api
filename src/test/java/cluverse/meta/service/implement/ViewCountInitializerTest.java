@@ -61,8 +61,6 @@ class ViewCountInitializerTest {
         return new ViewCountProperties(
                 Duration.ofMinutes(30),
                 Duration.ofMinutes(1),
-                100,
-                Duration.ofMinutes(1),
                 Duration.ofMinutes(30),
                 1000,
                 1000,

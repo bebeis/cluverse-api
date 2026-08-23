@@ -7,7 +7,6 @@ import cluverse.post.repository.PostRepository;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostUpdateRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +17,6 @@ public class PostWriter {
 
     private final PostRepository postRepository;
     private final PostAccessReader postAccessReader;
-    private final ApplicationEventPublisher eventPublisher;
 
     public Post create(Long memberId, PostCreateRequest request, String clientIp) {
         Post post = Post.createByMember(
@@ -34,9 +32,7 @@ public class PostWriter {
                 request.isExternalVisible(),
                 clientIp
         );
-        Post saved = postRepository.save(post);
-        eventPublisher.publishEvent(new PostListChangedEvent(post.getBoardId()));
-        return saved;
+        return postRepository.save(post);
     }
 
     public Post create(Long memberId, PostCreateRequest request, String clientIp, String clientRequestId) {
@@ -45,9 +41,7 @@ public class PostWriter {
                 request.category(), request.isAnonymous(), request.isPinned(), request.isExternalVisible(), clientIp,
                 clientRequestId
         );
-        Post saved = postRepository.saveAndFlush(post);
-        eventPublisher.publishEvent(new PostListChangedEvent(post.getBoardId()));
-        return saved;
+        return postRepository.saveAndFlush(post);
     }
 
     public void update(Long memberId, Long postId, PostUpdateRequest request) {
@@ -63,14 +57,12 @@ public class PostWriter {
                 request.isPinned(),
                 request.isExternalVisible()
         );
-        eventPublisher.publishEvent(new PostListChangedEvent(post.getBoardId()));
     }
 
     public void delete(Long memberId, Long postId) {
         Post post = postAccessReader.readOrThrow(postId);
         validateAuthor(memberId, post);
         post.delete();
-        eventPublisher.publishEvent(new PostListChangedEvent(post.getBoardId()));
     }
 
     private void validateAuthor(Long memberId, Post post) {

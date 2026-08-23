@@ -1,7 +1,5 @@
 package cluverse.popularity.scheduler;
 
-import cluverse.popularity.properties.PopularityProperties;
-import cluverse.popularity.service.implement.PopularityBatchProcessorV1;
 import cluverse.popularity.service.implement.PopularityFinalizationProcessor;
 import cluverse.popularity.service.implement.PopularityPolicyRefreshProcessor;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +14,6 @@ public class PopularityScheduler {
 
     private final PopularityFinalizationProcessor popularityFinalizationProcessor;
     private final PopularityPolicyRefreshProcessor popularityPolicyRefreshProcessor;
-    private final PopularityBatchProcessorV1 popularityBatchProcessorV1;
-    private final PopularityProperties properties;
 
     @Scheduled(
             fixedDelayString = "${popularity.finalization-interval:30s}",
@@ -33,16 +29,6 @@ public class PopularityScheduler {
     )
     public void refreshPolicies() {
         runSafely("게시판별 인기글 정책 갱신", popularityPolicyRefreshProcessor::refresh);
-    }
-
-    @Scheduled(
-            cron = "${popularity.baseline-scan-cron:0 0 1 * * *}",
-            zone = "Asia/Seoul"
-    )
-    public void runBaselineScan() {
-        if (properties.baselineScanEnabled()) {
-            runSafely("인기글 전체 집계 기준선", popularityBatchProcessorV1::run);
-        }
     }
 
     private void runSafely(String taskName, ScheduledTask task) {

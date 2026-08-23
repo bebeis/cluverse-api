@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -31,14 +30,11 @@ class PostWriterTest {
     @Mock
     private PostAccessReader postAccessReader;
 
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
-
     @InjectMocks
     private PostWriter postWriter;
 
     @Test
-    void 게시글을_생성하면_커밋후_목록_캐시를_비우기_위한_이벤트를_발행한다() {
+    void 게시글을_생성한다() {
         PostCreateRequest request = new PostCreateRequest(
                 3L,
                 "새 글",
@@ -55,7 +51,6 @@ class PostWriterTest {
         Post result = postWriter.create(1L, request, "127.0.0.1");
 
         assertThat(result.getBoardId()).isEqualTo(3L);
-        verify(eventPublisher).publishEvent(new PostListChangedEvent(3L));
     }
 
     @Test
@@ -68,7 +63,6 @@ class PostWriterTest {
 
         assertThat(post.getTitle()).isEqualTo("수정 제목");
         assertThat(post.getContent()).isEqualTo("수정 본문");
-        verify(eventPublisher).publishEvent(new PostListChangedEvent(3L));
     }
 
     @Test
@@ -88,7 +82,6 @@ class PostWriterTest {
         postWriter.delete(1L, 10L);
 
         assertThat(post.isActive()).isFalse();
-        verify(eventPublisher).publishEvent(new PostListChangedEvent(3L));
     }
 
     @Test

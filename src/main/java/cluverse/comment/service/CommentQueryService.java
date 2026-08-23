@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -23,28 +22,24 @@ public class CommentQueryService {
     private final CommentReader commentReader;
     private final PostAccessReader postAccessReader;
 
-    public CommentPageResponse getCommentsV1(Long memberId, CommentPageRequest request) {
-        return getComments(memberId, request, false);
-    }
-
-    public CommentPageResponse getCommentsV2(Long memberId, CommentPageRequest request) {
-        return getComments(memberId, request, true);
-    }
-
-    private CommentPageResponse getComments(Long memberId, CommentPageRequest request, boolean usePersistedPath) {
+    public CommentPageResponse getComments(Long memberId, CommentPageRequest request) {
         postAccessReader.validateReadablePost(memberId, request.postId());
         validateParentComment(request.postId(), request.parentCommentId());
 
         CommentPageCursor cursor = resolveCursor(request.cursor());
-        CommentPageQueryResult queryResult = usePersistedPath
-                ? commentReader.readCommentPageV2(memberId, request, cursor)
-                : commentReader.readCommentPageV1(memberId, request, cursor);
-        List<CommentResponse> comments = queryResult.comments().stream()
-                .map(comment -> CommentResponse.from(comment, memberId))
-                .toList();
+        CommentPageQueryResult queryResult = commentReader.readCommentPage(memberId, request, cursor);
+        return toResponse(memberId, request.limit(), cursor, queryResult);
+    }
 
-        String nextCursor = createNextCursor(cursor, queryResult);
-        return new CommentPageResponse(comments, nextCursor, request.limit(), queryResult.hasNext());
+    public CommentPageResponse getThread(Long memberId, Long rootCommentId, CommentPageRequest request) {
+        postAccessReader.validateReadablePost(memberId, request.postId());
+        cluverse.comment.domain.Comment root = commentReader.readOrThrow(rootCommentId);
+        commentReader.validateBelongsToPost(root, request.postId());
+
+        CommentPageCursor cursor = resolveCursor(request.cursor());
+        CommentPageQueryResult queryResult = commentReader.readCommentThreadPage(
+                memberId, request.postId(), rootCommentId, cursor, request.limit());
+        return toResponse(memberId, request.limit(), cursor, queryResult);
     }
 
     public CommentReactionTargetResponse getReactionTarget(Long commentId) {
@@ -72,7 +67,7 @@ public class CommentQueryService {
             return CommentPageCursor.decode(encodedCursor);
         }
         return CommentPageCursor.first(
-                LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS),
+                LocalDateTime.now(),
                 commentReader.readMaxCommentId()
         );
     }
@@ -86,5 +81,22 @@ public class CommentQueryService {
                 cursor.asOf(),
                 cursor.snapshotMaxCommentId()
         ).encode();
+    }
+
+    private CommentPageResponse toResponse(
+            Long memberId,
+            int limit,
+            CommentPageCursor cursor,
+            CommentPageQueryResult queryResult
+    ) {
+        List<CommentResponse> comments = queryResult.comments().stream()
+                .map(comment -> CommentResponse.from(comment, memberId))
+                .toList();
+        return new CommentPageResponse(
+                comments,
+                createNextCursor(cursor, queryResult),
+                limit,
+                queryResult.hasNext()
+        );
     }
 }

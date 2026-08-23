@@ -32,20 +32,8 @@ public class HomeQueryService {
         );
     }
 
-    public List<RecentCommentedPostResponse> getRecentCommentedPostsV1(Long memberId) {
-        return homeReader.readRecentCommentedPostsV1(memberId, HOME_COMPONENT_SIZE).stream()
-                .map(RecentCommentedPostResponse::from)
-                .toList();
-    }
-
-    public List<RecentCommentedPostResponse> getRecentCommentedPostsV2(Long memberId) {
-        return homeReader.readRecentCommentedPostsV2(memberId, HOME_COMPONENT_SIZE).stream()
-                .map(RecentCommentedPostResponse::from)
-                .toList();
-    }
-
-    public List<RecentCommentedPostResponse> getRecentCommentedPostsV3(Long memberId) {
-        return homeReader.readRecentCommentedPostsV3(memberId, HOME_COMPONENT_SIZE).stream()
+    public List<RecentCommentedPostResponse> getRecentCommentedPosts(Long memberId) {
+        return homeReader.readRecentCommentedPosts(memberId, HOME_COMPONENT_SIZE).stream()
                 .map(RecentCommentedPostResponse::from)
                 .toList();
     }

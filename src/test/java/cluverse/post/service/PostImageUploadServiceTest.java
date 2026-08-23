@@ -4,7 +4,6 @@ import cluverse.post.domain.ImageUploadVersion;
 import cluverse.post.domain.PostImageAsset;
 import cluverse.post.domain.PostImageUpload;
 import cluverse.post.exception.PostImageUploadTimeoutException;
-import cluverse.post.service.implement.PostImageUploadExperimentAuthorizer;
 import cluverse.post.service.implement.PostImageUploadMetricsRecorder;
 import cluverse.post.service.implement.PostImageUploadPreparer;
 import cluverse.post.service.implement.PostImageUploadProcessor;
@@ -37,19 +36,16 @@ import static org.mockito.Mockito.when;
 class PostImageUploadServiceTest {
 
     @Test
-    void URL이_선택한_버전의_프로세서만_실행한다() {
-        PostImageUploadExperimentAuthorizer authorizer = mock(PostImageUploadExperimentAuthorizer.class);
+    void 준비한_이미지를_Virtual_Thread_프로세서로_처리한다() {
         PostImageUploadPreparer preparer = mock(PostImageUploadPreparer.class);
         PostImageUploadReservation reservation = mock(PostImageUploadReservation.class);
         PostImageUploadWriter writer = mock(PostImageUploadWriter.class);
         PostImageUploadStorageManager storageManager = mock(PostImageUploadStorageManager.class);
         PostImageUploadMetricsRecorder metricsRecorder = mock(PostImageUploadMetricsRecorder.class);
-        PostImageUploadProcessor v1 = processor(ImageUploadVersion.V1);
-        PostImageUploadProcessor v3 = processor(ImageUploadVersion.V3);
+        PostImageUploadProcessor processor = processor();
         PostImageUploadRequest request = new PostImageUploadRequest(
                 UUID.randomUUID(),
-                List.of(new MockMultipartFile("images", "sample.jpg", "image/jpeg", new byte[]{1})),
-                null
+                List.of(new MockMultipartFile("images", "sample.jpg", "image/jpeg", new byte[]{1}))
         );
         PostImageAsset plan = PostImageAsset.plan(0, "staging/a", "content/a.jpg", "thumbnail/a.jpg", 1);
         PreparedPostImageUpload prepared = new PreparedPostImageUpload(
@@ -64,72 +60,65 @@ class PostImageUploadServiceTest {
         when(writer.read(request.requestId(), ImageUploadVersion.V3)).thenReturn(Optional.empty());
         when(reservation.reserve(request.requestId(), ImageUploadVersion.V3, prepared.assets()))
                 .thenReturn(new PostImageUploadReservationResult(reserved, true));
-        when(v3.process(prepared.images(), request.failurePoint())).thenReturn(List.of());
+        when(processor.process(prepared.images())).thenReturn(List.of());
         when(writer.complete(isNull(), any())).thenReturn(completed);
         when(storageManager.deleteStaging(completed)).thenReturn(true);
         PostImageUploadService service = new PostImageUploadService(
-                authorizer, preparer, reservation, writer, storageManager, metricsRecorder, List.of(v1, v3));
+                preparer, reservation, writer, storageManager, metricsRecorder, processor);
 
-        PostImageUploadResponse response = service.upload(ImageUploadVersion.V3, "secret", request);
+        PostImageUploadResponse response = service.upload(request);
 
-        assertThat(response.version()).isEqualTo("v3");
-        verify(authorizer).authorize("secret");
-        verify(v3).process(prepared.images(), request.failurePoint());
-        verify(v1, never()).process(any(), any());
+        assertThat(response.status()).isEqualTo("COMPLETED");
+        verify(processor).process(prepared.images());
     }
 
     @Test
     void 진행_중인_requestId의_거절도_실패_메트릭에_포함한다() {
-        PostImageUploadExperimentAuthorizer authorizer = mock(PostImageUploadExperimentAuthorizer.class);
         PostImageUploadPreparer preparer = mock(PostImageUploadPreparer.class);
         PostImageUploadReservation reservation = mock(PostImageUploadReservation.class);
         PostImageUploadWriter writer = mock(PostImageUploadWriter.class);
         PostImageUploadStorageManager storageManager = mock(PostImageUploadStorageManager.class);
         PostImageUploadMetricsRecorder metricsRecorder = mock(PostImageUploadMetricsRecorder.class);
-        PostImageUploadProcessor processor = processor(ImageUploadVersion.V1);
+        PostImageUploadProcessor processor = processor();
         UUID requestId = UUID.randomUUID();
         PostImageUploadRequest request = new PostImageUploadRequest(
                 requestId,
-                List.of(new MockMultipartFile("images", "sample.jpg", "image/jpeg", new byte[]{1})),
-                null
+                List.of(new MockMultipartFile("images", "sample.jpg", "image/jpeg", new byte[]{1}))
         );
         PostImageUpload pending = PostImageUpload.reserve(
                 requestId,
-                ImageUploadVersion.V1,
+                ImageUploadVersion.V3,
                 List.of(PostImageAsset.plan(0, "staging/a", "content/a.jpg", "thumbnail/a.jpg", 1))
         );
-        when(writer.read(requestId, ImageUploadVersion.V1)).thenReturn(Optional.of(pending));
+        when(writer.read(requestId, ImageUploadVersion.V3)).thenReturn(Optional.of(pending));
         PostImageUploadService service = new PostImageUploadService(
-                authorizer,
                 preparer,
                 reservation,
                 writer,
                 storageManager,
                 metricsRecorder,
-                List.of(processor)
+                processor
         );
 
-        assertThatThrownBy(() -> service.upload(ImageUploadVersion.V1, "secret", request))
+        assertThatThrownBy(() -> service.upload(request))
                 .isInstanceOf(cluverse.common.exception.BadRequestException.class);
 
-        verify(metricsRecorder).request(eq(ImageUploadVersion.V1), eq("failure"), anyLong());
+        verify(metricsRecorder).request(eq(ImageUploadVersion.V3), eq("failure"), anyLong());
         verify(preparer, never()).prepare(any(), any());
     }
 
     @Test
     void 외부_처리_timeout은_늦은_Lambda와_경쟁하지_않도록_즉시_보상하지_않는다() {
-        PostImageUploadExperimentAuthorizer authorizer = mock(PostImageUploadExperimentAuthorizer.class);
         PostImageUploadPreparer preparer = mock(PostImageUploadPreparer.class);
         PostImageUploadReservation reservation = mock(PostImageUploadReservation.class);
         PostImageUploadWriter writer = mock(PostImageUploadWriter.class);
         PostImageUploadStorageManager storageManager = mock(PostImageUploadStorageManager.class);
         PostImageUploadMetricsRecorder metricsRecorder = mock(PostImageUploadMetricsRecorder.class);
-        PostImageUploadProcessor processor = processor(ImageUploadVersion.V3);
+        PostImageUploadProcessor processor = processor();
         UUID requestId = UUID.randomUUID();
         PostImageUploadRequest request = new PostImageUploadRequest(
                 requestId,
-                List.of(new MockMultipartFile("images", "sample.jpg", "image/jpeg", new byte[]{1})),
-                null
+                List.of(new MockMultipartFile("images", "sample.jpg", "image/jpeg", new byte[]{1}))
         );
         PostImageAsset plan = PostImageAsset.plan(0, "staging/a", "content/a.jpg", "thumbnail/a.jpg", 1);
         PreparedPostImageUpload prepared = new PreparedPostImageUpload(
@@ -139,21 +128,19 @@ class PostImageUploadServiceTest {
         when(preparer.prepare(ImageUploadVersion.V3, request)).thenReturn(prepared);
         when(reservation.reserve(requestId, ImageUploadVersion.V3, prepared.assets()))
                 .thenReturn(new PostImageUploadReservationResult(reserved, true));
-        when(processor.process(prepared.images(), request.failurePoint()))
+        when(processor.process(prepared.images()))
                 .thenThrow(new PostImageUploadTimeoutException("timeout", new IllegalStateException()));
         PostImageUploadService service = new PostImageUploadService(
-                authorizer, preparer, reservation, writer, storageManager, metricsRecorder, List.of(processor));
+                preparer, reservation, writer, storageManager, metricsRecorder, processor);
 
-        assertThatThrownBy(() -> service.upload(ImageUploadVersion.V3, "secret", request))
+        assertThatThrownBy(() -> service.upload(request))
                 .isInstanceOf(PostImageUploadTimeoutException.class);
 
         verify(storageManager, never()).compensate(any());
         verify(writer, never()).fail(any(), any());
     }
 
-    private PostImageUploadProcessor processor(ImageUploadVersion version) {
-        PostImageUploadProcessor processor = mock(PostImageUploadProcessor.class);
-        when(processor.version()).thenReturn(version);
-        return processor;
+    private PostImageUploadProcessor processor() {
+        return mock(PostImageUploadProcessor.class);
     }
 }

@@ -47,12 +47,9 @@ class LambdaPostImageProcessorClientTest {
         LambdaPostImageProcessorClient client = new LambdaPostImageProcessorClient(
                 lambdaClient,
                 new PostImageUploadProperties(
-                        true,
-                        "token",
                         "image-processor",
                         "",
                         DataSize.ofMegabytes(10),
-                        32,
                         16,
                         Duration.ofSeconds(30),
                         Duration.ofMinutes(3),

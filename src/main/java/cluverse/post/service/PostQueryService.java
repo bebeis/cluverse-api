@@ -8,9 +8,7 @@ import cluverse.post.domain.Post;
 import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.service.implement.PostAccessReader;
 import cluverse.post.service.implement.PostReader;
-import cluverse.post.service.implement.PostListReader;
 import cluverse.post.service.request.PostKeywordSearchRequest;
-import cluverse.post.service.request.PostSearchRequest;
 import cluverse.post.service.response.PostDetailResponse;
 import cluverse.post.service.response.PostPageResponse;
 import cluverse.post.service.response.PostSummaryResponse;
@@ -29,47 +27,11 @@ import static java.util.stream.Collectors.toMap;
 @RequiredArgsConstructor
 public class PostQueryService {
 
-    private static final int PAGE_BLOCK_SIZE = 10;
-
     private final PostAccessReader postAccessReader;
     private final PostReader postReader;
-    private final PostListReader postListReader;
     private final BoardReader boardReader;
     private final MemberReader memberReader;
     private final CommentReader commentReader;
-
-    public PostPageResponse getPosts(Long memberId, PostSearchRequest request) {
-        boardReader.validateReadable(memberId, request.boardId());
-
-        int page = request.pageOrDefault();
-        int size = request.sizeOrDefault();
-        long searchLimit = pageBlockSearchLimit(page, size);
-        PostPageQueryResult queryResult = request.isDateBased()
-                ? postReader.readPostPageByDate(memberId, request)
-                : postListReader.readPostPage(memberId, request, searchLimit);
-
-        List<PostSummaryResponse> responses = queryResult.posts().stream()
-                .map(PostSummaryResponse::from)
-                .toList();
-
-        if (request.isDateBased()) {
-            return new PostPageResponse(responses, null, request.sizeOrDefault(), queryResult.hasNext(), true);
-        }
-
-        long cappedCount = queryResult.cappedCount() == null
-                ? postReader.countPostsUpTo(request, searchLimit)
-                : queryResult.cappedCount();
-        PageBlock pageBlock = resolvePageBlock(page, size, cappedCount);
-        return new PostPageResponse(
-                responses,
-                page,
-                size,
-                queryResult.hasNext(),
-                pageBlock.lastPage(),
-                pageBlock.hasNextBlock(),
-                false
-        );
-    }
 
     public PostPageResponse searchPosts(Long memberId, PostKeywordSearchRequest request) {
         boardReader.validateReadable(memberId, request.boardId());
@@ -102,16 +64,16 @@ public class PostQueryService {
      * 미달이면 그 값이 정확한 전체 개수이므로 실제 마지막 페이지를 계산한다.
      */
     private long pageBlockSearchLimit(int page, int size) {
-        int blockIndex = (page - 1) / PAGE_BLOCK_SIZE;
-        return (long) (blockIndex + 1) * size * PAGE_BLOCK_SIZE + 1;
+        int blockIndex = (page - 1) / 10;
+        return (long) (blockIndex + 1) * size * 10 + 1;
     }
 
     private PageBlock resolvePageBlock(int page, int size, long cappedCount) {
-        int blockIndex = (page - 1) / PAGE_BLOCK_SIZE;
+        int blockIndex = (page - 1) / 10;
         long searchLimit = pageBlockSearchLimit(page, size);
 
         if (cappedCount >= searchLimit) {
-            return new PageBlock((blockIndex + 1) * PAGE_BLOCK_SIZE, true);
+            return new PageBlock((blockIndex + 1) * 10, true);
         }
         int lastPage = (int) Math.max(1, (cappedCount + size - 1) / size);
         return new PageBlock(lastPage, false);
