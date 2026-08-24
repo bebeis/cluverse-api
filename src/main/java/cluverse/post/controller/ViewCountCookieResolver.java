@@ -22,10 +22,18 @@ public class ViewCountCookieResolver {
         String issued = UUID.randomUUID().toString();
         response.addHeader(
                 "Set-Cookie",
-                "%s=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=Lax"
-                        .formatted(COOKIE_NAME, issued, COOKIE_MAX_AGE_SECONDS)
+                cookieHeader(request, issued)
         );
         return issued;
+    }
+
+    private String cookieHeader(HttpServletRequest request, String value) {
+        boolean secure = request.isSecure()
+                || "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
+        String sameSite = secure ? "None" : "Lax";
+        String secureAttribute = secure ? "; Secure" : "";
+        return "%s=%s; Max-Age=%d; Path=/; HttpOnly%s; SameSite=%s"
+                .formatted(COOKIE_NAME, value, COOKIE_MAX_AGE_SECONDS, secureAttribute, sameSite);
     }
 
     private String find(HttpServletRequest request) {
