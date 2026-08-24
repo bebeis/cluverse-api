@@ -33,7 +33,15 @@ public record DataGoKrCertificationResponse(
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Body(JsonNode items) {
+    public record Body(
+            JsonNode items,
+            Integer numOfRows,
+            Integer pageNo,
+            Integer totalCount
+    ) {
+        public Body(JsonNode items) {
+            this(items, null, null, null);
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

@@ -20,7 +20,8 @@ import java.util.List;
 @Component
 public class DataGoKrCertificationScheduleClient implements CertificationScheduleClient {
 
-    private static final int ANNUAL_SCHEDULE_PAGE_SIZE = 1_000;
+    private static final int ANNUAL_SCHEDULE_PAGE_SIZE = 50;
+    private static final int MAX_PAGES = 20;
 
     private final CertificationProperties properties;
     private final CertificationScheduleMapper mapper;
@@ -61,15 +62,31 @@ public class DataGoKrCertificationScheduleClient implements CertificationSchedul
     public List<CertificationSchedule> readSchedules(int year) {
         validateServiceKey();
         try {
-            DataGoKrCertificationResponse response = restClient.get()
-                    .uri(scheduleUri(year))
-                    .retrieve()
-                    .body(DataGoKrCertificationResponse.class);
-            validateResponse(response);
-            return mapper.map(response);
+            List<CertificationSchedule> schedules = new java.util.ArrayList<>();
+            for (int pageNo = 1; pageNo <= MAX_PAGES; pageNo++) {
+                DataGoKrCertificationResponse response = readPage(year, pageNo);
+                validateResponse(response);
+                List<CertificationSchedule> page = mapper.map(response);
+                schedules.addAll(page);
+                Integer totalCount = response.resolvedBody() == null
+                        ? null : response.resolvedBody().totalCount();
+                if (page.isEmpty()
+                        || page.size() < ANNUAL_SCHEDULE_PAGE_SIZE
+                        || totalCount != null && schedules.size() >= totalCount) {
+                    break;
+                }
+            }
+            return List.copyOf(schedules);
         } catch (RestClientException exception) {
             throw unavailable(exception);
         }
+    }
+
+    private DataGoKrCertificationResponse readPage(int year, int pageNo) {
+        return restClient.get()
+                .uri(scheduleUri(year, pageNo))
+                .retrieve()
+                .body(DataGoKrCertificationResponse.class);
     }
 
     private void validateServiceKey() {
@@ -78,12 +95,12 @@ public class DataGoKrCertificationScheduleClient implements CertificationSchedul
         }
     }
 
-    private URI scheduleUri(int year) {
+    private URI scheduleUri(int year, int pageNo) {
         return URI.create(properties.providerBaseUrl()
                 + "/B490007/qualExamSchd/getQualExamSchdList"
                 + "?serviceKey=" + encodedServiceKey()
                 + "&numOfRows=" + ANNUAL_SCHEDULE_PAGE_SIZE
-                + "&pageNo=1"
+                + "&pageNo=" + pageNo
                 + "&dataFormat=json"
                 + "&implYy=" + year);
     }

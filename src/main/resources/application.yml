@@ -130,7 +130,7 @@ local-map:
   selection-token-secret: ${LOCAL_MAP_SELECTION_TOKEN_SECRET:}
   selection-token-ttl: 15m
   connect-timeout: 500ms
-  read-timeout: 2s
+  read-timeout: 5s
 
 certification:
   provider-base-url: ${CERTIFICATION_PROVIDER_BASE_URL:https://apis.data.go.kr}

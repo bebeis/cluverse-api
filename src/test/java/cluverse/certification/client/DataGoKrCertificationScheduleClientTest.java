@@ -29,13 +29,20 @@ class DataGoKrCertificationScheduleClientTest {
         MockRestServiceServer server = MockRestServiceServer.bindTo(restClientBuilder).build();
         server.expect(request -> {
                     assertThat(request.getURI().getRawQuery()).contains("serviceKey=test%2Bkey%3D");
+                    assertThat(request.getURI().getRawQuery()).contains("numOfRows=50");
                     assertThat(request.getURI().getRawQuery()).doesNotContain("%252B");
                 })
                 .andRespond(withSuccess("""
                         {
                           "header": {"resultCode": "00", "resultMsg": "NORMAL SERVICE"},
                           "body": {
+                            "numOfRows": 10,
+                            "pageNo": 1,
+                            "totalCount": 1,
                             "items": [{
+                              "implYy": "2026",
+                              "implSeq": 1,
+                              "qualgbCd": "T",
                               "qualgbNm": "국가기술자격",
                               "description": "2026년 정기 기사 1회",
                               "docRegStartDt": "20260801",
