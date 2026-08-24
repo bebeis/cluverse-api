@@ -12,6 +12,9 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.net.http.HttpClient;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Component
@@ -59,14 +62,7 @@ public class DataGoKrCertificationScheduleClient implements CertificationSchedul
         validateServiceKey();
         try {
             DataGoKrCertificationResponse response = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/B490007/qualExamSchd/getQualExamSchdList")
-                            .queryParam("serviceKey", properties.serviceKey())
-                            .queryParam("numOfRows", ANNUAL_SCHEDULE_PAGE_SIZE)
-                            .queryParam("pageNo", 1)
-                            .queryParam("dataFormat", "json")
-                            .queryParam("implYy", year)
-                            .build())
+                    .uri(scheduleUri(year))
                     .retrieve()
                     .body(DataGoKrCertificationResponse.class);
             validateResponse(response);
@@ -82,11 +78,27 @@ public class DataGoKrCertificationScheduleClient implements CertificationSchedul
         }
     }
 
+    private URI scheduleUri(int year) {
+        return URI.create(properties.providerBaseUrl()
+                + "/B490007/qualExamSchd/getQualExamSchdList"
+                + "?serviceKey=" + encodedServiceKey()
+                + "&numOfRows=" + ANNUAL_SCHEDULE_PAGE_SIZE
+                + "&pageNo=1"
+                + "&dataFormat=json"
+                + "&implYy=" + year);
+    }
+
+    private String encodedServiceKey() {
+        String serviceKey = properties.serviceKey();
+        return serviceKey.contains("%")
+                ? serviceKey
+                : URLEncoder.encode(serviceKey, StandardCharsets.UTF_8);
+    }
+
     private void validateResponse(DataGoKrCertificationResponse response) {
         if (response == null
-                || response.response() == null
-                || response.response().header() == null
-                || !"00".equals(response.response().header().resultCode())) {
+                || response.resolvedHeader() == null
+                || !"00".equals(response.resolvedHeader().resultCode())) {
             throw unavailable(new IllegalStateException("공공 API가 정상 응답 코드를 반환하지 않았습니다."));
         }
     }

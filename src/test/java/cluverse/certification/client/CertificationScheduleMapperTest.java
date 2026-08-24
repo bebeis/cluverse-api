@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.List;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,13 +53,31 @@ class CertificationScheduleMapperTest {
     }
 
     private DataGoKrCertificationResponse response(DataGoKrCertificationResponse.Item item) {
+        ArrayNode items = JsonNodeFactory.instance.arrayNode();
+        ObjectNode node = items.addObject();
+        node.put("qualgbNm", item.qualgbNm());
+        node.put("description", item.description());
+        put(node, "docRegStartDt", item.docRegStartDt());
+        put(node, "docRegEndDt", item.docRegEndDt());
+        put(node, "docExamStartDt", item.docExamStartDt());
+        put(node, "docExamEndDt", item.docExamEndDt());
+        put(node, "pracRegStartDt", item.pracRegStartDt());
+        put(node, "pracRegEndDt", item.pracRegEndDt());
+        put(node, "pracExamStartDt", item.pracExamStartDt());
+        put(node, "pracExamEndDt", item.pracExamEndDt());
         return new DataGoKrCertificationResponse(
                 new DataGoKrCertificationResponse.Response(
                         new DataGoKrCertificationResponse.Header("00", "NORMAL SERVICE"),
-                        new DataGoKrCertificationResponse.Body(
-                                new DataGoKrCertificationResponse.Items(List.of(item))
-                        )
+                        new DataGoKrCertificationResponse.Body(items)
                 )
         );
+    }
+
+    private void put(ObjectNode node, String fieldName, String value) {
+        if (value == null) {
+            node.putNull(fieldName);
+        } else {
+            node.put(fieldName, value);
+        }
     }
 }
