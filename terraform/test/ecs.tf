@@ -187,6 +187,11 @@ resource "aws_ecs_service" "api" {
   task_definition = aws_ecs_task_definition.api.arn
   desired_count   = var.ecs_desired_count
 
+  # bridge + 고정 hostPort 8080은 인스턴스당 태스크 1개만 배치할 수 있다.
+  # 기존 태스크를 한 대씩 내려 포트를 비운 뒤 새 태스크를 올리도록 한다.
+  deployment_minimum_healthy_percent = 50
+  deployment_maximum_percent         = 100
+
   # Spring Boot 부팅이 느려 grace가 짧으면 ALB 헬스체크 실패 → 태스크 무한 재시작.
   # 넉넉하게 180초.
   health_check_grace_period_seconds = 180
