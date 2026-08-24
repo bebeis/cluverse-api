@@ -51,6 +51,12 @@ spring:
       port: ${SPRING_REDIS_PORT:6379}
       timeout: 300ms          # 요청 경로가 Redis 장애에 매달리지 않게 짧게
       connect-timeout: 300ms
+  session:
+    timeout: 30m
+    data:
+      redis:
+        namespace: cluverse:session
+        flush-mode: on-save
   task:
     scheduling:
       pool:
