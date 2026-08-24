@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.http.HttpClient;
 import java.net.URI;
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Component
+@Slf4j
 public class DataGoKrCertificationScheduleClient implements CertificationScheduleClient {
 
     private static final int ANNUAL_SCHEDULE_PAGE_SIZE = 50;
@@ -78,6 +80,8 @@ public class DataGoKrCertificationScheduleClient implements CertificationSchedul
             }
             return List.copyOf(schedules);
         } catch (RestClientException exception) {
+            log.warn("공공 자격시험 API 호출에 실패했습니다. exceptionType={}, causeType={}",
+                    exception.getClass().getSimpleName(), rootCauseType(exception));
             throw unavailable(exception);
         }
     }
@@ -116,8 +120,20 @@ public class DataGoKrCertificationScheduleClient implements CertificationSchedul
         if (response == null
                 || response.resolvedHeader() == null
                 || !"00".equals(response.resolvedHeader().resultCode())) {
+            if (response != null && response.resolvedHeader() != null) {
+                log.warn("공공 자격시험 API가 오류 코드를 반환했습니다. resultCode={}",
+                        response.resolvedHeader().resultCode());
+            }
             throw unavailable(new IllegalStateException("공공 API가 정상 응답 코드를 반환하지 않았습니다."));
         }
+    }
+
+    private String rootCauseType(Throwable throwable) {
+        Throwable root = throwable;
+        while (root.getCause() != null) {
+            root = root.getCause();
+        }
+        return root.getClass().getSimpleName();
     }
 
     private ExternalServiceException unavailable(Throwable cause) {

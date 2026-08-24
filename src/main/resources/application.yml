@@ -129,8 +129,8 @@ local-map:
   naver-client-secret: ${NAVER_CLIENT_SECRET:}
   selection-token-secret: ${LOCAL_MAP_SELECTION_TOKEN_SECRET:}
   selection-token-ttl: 15m
-  connect-timeout: 500ms
-  read-timeout: 5s
+  connect-timeout: 2s
+  read-timeout: 10s
 
 certification:
   provider-base-url: ${CERTIFICATION_PROVIDER_BASE_URL:https://apis.data.go.kr}

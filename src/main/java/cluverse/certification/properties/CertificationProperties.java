@@ -13,8 +13,8 @@ import java.time.Duration;
 public record CertificationProperties(
         @DefaultValue("https://apis.data.go.kr") String providerBaseUrl,
         @DefaultValue("") @NotBlank String serviceKey,
-        @DefaultValue("500ms") @NotNull Duration connectTimeout,
-        @DefaultValue("5s") @NotNull Duration readTimeout,
+        @DefaultValue("2s") @NotNull Duration connectTimeout,
+        @DefaultValue("10s") @NotNull Duration readTimeout,
         @DefaultValue("12h") @NotNull Duration cacheTtl
 ) {
 }

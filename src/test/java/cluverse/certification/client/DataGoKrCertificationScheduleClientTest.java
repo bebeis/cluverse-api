@@ -3,6 +3,7 @@ package cluverse.certification.client;
 import cluverse.certification.properties.CertificationProperties;
 import cluverse.common.exception.ExternalServiceException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
@@ -14,6 +15,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class DataGoKrCertificationScheduleClientTest {
+
+    @Test
+    @EnabledIfEnvironmentVariable(named = "DATA_GO_KR_SERVICE_KEY", matches = ".+")
+    void 실제_공공_API에서_연간_일정을_조회한다() {
+        CertificationProperties properties = new CertificationProperties(
+                "https://apis.data.go.kr",
+                System.getenv("DATA_GO_KR_SERVICE_KEY"),
+                Duration.ofSeconds(2),
+                Duration.ofSeconds(5),
+                Duration.ofMinutes(1)
+        );
+        DataGoKrCertificationScheduleClient client = new DataGoKrCertificationScheduleClient(
+                properties,
+                new CertificationScheduleMapper()
+        );
+
+        assertThat(client.readSchedules(2026)).hasSize(157);
+    }
 
     @Test
     void URL_인코딩된_키와_최상위_응답_형식을_처리한다() {
