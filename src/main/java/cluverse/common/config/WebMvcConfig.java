@@ -46,7 +46,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
+                        "https://www.cluverse.cona.team",
+                        "https://cluverse.cona.team",
                         "https://cluverse-web.vercel.app",
+                        "https://cluverse-s7940sc0d-dawnglows-projects.vercel.app",
+                        "https://cluverse-web-git-feat-api-sync-home-localmap-dawnglows-projects.vercel.app",
+                        "https://cluverse-ht0zv09wb-dawnglows-projects.vercel.app",
                         "http://localhost:3000"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
