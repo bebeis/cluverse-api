@@ -6,7 +6,7 @@
 ```
 최초 1회   base-up.sh     VPC/ALB/ACM/ECR 생성 (Spaceship DNS 입력 2건만 수동)
 ─────────────────────────────────────────────────────────────
-측정 시작  up.sh          .env → SSM → 이미지 확보 → apply → 앱 healthy 대기 → 대시보드 → 시드
+측정 시작  up.sh          .env → SSM → 이미지 확보 → apply → 앱 healthy 대기 → 대시보드 → 최종 구현용 시드
 측정 중    tunnel.sh      Grafana/Prometheus/MySQL/Redis SSH 터널
 대시보드   grafana-dashboards.sh  grafana/*.json을 Grafana에 프로비저닝 (up.sh가 자동 호출)
 코드 변경  push-image.sh  bootJar → linux/amd64 빌드 → ECR 푸시 → ECS 재배포
@@ -16,9 +16,9 @@
 ## 일상 사이클
 
 ```bash
-script/aws/up.sh            # 딸깍 — 조회수·인기글 비교 시드까지 적재 (post-list 측정도 커버)
+script/aws/up.sh            # 딸깍 — 게시글 적재 + 최종 조회수 Redis 초기화
 script/aws/tunnel.sh start  # Grafana http://localhost:3000
-# … k6 측정 (script/post-list/README.md, script/view-count/README.md, script/popularity/README.md) …
+# … 필요한 성능 요청 실행 …
 script/aws/down.sh          # 딸깍 — 시간당 과금 전부 정지
 ```
 
@@ -28,8 +28,9 @@ script/aws/down.sh          # 딸깍 — 시간당 과금 전부 정지
   이미 SSM 값이 준비되어 로컬 `.env`를 사용하지 않을 때만 `--skip-secret-sync`를 사용한다.
 - 시딩은 **bastion에서 nohup으로** 돌아가므로 로컬이 끊겨도 계속됩니다.
   진행 확인: `seed.sh --follow`, 재적재: `seed.sh view-count --wait`
-- `view-count`와 `full` 프로파일은 MySQL 대량 시드 뒤 인기글 비교 fixture를 적재한다. 적재 전에는
-  조회수 실험용 Redis 키만 `SCAN + UNLINK`로 제거하며 다른 Redis 키는 보존한다.
+- `view-count`와 `full` 프로파일은 MySQL 대량 시드 전에 최종 조회수 구현의 Redis 키만
+  `SCAN + UNLINK`로 제거하며 다른 Redis 키는 보존한다.
+- `full` 프로파일은 댓글 적재 후 홈 최근 댓글 글 조회에 쓰는 `post_comment_activity`를 함께 재구축한다.
 - 실제 AWS 작업 없이 대상 SQL과 Redis prefix를 확인하려면 `seed.sh view-count --dry-run`을 사용한다.
 - 변수 입력은 필요 없습니다. `terraform/test/secrets.auto.tfvars`(gitignore)를 up.sh가 관리합니다
   — `db_password`는 최초 1회 자동 생성 후 유지, `my_ip`는 실행 시마다 현재 공인 IP로 갱신,

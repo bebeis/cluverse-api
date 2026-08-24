@@ -4,7 +4,7 @@
 # DB 비밀번호는 bastion이 SSM Parameter Store에서 직접 읽는다 (로컬로 노출 없음).
 #
 # 사용법:
-#   script/aws/seed.sh view-count [--8m] [--30m] [--wait]   # 01~05a(+05b)(+05d) + 인기글 fixture + 조회수 Redis 초기화
+#   script/aws/seed.sh view-count [--8m] [--30m] [--wait]   # 01~05a(+05b)(+05d) + 최종 조회수 Redis 초기화
 #   script/aws/seed.sh post-list  [--8m] [--30m] [--wait]   # 01~05a(+05b)(+05d)
 #   script/aws/seed.sh full       [--8m] [--30m] [--wait]   # view-count + 06_comment(300만)~08
 #   script/aws/seed.sh view-count --dry-run                 # AWS 변경 없이 실행 계획 확인
@@ -40,10 +40,8 @@ FILES=(01_university_seed.sql 02_member_seed.sql 03_major_seed.sql 04_interest_s
 [ "$EIGHT_M" = 1 ] && FILES+=(05b_popular_board_post_seed_8m.sql)
 [ "$THIRTY_M" = 1 ] && FILES+=(05d_post_seed_30m.sql)
 [ "$PROFILE" = "full" ] && FILES+=(06_comment_seed.sql 07_follow_seed.sql 08_block_seed.sql)
-INCLUDE_COMPARISON_FIXTURE=0
 RESET_VIEW_COUNT_REDIS=0
-if [ "$PROFILE" != "post-list" ]; then
-  INCLUDE_COMPARISON_FIXTURE=1
+if [ "$PROFILE" = "view-count" ] || [ "$PROFILE" = "full" ]; then
   RESET_VIEW_COUNT_REDIS=1
 fi
 
@@ -51,12 +49,9 @@ if [ "$DRY_RUN" = 1 ]; then
   echo "Profile: $PROFILE"
   echo "MySQL seed files:"
   printf '  docs/v1/ddl/test-data/%s\n' "${FILES[@]}"
-  if [ "$INCLUDE_COMPARISON_FIXTURE" = 1 ]; then
-    echo "  script/popularity/seed/fixture.sql"
-  fi
   if [ "$RESET_VIEW_COUNT_REDIS" = 1 ]; then
     echo "Redis reset: enabled"
-    "$REPO_ROOT/script/view-count/reset_redis.sh" --dry-run | sed 's/^/  /'
+    "$REPO_ROOT/script/aws/seed/reset-view-count-redis.sh" --dry-run | sed 's/^/  /'
   else
     echo "Redis reset: disabled"
   fi
@@ -103,7 +98,7 @@ if [ "$RESET_VIEW_COUNT_REDIS" = 1 ]; then
     echo "Redis 대기 중 (\$i/60)"; sleep 5
     [ "\$i" = 60 ] && { echo "SEED_FAIL redis-unreachable"; exit 1; }
   done
-  echo "=== 조회수 실험 Redis 초기화 완료 \$(date '+%H:%M:%S')"
+  echo "=== 조회수 Redis 초기화 완료 \$(date '+%H:%M:%S')"
 fi
 
 for f in ${FILES[*]}; do
@@ -112,12 +107,6 @@ for f in ${FILES[*]}; do
     echo "SEED_FAIL \$f"; exit 1
   fi
 done
-if [ "$INCLUDE_COMPARISON_FIXTURE" = 1 ]; then
-  echo "=== popularity_fixture.sql 시작 \$(date '+%H:%M:%S')"
-  if ! mysql -h $MYSQL_IP -u $DB_USER -p"\$DB_PASSWORD" $DB_NAME < popularity_fixture.sql; then
-    echo "SEED_FAIL popularity_fixture.sql"; exit 1
-  fi
-fi
 echo "SEED_DONE \$(date '+%H:%M:%S')"
 EOF
 
@@ -125,15 +114,8 @@ log "시드 파일 ${#FILES[@]}개를 bastion($BASTION)으로 전송"
 ssh_bastion 'mkdir -p seed'
 SCP_FILES=()
 for f in "${FILES[@]}"; do SCP_FILES+=("$SEED_SRC/$f"); done
-[ "$INCLUDE_COMPARISON_FIXTURE" = 1 ] && SCP_FILES+=("$REPO_ROOT/script/popularity/seed/fixture.sql")
-[ "$RESET_VIEW_COUNT_REDIS" = 1 ] && SCP_FILES+=("$REPO_ROOT/script/view-count/reset_redis.sh")
+[ "$RESET_VIEW_COUNT_REDIS" = 1 ] && SCP_FILES+=("$REPO_ROOT/script/aws/seed/reset-view-count-redis.sh")
 scp "${SSH_OPTS[@]}" -q "${SCP_FILES[@]}" "$RUNNER" ec2-user@"$BASTION":seed/
-if [ "$INCLUDE_COMPARISON_FIXTURE" = 1 ]; then
-  ssh_bastion 'cd seed && mv -f fixture.sql popularity_fixture.sql'
-fi
-if [ "$RESET_VIEW_COUNT_REDIS" = 1 ]; then
-  ssh_bastion 'cd seed && mv -f reset_redis.sh reset-view-count-redis.sh'
-fi
 # (nohup … &) 서브셸 래핑: 러너를 완전히 분리해 ssh 세션이 시딩 종료까지 붙잡히지 않게 한다
 ssh_bastion "cd seed && mv $(basename "$RUNNER") run-seed.sh && rm -f seed.log && (nohup bash run-seed.sh >> seed.log 2>&1 < /dev/null &)"
 rm -f "$RUNNER"

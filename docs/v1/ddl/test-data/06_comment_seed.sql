@@ -7,6 +7,7 @@
 --   - comment
 --   - updates post_comment_count
 --   - updates comment.reply_count
+--   - rebuilds post_comment_activity
 -- ============================================================
 
 SET @COMMENT_START_ID = 6000001;
@@ -16,6 +17,9 @@ SET @POST_START_ID = 3000001;
 SET @POST_END_ID = 5000000;
 
 DELETE FROM post_comment_count
+WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID;
+
+DELETE FROM post_comment_activity
 WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID;
 
 DELETE FROM comment
@@ -161,6 +165,34 @@ SELECT
 FROM comment
 WHERE post_id BETWEEN @POST_START_ID AND @POST_END_ID
 GROUP BY post_id;
+
+INSERT INTO post_comment_activity (
+    post_id,
+    last_comment_id,
+    last_commented_at,
+    created_at,
+    updated_at
+)
+SELECT
+    ranked.post_id,
+    ranked.comment_id,
+    ranked.created_at,
+    NOW(),
+    NOW()
+FROM (
+    SELECT
+        c.post_id,
+        c.comment_id,
+        c.created_at,
+        ROW_NUMBER() OVER (
+            PARTITION BY c.post_id
+            ORDER BY c.created_at DESC, c.comment_id DESC
+        ) AS row_num
+    FROM comment c
+    WHERE c.post_id BETWEEN @POST_START_ID AND @POST_END_ID
+      AND c.status <> 'DELETED'
+) ranked
+WHERE ranked.row_num = 1;
 
 ALTER TABLE comment AUTO_INCREMENT = 9000001;
 

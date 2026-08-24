@@ -10,7 +10,6 @@ locals {
     NAVER_CLIENT_ID                  = "/cluverse/test/naver/client-id"
     NAVER_CLIENT_SECRET              = "/cluverse/test/naver/client-secret"
     LOCAL_MAP_SELECTION_TOKEN_SECRET = "/cluverse/test/local-map/selection-token-secret"
-    LOCAL_MAP_BENCHMARK_TOKEN        = "/cluverse/test/local-map/selection-token-secret"
     DATA_GO_KR_SERVICE_KEY           = "/cluverse/test/data-go/service-key"
   }
 }

@@ -104,7 +104,8 @@ MySQL 8.x 기준 대량 테스트데이터 삽입 스크립트입니다.
 - `popular board post` 스크립트는 인기 게시판용 `board`, `post`, `post_view_count`, `post_like_count`, `post_bookmark_count`, `post_tag`, `post_image`를 추가 생성합니다.
 - `05d_post_seed_30m.sql`은 `post`와 카운트 4종(`post_view_count`, `post_like_count`, `post_comment_count`, `post_bookmark_count`)만 만듭니다. `board`는 만들지 않고(05가 만든 것을 재사용), 목록·조회수 측정에 쓰이지 않는 `post_tag`/`post_image`는 넣지 않습니다.
 - `05d`의 `created_at`은 다른 시드와 달리 `NOW()` 상대시간이 아니라 **2024-01-01 ~ 2026-06-30 고정 구간**에 결정적으로 흩뿌립니다(역주행 시나리오용 과거글). 커서/날짜 앵커를 이 범위 밖으로 잡지 않도록 주의하세요.
-- `comment` 스크립트는 댓글 삽입 후 `post_comment_count`, `comment.reply_count`를 갱신합니다.
+- `comment` 스크립트는 댓글 삽입 후 `post_comment_count`, `comment.reply_count`,
+  `post_comment_activity`를 갱신합니다.
 
 ## 실행 환경
 
