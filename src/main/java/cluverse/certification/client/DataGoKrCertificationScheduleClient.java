@@ -5,14 +5,13 @@ import cluverse.certification.exception.CertificationExceptionMessage;
 import cluverse.certification.properties.CertificationProperties;
 import cluverse.common.exception.ExternalServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.http.HttpClient;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -48,11 +47,8 @@ public class DataGoKrCertificationScheduleClient implements CertificationSchedul
     }
 
     private static RestClient createRestClient(CertificationProperties properties) {
-        HttpClient httpClient = HttpClient.newBuilder()
-                .connectTimeout(properties.connectTimeout())
-                .version(HttpClient.Version.HTTP_1_1)
-                .build();
-        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(properties.connectTimeout());
         requestFactory.setReadTimeout(properties.readTimeout());
 
         return RestClient.builder()
