@@ -58,17 +58,22 @@ class PostImageUploadServiceTest {
         );
         when(preparer.prepare(ImageUploadVersion.V3, request)).thenReturn(prepared);
         when(writer.read(request.requestId(), ImageUploadVersion.V3)).thenReturn(Optional.empty());
-        when(reservation.reserve(request.requestId(), ImageUploadVersion.V3, prepared.assets()))
+        when(reservation.reserve(isNull(), eq(request.requestId()), eq(ImageUploadVersion.V3),
+                eq(prepared.assets())))
                 .thenReturn(new PostImageUploadReservationResult(reserved, true));
         when(processor.process(prepared.images())).thenReturn(List.of());
         when(writer.complete(isNull(), any())).thenReturn(completed);
         when(storageManager.deleteStaging(completed)).thenReturn(true);
+        when(storageManager.createImageUrl("content/a.jpg"))
+                .thenReturn("https://images.example.com/content/a.jpg");
         PostImageUploadService service = new PostImageUploadService(
                 preparer, reservation, writer, storageManager, metricsRecorder, processor);
 
         PostImageUploadResponse response = service.upload(request);
 
         assertThat(response.status()).isEqualTo("COMPLETED");
+        assertThat(response.images().getFirst().contentUrl())
+                .isEqualTo("https://images.example.com/content/a.jpg");
         verify(processor).process(prepared.images());
     }
 
@@ -126,7 +131,8 @@ class PostImageUploadServiceTest {
         PostImageUpload reserved = PostImageUpload.reserve(requestId, ImageUploadVersion.V3, List.of(plan));
         when(writer.read(requestId, ImageUploadVersion.V3)).thenReturn(Optional.empty());
         when(preparer.prepare(ImageUploadVersion.V3, request)).thenReturn(prepared);
-        when(reservation.reserve(requestId, ImageUploadVersion.V3, prepared.assets()))
+        when(reservation.reserve(isNull(), eq(requestId), eq(ImageUploadVersion.V3),
+                eq(prepared.assets())))
                 .thenReturn(new PostImageUploadReservationResult(reserved, true));
         when(processor.process(prepared.images()))
                 .thenThrow(new PostImageUploadTimeoutException("timeout", new IllegalStateException()));

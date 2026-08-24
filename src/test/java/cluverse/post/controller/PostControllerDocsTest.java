@@ -286,7 +286,9 @@ class PostControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 여부"),
                                 fieldWithPath("isPinned").type(JsonFieldType.BOOLEAN).description("상단 고정 여부"),
                                 fieldWithPath("isExternalVisible").type(JsonFieldType.BOOLEAN).description("외부 공개 여부"),
-                                fieldWithPath("imageUrls").type(JsonFieldType.ARRAY).description("첨부 이미지 URL 목록")
+                                fieldWithPath("imageUrls").type(JsonFieldType.ARRAY).description("레거시 첨부 이미지 URL 목록"),
+                                fieldWithPath("imageUploadRequestIds").type(JsonFieldType.ARRAY)
+                                        .description("완료된 이미지 업로드 requestId 목록").optional()
                         ),
                         responseFields(
                                 fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
@@ -303,6 +305,11 @@ class PostControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.content").type(JsonFieldType.STRING).description("게시글 본문"),
                                 fieldWithPath("data.tags").type(JsonFieldType.ARRAY).description("태그 목록"),
                                 fieldWithPath("data.imageUrls").type(JsonFieldType.ARRAY).description("첨부 이미지 URL 목록"),
+                                fieldWithPath("data.imageAssets").type(JsonFieldType.ARRAY).description("처리 이미지 key와 조회 URL 목록"),
+                                fieldWithPath("data.imageAssets[].contentKey").type(JsonFieldType.STRING).description("본문 이미지 key").optional(),
+                                fieldWithPath("data.imageAssets[].thumbnailKey").type(JsonFieldType.STRING).description("썸네일 key").optional(),
+                                fieldWithPath("data.imageAssets[].contentUrl").type(JsonFieldType.STRING).description("본문 이미지 조회 URL").optional(),
+                                fieldWithPath("data.imageAssets[].thumbnailUrl").type(JsonFieldType.STRING).description("썸네일 조회 URL").optional(),
                                 fieldWithPath("data.isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 여부"),
                                 fieldWithPath("data.isPinned").type(JsonFieldType.BOOLEAN).description("상단 고정 여부"),
                                 fieldWithPath("data.isExternalVisible").type(JsonFieldType.BOOLEAN).description("외부 공개 여부"),
@@ -349,6 +356,11 @@ class PostControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.content").type(JsonFieldType.STRING).description("게시글 본문"),
                                 fieldWithPath("data.tags").type(JsonFieldType.ARRAY).description("태그 목록"),
                                 fieldWithPath("data.imageUrls").type(JsonFieldType.ARRAY).description("첨부 이미지 URL 목록"),
+                                fieldWithPath("data.imageAssets").type(JsonFieldType.ARRAY).description("처리 이미지 key와 조회 URL 목록"),
+                                fieldWithPath("data.imageAssets[].contentKey").type(JsonFieldType.STRING).description("본문 이미지 key").optional(),
+                                fieldWithPath("data.imageAssets[].thumbnailKey").type(JsonFieldType.STRING).description("썸네일 key").optional(),
+                                fieldWithPath("data.imageAssets[].contentUrl").type(JsonFieldType.STRING).description("본문 이미지 조회 URL").optional(),
+                                fieldWithPath("data.imageAssets[].thumbnailUrl").type(JsonFieldType.STRING).description("썸네일 조회 URL").optional(),
                                 fieldWithPath("data.isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 여부"),
                                 fieldWithPath("data.isPinned").type(JsonFieldType.BOOLEAN).description("상단 고정 여부"),
                                 fieldWithPath("data.isExternalVisible").type(JsonFieldType.BOOLEAN).description("외부 공개 여부"),
@@ -404,7 +416,11 @@ class PostControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 여부"),
                                 fieldWithPath("isPinned").type(JsonFieldType.BOOLEAN).description("상단 고정 여부"),
                                 fieldWithPath("isExternalVisible").type(JsonFieldType.BOOLEAN).description("외부 공개 여부"),
-                                fieldWithPath("imageUrls").type(JsonFieldType.ARRAY).description("첨부 이미지 URL 목록")
+                                fieldWithPath("imageUrls").type(JsonFieldType.ARRAY).description("레거시 첨부 이미지 URL 목록"),
+                                fieldWithPath("retainedImageContentKeys").type(JsonFieldType.ARRAY)
+                                        .description("수정 후 유지할 기존 이미지 content key 목록").optional(),
+                                fieldWithPath("imageUploadRequestIds").type(JsonFieldType.ARRAY)
+                                        .description("새로 연결할 이미지 업로드 requestId 목록").optional()
                         ),
                         responseFields(
                                 fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
@@ -421,6 +437,11 @@ class PostControllerDocsTest extends RestDocsSupport {
                                 fieldWithPath("data.content").type(JsonFieldType.STRING).description("게시글 본문"),
                                 fieldWithPath("data.tags").type(JsonFieldType.ARRAY).description("태그 목록"),
                                 fieldWithPath("data.imageUrls").type(JsonFieldType.ARRAY).description("첨부 이미지 URL 목록"),
+                                fieldWithPath("data.imageAssets").type(JsonFieldType.ARRAY).description("처리 이미지 key와 조회 URL 목록"),
+                                fieldWithPath("data.imageAssets[].contentKey").type(JsonFieldType.STRING).description("본문 이미지 key").optional(),
+                                fieldWithPath("data.imageAssets[].thumbnailKey").type(JsonFieldType.STRING).description("썸네일 key").optional(),
+                                fieldWithPath("data.imageAssets[].contentUrl").type(JsonFieldType.STRING).description("본문 이미지 조회 URL").optional(),
+                                fieldWithPath("data.imageAssets[].thumbnailUrl").type(JsonFieldType.STRING).description("썸네일 조회 URL").optional(),
                                 fieldWithPath("data.isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 여부"),
                                 fieldWithPath("data.isPinned").type(JsonFieldType.BOOLEAN).description("상단 고정 여부"),
                                 fieldWithPath("data.isExternalVisible").type(JsonFieldType.BOOLEAN).description("외부 공개 여부"),

@@ -21,6 +21,22 @@ public interface PostImageUploadRepository extends JpaRepository<PostImageUpload
     @EntityGraph(attributePaths = "assets")
     Optional<PostImageUpload> findByRequestIdAndVersion(UUID requestId, ImageUploadVersion version);
 
+    @EntityGraph(attributePaths = "assets")
+    List<PostImageUpload> findByClaimedPostId(Long claimedPostId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = "assets")
+    @Query("""
+            SELECT upload
+            FROM PostImageUpload upload
+            WHERE upload.requestId = :requestId
+              AND upload.version = :version
+            """)
+    Optional<PostImageUpload> findByRequestIdAndVersionForUpdate(
+            @Param("requestId") UUID requestId,
+            @Param("version") ImageUploadVersion version
+    );
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT upload FROM PostImageUpload upload WHERE upload.id = :uploadId")
     Optional<PostImageUpload> findByIdForUpdate(@Param("uploadId") Long uploadId);
@@ -49,6 +65,28 @@ public interface PostImageUploadRepository extends JpaRepository<PostImageUpload
     @EntityGraph(attributePaths = "assets")
     List<PostImageUpload> findTop100ByStatusAndStagingCleanedFalseOrderByUpdatedAtAsc(
             PostImageUploadStatus status
+    );
+
+    @EntityGraph(attributePaths = "assets")
+    List<PostImageUpload> findTop100ByStatusAndClaimedPostIdIsNullAndUpdatedAtBeforeOrderByUpdatedAtAsc(
+            PostImageUploadStatus status,
+            LocalDateTime updatedAt
+    );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            UPDATE PostImageUpload upload
+            SET upload.status = :claimedStatus, upload.updatedAt = CURRENT_TIMESTAMP
+            WHERE upload.id = :uploadId
+              AND upload.status = :completedStatus
+              AND upload.claimedPostId IS NULL
+              AND upload.updatedAt < :threshold
+            """)
+    int claimUnclaimedCompleted(
+            @Param("uploadId") Long uploadId,
+            @Param("threshold") LocalDateTime threshold,
+            @Param("completedStatus") PostImageUploadStatus completedStatus,
+            @Param("claimedStatus") PostImageUploadStatus claimedStatus
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

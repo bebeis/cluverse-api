@@ -26,19 +26,34 @@ public class PostImage {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    @Column(nullable = false)
+    @Column
     private String imageUrl;
+
+    private String contentKey;
+
+    private String thumbnailKey;
 
     @Column(columnDefinition = "TINYINT", nullable = false)
     private int displayOrder;
 
-    private PostImage(Post post, String imageUrl, int displayOrder) {
+    private PostImage(Post post, String imageUrl, String contentKey, String thumbnailKey, int displayOrder) {
         this.post = post;
         this.imageUrl = imageUrl;
+        this.contentKey = contentKey;
+        this.thumbnailKey = thumbnailKey;
         this.displayOrder = displayOrder;
     }
 
     public static PostImage of(Post post, String imageUrl, int displayOrder) {
-        return new PostImage(post, imageUrl, displayOrder);
+        return new PostImage(post, imageUrl, null, null, displayOrder);
+    }
+
+    public static PostImage processed(
+            Post post,
+            String contentKey,
+            String thumbnailKey,
+            int displayOrder
+    ) {
+        return new PostImage(post, null, contentKey, thumbnailKey, displayOrder);
     }
 }

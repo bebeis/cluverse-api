@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
+import java.util.UUID;
 
 public record PostUpdateRequest(
         @NotBlank(message = "제목을 입력해주세요.")
@@ -32,10 +33,34 @@ public record PostUpdateRequest(
         List<
                 @NotBlank(message = "이미지 URL은 비어 있을 수 없습니다.")
                 @Size(max = 500, message = "이미지 URL은 500자 이하여야 합니다.")
-                String> imageUrls
+                        String> imageUrls,
+
+        @Size(max = 10, message = "기존 이미지는 최대 10개까지 유지할 수 있습니다.")
+        List<@NotBlank String> retainedImageContentKeys,
+
+        @Size(max = 10, message = "이미지 업로드는 최대 10개까지 연결할 수 있습니다.")
+        List<@NotNull UUID> imageUploadRequestIds
 ) {
     public PostUpdateRequest {
         tags = tags == null ? List.of() : List.copyOf(tags);
         imageUrls = imageUrls == null ? List.of() : List.copyOf(imageUrls);
+        retainedImageContentKeys = retainedImageContentKeys == null
+                ? List.of() : List.copyOf(retainedImageContentKeys);
+        imageUploadRequestIds = imageUploadRequestIds == null
+                ? List.of() : List.copyOf(imageUploadRequestIds);
+    }
+
+    public PostUpdateRequest(
+            String title,
+            String content,
+            PostCategory category,
+            List<String> tags,
+            boolean isAnonymous,
+            boolean isPinned,
+            boolean isExternalVisible,
+            List<String> imageUrls
+    ) {
+        this(title, content, category, tags, isAnonymous, isPinned, isExternalVisible,
+                imageUrls, List.of(), List.of());
     }
 }

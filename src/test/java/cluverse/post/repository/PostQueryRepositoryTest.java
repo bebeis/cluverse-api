@@ -6,6 +6,7 @@ import cluverse.member.repository.MemberRepository;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
+import cluverse.post.PostImageStorageTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import({PostQueryRepository.class, QuerydslConfig.class})
+@Import({PostQueryRepository.class, QuerydslConfig.class, PostImageStorageTestConfig.class})
 class PostQueryRepositoryTest {
 
     @Autowired

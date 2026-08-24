@@ -15,6 +15,7 @@ public record PostDetailResponse(
         String content,
         List<String> tags,
         List<String> imageUrls,
+        List<PostImageResponse> imageAssets,
         boolean isAnonymous,
         boolean isPinned,
         boolean isExternalVisible,
@@ -29,6 +30,32 @@ public record PostDetailResponse(
     public PostDetailResponse {
         tags = tags == null ? List.of() : List.copyOf(tags);
         imageUrls = imageUrls == null ? List.of() : List.copyOf(imageUrls);
+        imageAssets = imageAssets == null ? List.of() : List.copyOf(imageAssets);
+    }
+
+    public PostDetailResponse(
+            Long postId,
+            Long boardId,
+            PostBoardResponse board,
+            PostCategory category,
+            String title,
+            String content,
+            List<String> tags,
+            List<String> imageUrls,
+            boolean isAnonymous,
+            boolean isPinned,
+            boolean isExternalVisible,
+            long viewCount,
+            long likeCount,
+            long commentCount,
+            long bookmarkCount,
+            PostAuthorResponse author,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+        this(postId, boardId, board, category, title, content, tags, imageUrls,
+                List.of(), isAnonymous, isPinned, isExternalVisible, viewCount,
+                likeCount, commentCount, bookmarkCount, author, createdAt, updatedAt);
     }
 
     public static PostDetailResponse from(PostDetailQueryDto post) {
@@ -41,6 +68,7 @@ public record PostDetailResponse(
                 post.content(),
                 post.tags(),
                 post.imageUrls(),
+                post.imageAssets().stream().map(PostImageResponse::from).toList(),
                 post.isAnonymous(),
                 post.isPinned(),
                 post.isExternalVisible(),
@@ -70,6 +98,7 @@ public record PostDetailResponse(
                 content,
                 tags,
                 imageUrls,
+                imageAssets,
                 isAnonymous,
                 isPinned,
                 isExternalVisible,

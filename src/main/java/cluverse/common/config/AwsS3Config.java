@@ -4,6 +4,7 @@ import cluverse.common.properties.AwsProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.util.StringUtils;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -32,6 +33,7 @@ public class AwsS3Config {
     }
 
     @Bean
+    @Primary
     S3Presigner s3Presigner(AwsProperties awsProperties) {
         S3Presigner.Builder builder = S3Presigner.builder()
                 .region(Region.of(awsProperties.region()))
@@ -44,6 +46,21 @@ public class AwsS3Config {
                     .build());
         }
 
+        return builder.build();
+    }
+
+    @Bean("publicS3Presigner")
+    S3Presigner publicS3Presigner(AwsProperties awsProperties) {
+        S3Presigner.Builder builder = S3Presigner.builder()
+                .region(Region.of(awsProperties.region()))
+                .credentialsProvider(DefaultCredentialsProvider.create());
+        String publicEndpoint = awsProperties.s3().publicEndpoint();
+        if (StringUtils.hasText(publicEndpoint)) {
+            builder.endpointOverride(URI.create(publicEndpoint));
+            builder.serviceConfiguration(S3Configuration.builder()
+                    .pathStyleAccessEnabled(true)
+                    .build());
+        }
         return builder.build();
     }
 }

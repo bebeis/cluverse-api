@@ -8,6 +8,7 @@ import cluverse.feed.service.request.HomeFeedFilter;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.domain.PostStatus;
 import cluverse.post.domain.QPostImage;
+import cluverse.post.client.PostImageObjectStorageClient;
 import cluverse.member.domain.MemberStatus;
 import cluverse.reaction.domain.QPostBookmark;
 import cluverse.reaction.domain.QPostLike;
@@ -76,6 +77,7 @@ public class FeedQueryRepository {
     private static final NumberPath<Long> TRENDING_SCORE = Expressions.numberPath(Long.class, "trendingScore");
 
     private final JPAQueryFactory queryFactory;
+    private final PostImageObjectStorageClient imageStorageClient;
 
     public Long findUniversityId(Long memberId) {
         if (memberId == null) {
@@ -319,6 +321,8 @@ public class FeedQueryRepository {
                         contentPreviewExpression,
                         POST_TAG,
                         THUMBNAIL_IMAGE.imageUrl,
+                        THUMBNAIL_IMAGE.contentKey,
+                        THUMBNAIL_IMAGE.thumbnailKey,
                         post.isAnonymous,
                         post.isPinned,
                         post.isExternalVisible,
@@ -389,7 +393,7 @@ public class FeedQueryRepository {
                 row.get(post.title),
                 row.get(CONTENT_PREVIEW),
                 tags,
-                row.get(THUMBNAIL_IMAGE.imageUrl),
+                resolveThumbnailImageUrl(row),
                 booleanValue(row.get(post.isAnonymous)),
                 booleanValue(row.get(post.isPinned)),
                 booleanValue(row.get(post.isExternalVisible)),
@@ -406,6 +410,18 @@ public class FeedQueryRepository {
                 row.get(memberProfile.profileImageUrl),
                 row.get(post.createdAt)
         );
+    }
+
+    private String resolveThumbnailImageUrl(Tuple row) {
+        String thumbnailKey = row.get(THUMBNAIL_IMAGE.thumbnailKey);
+        if (thumbnailKey != null) {
+            return imageStorageClient.createImageUrl(thumbnailKey);
+        }
+        String contentKey = row.get(THUMBNAIL_IMAGE.contentKey);
+        if (contentKey != null) {
+            return imageStorageClient.createImageUrl(contentKey);
+        }
+        return row.get(THUMBNAIL_IMAGE.imageUrl);
     }
 
     private List<Long> readMajorBoardIds(Long memberId) {

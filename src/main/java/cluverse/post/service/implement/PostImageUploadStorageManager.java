@@ -37,6 +37,10 @@ public class PostImageUploadStorageManager {
         }
     }
 
+    public String createImageUrl(String objectKey) {
+        return storageClient.createImageUrl(objectKey);
+    }
+
     private List<String> allKeys(PostImageUpload upload) {
         List<String> keys = new ArrayList<>();
         for (PostImageAsset asset : upload.getAssets()) {

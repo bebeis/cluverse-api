@@ -9,7 +9,8 @@ public record AwsProperties(
 ) {
     public record S3(
             String bucket,
-            String endpoint
+            String endpoint,
+            String publicEndpoint
     ) {
     }
 }

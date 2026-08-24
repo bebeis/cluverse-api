@@ -17,6 +17,7 @@ public class PostWriter {
 
     private final PostRepository postRepository;
     private final PostAccessReader postAccessReader;
+    private final PostImageUploadClaimer imageUploadClaimer;
 
     public Post create(Long memberId, PostCreateRequest request, String clientIp) {
         Post post = Post.createByMember(
@@ -32,7 +33,10 @@ public class PostWriter {
                 request.isExternalVisible(),
                 clientIp
         );
-        return postRepository.save(post);
+        Post saved = postRepository.save(post);
+        imageUploadClaimer.claimForCreate(
+                memberId, saved, request.imageUrls(), request.imageUploadRequestIds());
+        return saved;
     }
 
     public Post create(Long memberId, PostCreateRequest request, String clientIp, String clientRequestId) {
@@ -41,27 +45,37 @@ public class PostWriter {
                 request.category(), request.isAnonymous(), request.isPinned(), request.isExternalVisible(), clientIp,
                 clientRequestId
         );
-        return postRepository.saveAndFlush(post);
+        Post saved = postRepository.saveAndFlush(post);
+        imageUploadClaimer.claimForCreate(
+                memberId, saved, request.imageUrls(), request.imageUploadRequestIds());
+        return saved;
     }
 
     public void update(Long memberId, Long postId, PostUpdateRequest request) {
         Post post = postAccessReader.readOrThrow(postId);
         validateAuthor(memberId, post);
-        post.update(
+        post.updateDetails(
                 request.title(),
                 request.content(),
                 request.category(),
                 request.tags(),
-                request.imageUrls(),
                 request.isAnonymous(),
                 request.isPinned(),
                 request.isExternalVisible()
+        );
+        imageUploadClaimer.claimForUpdate(
+                memberId,
+                post,
+                request.imageUrls(),
+                request.retainedImageContentKeys(),
+                request.imageUploadRequestIds()
         );
     }
 
     public void delete(Long memberId, Long postId) {
         Post post = postAccessReader.readOrThrow(postId);
         validateAuthor(memberId, post);
+        imageUploadClaimer.releaseAll(post);
         post.delete();
     }
 

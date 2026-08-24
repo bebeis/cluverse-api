@@ -1,6 +1,8 @@
 package cluverse.post.controller;
 
 import cluverse.common.api.response.ApiResponse;
+import cluverse.common.auth.Login;
+import cluverse.common.auth.LoginMember;
 import cluverse.post.service.PostImageUploadService;
 import cluverse.post.service.request.PostImageUploadRequest;
 import cluverse.post.service.response.PostImageUploadResponse;
@@ -24,8 +26,9 @@ public class PostImageUploadController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<PostImageUploadResponse> upload(
+            @Login LoginMember loginMember,
             @Valid @ModelAttribute PostImageUploadRequest request
     ) {
-        return ApiResponse.created(service.upload(request));
+        return ApiResponse.created(service.upload(loginMember.memberId(), request));
     }
 }

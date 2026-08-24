@@ -31,6 +31,7 @@ import cluverse.meta.repository.PostViewCountRepository;
 import cluverse.post.domain.Post;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.repository.PostRepository;
+import cluverse.post.PostImageStorageTestConfig;
 import cluverse.reaction.domain.PostBookmark;
 import cluverse.reaction.domain.PostLike;
 import cluverse.reaction.repository.PostBookmarkRepository;
@@ -49,7 +50,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import({FeedQueryRepository.class, QuerydslConfig.class})
+@Import({FeedQueryRepository.class, QuerydslConfig.class, PostImageStorageTestConfig.class})
 class FeedQueryRepositoryTest {
 
     @Autowired

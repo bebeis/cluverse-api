@@ -49,7 +49,7 @@ public class PostImageUploadService {
         this.processor = processor;
     }
 
-    public PostImageUploadResponse upload(PostImageUploadRequest request) {
+    public PostImageUploadResponse upload(Long memberId, PostImageUploadRequest request) {
         ImageUploadVersion version = CURRENT_VERSION;
         long startedAt = System.nanoTime();
         PostImageUpload reserved = null;
@@ -58,12 +58,13 @@ public class PostImageUploadService {
         try {
             Optional<PostImageUpload> existing = writer.read(request.requestId(), version);
             if (existing.isPresent()) {
+                existing.get().validateOwner(memberId);
                 return respondExisting(existing.get(), startedAt);
             }
 
             try (PreparedPostImageUpload prepared = preparer.prepare(version, request)) {
                 PostImageUploadReservationResult reservationResult = reservation.reserve(
-                        request.requestId(), version, prepared.assets());
+                        memberId, request.requestId(), version, prepared.assets());
                 reserved = reservationResult.upload();
                 ownsReservation = reservationResult.created();
                 if (!ownsReservation) {
@@ -75,7 +76,7 @@ public class PostImageUploadService {
                 cleanupStaging(completed);
                 metricsRecorder.bytes(version, completed.getTotalSourceBytes(), completed.getTotalOutputBytes());
                 metricsRecorder.request(version, "success", System.nanoTime() - startedAt);
-                return PostImageUploadResponse.of(completed);
+                return toResponse(completed);
             }
         } catch (RuntimeException exception) {
             if (ownsReservation && !(exception instanceof PostImageUploadTimeoutException)) {
@@ -87,10 +88,14 @@ public class PostImageUploadService {
         }
     }
 
+    PostImageUploadResponse upload(PostImageUploadRequest request) {
+        return upload(null, request);
+    }
+
     private PostImageUploadResponse respondExisting(PostImageUpload upload, long startedAt) {
         if (upload.getStatus() == PostImageUploadStatus.COMPLETED) {
             metricsRecorder.request(upload.getVersion(), "idempotent", System.nanoTime() - startedAt);
-            return PostImageUploadResponse.of(upload);
+            return toResponse(upload);
         }
         if (upload.getStatus() == PostImageUploadStatus.PENDING) {
             throw new BadRequestException("같은 requestId의 이미지 업로드가 진행 중입니다.");
@@ -103,6 +108,10 @@ public class PostImageUploadService {
             writer.markStagingCleaned(completed.getId());
             completed.markStagingCleaned();
         }
+    }
+
+    private PostImageUploadResponse toResponse(PostImageUpload upload) {
+        return PostImageUploadResponse.of(upload, storageManager::createImageUrl);
     }
 
     private void compensate(PostImageUpload upload, RuntimeException failure) {

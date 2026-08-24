@@ -54,6 +54,7 @@ server:
 aws:
   s3:
     endpoint: http://localstack:4566
+    public-endpoint: http://localhost:4566
 
 app:
   frontend-url: http://localhost:3000

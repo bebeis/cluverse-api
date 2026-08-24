@@ -53,6 +53,7 @@ class LambdaPostImageProcessorClientTest {
                         16,
                         Duration.ofSeconds(30),
                         Duration.ofMinutes(3),
+                        Duration.ofHours(24),
                         Duration.ofSeconds(30)
                 )
         );

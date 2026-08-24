@@ -87,6 +87,7 @@ aws:
   s3:
     bucket: ${AWS_S3_BUCKET_NAME:cluverse-images}
     endpoint: ""   # 기본값 없음 = AWS 실제 엔드포인트 사용 (운영)
+    public-endpoint: ${AWS_S3_PUBLIC_ENDPOINT:}
   region: ap-northeast-2
 
 app:
@@ -139,6 +140,7 @@ post-image-upload:
   max-concurrent-remote-calls: 16
   remote-timeout: 30s
   stale-pending-after: 3m
+  unclaimed-after: 24h
   cleanup-interval: 30s
 
 post-image:

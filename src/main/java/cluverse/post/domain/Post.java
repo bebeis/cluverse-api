@@ -118,6 +118,19 @@ public class Post extends BaseTimeEntity {
 
     public void update(String title, String content, PostCategory category, List<String> tags, List<String> imageUrls,
                        boolean isAnonymous, boolean isPinned, boolean isExternalVisible) {
+        updateDetails(title, content, category, tags, isAnonymous, isPinned, isExternalVisible);
+        replaceImages(imageUrls);
+    }
+
+    public void updateDetails(
+            String title,
+            String content,
+            PostCategory category,
+            List<String> tags,
+            boolean isAnonymous,
+            boolean isPinned,
+            boolean isExternalVisible
+    ) {
         this.title = title;
         this.content = content;
         this.category = category;
@@ -125,7 +138,6 @@ public class Post extends BaseTimeEntity {
         this.isPinned = isPinned;
         this.isExternalVisible = isExternalVisible;
         replaceTags(tags);
-        replaceImages(imageUrls);
     }
 
     public void delete() {
@@ -148,7 +160,27 @@ public class Post extends BaseTimeEntity {
     public List<String> getImageUrls() {
         return images.stream()
                 .map(PostImage::getImageUrl)
+                .filter(java.util.Objects::nonNull)
                 .toList();
+    }
+
+    public void replaceImages(List<String> legacyImageUrls, List<PostImageKey> imageKeys) {
+        this.images.clear();
+        int displayOrder = 0;
+        if (legacyImageUrls != null) {
+            for (String imageUrl : legacyImageUrls) {
+                this.images.add(PostImage.of(this, imageUrl, displayOrder++));
+            }
+        }
+        if (imageKeys != null) {
+            for (PostImageKey key : imageKeys) {
+                this.images.add(PostImage.processed(
+                        this, key.contentKey(), key.thumbnailKey(), displayOrder++));
+            }
+        }
+    }
+
+    public record PostImageKey(String contentKey, String thumbnailKey) {
     }
 
     public void addPlace(Long placeId, int displayOrder, Long authorUniversityId,

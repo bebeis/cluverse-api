@@ -4,6 +4,7 @@ import cluverse.post.domain.PostImageUpload;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 public record PostImageUploadResponse(
         UUID requestId,
@@ -13,7 +14,7 @@ public record PostImageUploadResponse(
         double reductionPercent,
         List<PostImageAssetResponse> images
 ) {
-    public static PostImageUploadResponse of(PostImageUpload upload) {
+    public static PostImageUploadResponse of(PostImageUpload upload, Function<String, String> imageUrlResolver) {
         long sourceBytes = upload.getTotalSourceBytes();
         long outputBytes = upload.getTotalOutputBytes();
         double reductionPercent = sourceBytes == 0
@@ -25,7 +26,9 @@ public record PostImageUploadResponse(
                 sourceBytes,
                 outputBytes,
                 Math.round(reductionPercent * 100.0) / 100.0,
-                upload.getAssets().stream().map(PostImageAssetResponse::of).toList()
+                upload.getAssets().stream()
+                        .map(asset -> PostImageAssetResponse.of(asset, imageUrlResolver))
+                        .toList()
         );
     }
 }

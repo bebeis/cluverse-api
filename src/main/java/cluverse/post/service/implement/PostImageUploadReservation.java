@@ -17,19 +17,31 @@ public class PostImageUploadReservation {
     private final PostImageUploadWriter writer;
 
     public PostImageUploadReservationResult reserve(
+            Long memberId,
             UUID requestId,
             ImageUploadVersion version,
             List<PostImageAsset> assets
     ) {
         var existing = writer.read(requestId, version);
         if (existing.isPresent()) {
+            existing.get().validateOwner(memberId);
             return new PostImageUploadReservationResult(existing.get(), false);
         }
         try {
-            return new PostImageUploadReservationResult(writer.reserve(requestId, version, assets), true);
+            return new PostImageUploadReservationResult(
+                    writer.reserve(memberId, requestId, version, assets), true);
         } catch (DataIntegrityViolationException exception) {
             PostImageUpload raced = writer.read(requestId, version).orElseThrow(() -> exception);
+            raced.validateOwner(memberId);
             return new PostImageUploadReservationResult(raced, false);
         }
+    }
+
+    public PostImageUploadReservationResult reserve(
+            UUID requestId,
+            ImageUploadVersion version,
+            List<PostImageAsset> assets
+    ) {
+        return reserve(null, requestId, version, assets);
     }
 }

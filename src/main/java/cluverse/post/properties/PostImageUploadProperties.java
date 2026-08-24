@@ -14,6 +14,7 @@ public record PostImageUploadProperties(
         @DefaultValue("16") int maxConcurrentRemoteCalls,
         @DefaultValue("30s") Duration remoteTimeout,
         @DefaultValue("3m") Duration stalePendingAfter,
+        @DefaultValue("24h") Duration unclaimedAfter,
         @DefaultValue("30s") Duration cleanupInterval
 ) {
 }

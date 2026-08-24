@@ -10,4 +10,6 @@ public interface PostImageObjectStorageClient {
     void delete(Collection<String> objectKeys);
 
     long size(String objectKey);
+
+    String createImageUrl(String objectKey);
 }

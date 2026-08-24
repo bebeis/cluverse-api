@@ -30,6 +30,9 @@ class PostWriterTest {
     @Mock
     private PostAccessReader postAccessReader;
 
+    @Mock
+    private PostImageUploadClaimer imageUploadClaimer;
+
     @InjectMocks
     private PostWriter postWriter;
 

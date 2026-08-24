@@ -28,11 +28,21 @@ public class PostImageUploadWriter {
 
     @Transactional
     public PostImageUpload reserve(
+            Long memberId,
             UUID requestId,
             ImageUploadVersion version,
             List<PostImageAsset> assets
     ) {
-        return repository.saveAndFlush(PostImageUpload.reserve(requestId, version, assets));
+        return repository.saveAndFlush(PostImageUpload.reserve(memberId, requestId, version, assets));
+    }
+
+    @Transactional
+    public PostImageUpload reserve(
+            UUID requestId,
+            ImageUploadVersion version,
+            List<PostImageAsset> assets
+    ) {
+        return reserve(null, requestId, version, assets);
     }
 
     @Transactional(readOnly = true)
@@ -104,6 +114,24 @@ public class PostImageUploadWriter {
         return repository.findTop100ByStatusAndStagingCleanedFalseOrderByUpdatedAtAsc(
                 PostImageUploadStatus.COMPLETED
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<PostImageUpload> readUnclaimedCompleted(LocalDateTime threshold) {
+        return repository.findTop100ByStatusAndClaimedPostIdIsNullAndUpdatedAtBeforeOrderByUpdatedAtAsc(
+                PostImageUploadStatus.COMPLETED,
+                threshold
+        );
+    }
+
+    @Transactional
+    public boolean claimUnclaimedCompleted(Long uploadId, LocalDateTime threshold) {
+        return repository.claimUnclaimedCompleted(
+                uploadId,
+                threshold,
+                PostImageUploadStatus.COMPLETED,
+                PostImageUploadStatus.COMPENSATING
+        ) == 1;
     }
 
     @Transactional(readOnly = true)

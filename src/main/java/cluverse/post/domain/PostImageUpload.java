@@ -45,6 +45,8 @@ public class PostImageUpload extends BaseTimeEntity {
     @Column(name = "request_id", nullable = false, length = 36)
     private UUID requestId;
 
+    private Long memberId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 8)
     private ImageUploadVersion version;
@@ -52,6 +54,10 @@ public class PostImageUpload extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private PostImageUploadStatus status;
+
+    private Long claimedPostId;
+
+    private java.time.LocalDateTime claimedAt;
 
     @OneToMany(mappedBy = "upload", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
@@ -65,12 +71,14 @@ public class PostImageUpload extends BaseTimeEntity {
 
     private PostImageUpload(
             UUID requestId,
+            Long memberId,
             ImageUploadVersion version,
             PostImageUploadStatus status,
             List<PostImageAsset> assets,
             boolean stagingCleaned
     ) {
         this.requestId = requestId;
+        this.memberId = memberId;
         this.version = version;
         this.status = status;
         this.stagingCleaned = stagingCleaned;
@@ -78,11 +86,20 @@ public class PostImageUpload extends BaseTimeEntity {
     }
 
     public static PostImageUpload reserve(
+            Long memberId,
             UUID requestId,
             ImageUploadVersion version,
             List<PostImageAsset> assets
     ) {
-        return new PostImageUpload(requestId, version, PostImageUploadStatus.PENDING, assets, false);
+        return new PostImageUpload(requestId, memberId, version, PostImageUploadStatus.PENDING, assets, false);
+    }
+
+    public static PostImageUpload reserve(
+            UUID requestId,
+            ImageUploadVersion version,
+            List<PostImageAsset> assets
+    ) {
+        return reserve(null, requestId, version, assets);
     }
 
     public static PostImageUpload completed(
@@ -90,7 +107,42 @@ public class PostImageUpload extends BaseTimeEntity {
             ImageUploadVersion version,
             List<PostImageAsset> assets
     ) {
-        return new PostImageUpload(requestId, version, PostImageUploadStatus.COMPLETED, assets, true);
+        return completed(null, requestId, version, assets);
+    }
+
+    public static PostImageUpload completed(
+            Long memberId,
+            UUID requestId,
+            ImageUploadVersion version,
+            List<PostImageAsset> assets
+    ) {
+        return new PostImageUpload(
+                requestId, memberId, version, PostImageUploadStatus.COMPLETED, assets, true);
+    }
+
+    public void validateOwner(Long requestedMemberId) {
+        if (memberId != null && !memberId.equals(requestedMemberId)) {
+            throw new IllegalArgumentException("이미지 업로드 소유자가 일치하지 않습니다.");
+        }
+    }
+
+    public void claim(Long requestedMemberId, Long postId) {
+        validateOwner(requestedMemberId);
+        if (status != PostImageUploadStatus.COMPLETED) {
+            throw new IllegalStateException("완료된 이미지 업로드만 게시글에 연결할 수 있습니다.");
+        }
+        if (claimedPostId != null && !claimedPostId.equals(postId)) {
+            throw new IllegalStateException("이미 다른 게시글에 연결된 이미지 업로드입니다.");
+        }
+        claimedPostId = postId;
+        claimedAt = java.time.LocalDateTime.now();
+    }
+
+    public void release(Long postId) {
+        if (claimedPostId != null && claimedPostId.equals(postId)) {
+            claimedPostId = null;
+            claimedAt = null;
+        }
     }
 
     public void complete(List<ProcessedPostImage> processedImages) {

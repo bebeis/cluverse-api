@@ -18,6 +18,7 @@ import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
 import cluverse.post.service.request.PostKeywordSearchRequest;
 import cluverse.post.service.request.PostCursorSearchRequest;
+import cluverse.post.PostImageStorageTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -29,7 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
-@Import({PostReader.class, PostPageQueryRepository.class, PostQueryRepository.class, QuerydslConfig.class})
+@Import({PostReader.class, PostPageQueryRepository.class, PostQueryRepository.class,
+        QuerydslConfig.class, PostImageStorageTestConfig.class})
 class PostReaderTest {
 
     @Autowired

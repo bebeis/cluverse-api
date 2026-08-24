@@ -4,7 +4,9 @@ import cluverse.board.domain.BoardType;
 import cluverse.post.domain.PostCategory;
 import cluverse.post.domain.PostStatus;
 import cluverse.post.domain.QPostImage;
+import cluverse.post.client.PostImageObjectStorageClient;
 import cluverse.post.repository.dto.PostDetailQueryDto;
+import cluverse.post.repository.dto.PostImageQueryDto;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Projections;
@@ -47,6 +49,7 @@ public class PostQueryRepository {
     private static final int CONTENT_PREVIEW_LENGTH = 120;
 
     private final JPAQueryFactory queryFactory;
+    private final PostImageObjectStorageClient imageStorageClient;
 
     public Optional<PostDetailQueryDto> findPostDetail(Long memberId, Long postId) {
         PostDetailRow row = queryFactory
@@ -92,13 +95,31 @@ public class PostQueryRepository {
         }
 
         List<String> tags = findTagsByPostIds(List.of(postId)).getOrDefault(postId, List.of());
-        List<String> imageUrls = queryFactory.select(postImage.imageUrl)
+        List<PostImageRow> images = queryFactory.select(Projections.constructor(
+                        PostImageRow.class,
+                        postImage.imageUrl,
+                        postImage.contentKey,
+                        postImage.thumbnailKey
+                ))
                 .from(postImage)
                 .where(postImage.post.id.eq(postId))
                 .orderBy(postImage.displayOrder.asc())
                 .fetch();
 
-        return Optional.of(row.toDto(tags, imageUrls));
+        List<String> imageUrls = images.stream()
+                .map(image -> resolveImageUrl(image.legacyImageUrl(), image.contentKey()))
+                .toList();
+        List<PostImageQueryDto> imageAssets = images.stream()
+                .filter(image -> image.contentKey() != null)
+                .map(image -> new PostImageQueryDto(
+                        image.contentKey(),
+                        image.thumbnailKey(),
+                        resolveImageUrl(null, image.contentKey()),
+                        resolveImageUrl(null, image.thumbnailKey())
+                ))
+                .toList();
+
+        return Optional.of(row.toDto(tags, imageUrls, imageAssets));
     }
 
     /**
@@ -117,6 +138,8 @@ public class PostQueryRepository {
                         post.title,
                         contentPreviewExpression(),
                         THUMBNAIL_IMAGE.imageUrl,
+                        THUMBNAIL_IMAGE.contentKey,
+                        THUMBNAIL_IMAGE.thumbnailKey,
                         post.isAnonymous,
                         post.isPinned,
                         post.isExternalVisible,
@@ -150,8 +173,15 @@ public class PostQueryRepository {
 
         return postIds.stream()
                 .filter(rowByPostId::containsKey)
-                .map(postId -> rowByPostId.get(postId).toDto(
-                        tagsByPostId.getOrDefault(postId, List.of())))
+                .map(postId -> {
+                    PostSummaryRow row = rowByPostId.get(postId);
+                    String thumbnailKey = row.thumbnailImageKey() != null
+                            ? row.thumbnailImageKey() : row.contentImageKey();
+                    return row.toDto(
+                            tagsByPostId.getOrDefault(postId, List.of()),
+                            resolveImageUrl(row.legacyThumbnailImageUrl(), thumbnailKey)
+                    );
+                })
                 .toList();
     }
 
@@ -181,6 +211,20 @@ public class PostQueryRepository {
         );
     }
 
+    private String resolveImageUrl(String legacyImageUrl, String objectKey) {
+        if (objectKey != null) {
+            return imageStorageClient.createImageUrl(objectKey);
+        }
+        return legacyImageUrl;
+    }
+
+    public record PostImageRow(
+            String legacyImageUrl,
+            String contentKey,
+            String thumbnailKey
+    ) {
+    }
+
     // Projections.constructor는 public 생성자만 탐색하므로 반드시 public record여야 한다.
     public record PostSummaryRow(
             Long postId,
@@ -188,7 +232,9 @@ public class PostQueryRepository {
             PostCategory category,
             String title,
             String contentPreview,
-            String thumbnailImageUrl,
+            String legacyThumbnailImageUrl,
+            String contentImageKey,
+            String thumbnailImageKey,
             boolean isAnonymous,
             boolean isPinned,
             boolean isExternalVisible,
@@ -202,14 +248,16 @@ public class PostQueryRepository {
             String authorProfileImageUrl,
             LocalDateTime createdAt
     ) {
-        private PostSummaryQueryDto toDto(List<String> tags) {
+        private PostSummaryQueryDto toDto(List<String> tags, String thumbnailImageUrl) {
             return new PostSummaryQueryDto(
-                    postId, boardId, category, title, contentPreview, tags, thumbnailImageUrl,
+                    postId, boardId, category, title, contentPreview, tags,
+                    thumbnailImageUrl,
                     isAnonymous, isPinned, isExternalVisible, isMine,
                     viewCount, likeCount, commentCount, bookmarkCount,
                     authorMemberId, authorNickname, authorProfileImageUrl, createdAt
             );
         }
+
     }
 
     public record PostDetailRow(
@@ -235,10 +283,14 @@ public class PostQueryRepository {
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
-        private PostDetailQueryDto toDto(List<String> tags, List<String> imageUrls) {
+        private PostDetailQueryDto toDto(
+                List<String> tags,
+                List<String> imageUrls,
+                List<PostImageQueryDto> imageAssets
+        ) {
             return new PostDetailQueryDto(
                     postId, boardId, boardType, boardName, parentBoardId, category, title, content,
-                    tags, imageUrls,
+                    tags, imageUrls, imageAssets,
                     isAnonymous, isPinned, isExternalVisible, isMine,
                     viewCount, likeCount, commentCount, bookmarkCount,
                     authorMemberId, authorNickname, authorProfileImageUrl, createdAt, updatedAt

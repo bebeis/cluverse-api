@@ -33,6 +33,27 @@ public class PostImageUploadReconciler {
     public void reconcile() {
         cleanupCompletedStaging();
         failStalePending();
+        cleanupUnclaimedCompleted();
+    }
+
+    private void cleanupUnclaimedCompleted() {
+        LocalDateTime threshold = LocalDateTime.now().minus(properties.unclaimedAfter());
+        for (PostImageUpload upload : writer.readUnclaimedCompleted(threshold)) {
+            if (!writer.claimUnclaimedCompleted(upload.getId(), threshold)) {
+                continue;
+            }
+            try {
+                if (!storageManager.compensate(upload)) {
+                    deferCleanup(upload, "unclaimed_completed");
+                    continue;
+                }
+                writer.completeCompensation(upload.getId(), "unclaimed completed upload expired");
+                metricsRecorder.reconciled("unclaimed_completed_deleted");
+            } catch (RuntimeException exception) {
+                log.warn("미연결 완료 이미지 정리에 실패했습니다. uploadId={}", upload.getId(), exception);
+                deferCleanup(upload, "unclaimed_completed");
+            }
+        }
     }
 
     private void cleanupCompletedStaging() {
