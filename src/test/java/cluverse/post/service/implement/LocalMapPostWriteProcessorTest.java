@@ -31,6 +31,8 @@ class LocalMapPostWriteProcessorTest {
     @Mock
     private PostMetaWriter postMetaWriter;
     @Mock
+    private PostPlaceVerificationWriter verificationWriter;
+    @Mock
     private ApplicationEventPublisher eventPublisher;
     @InjectMocks
     private LocalMapPostWriteProcessor processor;
@@ -50,6 +52,7 @@ class LocalMapPostWriteProcessorTest {
 
         assertThat(result).isEqualTo(10L);
         verify(postMetaWriter).createViewCount(10L);
+        verify(verificationWriter).start(10L);
         verify(eventPublisher).publishEvent(
                 new PostPlaceVerificationRequested(1L, 10L, List.of(selectedPlace)));
     }

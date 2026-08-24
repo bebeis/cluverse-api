@@ -28,6 +28,8 @@ class AsyncPostPlaceVerificationHandlerTest {
     private PostPlaceCompletionProcessor completionProcessor;
     @Mock
     private LocalMapMetricsRecorder metricsRecorder;
+    @Mock
+    private PostPlaceVerificationWriter verificationWriter;
     @InjectMocks
     private AsyncPostPlaceVerificationHandler handler;
 
@@ -70,5 +72,6 @@ class AsyncPostPlaceVerificationHandlerTest {
 
         verify(completionProcessor, never()).complete(org.mockito.ArgumentMatchers.anyLong(),
                 org.mockito.ArgumentMatchers.anyLong(), anyList());
+        verify(verificationWriter).fail(10L, "provider timeout");
     }
 }

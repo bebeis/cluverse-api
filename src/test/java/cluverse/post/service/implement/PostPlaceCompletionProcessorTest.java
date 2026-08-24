@@ -44,6 +44,9 @@ class PostPlaceCompletionProcessorTest {
     @InjectMocks
     private PostPlaceCompletionProcessor processor;
 
+    @Mock
+    private PostPlaceVerificationWriter verificationWriter;
+
     @Test
     void 장소_UPSERT로_영속성_컨텍스트가_비워진_뒤_게시글을_다시_조회해_연결한다() {
         // given
@@ -75,5 +78,6 @@ class PostPlaceCompletionProcessorTest {
         order.verify(placeWriter).upsertAll(List.of(candidate));
         order.verify(postAccessReader).readWithPlacesOrThrow(10L);
         verify(post).addPlace(20L, 0, 1L, null, false);
+        verify(verificationWriter).complete(10L);
     }
 }

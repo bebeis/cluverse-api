@@ -19,6 +19,7 @@ public class PostPlaceCompletionProcessor {
     private final PostAccessReader postAccessReader;
     private final LocalPlaceAttachmentResolver attachmentResolver;
     private final PlaceWriter placeWriter;
+    private final PostPlaceVerificationWriter verificationWriter;
 
     @Transactional
     public void complete(Long memberId, Long postId, List<SelectedPlace> selectedPlaces) {
@@ -34,5 +35,6 @@ public class PostPlaceCompletionProcessor {
                     attachment.universityCampusId(), attachment.recommended()
             );
         }
+        verificationWriter.complete(postId);
     }
 }

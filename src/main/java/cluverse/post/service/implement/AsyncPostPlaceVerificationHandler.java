@@ -21,6 +21,7 @@ public class AsyncPostPlaceVerificationHandler {
     private final ExternalPlaceVerificationResolver placeVerificationResolver;
     private final PostPlaceCompletionProcessor completionProcessor;
     private final LocalMapMetricsRecorder metricsRecorder;
+    private final PostPlaceVerificationWriter verificationWriter;
 
     @Async("localMapPlaceExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -40,6 +41,7 @@ public class AsyncPostPlaceVerificationHandler {
                     () -> completionProcessor.complete(event.memberId(), event.postId(), verifiedPlaces)
             );
         } catch (RuntimeException exception) {
+            verificationWriter.fail(event.postId(), exception.getMessage());
             log.warn("게시글은 저장했지만 비동기 장소 검증에 실패했습니다. postId={}", event.postId(), exception);
         }
     }

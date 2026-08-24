@@ -21,6 +21,7 @@ public class LocalMapPostWriteProcessor {
     private final MemberReader memberReader;
     private final PostWriter postWriter;
     private final PostMetaWriter postMetaWriter;
+    private final PostPlaceVerificationWriter verificationWriter;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -30,6 +31,7 @@ public class LocalMapPostWriteProcessor {
         Post post = postWriter.create(memberId, request, clientIp, requestId);
         postMetaWriter.createViewCount(post.getId());
         if (!selectedPlaces.isEmpty()) {
+            verificationWriter.start(post.getId());
             eventPublisher.publishEvent(
                     new PostPlaceVerificationRequested(memberId, post.getId(), selectedPlaces));
         }
