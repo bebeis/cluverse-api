@@ -1,13 +1,6 @@
 == 게시글 API
 
-게시글 목록 조회는 성능 개선 단계를 비교 측정하기 위해 V1~V4 네 가지 버전으로 제공된다.
-
-- V1 (`/api/v1/posts`): 인덱스만 건 원본 오프셋 페이징
-- V2 (`/api/v2/posts`): 커버링 인덱스 + 지연 조인
-- V3 (`/api/v3/posts`): 앞쪽 최신순 Redis ID 캐시 + V2 + 페이지 블록 상한 카운트 (최대 200페이지)
-- V4 (`/api/v4/posts`): 날짜 앵커 + 커서 기반
-
-=== 게시글 목록 조회 (V1)
+=== 게시글 목록 조회
 
 ==== 요청
 
@@ -18,54 +11,6 @@ include::{snippets}/posts/get-post-list/query-parameters.adoc[]
 
 include::{snippets}/posts/get-post-list/http-response.adoc[]
 include::{snippets}/posts/get-post-list/response-fields.adoc[]
-
-=== 게시글 목록 조회 (V2)
-
-==== 요청
-
-include::{snippets}/posts/get-post-list-v2/http-request.adoc[]
-include::{snippets}/posts/get-post-list-v2/query-parameters.adoc[]
-
-==== 응답
-
-include::{snippets}/posts/get-post-list-v2/http-response.adoc[]
-include::{snippets}/posts/get-post-list-v2/response-fields.adoc[]
-
-=== 게시글 목록 조회 (V3)
-
-==== 요청
-
-include::{snippets}/posts/get-post-list-v3/http-request.adoc[]
-include::{snippets}/posts/get-post-list-v3/query-parameters.adoc[]
-
-==== 응답
-
-include::{snippets}/posts/get-post-list-v3/http-response.adoc[]
-include::{snippets}/posts/get-post-list-v3/response-fields.adoc[]
-
-=== 날짜 기반 게시글 목록 조회 (V3)
-
-==== 요청
-
-include::{snippets}/posts/get-post-list-by-date/http-request.adoc[]
-include::{snippets}/posts/get-post-list-by-date/query-parameters.adoc[]
-
-==== 응답
-
-include::{snippets}/posts/get-post-list-by-date/http-response.adoc[]
-include::{snippets}/posts/get-post-list-by-date/response-fields.adoc[]
-
-=== 게시글 목록 조회 (V4, 커서)
-
-==== 요청
-
-include::{snippets}/posts/get-post-list-v4/http-request.adoc[]
-include::{snippets}/posts/get-post-list-v4/query-parameters.adoc[]
-
-==== 응답
-
-include::{snippets}/posts/get-post-list-v4/http-response.adoc[]
-include::{snippets}/posts/get-post-list-v4/response-fields.adoc[]
 
 === 게시글 검색
 
@@ -115,54 +60,17 @@ include::{snippets}/posts/read-post/path-parameters.adoc[]
 include::{snippets}/posts/read-post/http-response.adoc[]
 include::{snippets}/posts/read-post/response-fields.adoc[]
 
-=== 게시글 조회수 증가 (V1~V4)
+=== 게시글 조회수 증가
 
-게시글 조회수 집계 구조를 같은 배포 환경에서 비교 측정하기 위해 V1~V4 네 가지 버전으로 제공된다.
+==== 요청
 
-- V1 (`/api/v1/posts/{postId}/view-count`): 요청마다 MySQL 원자적 UPDATE
-- V2 (`/api/v2/posts/{postId}/view-count`): Redis 시간 기반 증분과 주기 flush
-- V3 (`/api/v3/posts/{postId}/view-count`): Redis 기준치 기반 증분과 write-back
-- V4 (`/api/v4/posts/{postId}/view-count`): Redis 전체 조회수 카운터와 MySQL 체크포인트
+include::{snippets}/posts/increase-view-count/http-request.adoc[]
+include::{snippets}/posts/increase-view-count/path-parameters.adoc[]
 
-==== 조회수 증가 (V1) 요청
+==== 응답
 
-include::{snippets}/posts/increase-view-count-v1/http-request.adoc[]
-include::{snippets}/posts/increase-view-count-v1/path-parameters.adoc[]
-
-==== 조회수 증가 (V1) 응답
-
-include::{snippets}/posts/increase-view-count-v1/http-response.adoc[]
-include::{snippets}/posts/increase-view-count-v1/response-fields.adoc[]
-
-==== 조회수 증가 (V2) 요청
-
-include::{snippets}/posts/increase-view-count-v2/http-request.adoc[]
-include::{snippets}/posts/increase-view-count-v2/path-parameters.adoc[]
-
-==== 조회수 증가 (V2) 응답
-
-include::{snippets}/posts/increase-view-count-v2/http-response.adoc[]
-include::{snippets}/posts/increase-view-count-v2/response-fields.adoc[]
-
-==== 조회수 증가 (V3) 요청
-
-include::{snippets}/posts/increase-view-count-v3/http-request.adoc[]
-include::{snippets}/posts/increase-view-count-v3/path-parameters.adoc[]
-
-==== 조회수 증가 (V3) 응답
-
-include::{snippets}/posts/increase-view-count-v3/http-response.adoc[]
-include::{snippets}/posts/increase-view-count-v3/response-fields.adoc[]
-
-==== 조회수 증가 (V4) 요청
-
-include::{snippets}/posts/increase-view-count-v4/http-request.adoc[]
-include::{snippets}/posts/increase-view-count-v4/path-parameters.adoc[]
-
-==== 조회수 증가 (V4) 응답
-
-include::{snippets}/posts/increase-view-count-v4/http-response.adoc[]
-include::{snippets}/posts/increase-view-count-v4/response-fields.adoc[]
+include::{snippets}/posts/increase-view-count/http-response.adoc[]
+include::{snippets}/posts/increase-view-count/response-fields.adoc[]
 
 === 게시글 수정
 

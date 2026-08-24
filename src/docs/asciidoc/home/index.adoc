@@ -7,23 +7,11 @@ include::{snippets}/home/get-favorite-boards/query-parameters.adoc[]
 include::{snippets}/home/get-favorite-boards/http-response.adoc[]
 include::{snippets}/home/get-favorite-boards/response-fields.adoc[]
 
-=== 최근 댓글 글 조회 - 개선 전
+=== 최근 댓글 글 조회
 
-include::{snippets}/home/get-recent-commented-posts-v1/http-request.adoc[]
-include::{snippets}/home/get-recent-commented-posts-v1/http-response.adoc[]
-include::{snippets}/home/get-recent-commented-posts-v1/response-fields.adoc[]
-
-=== 최근 댓글 글 조회 - 인덱스 집계와 캐시
-
-include::{snippets}/home/get-recent-commented-posts-v2/http-request.adoc[]
-include::{snippets}/home/get-recent-commented-posts-v2/http-response.adoc[]
-include::{snippets}/home/get-recent-commented-posts-v2/response-fields.adoc[]
-
-=== 최근 댓글 글 조회 - 활동 투영
-
-include::{snippets}/home/get-recent-commented-posts-v3/http-request.adoc[]
-include::{snippets}/home/get-recent-commented-posts-v3/http-response.adoc[]
-include::{snippets}/home/get-recent-commented-posts-v3/response-fields.adoc[]
+include::{snippets}/home/get-recent-commented-posts/http-request.adoc[]
+include::{snippets}/home/get-recent-commented-posts/http-response.adoc[]
+include::{snippets}/home/get-recent-commented-posts/response-fields.adoc[]
 
 === 접수 마감 임박 자격시험 조회
 

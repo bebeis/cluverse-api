@@ -103,9 +103,11 @@ class PostCommentActivityRepositoryTest {
     }
 
     private Comment saveComment(Long postId, String content) {
-        return commentRepository.saveAndFlush(Comment.createByMember(
+        Comment savedComment = commentRepository.saveAndFlush(Comment.createByMember(
                 postId, 1L, null, 0, content, false, "127.0.0.1"
         ));
+        entityManager.refresh(savedComment);
+        return savedComment;
     }
 
     private Comment saveComment(Long postId, String content, LocalDateTime createdAt) {

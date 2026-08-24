@@ -83,7 +83,7 @@ class HomeControllerDocsTest extends RestDocsSupport {
         mockMvc.perform(get("/api/v1/home/recent-commented-posts").session(session()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].postId").value(20))
-                .andDo(document("home/get-recent-commented-posts-v1",
+                .andDo(document("home/get-recent-commented-posts",
                         responseFields(recentPostFields())
                 ));
     }
