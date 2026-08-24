@@ -51,7 +51,7 @@ services:
       - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cluverse_v2?allowPublicKeyRetrieval=true&useSSL=false&rewriteBatchedStatements=true&connectionTimeZone=Asia/Seoul&forceConnectionTimeZoneToSession=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cluverse_v2?allowPublicKeyRetrieval=true&useSSL=false&rewriteBatchedStatements=true&connectionTimeZone=%2B09:00&forceConnectionTimeZoneToSession=true
       SPRING_DATASOURCE_USERNAME: cluverse_user
       SPRING_DATASOURCE_PASSWORD: test1234
       SPRING_REDIS_HOST: redis
@@ -79,7 +79,7 @@ services:
       - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cluverse_v2?allowPublicKeyRetrieval=true&useSSL=false&rewriteBatchedStatements=true&connectionTimeZone=Asia/Seoul&forceConnectionTimeZoneToSession=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cluverse_v2?allowPublicKeyRetrieval=true&useSSL=false&rewriteBatchedStatements=true&connectionTimeZone=%2B09:00&forceConnectionTimeZoneToSession=true
       SPRING_DATASOURCE_USERNAME: cluverse_user
       SPRING_DATASOURCE_PASSWORD: test1234
       SPRING_REDIS_HOST: redis
