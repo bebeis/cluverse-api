@@ -1,24 +1,35 @@
 package cluverse.auth.client;
 
 import cluverse.auth.properties.OAuth2Properties;
+import cluverse.common.exception.BadRequestException;
+import cluverse.common.exception.ExternalServiceException;
+import cluverse.common.exception.UnauthorizedException;
 import cluverse.member.domain.OAuthProvider;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.ResourceAccessException;
 
 @Component
 public class GoogleOAuth2Client implements OAuth2Client {
 
-    private static final String TOKEN_URL = "https://oauth2.googleapis.com/token";
+    private static final String TOKEN_INFO_URL = "https://oauth2.googleapis.com/tokeninfo";
     private static final String USER_INFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
 
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient;
     private final OAuth2Properties.Provider properties;
 
+    @Autowired
     public GoogleOAuth2Client(OAuth2Properties properties) {
+        this(properties, RestClient.create());
+    }
+
+    GoogleOAuth2Client(OAuth2Properties properties, RestClient restClient) {
         this.properties = properties.google();
+        this.restClient = restClient;
     }
 
     @Override
@@ -32,23 +43,38 @@ public class GoogleOAuth2Client implements OAuth2Client {
     }
 
     @Override
-    public OAuthUserInfo getUserInfo(String code) {
-        String accessToken = exchangeToken(code);
-        return fetchUserInfo(accessToken);
+    public OAuthUserInfo getUserInfo(OAuthCredential credential) {
+        if (isBlank(credential.accessToken())) {
+            throw new BadRequestException("구글 액세스 토큰이 필요합니다.");
+        }
+        try {
+            verifyAudience(credential.accessToken());
+            return fetchUserInfo(credential.accessToken());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().is4xxClientError()) {
+                throw new UnauthorizedException("소셜 인증 정보가 유효하지 않습니다.");
+            }
+            throw new ExternalServiceException("구글 인증 서버를 일시적으로 이용할 수 없습니다.", e);
+        } catch (ResourceAccessException e) {
+            throw new ExternalServiceException("구글 인증 서버를 일시적으로 이용할 수 없습니다.", e);
+        }
     }
 
-    private String exchangeToken(String code) {
-        GoogleTokenResponse response = restClient.post()
-                .uri(TOKEN_URL)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body("grant_type=authorization_code"
-                        + "&client_id=" + properties.clientId()
-                        + "&client_secret=" + properties.clientSecret()
-                        + "&redirect_uri=" + properties.redirectUri()
-                        + "&code=" + code)
+    private void verifyAudience(String accessToken) {
+        GoogleTokenInfo response = restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("https")
+                        .host("oauth2.googleapis.com")
+                        .path("/tokeninfo")
+                        .queryParam("access_token", accessToken)
+                        .build())
                 .retrieve()
-                .body(GoogleTokenResponse.class);
-        return response.accessToken();
+                .body(GoogleTokenInfo.class);
+        if (response == null || !properties.clientId().equals(response.audience())) {
+            throw new UnauthorizedException("소셜 인증 정보가 유효하지 않습니다.");
+        }
     }
 
     private OAuthUserInfo fetchUserInfo(String accessToken) {
@@ -58,12 +84,17 @@ public class GoogleOAuth2Client implements OAuth2Client {
                 .retrieve()
                 .body(GoogleUserInfo.class);
 
+        if (userInfo == null || isBlank(userInfo.sub()) || isBlank(userInfo.email()) || isBlank(userInfo.name())) {
+            throw new UnauthorizedException("구글 계정의 이메일과 프로필 제공 동의가 필요합니다.");
+        }
         return new OAuthUserInfo(userInfo.sub(), userInfo.email(), userInfo.name());
     }
 
-    private record GoogleTokenResponse(
-            @JsonProperty("access_token") String accessToken
-    ) {}
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private record GoogleTokenInfo(@JsonProperty("aud") String audience) {}
 
     private record GoogleUserInfo(String sub, String email, String name) {}
 }

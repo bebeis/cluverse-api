@@ -8,5 +8,5 @@ public interface OAuth2Client {
 
     OAuthProvider provider();
 
-    OAuthUserInfo getUserInfo(String code);
+    OAuthUserInfo getUserInfo(OAuthCredential credential);
 }

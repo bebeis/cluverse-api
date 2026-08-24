@@ -2,6 +2,8 @@ package cluverse.auth.controller;
 
 import cluverse.auth.client.OAuth2Client;
 import cluverse.auth.client.OAuth2ClientManager;
+import cluverse.auth.client.OAuthCredential;
+import cluverse.auth.client.OAuthRedirectUriPolicy;
 import cluverse.auth.client.OAuthUserInfo;
 import cluverse.auth.service.AuthService;
 import cluverse.common.auth.LoginMember;
@@ -35,10 +37,11 @@ class AuthControllerDocsTest extends RestDocsSupport {
     private final LoginSessionManager loginSessionManager = mock(LoginSessionManager.class);
     private final OAuth2ClientManager oAuth2ClientManager = mock(OAuth2ClientManager.class);
     private final OAuth2Client oAuth2Client = mock(OAuth2Client.class);
+    private final OAuthRedirectUriPolicy oAuthRedirectUriPolicy = mock(OAuthRedirectUriPolicy.class);
 
     @Override
     protected Object initController() {
-        return new AuthController(authService, loginSessionManager, oAuth2ClientManager);
+        return new AuthController(authService, loginSessionManager, oAuth2ClientManager, oAuthRedirectUriPolicy);
     }
 
     @Test
@@ -189,7 +192,9 @@ class AuthControllerDocsTest extends RestDocsSupport {
         LoginMember loginMember = new LoginMember(1L, "kakaouser", MemberRole.MEMBER);
 
         when(oAuth2ClientManager.getClient("kakao")).thenReturn(oAuth2Client);
-        when(oAuth2Client.getUserInfo("auth-code")).thenReturn(userInfo);
+        when(oAuthRedirectUriPolicy.validate("kakao", "https://cluverse-web.vercel.app/login/callback/kakao"))
+                .thenReturn("https://cluverse-web.vercel.app/login/callback/kakao");
+        when(oAuth2Client.getUserInfo(any(OAuthCredential.class))).thenReturn(userInfo);
         when(oAuth2Client.provider()).thenReturn(OAuthProvider.KAKAO);
         when(authService.loginWithOAuth(userInfo, OAuthProvider.KAKAO, "127.0.0.1"))
                 .thenReturn(loginMember);
@@ -198,7 +203,8 @@ class AuthControllerDocsTest extends RestDocsSupport {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "code": "auth-code"
+                                    "code": "auth-code",
+                                    "redirectUri": "https://cluverse-web.vercel.app/login/callback/kakao"
                                 }
                                 """))
                 .andExpect(status().isOk())
@@ -209,7 +215,9 @@ class AuthControllerDocsTest extends RestDocsSupport {
                                 parameterWithName("provider").description("OAuth2 provider (kakao, google)")
                         ),
                         requestFields(
-                                fieldWithPath("code").type(JsonFieldType.STRING).description("OAuth2 인가 코드 (프론트엔드에서 인가 서버로부터 받은 code)")
+                                fieldWithPath("code").type(JsonFieldType.STRING).description("카카오 인가 코드").optional(),
+                                fieldWithPath("accessToken").type(JsonFieldType.STRING).description("구글 액세스 토큰").optional(),
+                                fieldWithPath("redirectUri").type(JsonFieldType.STRING).description("인가 요청에 사용한 콜백 URI").optional()
                         ),
                         responseFields(
                                 fieldWithPath("code").type(JsonFieldType.NUMBER).description("HTTP 상태 코드"),
