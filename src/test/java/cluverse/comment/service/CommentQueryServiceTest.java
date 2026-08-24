@@ -20,6 +20,7 @@ import cluverse.meta.service.implement.PostMetaWriter;
 import cluverse.popularity.domain.PopularityTrigger;
 import cluverse.popularity.service.implement.PopularityPromotionInvoker;
 import cluverse.post.service.implement.PostAccessReader;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -27,7 +28,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,11 +61,19 @@ class CommentQueryServiceTest {
     @Mock
     private PopularityPromotionInvoker popularityPromotionInvoker;
 
-    @InjectMocks
     private CommentQueryService commentQueryService;
 
     @InjectMocks
     private CommentService commentService;
+
+    @BeforeEach
+    void setUpCommentQueryService() {
+        Clock clock = Clock.fixed(
+                Instant.parse("2026-08-24T06:00:00Z"),
+                ZoneId.of("Asia/Seoul")
+        );
+        commentQueryService = new CommentQueryService(commentReader, postAccessReader, clock);
+    }
 
     @Test
     void 댓글_목록_조회시_쿼리_결과를_응답으로_조립한다() {
@@ -89,7 +101,8 @@ class CommentQueryServiceTest {
         verify(commentReader).readCommentPage(eq(99L), eq(request), cursorCaptor.capture());
         assertThat(cursorCaptor.getValue().path()).isEmpty();
         assertThat(cursorCaptor.getValue().snapshotMaxCommentId()).isEqualTo(200L);
-        assertThat(cursorCaptor.getValue().asOf()).isNotNull();
+        assertThat(cursorCaptor.getValue().asOf())
+                .isEqualTo(LocalDateTime.of(2026, 8, 24, 15, 0));
     }
 
     @Test

@@ -86,7 +86,7 @@ DB_PASSWORD=\$(aws ssm get-parameter --name $DB_PASSWORD_SSM_KEY --with-decrypti
   --region $AWS_REGION --query Parameter.Value --output text) || { echo "SEED_FAIL ssm"; exit 1; }
 
 for i in \$(seq 1 60); do
-  mysql -h $MYSQL_IP -u $DB_USER -p"\$DB_PASSWORD" -e 'SELECT 1' $DB_NAME >/dev/null 2>&1 && break
+  mysql --init-command="SET SESSION time_zone='+09:00'" -h $MYSQL_IP -u $DB_USER -p"\$DB_PASSWORD" -e 'SELECT 1' $DB_NAME >/dev/null 2>&1 && break
   echo "MySQL 대기 중 (\$i/60)"; sleep 10
   [ "\$i" = 60 ] && { echo "SEED_FAIL mysql-unreachable"; exit 1; }
 done
@@ -103,7 +103,7 @@ fi
 
 for f in ${FILES[*]}; do
   echo "=== \$f 시작 \$(date '+%H:%M:%S')"
-  if ! mysql -h $MYSQL_IP -u $DB_USER -p"\$DB_PASSWORD" $DB_NAME < "\$f"; then
+  if ! mysql --init-command="SET SESSION time_zone='+09:00'" -h $MYSQL_IP -u $DB_USER -p"\$DB_PASSWORD" $DB_NAME < "\$f"; then
     echo "SEED_FAIL \$f"; exit 1
   fi
 done

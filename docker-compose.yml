@@ -51,7 +51,7 @@ services:
       - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cluverse_v2?allowPublicKeyRetrieval=true&useSSL=false&rewriteBatchedStatements=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cluverse_v2?allowPublicKeyRetrieval=true&useSSL=false&rewriteBatchedStatements=true&connectionTimeZone=Asia/Seoul&forceConnectionTimeZoneToSession=true
       SPRING_DATASOURCE_USERNAME: cluverse_user
       SPRING_DATASOURCE_PASSWORD: test1234
       SPRING_REDIS_HOST: redis
@@ -61,7 +61,7 @@ services:
       AWS_SECRET_ACCESS_KEY: test
       IMAGE_PROCESSOR_LAMBDA_NAME: ${IMAGE_PROCESSOR_LAMBDA_NAME:-}
       IMAGE_PROCESSOR_LAMBDA_ENDPOINT: ${IMAGE_PROCESSOR_LAMBDA_ENDPOINT:-http://localstack:4566}
-      JAVA_OPTS: "-Xms256m -Xmx512m"
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -Duser.timezone=Asia/Seoul"
     depends_on:
       db:
         condition: service_healthy
@@ -79,7 +79,7 @@ services:
       - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cluverse_v2?allowPublicKeyRetrieval=true&useSSL=false&rewriteBatchedStatements=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cluverse_v2?allowPublicKeyRetrieval=true&useSSL=false&rewriteBatchedStatements=true&connectionTimeZone=Asia/Seoul&forceConnectionTimeZoneToSession=true
       SPRING_DATASOURCE_USERNAME: cluverse_user
       SPRING_DATASOURCE_PASSWORD: test1234
       SPRING_REDIS_HOST: redis
@@ -89,7 +89,7 @@ services:
       AWS_SECRET_ACCESS_KEY: test
       IMAGE_PROCESSOR_LAMBDA_NAME: ${IMAGE_PROCESSOR_LAMBDA_NAME:-}
       IMAGE_PROCESSOR_LAMBDA_ENDPOINT: ${IMAGE_PROCESSOR_LAMBDA_ENDPOINT:-http://localstack:4566}
-      JAVA_OPTS: "-Xms256m -Xmx512m"
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -Duser.timezone=Asia/Seoul"
     depends_on:
       db:
         condition: service_healthy

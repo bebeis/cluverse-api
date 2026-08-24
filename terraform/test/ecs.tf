@@ -146,9 +146,9 @@ resource "aws_ecs_task_definition" "api" {
       environment = [
         # JVM이 cgroup 1536MB를 보고 힙 50% = 768MB로 고정 (Initial=Max: 리사이즈 제거, 측정 재현성).
         # 나머지 ~768MB = 메타스페이스 + 스레드 스택 + 코드캐시 + 다이렉트 버퍼 몫.
-        { name = "JAVA_TOOL_OPTIONS", value = "-XX:InitialRAMPercentage=50 -XX:MaxRAMPercentage=50" },
+        { name = "JAVA_TOOL_OPTIONS", value = "-XX:InitialRAMPercentage=50 -XX:MaxRAMPercentage=50 -Duser.timezone=Asia/Seoul" },
         # Spring relaxed binding — docker-compose.yml과 동일한 관례로 주입
-        { name = "SPRING_DATASOURCE_URL", value = "jdbc:mysql://${var.mysql_private_ip}:3306/${var.db_name}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true" },
+        { name = "SPRING_DATASOURCE_URL", value = "jdbc:mysql://${var.mysql_private_ip}:3306/${var.db_name}?useSSL=false&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true&connectionTimeZone=Asia/Seoul&forceConnectionTimeZoneToSession=true" },
         { name = "SPRING_DATASOURCE_USERNAME", value = var.db_username },
         { name = "SPRING_REDIS_HOST", value = var.redis_private_ip },
         { name = "SPRING_REDIS_PORT", value = "6379" },

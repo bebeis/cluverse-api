@@ -12,6 +12,7 @@ import cluverse.post.service.implement.PostAccessReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,6 +22,7 @@ public class CommentQueryService {
 
     private final CommentReader commentReader;
     private final PostAccessReader postAccessReader;
+    private final Clock clock;
 
     public CommentPageResponse getComments(Long memberId, CommentPageRequest request) {
         postAccessReader.validateReadablePost(memberId, request.postId());
@@ -67,7 +69,7 @@ public class CommentQueryService {
             return CommentPageCursor.decode(encodedCursor);
         }
         return CommentPageCursor.first(
-                LocalDateTime.now(),
+                LocalDateTime.ofInstant(clock.instant(), clock.getZone()),
                 commentReader.readMaxCommentId()
         );
     }
