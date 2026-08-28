@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,12 +54,19 @@ class PostWriterTest {
                 true,
                 List.of()
         );
-        when(postRepository.save(any(Post.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        LocalDateTime createdAt = LocalDateTime.of(2026, 8, 28, 13, 0);
+        when(postRepository.save(any(Post.class))).thenAnswer(invocation -> {
+            Post post = invocation.getArgument(0);
+            ReflectionTestUtils.setField(post, "id", 10L);
+            ReflectionTestUtils.setField(post, "createdAt", createdAt);
+            return post;
+        });
 
         Post result = postWriter.create(1L, request, "127.0.0.1");
 
         assertThat(result.getBoardId()).isEqualTo(3L);
-        verify(eventPublisher).publishEvent(new PostListChangedEvent(3L));
+        verify(eventPublisher).publishEvent(new PostCreatedEvent(
+                3L, 10L, PostCategory.INFORMATION, createdAt));
     }
 
     @Test

@@ -38,7 +38,7 @@ public class PostWriter {
         Post saved = postRepository.save(post);
         imageUploadClaimer.claimForCreate(
                 memberId, saved, request.imageUrls(), request.imageUploadRequestIds());
-        eventPublisher.publishEvent(new PostListChangedEvent(saved.getBoardId()));
+        eventPublisher.publishEvent(PostCreatedEvent.from(saved));
         return saved;
     }
 
@@ -51,7 +51,7 @@ public class PostWriter {
         Post saved = postRepository.saveAndFlush(post);
         imageUploadClaimer.claimForCreate(
                 memberId, saved, request.imageUrls(), request.imageUploadRequestIds());
-        eventPublisher.publishEvent(new PostListChangedEvent(saved.getBoardId()));
+        eventPublisher.publishEvent(PostCreatedEvent.from(saved));
         return saved;
     }
 

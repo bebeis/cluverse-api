@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,7 @@ public class LatestPostIdCacheRepository {
     private final StringRedisTemplate redisTemplate;
     private final RedisScript<List> readScript;
     private final RedisScript<Long> replaceScript;
+    private final RedisScript<Long> addIfReadyScript;
     private final RedisScript<Long> invalidateScript;
     private final RedisScript<Long> unlockScript;
     private final Clock clock;
@@ -31,6 +33,7 @@ public class LatestPostIdCacheRepository {
             StringRedisTemplate redisTemplate,
             @Qualifier("readLatestPostIdsScript") RedisScript<List> readScript,
             @Qualifier("replaceLatestPostIdsScript") RedisScript<Long> replaceScript,
+            @Qualifier("addLatestPostIdIfReadyScript") RedisScript<Long> addIfReadyScript,
             @Qualifier("invalidateLatestPostIdsScript") RedisScript<Long> invalidateScript,
             @Qualifier("unlockScript") RedisScript<Long> unlockScript,
             Clock clock
@@ -38,6 +41,7 @@ public class LatestPostIdCacheRepository {
         this.redisTemplate = redisTemplate;
         this.readScript = readScript;
         this.replaceScript = replaceScript;
+        this.addIfReadyScript = addIfReadyScript;
         this.invalidateScript = invalidateScript;
         this.unlockScript = unlockScript;
         this.clock = clock;
@@ -103,10 +107,7 @@ public class LatestPostIdCacheRepository {
         // score가 같은 게시글은 19자리 postId member의 역순으로 정렬되어 DB의 post_id DESC와 일치한다.
         for (LatestPostCacheEntry entry : entries) {
             arguments.add(member(entry.postId()));
-            arguments.add(String.valueOf(entry.createdAt()
-                    .atZone(clock.getZone())
-                    .toInstant()
-                    .toEpochMilli()));
+            arguments.add(String.valueOf(score(entry.createdAt())));
         }
 
         Long replaced = redisTemplate.execute(
@@ -115,6 +116,26 @@ public class LatestPostIdCacheRepository {
                 arguments.toArray()
         );
         return replaced != null && replaced == 1L;
+    }
+
+    public boolean addIfReady(
+            Long boardId,
+            PostCategory category,
+            Long postId,
+            LocalDateTime createdAt,
+            int maxEntries,
+            Duration ttl
+    ) {
+        CacheKeys keys = keys(boardId, category);
+        Long updated = redisTemplate.execute(
+                addIfReadyScript,
+                List.of(keys.ids(), keys.ready(), keys.version()),
+                member(postId),
+                String.valueOf(score(createdAt)),
+                String.valueOf(maxEntries),
+                String.valueOf(ttl.toSeconds())
+        );
+        return updated != null && updated == 1L;
     }
 
     public void invalidateBoard(Long boardId) {
@@ -146,6 +167,10 @@ public class LatestPostIdCacheRepository {
 
     private String member(Long postId) {
         return String.format("%0" + POST_ID_WIDTH + "d", postId);
+    }
+
+    private long score(LocalDateTime createdAt) {
+        return createdAt.atZone(clock.getZone()).toInstant().toEpochMilli();
     }
 
     private long asLong(Object value) {

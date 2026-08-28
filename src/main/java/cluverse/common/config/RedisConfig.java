@@ -47,6 +47,11 @@ public class RedisConfig {
     }
 
     @Bean
+    public RedisScript<Long> addLatestPostIdIfReadyScript() {
+        return longScript("redis/add_latest_post_id_if_ready.lua");
+    }
+
+    @Bean
     public RedisScript<Long> invalidateLatestPostIdsScript() {
         return longScript("redis/invalidate_latest_post_ids.lua");
     }
