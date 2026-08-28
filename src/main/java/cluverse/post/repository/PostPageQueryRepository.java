@@ -34,10 +34,10 @@ public class PostPageQueryRepository {
     private final JPAQueryFactory queryFactory;
     private final EntityManager entityManager;
 
-    public PostIdSliceQueryResult findPostPageIds(PostPageSearchRequest request) {
+    public PostIdSliceQueryResult findOffsetPageIds(PostPageSearchRequest request) {
         int size = request.sizeOrDefault();
         long offset = (long) (request.pageOrDefault() - 1) * size;
-        return findPostPageIds(request.boardId(), request.category(), request.sortOrDefault(), offset, size);
+        return findOffsetPageIds(request.boardId(), request.category(), request.sortOrDefault(), offset, size);
     }
 
     public List<LatestPostCacheEntry> findLatestPostCacheEntries(
@@ -61,13 +61,14 @@ public class PostPageQueryRepository {
                 .fetch();
     }
 
-    private PostIdSliceQueryResult findPostPageIds(
+    private PostIdSliceQueryResult findOffsetPageIds(
             Long boardId,
             PostCategory category,
             PostSortType sortType,
             long offset,
             int size
     ) {
+        // OFFSET 이동은 커버링 인덱스에서 ID로만 끝내고, 화면용 조인은 최종 ID에만 수행한다.
         JPAQuery<Long> postIdQuery = queryFactory.select(post.id).from(post);
         if (sortType == PostSortType.VIEW_COUNT) {
             postIdQuery.leftJoin(postViewCount).on(postViewCount.postId.eq(post.id));
@@ -87,7 +88,7 @@ public class PostPageQueryRepository {
         return toSlice(postIds, size);
     }
 
-    public PostIdSliceQueryResult findPostPageIdsByCursor(PostCursorSearchRequest request) {
+    public PostIdSliceQueryResult findCursorPageIds(PostCursorSearchRequest request) {
         int size = request.sizeOrDefault();
         boolean ascending = request.hasCursor() && request.directionOrDefault() == PostCursorDirection.PREV;
 
@@ -109,6 +110,7 @@ public class PostPageQueryRepository {
         if (!ascending) {
             return slice;
         }
+        // PREV는 인접한 최신 글을 ASC로 가져온 뒤 API 계약인 최신순으로 되돌린다.
         List<Long> reversed = new ArrayList<>(slice.postIds());
         Collections.reverse(reversed);
         return new PostIdSliceQueryResult(reversed, slice.hasNext());
@@ -130,6 +132,7 @@ public class PostPageQueryRepository {
         if (request.hasCursor()) {
             LocalDateTime createdAt = request.cursorCreatedAt();
             Long postId = request.cursorPostId();
+            // created_at 동률에서도 누락·중복이 없도록 post_id까지 포함한 튜플 경계를 만든다.
             return switch (request.directionOrDefault()) {
                 case NEXT -> post.createdAt.lt(createdAt)
                         .or(post.createdAt.eq(createdAt).and(post.id.lt(postId)));
@@ -143,7 +146,7 @@ public class PostPageQueryRepository {
         return null;
     }
 
-    public PostIdSliceQueryResult findPostPageIdsByKeyword(PostKeywordSearchRequest request) {
+    public PostIdSliceQueryResult findKeywordPageIds(PostKeywordSearchRequest request) {
         int size = request.sizeOrDefault();
         long offset = (long) (request.pageOrDefault() - 1) * size;
 
@@ -162,7 +165,7 @@ public class PostPageQueryRepository {
         return toSlice(postIds, size);
     }
 
-    public PostIdSliceQueryResult findPostPageIdsByAuthor(Long authorId, int page, int size) {
+    public PostIdSliceQueryResult findAuthorPageIds(Long authorId, int page, int size) {
         long offset = (long) (page - 1) * size;
 
         List<Long> postIds = queryFactory.select(post.id)
@@ -197,6 +200,7 @@ public class PostPageQueryRepository {
     }
 
     public long countPostsUpTo(PostPageSearchRequest request, long searchLimit) {
+        // LIMIT이 있는 파생 테이블로 현재 페이지 블록에 필요한 범위까지만 센다.
         String sql = "SELECT COUNT(*) FROM ("
                 + " SELECT post_id FROM post"
                 + " WHERE board_id = :boardId AND status = :status"

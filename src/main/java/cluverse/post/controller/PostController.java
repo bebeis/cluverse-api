@@ -49,7 +49,7 @@ public class PostController {
             @Login LoginMember loginMember,
             @Valid @ModelAttribute PostPageSearchRequest request
     ) {
-        return ApiResponse.ok(postQueryService.getPosts(extractMemberId(loginMember), request));
+        return ApiResponse.ok(postListQueryService.readPage(extractMemberId(loginMember), request));
     }
 
     @GetMapping(params = {"cursorCreatedAt", "cursorPostId"})
@@ -57,7 +57,7 @@ public class PostController {
             @Login LoginMember loginMember,
             @Valid @ModelAttribute PostCursorSearchRequest request
     ) {
-        return ApiResponse.ok(postListQueryService.getPosts(extractMemberId(loginMember), request));
+        return ApiResponse.ok(postListQueryService.readCursor(extractMemberId(loginMember), request));
     }
 
     @GetMapping(params = {"date", "!cursorCreatedAt", "!cursorPostId"})
@@ -65,7 +65,7 @@ public class PostController {
             @Login LoginMember loginMember,
             @Valid @ModelAttribute PostCursorSearchRequest request
     ) {
-        return ApiResponse.ok(postListQueryService.getPosts(extractMemberId(loginMember), request));
+        return ApiResponse.ok(postListQueryService.readCursor(extractMemberId(loginMember), request));
     }
 
     @GetMapping("/cursor")
@@ -73,13 +73,13 @@ public class PostController {
             @Login LoginMember loginMember,
             @Valid @ModelAttribute PostCursorSearchRequest request
     ) {
-        return ApiResponse.ok(postListQueryService.getPosts(extractMemberId(loginMember), request));
+        return ApiResponse.ok(postListQueryService.readCursor(extractMemberId(loginMember), request));
     }
 
     @GetMapping("/search")
     public ApiResponse<PostPageResponse> searchPosts(@Login LoginMember loginMember,
                                                      @Valid @ModelAttribute PostKeywordSearchRequest request) {
-        return ApiResponse.ok(postQueryService.searchPosts(extractMemberId(loginMember), request));
+        return ApiResponse.ok(postListQueryService.search(extractMemberId(loginMember), request));
     }
 
     @GetMapping("/recent-comment-replied")

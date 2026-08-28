@@ -17,12 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 @Slf4j
 @Component
 @Transactional(readOnly = true)
-public class PostListReader {
+public class PostPageReader {
 
     private final PostReader postReader;
     private final PostPageQueryRepository postPageQueryRepository;
@@ -33,7 +35,7 @@ public class PostListReader {
     private final Counter cacheBypass;
     private final Counter cacheError;
 
-    public PostListReader(
+    public PostPageReader(
             PostReader postReader,
             PostPageQueryRepository postPageQueryRepository,
             PostListCacheRepository cacheRepository,
@@ -50,15 +52,15 @@ public class PostListReader {
         this.cacheError = cacheCounter(meterRegistry, "error");
     }
 
-    public PostPageQueryResult readPostPage(
+    public PostPageQueryResult readPage(
             Long memberId,
             PostPageSearchRequest request,
             long countLimit
     ) {
-        return readPostPage(memberId, request, countLimit, UUID.randomUUID().toString());
+        return readPage(memberId, request, countLimit, UUID.randomUUID().toString());
     }
 
-    PostPageQueryResult readPostPage(
+    PostPageQueryResult readPage(
             Long memberId,
             PostPageSearchRequest request,
             long countLimit,
@@ -66,74 +68,67 @@ public class PostListReader {
     ) {
         if (!isCacheable(request)) {
             cacheBypass.increment();
-            return postReader.readPostPage(memberId, request);
+            return postReader.readOffsetPage(memberId, request);
         }
 
-        long offset = offset(request);
-        int fetchSize = request.sizeOrDefault() + 1;
-        Optional<CachedLatestPostIds> cached;
         try {
-            cached = cacheRepository.read(request.boardId(), request.category(), offset, fetchSize);
-        } catch (RuntimeException exception) {
-            return fallbackAfterCacheError(memberId, request, exception);
+            return readFromCache(memberId, request, countLimit, lockOwner)
+                    .orElseGet(() -> postReader.readOffsetPage(memberId, request));
+        } catch (CacheOperationException failure) {
+            return fallbackAfterCacheError(memberId, request, failure);
         }
-        if (cached.isPresent()) {
-            PostPageQueryResult result = projectCachedIds(memberId, request, cached.get(), countLimit);
-            if (result != null) {
-                cacheHit.increment();
-                return result;
-            }
-            invalidateSafely(request.boardId());
-            return postReader.readPostPage(memberId, request);
-        }
-
-        cacheMiss.increment();
-        return warmOrFallback(memberId, request, countLimit, lockOwner);
     }
 
-    private PostPageQueryResult warmOrFallback(
+    private Optional<PostPageQueryResult> readFromCache(
             Long memberId,
             PostPageSearchRequest request,
             long countLimit,
             String lockOwner
     ) {
-        boolean acquired;
-        try {
-            acquired = cacheRepository.tryAcquireWarmupLock(
-                    request.boardId(), request.category(), lockOwner, properties.warmupLockTtl());
-        } catch (RuntimeException exception) {
-            return fallbackAfterCacheError(memberId, request, exception);
+        long offset = offset(request);
+        int fetchSize = request.sizeOrDefault() + 1;
+        Optional<CachedLatestPostIds> cached = cacheCall(() -> cacheRepository.read(
+                request.boardId(), request.category(), offset, fetchSize));
+        if (cached.isPresent()) {
+            Optional<PostPageQueryResult> result = project(memberId, request, cached.get(), countLimit);
+            result.ifPresent(ignored -> cacheHit.increment());
+            return result;
         }
+
+        cacheMiss.increment();
+        return warm(memberId, request, countLimit, lockOwner);
+    }
+
+    private Optional<PostPageQueryResult> warm(
+            Long memberId,
+            PostPageSearchRequest request,
+            long countLimit,
+            String lockOwner
+    ) {
+        boolean acquired = cacheCall(() -> cacheRepository.tryAcquireWarmupLock(
+                request.boardId(), request.category(), lockOwner, properties.warmupLockTtl()));
         if (!acquired) {
-            return postReader.readPostPage(memberId, request);
+            return Optional.empty();
         }
 
         try {
-            long version;
-            try {
-                version = cacheRepository.readVersion(request.boardId(), request.category());
-            } catch (RuntimeException exception) {
-                return fallbackAfterCacheError(memberId, request, exception);
-            }
+            // DB를 읽는 동안 쓰기가 커밋되면 버전이 달라져 오래된 스냅숏의 저장을 거부한다.
+            long version = cacheCall(() -> cacheRepository.readVersion(
+                    request.boardId(), request.category()));
             List<LatestPostCacheEntry> entries = postPageQueryRepository.findLatestPostCacheEntries(
                     request.boardId(), request.category(), properties.maxEntries());
-            boolean stored;
-            try {
-                stored = cacheRepository.replaceIfVersion(
-                        request.boardId(), request.category(), version, entries, properties.ttl());
-            } catch (RuntimeException exception) {
-                return fallbackAfterCacheError(memberId, request, exception);
-            }
+            boolean stored = cacheCall(() -> cacheRepository.replaceIfVersion(
+                    request.boardId(), request.category(), version, entries, properties.ttl()));
             if (!stored) {
-                return postReader.readPostPage(memberId, request);
+                return Optional.empty();
             }
-            return projectEntries(memberId, request, entries, countLimit);
+            return project(memberId, request, slice(entries, request), countLimit);
         } finally {
             releaseLock(request, lockOwner);
         }
     }
 
-    private PostPageQueryResult projectCachedIds(
+    private Optional<PostPageQueryResult> project(
             Long memberId,
             PostPageSearchRequest request,
             CachedLatestPostIds cached,
@@ -144,20 +139,20 @@ public class PostListReader {
                 .toList();
         List<PostSummaryQueryDto> posts = postReader.readPostSummaries(memberId, pageIds);
         if (posts.size() != pageIds.size()) {
-            return null;
+            // 쓰기 커밋과 조회 사이에 삭제된 ID가 섞였으면 캐시를 버리고 DB 원본으로 다시 읽는다.
+            invalidateSafely(request.boardId());
+            return Optional.empty();
         }
-        return new PostPageQueryResult(
+        return Optional.of(new PostPageQueryResult(
                 posts,
                 cached.postIds().size() > request.sizeOrDefault(),
                 cappedCount(cached.cachedCount(), countLimit)
-        );
+        ));
     }
 
-    private PostPageQueryResult projectEntries(
-            Long memberId,
-            PostPageSearchRequest request,
+    private CachedLatestPostIds slice(
             List<LatestPostCacheEntry> entries,
-            long countLimit
+            PostPageSearchRequest request
     ) {
         long offset = offset(request);
         int fromIndex = (int) Math.min(offset, entries.size());
@@ -165,24 +160,14 @@ public class PostListReader {
         List<Long> fetchedIds = entries.subList(fromIndex, toIndex).stream()
                 .map(LatestPostCacheEntry::postId)
                 .toList();
-        List<Long> pageIds = fetchedIds.stream().limit(request.sizeOrDefault()).toList();
-        List<PostSummaryQueryDto> posts = postReader.readPostSummaries(memberId, pageIds);
-        if (posts.size() != pageIds.size()) {
-            invalidateSafely(request.boardId());
-            return postReader.readPostPage(memberId, request);
-        }
-        return new PostPageQueryResult(
-                posts,
-                fetchedIds.size() > request.sizeOrDefault(),
-                cappedCount(entries.size(), countLimit)
-        );
+        return new CachedLatestPostIds(fetchedIds, entries.size());
     }
 
-    private Long cappedCount(long cachedCount, long countLimit) {
+    private OptionalLong cappedCount(long cachedCount, long countLimit) {
         if (countLimit > properties.maxEntries()) {
-            return null;
+            return OptionalLong.empty();
         }
-        return Math.min(cachedCount, countLimit);
+        return OptionalLong.of(Math.min(cachedCount, countLimit));
     }
 
     private boolean isCacheable(PostPageSearchRequest request) {
@@ -218,12 +203,21 @@ public class PostListReader {
     private PostPageQueryResult fallbackAfterCacheError(
             Long memberId,
             PostPageSearchRequest request,
-            RuntimeException exception
+            CacheOperationException exception
     ) {
         cacheError.increment();
         log.warn("게시글 목록 Redis 캐시 처리 실패. DB 조회로 폴백합니다. boardId={}",
                 request.boardId(), exception);
-        return postReader.readPostPage(memberId, request);
+        return postReader.readOffsetPage(memberId, request);
+    }
+
+    private <T> T cacheCall(Supplier<T> operation) {
+        try {
+            return operation.get();
+        } catch (RuntimeException exception) {
+            // DB 조회 실패까지 캐시 장애로 오인해 재시도하지 않도록 Redis 호출만 경계 안에 둔다.
+            throw new CacheOperationException(exception);
+        }
     }
 
     private Counter cacheCounter(MeterRegistry meterRegistry, String result) {
@@ -231,5 +225,12 @@ public class PostListReader {
                 .description("최신순 게시글 ID 캐시 요청")
                 .tag("result", result)
                 .register(meterRegistry);
+    }
+
+    private static final class CacheOperationException extends RuntimeException {
+
+        private CacheOperationException(RuntimeException cause) {
+            super(cause);
+        }
     }
 }

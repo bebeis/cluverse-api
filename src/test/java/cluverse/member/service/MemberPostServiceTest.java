@@ -42,7 +42,7 @@ class MemberPostServiceTest {
         MemberPostPageRequest request = new MemberPostPageRequest(1, 20);
 
         when(memberReader.readOrThrow(1L)).thenReturn(member);
-        when(postReader.readPostPageByAuthor(1L, 1L, 1, 20)).thenReturn(new PostPageQueryResult(
+        when(postReader.readAuthorPage(1L, 1L, 1, 20)).thenReturn(new PostPageQueryResult(
                 List.of(new PostSummaryQueryDto(
                         10L,
                         3L,

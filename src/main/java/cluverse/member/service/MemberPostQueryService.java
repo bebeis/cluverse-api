@@ -21,7 +21,7 @@ public class MemberPostQueryService {
     public PostPageResponse getMyPosts(Long memberId, MemberPostPageRequest request) {
         memberReader.readOrThrow(memberId);
 
-        PostPageQueryResult queryResult = postReader.readPostPageByAuthor(memberId, memberId, request.pageOrDefault(),
+        PostPageQueryResult queryResult = postReader.readAuthorPage(memberId, memberId, request.pageOrDefault(),
                 request.sizeOrDefault());
         List<PostSummaryResponse> responses = queryResult.posts().stream()
                 .map(PostSummaryResponse::from)

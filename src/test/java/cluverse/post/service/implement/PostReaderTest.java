@@ -56,7 +56,7 @@ class PostReaderTest {
         PostCursorSearchRequest request = new PostCursorSearchRequest(1L, null, 10, null, null, null, null);
 
         // when
-        PostPageQueryResult result = postReader.readPostPage(author.getId(), request);
+        PostPageQueryResult result = postReader.readCursorPage(author.getId(), request);
 
         // then
         assertThat(result.posts()).extracting(PostSummaryQueryDto::postId)
@@ -76,7 +76,7 @@ class PostReaderTest {
         PostCursorSearchRequest request = new PostCursorSearchRequest(1L, null, 10, null, null, null, null);
 
         // when
-        PostPageQueryResult result = postReader.readPostPage(author.getId(), request);
+        PostPageQueryResult result = postReader.readCursorPage(author.getId(), request);
 
         // then
         assertThat(result.posts()).hasSize(1);
@@ -114,7 +114,7 @@ class PostReaderTest {
         PostCursorSearchRequest request = new PostCursorSearchRequest(1L, null, 10, null, null, null, null);
 
         // when
-        PostPageQueryResult result = postReader.readPostPage(null, request);
+        PostPageQueryResult result = postReader.readCursorPage(null, request);
 
         // then
         assertThat(result.posts()).hasSize(1);

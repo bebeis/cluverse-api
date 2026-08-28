@@ -5,6 +5,7 @@ import cluverse.post.domain.PostCategory;
 import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
 import cluverse.post.service.implement.PostReader;
+import cluverse.post.service.implement.PostPageReader;
 import cluverse.post.service.request.PostCursorDirection;
 import cluverse.post.service.request.PostCursorSearchRequest;
 import cluverse.post.service.response.PostCursorPageResponse;
@@ -29,6 +30,9 @@ class PostListQueryServiceTest {
     private PostReader postReader;
 
     @Mock
+    private PostPageReader postPageReader;
+
+    @Mock
     private BoardReader boardReader;
 
     @InjectMocks
@@ -40,13 +44,13 @@ class PostListQueryServiceTest {
         PostCursorSearchRequest request = new PostCursorSearchRequest(3L, null, 2, null, null, null, null);
         LocalDateTime first = LocalDateTime.of(2026, 1, 20, 12, 0);
         LocalDateTime last = LocalDateTime.of(2026, 1, 19, 9, 0);
-        when(postReader.readPostPage(99L, request)).thenReturn(new PostPageQueryResult(
+        when(postReader.readCursorPage(99L, request)).thenReturn(new PostPageQueryResult(
                 List.of(createSummary(10L, first), createSummary(7L, last)),
                 true
         ));
 
         // when
-        PostCursorPageResponse response = postListQueryService.getPosts(99L, request);
+        PostCursorPageResponse response = postListQueryService.readCursor(99L, request);
 
         // then
         assertThat(response.prevCursor().createdAt()).isEqualTo(first);
@@ -60,11 +64,11 @@ class PostListQueryServiceTest {
     void 무앵커_진입은_hasPrev가_false다() {
         // given
         PostCursorSearchRequest request = new PostCursorSearchRequest(3L, null, 20, null, null, null, null);
-        when(postReader.readPostPage(99L, request))
+        when(postReader.readCursorPage(99L, request))
                 .thenReturn(new PostPageQueryResult(List.of(), true));
 
         // when
-        PostCursorPageResponse response = postListQueryService.getPosts(99L, request);
+        PostCursorPageResponse response = postListQueryService.readCursor(99L, request);
 
         // then
         assertThat(response.hasPrev()).isFalse();
@@ -76,12 +80,12 @@ class PostListQueryServiceTest {
         // given
         PostCursorSearchRequest request = new PostCursorSearchRequest(
                 3L, PostCategory.INFORMATION, 20, LocalDate.of(2026, 1, 20), null, null, null);
-        when(postReader.readPostPage(99L, request))
+        when(postReader.readCursorPage(99L, request))
                 .thenReturn(new PostPageQueryResult(List.of(), false));
         when(postReader.existsPostsNewerThan(request)).thenReturn(true);
 
         // when
-        PostCursorPageResponse response = postListQueryService.getPosts(99L, request);
+        PostCursorPageResponse response = postListQueryService.readCursor(99L, request);
 
         // then
         assertThat(response.hasPrev()).isTrue();
@@ -93,11 +97,11 @@ class PostListQueryServiceTest {
         // given: 커서가 있다는 것 자체가 이전 페이지의 존재를 뜻한다
         PostCursorSearchRequest request = new PostCursorSearchRequest(
                 3L, null, 20, null, LocalDateTime.of(2026, 1, 20, 12, 0), 100L, PostCursorDirection.NEXT);
-        when(postReader.readPostPage(99L, request))
+        when(postReader.readCursorPage(99L, request))
                 .thenReturn(new PostPageQueryResult(List.of(), false));
 
         // when
-        PostCursorPageResponse response = postListQueryService.getPosts(99L, request);
+        PostCursorPageResponse response = postListQueryService.readCursor(99L, request);
 
         // then
         assertThat(response.hasPrev()).isTrue();
@@ -109,11 +113,11 @@ class PostListQueryServiceTest {
         // given
         PostCursorSearchRequest request = new PostCursorSearchRequest(
                 3L, null, 20, null, LocalDateTime.of(2026, 1, 20, 12, 0), 100L, PostCursorDirection.PREV);
-        when(postReader.readPostPage(99L, request))
+        when(postReader.readCursorPage(99L, request))
                 .thenReturn(new PostPageQueryResult(List.of(), true));
 
         // when
-        PostCursorPageResponse response = postListQueryService.getPosts(99L, request);
+        PostCursorPageResponse response = postListQueryService.readCursor(99L, request);
 
         // then
         assertThat(response.hasPrev()).isTrue();
@@ -124,11 +128,11 @@ class PostListQueryServiceTest {
     void 결과가_비면_커서도_null이다() {
         // given
         PostCursorSearchRequest request = new PostCursorSearchRequest(3L, null, 20, null, null, null, null);
-        when(postReader.readPostPage(99L, request))
+        when(postReader.readCursorPage(99L, request))
                 .thenReturn(new PostPageQueryResult(List.of(), false));
 
         // when
-        PostCursorPageResponse response = postListQueryService.getPosts(99L, request);
+        PostCursorPageResponse response = postListQueryService.readCursor(99L, request);
 
         // then
         assertThat(response.posts()).isEmpty();

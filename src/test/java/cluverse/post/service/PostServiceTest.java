@@ -16,7 +16,7 @@ import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
 import cluverse.post.service.implement.PostAccessReader;
 import cluverse.post.service.implement.PostCreationProcessor;
-import cluverse.post.service.implement.PostListReader;
+import cluverse.post.service.implement.PostPageReader;
 import cluverse.post.service.implement.PostWriter;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
@@ -54,7 +54,7 @@ class PostServiceTest {
     private PostReader postReader;
 
     @Mock
-    private PostListReader postListReader;
+    private PostPageReader postPageReader;
 
     @Mock
     private BoardReader boardReader;
@@ -75,6 +75,9 @@ class PostServiceTest {
     private PostQueryService postQueryService;
 
     @InjectMocks
+    private PostListQueryService postListQueryService;
+
+    @InjectMocks
     private PostService postService;
 
     @Test
@@ -83,10 +86,10 @@ class PostServiceTest {
                 3L, null, PostSortType.LATEST, 200, 2);
         PostSummaryQueryDto first = createPostSummaryQueryDto(20L, 20L, false);
         PostSummaryQueryDto last = createPostSummaryQueryDto(10L, 20L, false);
-        when(postListReader.readPostPage(99L, request, 401L)).thenReturn(
+        when(postPageReader.readPage(99L, request, 401L)).thenReturn(
                 new PostPageQueryResult(List.of(first, last), true, 401L));
 
-        PostPageResponse response = postQueryService.getPosts(99L, request);
+        PostPageResponse response = postListQueryService.readPage(99L, request);
 
         assertThat(response.page()).isEqualTo(200);
         assertThat(response.cursorRequired()).isTrue();
@@ -99,14 +102,14 @@ class PostServiceTest {
     void 게시글_검색시_검색_결과를_응답으로_조립한다() {
         // given
         PostKeywordSearchRequest request = new PostKeywordSearchRequest(3L, "스프링", 1, 20);
-        when(postReader.readPostPageByKeyword(99L, request)).thenReturn(new PostPageQueryResult(
+        when(postReader.readKeywordPage(99L, request)).thenReturn(new PostPageQueryResult(
                 List.of(createPostSummaryQueryDto(10L, 20L, false)),
                 true
         ));
         when(postReader.countPostsByKeywordUpTo(request, 201L)).thenReturn(35L);
 
         // when
-        PostPageResponse response = postQueryService.searchPosts(99L, request);
+        PostPageResponse response = postListQueryService.search(99L, request);
 
         // then
         assertThat(response.posts()).extracting("postId").containsExactly(10L);

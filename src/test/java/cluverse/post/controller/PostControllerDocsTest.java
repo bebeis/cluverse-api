@@ -52,7 +52,7 @@ class PostControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 게시글_목록_조회() throws Exception {
-        when(postListQueryService.getPosts(anyLong(), any())).thenReturn(new PostCursorPageResponse(
+        when(postListQueryService.readCursor(anyLong(), any())).thenReturn(new PostCursorPageResponse(
                 List.of(
                         new PostSummaryResponse(
                                 10L,
@@ -138,7 +138,7 @@ class PostControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 게시글_목록은_200페이지까지_offset_조회하고_cursor_handoff를_제공한다() throws Exception {
-        when(postQueryService.getPosts(anyLong(), any())).thenReturn(new PostPageResponse(
+        when(postListQueryService.readPage(anyLong(), any())).thenReturn(new PostPageResponse(
                 List.of(),
                 200,
                 20,
@@ -196,7 +196,7 @@ class PostControllerDocsTest extends RestDocsSupport {
 
     @Test
     void 게시글_검색() throws Exception {
-        when(postQueryService.searchPosts(anyLong(), any())).thenReturn(new PostPageResponse(
+        when(postListQueryService.search(anyLong(), any())).thenReturn(new PostPageResponse(
                 List.of(
                         new PostSummaryResponse(
                                 10L,

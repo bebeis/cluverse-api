@@ -32,12 +32,12 @@ public class PostReader {
         return postQueryRepository.findPostSummaries(memberId, postIds);
     }
 
-    public PostPageQueryResult readPostPage(Long memberId, PostCursorSearchRequest request) {
-        return toPageResult(memberId, postPageQueryRepository.findPostPageIdsByCursor(request));
+    public PostPageQueryResult readCursorPage(Long memberId, PostCursorSearchRequest request) {
+        return toPageResult(memberId, postPageQueryRepository.findCursorPageIds(request));
     }
 
-    public PostPageQueryResult readPostPage(Long memberId, PostPageSearchRequest request) {
-        return toPageResult(memberId, postPageQueryRepository.findPostPageIds(request));
+    public PostPageQueryResult readOffsetPage(Long memberId, PostPageSearchRequest request) {
+        return toPageResult(memberId, postPageQueryRepository.findOffsetPageIds(request));
     }
 
     public boolean existsPostsNewerThan(PostCursorSearchRequest request) {
@@ -45,12 +45,12 @@ public class PostReader {
                 request.boardId(), request.category(), request.exclusiveDateEnd());
     }
 
-    public PostPageQueryResult readPostPageByKeyword(Long memberId, PostKeywordSearchRequest request) {
-        return toPageResult(memberId, postPageQueryRepository.findPostPageIdsByKeyword(request));
+    public PostPageQueryResult readKeywordPage(Long memberId, PostKeywordSearchRequest request) {
+        return toPageResult(memberId, postPageQueryRepository.findKeywordPageIds(request));
     }
 
-    public PostPageQueryResult readPostPageByAuthor(Long viewerId, Long authorId, int page, int size) {
-        return toPageResult(viewerId, postPageQueryRepository.findPostPageIdsByAuthor(authorId, page, size));
+    public PostPageQueryResult readAuthorPage(Long viewerId, Long authorId, int page, int size) {
+        return toPageResult(viewerId, postPageQueryRepository.findAuthorPageIds(authorId, page, size));
     }
 
     public long countPostsByKeywordUpTo(PostKeywordSearchRequest request, long searchLimit) {
