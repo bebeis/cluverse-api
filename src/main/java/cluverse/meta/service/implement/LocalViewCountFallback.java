@@ -14,6 +14,7 @@ public class LocalViewCountFallback {
 
     private static final int MAXIMUM_DUPLICATE_KEYS = 1_000_000;
 
+    // 인스턴스별 임시 상태라 전역 중복 판정과 프로세스 종료 시 내구성은 보장하지 않는다.
     private final PostMetaReader postMetaReader;
     private final Map<Long, AtomicLong> deltas = new ConcurrentHashMap<>();
     private final Map<Long, Long> bases = new ConcurrentHashMap<>();

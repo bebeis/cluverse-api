@@ -17,6 +17,7 @@ public class ViewCountInitializer {
 
     public long ensureInitialized(Long postId) {
         for (int attempt = 0; attempt < properties.initializationAttempts(); attempt++) {
+            // 이미 초기화된 대부분의 요청은 락을 건드리지 않는 빠른 경로로 끝낸다.
             Long existing = totalViewCountRepository.read(postId);
             if (existing != null) {
                 return existing;
@@ -33,6 +34,7 @@ public class ViewCountInitializer {
 
     private long initializeAsOwner(Long postId, String ownerToken) {
         try {
+            // 락을 기다리는 사이 다른 요청이 적재했을 수 있으므로 MySQL을 읽기 전에 다시 확인한다.
             Long existing = totalViewCountRepository.read(postId);
             if (existing != null) {
                 return existing;
@@ -45,6 +47,7 @@ public class ViewCountInitializer {
             }
             return initialized;
         } finally {
+            // 임대 시간이 끝난 뒤 다른 요청이 얻은 락을 지우지 않도록 소유 토큰을 확인한다.
             totalViewCountRepository.releaseInitialization(postId, ownerToken);
         }
     }

@@ -33,6 +33,7 @@ public class ViewCountCheckpointWorker {
 
     public int checkpoint() {
         List<ResidentViewCount> counters = totalViewCountRepository.findAll();
+        // MySQL에는 증분이 아니라 전체값을 GREATEST로 반영해 오래된 스냅샷이 값을 내리지 못하게 한다.
         postMetaWriter.checkpointViewCounts(counters.stream().map(ResidentViewCount::toSnapshot).toList());
         lastSuccessMillis.set(clock.millis());
         return counters.size();

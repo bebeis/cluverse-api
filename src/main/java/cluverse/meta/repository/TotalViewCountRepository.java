@@ -126,6 +126,7 @@ public class TotalViewCountRepository {
     }
 
     private List<ResidentViewCount> scan(boolean inactiveOnly) {
+        // SCAN count는 반환 개수의 보장이 아닌 힌트다. findAll은 전체를 모으고 비활성 조회만 batchSize로 제한한다.
         long inactiveBefore = clock.millis() - properties.inactiveAfter().toMillis();
         List<ResidentViewCount> counters = new ArrayList<>();
         ScanOptions options = ScanOptions.scanOptions()
@@ -155,6 +156,7 @@ public class TotalViewCountRepository {
     }
 
     private String counterKey(Long postId) {
+        // 조회 Lua가 함께 다루는 카운터와 중복 방지 키를 Redis Cluster의 같은 슬롯에 둔다.
         return COUNTER_KEY_PREFIX + "{" + postId + "}";
     }
 

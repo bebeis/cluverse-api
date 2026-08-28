@@ -19,6 +19,7 @@ public class InactiveCounterEvictor {
         if (counters.isEmpty()) {
             return 0;
         }
+        // 삭제 전에 전체값을 마지막으로 체크포인트하고, 그사이 조회가 없었던 카운터만 제거한다.
         postMetaWriter.checkpointViewCounts(counters.stream().map(ResidentViewCount::toSnapshot).toList());
         int evicted = 0;
         for (ResidentViewCount counter : counters) {

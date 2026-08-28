@@ -23,6 +23,7 @@ public class TotalViewCountCounter {
             for (int attempt = 0; attempt < MAX_REINITIALIZE_COUNT; attempt++) {
                 TotalViewCountResult result = totalViewCountRepository.count(postId, cookieId);
                 if (result.status() == TotalViewCountStatus.REINITIALIZE) {
+                    // 카운터가 없을 때 Lua가 1부터 만들지 않고 MySQL 누적값 적재를 먼저 요구한다.
                     viewCountInitializer.ensureInitialized(postId);
                     continue;
                 }
@@ -34,6 +35,7 @@ public class TotalViewCountCounter {
             }
             throw new IllegalStateException("조회수 카운터 재초기화가 반복되었습니다: postId=" + postId);
         } catch (RedisConnectionFailureException | RedisSystemException exception) {
+            // Redis 장애를 MySQL 쓰기로 전파하지 않고 인스턴스 로컬의 근사값으로 격리한다.
             return localViewCountFallback.count(postId, cookieId);
         }
     }

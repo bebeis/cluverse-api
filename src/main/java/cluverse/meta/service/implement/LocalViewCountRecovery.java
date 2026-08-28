@@ -19,6 +19,7 @@ public class LocalViewCountRecovery {
     public long recover() {
         long recovered = 0;
         for (Map.Entry<Long, AtomicLong> entry : localViewCountFallback.deltas().entrySet()) {
+            // 복구 중 새 조회는 새 delta에 쌓이게 하고, 가져온 값만 Redis에 반영한다.
             long delta = entry.getValue().getAndSet(0);
             if (delta == 0) {
                 continue;
@@ -30,6 +31,7 @@ public class LocalViewCountRecovery {
                 localViewCountFallback.reflected(entry.getKey());
                 recovered += delta;
             } catch (RuntimeException exception) {
+                // Redis 반영 여부가 확정되지 않은 값은 다음 복구에서 다시 시도할 수 있게 되돌린다.
                 entry.getValue().addAndGet(delta);
                 throw exception;
             }
