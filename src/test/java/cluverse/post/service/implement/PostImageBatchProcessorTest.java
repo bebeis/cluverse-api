@@ -4,6 +4,7 @@ import cluverse.post.client.PostImageObjectStorageClient;
 import cluverse.post.client.PostImageProcessCommand;
 import cluverse.post.client.PostImageProcessorClient;
 import cluverse.post.domain.PostImageMetadata;
+import cluverse.post.domain.PostImageProcessingPlan;
 import cluverse.post.domain.ProcessedPostImage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class VirtualThreadPostImageUploadProcessorTest {
+class PostImageBatchProcessorTest {
 
     private ExecutorService executor;
 
@@ -59,8 +60,9 @@ class VirtualThreadPostImageUploadProcessorTest {
             }
         });
         executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().factory());
-        VirtualThreadPostImageUploadProcessor processor = new VirtualThreadPostImageUploadProcessor(
-                storage, client, mock(PostImageUploadMetricsRecorder.class), executor, new Semaphore(1));
+        PostImageUploadMetricsRecorder metrics = mock(PostImageUploadMetricsRecorder.class);
+        PostImageBatchProcessor processor = new PostImageBatchProcessor(
+                storage, client, metrics, executor, new PostImageConcurrencyGate(new Semaphore(1), metrics));
 
         List<ProcessedPostImage> results = processor.process(
                 List.of(image(0), image(1), image(2), image(3)));
@@ -87,8 +89,10 @@ class VirtualThreadPostImageUploadProcessorTest {
                 new SynchronousQueue<>(),
                 new ThreadPoolExecutor.AbortPolicy()
         );
-        VirtualThreadPostImageUploadProcessor processor = new VirtualThreadPostImageUploadProcessor(
-                storageClient(), client, mock(PostImageUploadMetricsRecorder.class), executor, new Semaphore(1));
+        PostImageUploadMetricsRecorder metrics = mock(PostImageUploadMetricsRecorder.class);
+        PostImageBatchProcessor processor = new PostImageBatchProcessor(
+                storageClient(), client, metrics, executor,
+                new PostImageConcurrencyGate(new Semaphore(1), metrics));
 
         CompletableFuture<List<ProcessedPostImage>> processing = CompletableFuture.supplyAsync(
                 () -> processor.process(List.of(image(0), image(1))));
@@ -100,11 +104,47 @@ class VirtualThreadPostImageUploadProcessorTest {
                 .hasCauseInstanceOf(RejectedExecutionException.class);
     }
 
+    @Test
+    void 이미지_하나가_실패해도_이미_시작한_작업이_끝난_뒤_실패를_전파한다() throws Exception {
+        CountDownLatch slowTaskStarted = new CountDownLatch(1);
+        CountDownLatch releaseSlowTask = new CountDownLatch(1);
+        CountDownLatch failureRaised = new CountDownLatch(1);
+        PostImageProcessorClient client = mock(PostImageProcessorClient.class);
+        when(client.process(any())).thenAnswer(invocation -> {
+            PostImageProcessCommand command = invocation.getArgument(0);
+            if (command.displayOrder() == 0) {
+                slowTaskStarted.countDown();
+                releaseSlowTask.await(2, TimeUnit.SECONDS);
+                return processed(command);
+            }
+            failureRaised.countDown();
+            throw new IllegalStateException("processor failed");
+        });
+        executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().factory());
+        PostImageUploadMetricsRecorder metrics = mock(PostImageUploadMetricsRecorder.class);
+        PostImageBatchProcessor processor = new PostImageBatchProcessor(
+                storageClient(), client, metrics, executor,
+                new PostImageConcurrencyGate(new Semaphore(2), metrics));
+
+        CompletableFuture<List<ProcessedPostImage>> processing = CompletableFuture.supplyAsync(
+                () -> processor.process(List.of(image(0), image(1))));
+
+        assertThat(slowTaskStarted.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(failureRaised.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(processing).isNotDone();
+        releaseSlowTask.countDown();
+        assertThatThrownBy(processing::join)
+                .hasCauseInstanceOf(IllegalStateException.class)
+                .hasRootCauseMessage("processor failed");
+    }
+
     private PreparedPostImage image(int order) {
         String prefix = "request/" + order;
-        PostImageProcessCommand command = new PostImageProcessCommand(
+        PostImageProcessingPlan plan = new PostImageProcessingPlan(
                 UUID.randomUUID(), order, prefix + "/staging", prefix + "/content", prefix + "/thumbnail", "p1");
-        return new PreparedPostImage(Path.of(prefix), "image/jpeg", 100, command);
+        TemporaryPostImageFile source = new TemporaryPostImageFile(
+                Path.of(prefix), mock(PostImageUploadTemporaryFileCleaner.class));
+        return new PreparedPostImage(source, "image/jpeg", 100, plan);
     }
 
     private PostImageObjectStorageClient storageClient() {

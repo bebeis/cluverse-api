@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.core.exception.ApiCallTimeoutException;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.lambda.LambdaClient;
 import software.amazon.awssdk.services.lambda.model.InvocationType;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
@@ -39,10 +40,7 @@ public class LambdaPostImageProcessorClient implements PostImageProcessorClient 
             throw new PostImageUploadTimeoutException("이미지 프로세서 응답 시간이 초과됐습니다.", exception);
         } catch (JsonProcessingException exception) {
             throw new ExternalServiceException("이미지 프로세서 응답을 해석하지 못했습니다.", exception);
-        } catch (RuntimeException exception) {
-            if (exception instanceof PostImageUploadTimeoutException) {
-                throw exception;
-            }
+        } catch (SdkException exception) {
             throw new ExternalServiceException("이미지 프로세서를 호출하지 못했습니다.", exception);
         }
     }

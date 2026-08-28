@@ -12,25 +12,29 @@ import java.time.LocalDateTime;
 @Slf4j
 public class PostImageUploadReconciler {
 
-    private final PostImageUploadWriter writer;
-    private final PostImageUploadStorageManager storageManager;
+    private final PostImageUploadRecoveryStore recoveryStore;
+    private final PostImageUploadRecovery recovery;
+    private final PostImageStagingCleanup stagingCleanup;
     private final PostImageUploadProperties properties;
     private final PostImageUploadMetricsRecorder metricsRecorder;
 
     public PostImageUploadReconciler(
-            PostImageUploadWriter writer,
-            PostImageUploadStorageManager storageManager,
+            PostImageUploadRecoveryStore recoveryStore,
+            PostImageUploadRecovery recovery,
+            PostImageStagingCleanup stagingCleanup,
             PostImageUploadProperties properties,
             PostImageUploadMetricsRecorder metricsRecorder
     ) {
-        this.writer = writer;
-        this.storageManager = storageManager;
+        this.recoveryStore = recoveryStore;
+        this.recovery = recovery;
+        this.stagingCleanup = stagingCleanup;
         this.properties = properties;
         this.metricsRecorder = metricsRecorder;
     }
 
     @Scheduled(fixedDelayString = "${post-image-upload.cleanup-interval:30s}")
     public void reconcile() {
+        // 각 작업은 실패한 항목을 뒤로 미루므로 한 종류의 정리 실패가 다음 작업을 막지 않는다.
         cleanupCompletedStaging();
         failStalePending();
         cleanupUnclaimedCompleted();
@@ -38,35 +42,25 @@ public class PostImageUploadReconciler {
 
     private void cleanupUnclaimedCompleted() {
         LocalDateTime threshold = LocalDateTime.now().minus(properties.unclaimedAfter());
-        for (PostImageUpload upload : writer.readUnclaimedCompleted(threshold)) {
-            if (!writer.claimUnclaimedCompleted(upload.getId(), threshold)) {
+        for (PostImageUpload upload : recoveryStore.readUnclaimedCompleted(threshold)) {
+            if (!recoveryStore.claimUnclaimedCompleted(upload.getId(), threshold)) {
                 continue;
             }
-            try {
-                if (!storageManager.compensate(upload)) {
-                    deferCleanup(upload, "unclaimed_completed");
-                    continue;
-                }
-                writer.completeCompensation(upload.getId(), "unclaimed completed upload expired");
+            PostImageCleanupOutcome outcome = recovery.compensateClaimed(
+                    upload, "unclaimed completed upload expired");
+            if (outcome == PostImageCleanupOutcome.COMPLETED) {
                 metricsRecorder.reconciled("unclaimed_completed_deleted");
-            } catch (RuntimeException exception) {
-                log.warn("미연결 완료 이미지 정리에 실패했습니다. uploadId={}", upload.getId(), exception);
+            } else {
                 deferCleanup(upload, "unclaimed_completed");
             }
         }
     }
 
     private void cleanupCompletedStaging() {
-        for (PostImageUpload upload : writer.readCompletedWithStaging()) {
-            try {
-                if (!storageManager.deleteStaging(upload)) {
-                    deferCleanup(upload, "completed_staging");
-                    continue;
-                }
-                writer.markStagingCleaned(upload.getId());
+        for (PostImageUpload upload : recoveryStore.readCompletedWithStaging()) {
+            if (stagingCleanup.clean(upload) == PostImageCleanupOutcome.COMPLETED) {
                 metricsRecorder.reconciled("completed_staging_deleted");
-            } catch (RuntimeException exception) {
-                log.warn("완료 이미지 staging 재조정에 실패했습니다. uploadId={}", upload.getId(), exception);
+            } else {
                 deferCleanup(upload, "completed_staging");
             }
         }
@@ -74,33 +68,28 @@ public class PostImageUploadReconciler {
 
     private void failStalePending() {
         LocalDateTime threshold = LocalDateTime.now().minus(properties.stalePendingAfter());
-        for (PostImageUpload upload : writer.readStalePending(threshold)) {
-            if (writer.claimStalePending(upload.getId(), threshold)) {
+        for (PostImageUpload upload : recoveryStore.readStalePending(threshold)) {
+            if (recoveryStore.claimStalePending(upload.getId(), threshold)) {
                 compensateClaimed(upload);
             }
         }
-        for (PostImageUpload upload : writer.readStaleCompensating(threshold)) {
+        for (PostImageUpload upload : recoveryStore.readStaleCompensating(threshold)) {
             compensateClaimed(upload);
         }
     }
 
     private void compensateClaimed(PostImageUpload upload) {
-        try {
-            if (!storageManager.compensate(upload)) {
-                deferCleanup(upload, "stale_pending");
-                return;
-            }
-            writer.completeCompensation(upload.getId(), "stale pending reconciled");
+        if (recovery.compensateClaimed(upload, "stale pending reconciled")
+                == PostImageCleanupOutcome.COMPLETED) {
             metricsRecorder.reconciled("stale_pending_failed");
-        } catch (RuntimeException exception) {
-            log.warn("stale 이미지 업로드 재조정에 실패했습니다. uploadId={}", upload.getId(), exception);
+        } else {
             deferCleanup(upload, "stale_pending");
         }
     }
 
     private void deferCleanup(PostImageUpload upload, String operation) {
         try {
-            writer.deferCleanupRetry(upload.getId());
+            recoveryStore.deferCleanupRetry(upload.getId());
         } catch (RuntimeException exception) {
             log.error("이미지 정리 재시도를 연기하지 못했습니다. uploadId={}, operation={}",
                     upload.getId(), operation, exception);

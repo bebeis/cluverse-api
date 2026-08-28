@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
@@ -52,7 +53,7 @@ public class S3PostImageObjectStorageClient implements PostImageObjectStorageCli
                             .build(),
                     RequestBody.fromFile(source)
             );
-        } catch (RuntimeException exception) {
+        } catch (SdkException exception) {
             throw new ExternalServiceException("이미지 원본을 staging 저장소에 업로드하지 못했습니다.", exception);
         }
     }
@@ -67,16 +68,20 @@ public class S3PostImageObjectStorageClient implements PostImageObjectStorageCli
         if (objects.isEmpty()) {
             return;
         }
+        DeleteObjectsResponse response;
         try {
-            DeleteObjectsResponse response = s3Client.deleteObjects(DeleteObjectsRequest.builder()
+            response = s3Client.deleteObjects(DeleteObjectsRequest.builder()
                     .bucket(awsProperties.s3().bucket())
                     .delete(Delete.builder().objects(objects).quiet(true).build())
                     .build());
-            if (!response.errors().isEmpty()) {
-                throw new IllegalStateException("S3 delete errors=" + response.errors().size());
-            }
-        } catch (RuntimeException exception) {
+        } catch (SdkException exception) {
             throw new ExternalServiceException("이미지 객체를 삭제하지 못했습니다.", exception);
+        }
+        if (!response.errors().isEmpty()) {
+            throw new ExternalServiceException(
+                    "이미지 객체를 삭제하지 못했습니다.",
+                    new IllegalStateException("S3 delete errors=" + response.errors().size())
+            );
         }
     }
 
@@ -84,7 +89,7 @@ public class S3PostImageObjectStorageClient implements PostImageObjectStorageCli
     public long size(String objectKey) {
         try {
             return head(objectKey).contentLength();
-        } catch (RuntimeException exception) {
+        } catch (SdkException exception) {
             throw new ExternalServiceException("이미지 객체 크기를 확인하지 못했습니다.", exception);
         }
     }

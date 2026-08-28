@@ -6,14 +6,13 @@ import java.util.List;
 
 public record PreparedPostImageUpload(
         List<PreparedPostImage> images,
-        List<PostImageAsset> assets,
-        PostImageUploadTemporaryFileCleaner temporaryFileCleaner
+        List<PostImageAsset> assets
 ) implements AutoCloseable {
 
     @Override
     public void close() {
         for (PreparedPostImage image : images) {
-            temporaryFileCleaner.delete(image.path());
+            image.source().close();
         }
     }
 }

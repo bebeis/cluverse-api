@@ -34,7 +34,7 @@ class PostImageUploadReservationTest {
         );
 
         assertThat(result.upload()).isSameAs(completed);
-        assertThat(result.created()).isFalse();
+        assertThat(result).isInstanceOf(PostImageUploadReservationResult.Existing.class);
         verify(writer).read(requestId, ImageUploadVersion.V3);
     }
 }

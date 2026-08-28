@@ -18,74 +18,75 @@ class PostImageUploadReconcilerTest {
 
     @Test
     void 정리_실패_레코드는_뒤로_보내_다음_배치가_진행되게_한다() {
-        PostImageUploadWriter writer = mock(PostImageUploadWriter.class);
-        PostImageUploadStorageManager storageManager = mock(PostImageUploadStorageManager.class);
-        PostImageUploadProperties properties = mock(PostImageUploadProperties.class);
-        PostImageUploadMetricsRecorder metrics = mock(PostImageUploadMetricsRecorder.class);
+        PostImageUploadRecoveryStore store = mock(PostImageUploadRecoveryStore.class);
+        PostImageUploadRecovery recovery = mock(PostImageUploadRecovery.class);
+        PostImageStagingCleanup stagingCleanup = mock(PostImageStagingCleanup.class);
         PostImageUpload completed = upload(1L);
         PostImageUpload pending = upload(2L);
-        when(writer.readCompletedWithStaging()).thenReturn(List.of(completed));
-        when(properties.stalePendingAfter()).thenReturn(Duration.ofMinutes(3));
-        when(writer.readStalePending(any())).thenReturn(List.of(pending));
-        when(writer.readStaleCompensating(any())).thenReturn(List.of());
-        when(writer.claimStalePending(eq(2L), any())).thenReturn(true);
-        when(storageManager.deleteStaging(completed)).thenReturn(false);
-        when(storageManager.compensate(pending)).thenReturn(false);
+        when(store.readCompletedWithStaging()).thenReturn(List.of(completed));
+        when(store.readStalePending(any())).thenReturn(List.of(pending));
+        when(store.readStaleCompensating(any())).thenReturn(List.of());
+        when(store.readUnclaimedCompleted(any())).thenReturn(List.of());
+        when(store.claimStalePending(eq(2L), any())).thenReturn(true);
+        when(stagingCleanup.clean(completed)).thenReturn(PostImageCleanupOutcome.DEFERRED);
+        when(recovery.compensateClaimed(pending, "stale pending reconciled"))
+                .thenReturn(PostImageCleanupOutcome.DEFERRED);
         PostImageUploadReconciler reconciler = new PostImageUploadReconciler(
-                writer, storageManager, properties, metrics);
+                store, recovery, stagingCleanup, properties(), mock(PostImageUploadMetricsRecorder.class));
 
         reconciler.reconcile();
 
-        verify(writer).deferCleanupRetry(1L);
-        verify(writer).deferCleanupRetry(2L);
+        verify(store).deferCleanupRetry(1L);
+        verify(store).deferCleanupRetry(2L);
     }
 
     @Test
     void stale_PENDING_점유에_실패하면_보상하지_않는다() {
-        PostImageUploadWriter writer = mock(PostImageUploadWriter.class);
-        PostImageUploadStorageManager storageManager = mock(PostImageUploadStorageManager.class);
-        PostImageUploadProperties properties = mock(PostImageUploadProperties.class);
+        PostImageUploadRecoveryStore store = mock(PostImageUploadRecoveryStore.class);
+        PostImageUploadRecovery recovery = mock(PostImageUploadRecovery.class);
+        PostImageStagingCleanup stagingCleanup = mock(PostImageStagingCleanup.class);
         PostImageUpload pending = upload(1L);
-        when(properties.stalePendingAfter()).thenReturn(Duration.ofMinutes(3));
-        when(writer.readCompletedWithStaging()).thenReturn(List.of());
-        when(writer.readStalePending(any())).thenReturn(List.of(pending));
-        when(writer.readStaleCompensating(any())).thenReturn(List.of());
-        when(writer.claimStalePending(eq(1L), any())).thenReturn(false);
+        when(store.readCompletedWithStaging()).thenReturn(List.of());
+        when(store.readStalePending(any())).thenReturn(List.of(pending));
+        when(store.readStaleCompensating(any())).thenReturn(List.of());
+        when(store.readUnclaimedCompleted(any())).thenReturn(List.of());
+        when(store.claimStalePending(eq(1L), any())).thenReturn(false);
         PostImageUploadReconciler reconciler = new PostImageUploadReconciler(
-                writer,
-                storageManager,
-                properties,
-                mock(PostImageUploadMetricsRecorder.class)
-        );
+                store, recovery, stagingCleanup, properties(), mock(PostImageUploadMetricsRecorder.class));
 
         reconciler.reconcile();
 
-        verify(storageManager, never()).compensate(any());
-        verify(writer, never()).completeCompensation(any(), any());
+        verify(recovery, never()).compensateClaimed(any(), any());
     }
 
     @Test
     void 점유한_stale_PENDING은_보상한_뒤_FAILED로_확정한다() {
-        PostImageUploadWriter writer = mock(PostImageUploadWriter.class);
-        PostImageUploadStorageManager storageManager = mock(PostImageUploadStorageManager.class);
-        PostImageUploadProperties properties = mock(PostImageUploadProperties.class);
+        PostImageUploadRecoveryStore store = mock(PostImageUploadRecoveryStore.class);
+        PostImageUploadRecovery recovery = mock(PostImageUploadRecovery.class);
+        PostImageStagingCleanup stagingCleanup = mock(PostImageStagingCleanup.class);
+        PostImageUploadMetricsRecorder metrics = mock(PostImageUploadMetricsRecorder.class);
         PostImageUpload pending = upload(1L);
-        when(properties.stalePendingAfter()).thenReturn(Duration.ofMinutes(3));
-        when(writer.readCompletedWithStaging()).thenReturn(List.of());
-        when(writer.readStalePending(any())).thenReturn(List.of(pending));
-        when(writer.readStaleCompensating(any())).thenReturn(List.of());
-        when(writer.claimStalePending(eq(1L), any())).thenReturn(true);
-        when(storageManager.compensate(pending)).thenReturn(true);
+        when(store.readCompletedWithStaging()).thenReturn(List.of());
+        when(store.readStalePending(any())).thenReturn(List.of(pending));
+        when(store.readStaleCompensating(any())).thenReturn(List.of());
+        when(store.readUnclaimedCompleted(any())).thenReturn(List.of());
+        when(store.claimStalePending(eq(1L), any())).thenReturn(true);
+        when(recovery.compensateClaimed(pending, "stale pending reconciled"))
+                .thenReturn(PostImageCleanupOutcome.COMPLETED);
         PostImageUploadReconciler reconciler = new PostImageUploadReconciler(
-                writer,
-                storageManager,
-                properties,
-                mock(PostImageUploadMetricsRecorder.class)
-        );
+                store, recovery, stagingCleanup, properties(), metrics);
 
         reconciler.reconcile();
 
-        verify(writer).completeCompensation(1L, "stale pending reconciled");
+        verify(recovery).compensateClaimed(pending, "stale pending reconciled");
+        verify(metrics).reconciled("stale_pending_failed");
+    }
+
+    private PostImageUploadProperties properties() {
+        PostImageUploadProperties properties = mock(PostImageUploadProperties.class);
+        when(properties.stalePendingAfter()).thenReturn(Duration.ofMinutes(3));
+        when(properties.unclaimedAfter()).thenReturn(Duration.ofHours(24));
+        return properties;
     }
 
     private PostImageUpload upload(Long id) {

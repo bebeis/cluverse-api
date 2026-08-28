@@ -1,13 +1,14 @@
 package cluverse.post.service.implement;
 
-import cluverse.post.client.PostImageProcessCommand;
-
-import java.nio.file.Path;
+import cluverse.post.domain.PostImageProcessingPlan;
 
 public record PreparedPostImage(
-        Path path,
+        TemporaryPostImageFile source,
         String contentType,
         long sourceBytes,
-        PostImageProcessCommand command
+        PostImageProcessingPlan plan
 ) {
+    public java.nio.file.Path path() {
+        return source.path();
+    }
 }

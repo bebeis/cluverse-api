@@ -31,12 +31,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
-@Import(PostImageUploadWriter.class)
+@Import({PostImageUploadWriter.class, PostImageUploadRecoveryStore.class})
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class PostImageUploadWriterConcurrencyTest {
 
     @Autowired
     private PostImageUploadWriter writer;
+
+    @Autowired
+    private PostImageUploadRecoveryStore recoveryStore;
 
     @Autowired
     private PostImageUploadRepository repository;
@@ -71,7 +74,7 @@ class PostImageUploadWriterConcurrencyTest {
 
         CompletableFuture<Boolean> claim = CompletableFuture.supplyAsync(() -> {
             claimStarted.countDown();
-            return writer.claimStalePending(reserved.getId(), LocalDateTime.now().plusMinutes(1));
+            return recoveryStore.claimStalePending(reserved.getId(), LocalDateTime.now().plusMinutes(1));
         }, executor);
         assertThat(claimStarted.await(1, TimeUnit.SECONDS)).isTrue();
         assertThatThrownBy(() -> claim.get(200, TimeUnit.MILLISECONDS))
@@ -89,7 +92,7 @@ class PostImageUploadWriterConcurrencyTest {
     void stale_보상이_먼저_점유하면_정상_완료는_거절된다() {
         PostImageUpload reserved = reserve();
 
-        boolean claimed = writer.claimStalePending(
+        boolean claimed = recoveryStore.claimStalePending(
                 reserved.getId(),
                 LocalDateTime.now().plusMinutes(1)
         );

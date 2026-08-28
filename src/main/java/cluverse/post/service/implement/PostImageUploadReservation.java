@@ -25,15 +25,16 @@ public class PostImageUploadReservation {
         var existing = writer.read(requestId, version);
         if (existing.isPresent()) {
             existing.get().validateOwner(memberId);
-            return new PostImageUploadReservationResult(existing.get(), false);
+            return new PostImageUploadReservationResult.Existing(existing.get());
         }
         try {
-            return new PostImageUploadReservationResult(
-                    writer.reserve(memberId, requestId, version, assets), true);
+            return new PostImageUploadReservationResult.Created(
+                    writer.reserve(memberId, requestId, version, assets));
         } catch (DataIntegrityViolationException exception) {
+            // 선행 조회를 함께 통과한 요청은 DB unique constraint로 한 건만 생성한다.
             PostImageUpload raced = writer.read(requestId, version).orElseThrow(() -> exception);
             raced.validateOwner(memberId);
-            return new PostImageUploadReservationResult(raced, false);
+            return new PostImageUploadReservationResult.Existing(raced);
         }
     }
 

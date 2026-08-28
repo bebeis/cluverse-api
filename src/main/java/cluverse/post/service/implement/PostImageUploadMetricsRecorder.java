@@ -1,6 +1,7 @@
 package cluverse.post.service.implement;
 
 import cluverse.post.domain.ImageUploadVersion;
+import cluverse.post.exception.PostImageUploadTimeoutException;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -9,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.concurrent.Semaphore;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Component
 public class PostImageUploadMetricsRecorder {
@@ -27,6 +30,23 @@ public class PostImageUploadMetricsRecorder {
 
     public void request(ImageUploadVersion version, String outcome, long elapsedNanos) {
         timer("image.upload.request.duration", version, outcome).record(Duration.ofNanos(elapsedNanos));
+    }
+
+    public <T> T recordRequest(
+            ImageUploadVersion version,
+            Supplier<T> operation,
+            Function<T, String> outcomeResolver
+    ) {
+        long startedAt = System.nanoTime();
+        try {
+            T result = operation.get();
+            request(version, outcomeResolver.apply(result), System.nanoTime() - startedAt);
+            return result;
+        } catch (RuntimeException failure) {
+            String outcome = failure instanceof PostImageUploadTimeoutException ? "timeout" : "failure";
+            request(version, outcome, System.nanoTime() - startedAt);
+            throw failure;
+        }
     }
 
     public void remote(ImageUploadVersion version, long elapsedNanos) {

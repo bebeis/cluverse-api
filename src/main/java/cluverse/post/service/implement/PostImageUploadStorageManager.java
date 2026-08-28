@@ -4,7 +4,6 @@ import cluverse.post.client.PostImageObjectStorageClient;
 import cluverse.post.domain.PostImageAsset;
 import cluverse.post.domain.PostImageUpload;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -12,29 +11,16 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class PostImageUploadStorageManager {
 
     private final PostImageObjectStorageClient storageClient;
 
-    public boolean deleteStaging(PostImageUpload upload) {
-        try {
-            storageClient.delete(upload.getAssets().stream().map(PostImageAsset::getStagingKey).toList());
-            return true;
-        } catch (RuntimeException exception) {
-            log.warn("이미지 staging 정리에 실패했습니다. uploadId={}", upload.getId(), exception);
-            return false;
-        }
+    public void deleteStaging(PostImageUpload upload) {
+        storageClient.delete(upload.getAssets().stream().map(PostImageAsset::getStagingKey).toList());
     }
 
-    public boolean compensate(PostImageUpload upload) {
-        try {
-            storageClient.delete(allKeys(upload));
-            return true;
-        } catch (RuntimeException exception) {
-            log.warn("이미지 업로드 보상에 실패했습니다. uploadId={}", upload.getId(), exception);
-            return false;
-        }
+    public void deleteAll(PostImageUpload upload) {
+        storageClient.delete(allKeys(upload));
     }
 
     public String createImageUrl(String objectKey) {

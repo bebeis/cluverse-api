@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,11 +19,6 @@ import java.util.UUID;
 public class PostImageUploadWriter {
 
     private final PostImageUploadRepository repository;
-
-    @Transactional
-    public PostImageUpload saveCompleted(PostImageUpload upload) {
-        return repository.save(upload);
-    }
 
     @Transactional
     public PostImageUpload reserve(
@@ -52,25 +46,11 @@ public class PostImageUploadWriter {
 
     @Transactional
     public PostImageUpload complete(Long uploadId, List<ProcessedPostImage> processedImages) {
+        // stale 재조정의 PENDING 점유와 정상 완료가 동시에 상태를 바꾸지 못하게 행을 잠근다.
         PostImageUpload upload = repository.findByIdForUpdate(uploadId)
                 .orElseThrow(() -> new IllegalStateException("이미지 업로드 작업을 찾을 수 없습니다."));
         upload.complete(processedImages);
         return upload;
-    }
-
-    @Transactional
-    public boolean claimStalePending(Long uploadId, LocalDateTime threshold) {
-        return repository.claimStalePending(
-                uploadId,
-                threshold,
-                PostImageUploadStatus.PENDING,
-                PostImageUploadStatus.COMPENSATING
-        ) == 1;
-    }
-
-    @Transactional
-    public void completeCompensation(Long uploadId, String reason) {
-        readById(uploadId).completeCompensation(reason);
     }
 
     @Transactional
@@ -84,59 +64,6 @@ public class PostImageUploadWriter {
     @Transactional
     public void markStagingCleaned(Long uploadId) {
         readById(uploadId).markStagingCleaned();
-    }
-
-    @Transactional
-    public void deferCleanupRetry(Long uploadId) {
-        if (repository.touchUpdatedAt(uploadId) != 1) {
-            throw new IllegalStateException("정리 재시도 대상을 찾을 수 없습니다.");
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public List<PostImageUpload> readStalePending(LocalDateTime threshold) {
-        return repository.findTop100ByStatusAndUpdatedAtBeforeOrderByUpdatedAtAsc(
-                PostImageUploadStatus.PENDING,
-                threshold
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public List<PostImageUpload> readStaleCompensating(LocalDateTime threshold) {
-        return repository.findTop100ByStatusAndUpdatedAtBeforeOrderByUpdatedAtAsc(
-                PostImageUploadStatus.COMPENSATING,
-                threshold
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public List<PostImageUpload> readCompletedWithStaging() {
-        return repository.findTop100ByStatusAndStagingCleanedFalseOrderByUpdatedAtAsc(
-                PostImageUploadStatus.COMPLETED
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public List<PostImageUpload> readUnclaimedCompleted(LocalDateTime threshold) {
-        return repository.findTop100ByStatusAndClaimedPostIdIsNullAndUpdatedAtBeforeOrderByUpdatedAtAsc(
-                PostImageUploadStatus.COMPLETED,
-                threshold
-        );
-    }
-
-    @Transactional
-    public boolean claimUnclaimedCompleted(Long uploadId, LocalDateTime threshold) {
-        return repository.claimUnclaimedCompleted(
-                uploadId,
-                threshold,
-                PostImageUploadStatus.COMPLETED,
-                PostImageUploadStatus.COMPENSATING
-        ) == 1;
-    }
-
-    @Transactional(readOnly = true)
-    public long countPending() {
-        return repository.countByStatus(PostImageUploadStatus.PENDING);
     }
 
     private PostImageUpload readById(Long uploadId) {
