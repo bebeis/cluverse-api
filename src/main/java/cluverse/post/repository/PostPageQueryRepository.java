@@ -141,6 +141,7 @@ public class PostPageQueryRepository {
             };
         }
         if (request.isDateAnchored()) {
+            // 선택 날짜의 다음 날 00:00 미만을 시작점으로 잡아 그날 글이 부족하면 이전 날짜까지 자연스럽게 채운다.
             return post.createdAt.lt(request.exclusiveDateEnd());
         }
         return null;
@@ -200,7 +201,8 @@ public class PostPageQueryRepository {
     }
 
     public long countPostsUpTo(PostPageSearchRequest request, long searchLimit) {
-        // LIMIT이 있는 파생 테이블로 현재 페이지 블록에 필요한 범위까지만 센다.
+        // LIMIT이 있는 파생 테이블은 derived merge 대상이 아니므로 searchLimit에서 인덱스 스캔을 멈춘다.
+        // 정확한 전체 개수 대신 현재 페이지 블록과 다음 블록 존재 여부에 필요한 범위만 센다.
         String sql = "SELECT COUNT(*) FROM ("
                 + " SELECT post_id FROM post"
                 + " WHERE board_id = :boardId AND status = :status"

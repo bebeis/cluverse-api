@@ -1,6 +1,6 @@
 package cluverse.post.service.implement;
 
-import cluverse.post.repository.PostListCacheRepository;
+import cluverse.post.repository.LatestPostIdCacheRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +12,12 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class PostListCacheInvalidator {
 
-    private final PostListCacheRepository cacheRepository;
+    private final LatestPostIdCacheRepository cacheRepository;
     private final Counter invalidationSuccess;
     private final Counter invalidationError;
 
     public PostListCacheInvalidator(
-            PostListCacheRepository cacheRepository,
+            LatestPostIdCacheRepository cacheRepository,
             MeterRegistry meterRegistry
     ) {
         this.cacheRepository = cacheRepository;
@@ -28,6 +28,7 @@ public class PostListCacheInvalidator {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void invalidate(PostListChangedEvent event) {
         try {
+            // 롤백된 쓰기는 캐시를 비우지 않는다. 커밋된 변경만 버전을 올려 진행 중인 워밍도 무효화한다.
             cacheRepository.invalidateBoard(event.boardId());
             invalidationSuccess.increment();
         } catch (RuntimeException exception) {

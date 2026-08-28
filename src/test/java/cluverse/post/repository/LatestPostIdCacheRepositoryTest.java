@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class PostListCacheRepositoryTest {
+class LatestPostIdCacheRepositoryTest {
 
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
 
@@ -32,7 +32,7 @@ class PostListCacheRepositoryTest {
         RedisScript<Long> invalidateScript = mock(RedisScript.class);
         RedisScript<Long> unlockScript = mock(RedisScript.class);
         Clock clock = Clock.fixed(Instant.parse("2026-08-29T00:00:00Z"), SEOUL);
-        PostListCacheRepository repository = new PostListCacheRepository(
+        LatestPostIdCacheRepository repository = new LatestPostIdCacheRepository(
                 redisTemplate, readScript, replaceScript, invalidateScript, unlockScript, clock);
         LocalDateTime createdAt = LocalDateTime.of(2026, 8, 29, 9, 0, 0);
         when(redisTemplate.execute(eq(replaceScript), any(), any(Object[].class))).thenReturn(1L);

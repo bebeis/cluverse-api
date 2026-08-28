@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class PostListCacheRepository {
+public class LatestPostIdCacheRepository {
 
     private static final String KEY_PREFIX = "post:list:latest:";
     private static final int POST_ID_WIDTH = 19;
@@ -27,7 +27,7 @@ public class PostListCacheRepository {
     private final RedisScript<Long> unlockScript;
     private final Clock clock;
 
-    public PostListCacheRepository(
+    public LatestPostIdCacheRepository(
             StringRedisTemplate redisTemplate,
             @Qualifier("readLatestPostIdsScript") RedisScript<List> readScript,
             @Qualifier("replaceLatestPostIdsScript") RedisScript<Long> replaceScript,
@@ -50,6 +50,7 @@ public class PostListCacheRepository {
             int limit
     ) {
         CacheKeys keys = keys(boardId, category);
+        // ready 키와 ID 범위를 한 Lua에서 읽어, 워밍되지 않은 캐시와 정상적인 빈 목록을 구분한다.
         List<?> values = redisTemplate.execute(
                 readScript,
                 List.of(keys.ids(), keys.ready()),
@@ -73,6 +74,7 @@ public class PostListCacheRepository {
             String owner,
             Duration lease
     ) {
+        // owner token + lease를 저장해 워밍 서버가 중단돼도 다음 요청이 락을 회수할 수 있게 한다.
         Boolean acquired = redisTemplate.opsForValue().setIfAbsent(
                 keys(boardId, category).lock(), owner, lease);
         return Boolean.TRUE.equals(acquired);
@@ -98,6 +100,7 @@ public class PostListCacheRepository {
         List<String> arguments = new ArrayList<>(2 + entries.size() * 2);
         arguments.add(String.valueOf(expectedVersion));
         arguments.add(String.valueOf(ttl.toSeconds()));
+        // score가 같은 게시글은 19자리 postId member의 역순으로 정렬되어 DB의 post_id DESC와 일치한다.
         for (LatestPostCacheEntry entry : entries) {
             arguments.add(member(entry.postId()));
             arguments.add(String.valueOf(entry.createdAt()
@@ -131,6 +134,7 @@ public class PostListCacheRepository {
 
     private CacheKeys keys(Long boardId, PostCategory category) {
         String filter = category == null ? "all" : category.name().toLowerCase();
+        // 중괄호 안을 Redis Cluster hash tag로 사용해 Lua가 접근하는 네 키를 같은 슬롯에 배치한다.
         String prefix = KEY_PREFIX + "{" + boardId + ":" + filter + "}";
         return new CacheKeys(
                 prefix + ":ids",
