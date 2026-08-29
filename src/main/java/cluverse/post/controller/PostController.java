@@ -9,6 +9,7 @@ import cluverse.post.service.PostService;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
 import cluverse.post.service.request.PostCursorSearchRequest;
+import cluverse.post.service.request.PostPageSearchRequest;
 import cluverse.post.service.request.PostUpdateRequest;
 import cluverse.post.service.response.PostDetailResponse;
 import cluverse.post.service.response.PostCursorPageResponse;
@@ -43,8 +44,32 @@ public class PostController {
     private final PostService postService;
     private final ViewCountCookieResolver viewCountCookieResolver;
 
-    @GetMapping
-    public ApiResponse<PostCursorPageResponse> getPostList(
+    @GetMapping(params = {"!cursorCreatedAt", "!cursorPostId", "!date"})
+    public ApiResponse<PostPageResponse> getPostList(
+            @Login LoginMember loginMember,
+            @Valid @ModelAttribute PostPageSearchRequest request
+    ) {
+        return ApiResponse.ok(postQueryService.getPosts(extractMemberId(loginMember), request));
+    }
+
+    @GetMapping(params = {"cursorCreatedAt", "cursorPostId"})
+    public ApiResponse<PostCursorPageResponse> getPostListByCursor(
+            @Login LoginMember loginMember,
+            @Valid @ModelAttribute PostCursorSearchRequest request
+    ) {
+        return ApiResponse.ok(postListQueryService.getPosts(extractMemberId(loginMember), request));
+    }
+
+    @GetMapping(params = {"date", "!cursorCreatedAt", "!cursorPostId"})
+    public ApiResponse<PostCursorPageResponse> getPostListByDate(
+            @Login LoginMember loginMember,
+            @Valid @ModelAttribute PostCursorSearchRequest request
+    ) {
+        return ApiResponse.ok(postListQueryService.getPosts(extractMemberId(loginMember), request));
+    }
+
+    @GetMapping("/cursor")
+    public ApiResponse<PostCursorPageResponse> getPostListByCursorPath(
             @Login LoginMember loginMember,
             @Valid @ModelAttribute PostCursorSearchRequest request
     ) {

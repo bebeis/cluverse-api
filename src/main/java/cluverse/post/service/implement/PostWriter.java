@@ -7,6 +7,7 @@ import cluverse.post.repository.PostRepository;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostUpdateRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ public class PostWriter {
     private final PostRepository postRepository;
     private final PostAccessReader postAccessReader;
     private final PostImageUploadClaimer imageUploadClaimer;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Post create(Long memberId, PostCreateRequest request, String clientIp) {
         Post post = Post.createByMember(
@@ -36,6 +38,7 @@ public class PostWriter {
         Post saved = postRepository.save(post);
         imageUploadClaimer.claimForCreate(
                 memberId, saved, request.imageUrls(), request.imageUploadRequestIds());
+        eventPublisher.publishEvent(new PostListChangedEvent(saved.getBoardId()));
         return saved;
     }
 
@@ -48,6 +51,7 @@ public class PostWriter {
         Post saved = postRepository.saveAndFlush(post);
         imageUploadClaimer.claimForCreate(
                 memberId, saved, request.imageUrls(), request.imageUploadRequestIds());
+        eventPublisher.publishEvent(new PostListChangedEvent(saved.getBoardId()));
         return saved;
     }
 
@@ -70,6 +74,7 @@ public class PostWriter {
                 request.retainedImageContentKeys(),
                 request.imageUploadRequestIds()
         );
+        eventPublisher.publishEvent(new PostListChangedEvent(post.getBoardId()));
     }
 
     public void delete(Long memberId, Long postId) {
@@ -77,6 +82,7 @@ public class PostWriter {
         validateAuthor(memberId, post);
         imageUploadClaimer.releaseAll(post);
         post.delete();
+        eventPublisher.publishEvent(new PostListChangedEvent(post.getBoardId()));
     }
 
     private void validateAuthor(Long memberId, Post post) {

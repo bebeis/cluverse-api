@@ -2,13 +2,20 @@ package cluverse.post.repository;
 
 import cluverse.post.domain.PostCategory;
 import cluverse.post.domain.PostStatus;
+import cluverse.post.repository.dto.LatestPostCacheEntry;
 import cluverse.post.repository.dto.PostIdSliceQueryResult;
 import cluverse.post.service.request.PostCursorDirection;
 import cluverse.post.service.request.PostCursorSearchRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
+import cluverse.post.service.request.PostPageSearchRequest;
+import cluverse.post.service.request.PostSortType;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -17,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static cluverse.meta.domain.QPostViewCount.postViewCount;
 import static cluverse.post.domain.QPost.post;
 
 @Repository
@@ -24,6 +32,61 @@ import static cluverse.post.domain.QPost.post;
 public class PostPageQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+    private final EntityManager entityManager;
+
+    public PostIdSliceQueryResult findPostPageIds(PostPageSearchRequest request) {
+        int size = request.sizeOrDefault();
+        long offset = (long) (request.pageOrDefault() - 1) * size;
+        return findPostPageIds(request.boardId(), request.category(), request.sortOrDefault(), offset, size);
+    }
+
+    public List<LatestPostCacheEntry> findLatestPostCacheEntries(
+            Long boardId,
+            PostCategory category,
+            int limit
+    ) {
+        return queryFactory.select(Projections.constructor(
+                        LatestPostCacheEntry.class,
+                        post.id,
+                        post.createdAt
+                ))
+                .from(post)
+                .where(
+                        activePost(),
+                        boardIdEq(boardId),
+                        categoryEq(category)
+                )
+                .orderBy(post.createdAt.desc(), post.id.desc())
+                .limit(limit)
+                .fetch();
+    }
+
+    private PostIdSliceQueryResult findPostPageIds(
+            Long boardId,
+            PostCategory category,
+            PostSortType sortType,
+            long offset,
+            int size
+    ) {
+        JPAQuery<Long> postIdQuery = queryFactory.select(post.id).from(post);
+        if (sortType == PostSortType.VIEW_COUNT) {
+            postIdQuery.leftJoin(postViewCount).on(postViewCount.postId.eq(post.id));
+        }
+
+        List<Long> postIds = postIdQuery
+                .where(
+                        activePost(),
+                        boardIdEq(boardId),
+                        categoryEq(category)
+                )
+                .orderBy(resolveOrderSpecifiers(sortType))
+                .offset(offset)
+                .limit(size + 1L)
+                .fetch();
+
+        return toSlice(postIds, size);
+    }
+
     public PostIdSliceQueryResult findPostPageIdsByCursor(PostCursorSearchRequest request) {
         int size = request.sizeOrDefault();
         boolean ascending = request.hasCursor() && request.directionOrDefault() == PostCursorDirection.PREV;
@@ -133,6 +196,24 @@ public class PostPageQueryRepository {
                 .size();
     }
 
+    public long countPostsUpTo(PostPageSearchRequest request, long searchLimit) {
+        String sql = "SELECT COUNT(*) FROM ("
+                + " SELECT post_id FROM post"
+                + " WHERE board_id = :boardId AND status = :status"
+                + (request.category() == null ? "" : " AND category = :category")
+                + " LIMIT :searchLimit"
+                + ") capped";
+
+        Query query = entityManager.createNativeQuery(sql)
+                .setParameter("boardId", request.boardId())
+                .setParameter("status", PostStatus.ACTIVE.name())
+                .setParameter("searchLimit", searchLimit);
+        if (request.category() != null) {
+            query.setParameter("category", request.category().name());
+        }
+        return ((Number) query.getSingleResult()).longValue();
+    }
+
     private PostIdSliceQueryResult toSlice(List<Long> fetchedIds, int size) {
         boolean hasNext = fetchedIds.size() > size;
         List<Long> pageIds = hasNext ? fetchedIds.subList(0, size) : fetchedIds;
@@ -155,6 +236,15 @@ public class PostPageQueryRepository {
         return post.title.containsIgnoreCase(keyword)
                 .or(post.content.containsIgnoreCase(keyword))
                 .or(post.tags.any().containsIgnoreCase(keyword));
+    }
+
+    private OrderSpecifier<?>[] resolveOrderSpecifiers(PostSortType sortType) {
+        return switch (sortType) {
+            case VIEW_COUNT -> new OrderSpecifier<?>[]{
+                    postViewCount.viewCount.coalesce(0L).desc(), post.id.desc()
+            };
+            case LATEST -> new OrderSpecifier<?>[]{post.createdAt.desc(), post.id.desc()};
+        };
     }
 
 }

@@ -10,6 +10,7 @@ import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
 import cluverse.post.service.request.PostCursorSearchRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
+import cluverse.post.service.request.PostPageSearchRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,11 @@ public class PostReader {
     public PostPageQueryResult readPostPage(Long memberId, PostCursorSearchRequest request) {
         return toPageResult(memberId, postPageQueryRepository.findPostPageIdsByCursor(request));
     }
+
+    public PostPageQueryResult readPostPage(Long memberId, PostPageSearchRequest request) {
+        return toPageResult(memberId, postPageQueryRepository.findPostPageIds(request));
+    }
+
     public boolean existsPostsNewerThan(PostCursorSearchRequest request) {
         return postPageQueryRepository.existsPostsNewerThan(
                 request.boardId(), request.category(), request.exclusiveDateEnd());
@@ -49,6 +55,10 @@ public class PostReader {
 
     public long countPostsByKeywordUpTo(PostKeywordSearchRequest request, long searchLimit) {
         return postPageQueryRepository.countPostsByKeywordUpTo(request, searchLimit);
+    }
+
+    public long countPostsUpTo(PostPageSearchRequest request, long searchLimit) {
+        return postPageQueryRepository.countPostsUpTo(request, searchLimit);
     }
 
     public PostDetailQueryDto readPostDetail(Long memberId, Long postId) {

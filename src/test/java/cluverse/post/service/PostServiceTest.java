@@ -16,9 +16,12 @@ import cluverse.post.repository.dto.PostPageQueryResult;
 import cluverse.post.repository.dto.PostSummaryQueryDto;
 import cluverse.post.service.implement.PostAccessReader;
 import cluverse.post.service.implement.PostCreationProcessor;
+import cluverse.post.service.implement.PostListReader;
 import cluverse.post.service.implement.PostWriter;
 import cluverse.post.service.request.PostCreateRequest;
 import cluverse.post.service.request.PostKeywordSearchRequest;
+import cluverse.post.service.request.PostPageSearchRequest;
+import cluverse.post.service.request.PostSortType;
 import cluverse.post.service.request.PostUpdateRequest;
 import cluverse.post.service.response.PostAuthorResponse;
 import cluverse.post.service.response.PostDetailResponse;
@@ -51,6 +54,9 @@ class PostServiceTest {
     private PostReader postReader;
 
     @Mock
+    private PostListReader postListReader;
+
+    @Mock
     private BoardReader boardReader;
 
     @Mock
@@ -70,6 +76,24 @@ class PostServiceTest {
 
     @InjectMocks
     private PostService postService;
+
+    @Test
+    void offset_200페이지는_다음_조회에_사용할_cursor를_반환한다() {
+        PostPageSearchRequest request = new PostPageSearchRequest(
+                3L, null, PostSortType.LATEST, 200, 2);
+        PostSummaryQueryDto first = createPostSummaryQueryDto(20L, 20L, false);
+        PostSummaryQueryDto last = createPostSummaryQueryDto(10L, 20L, false);
+        when(postListReader.readPostPage(99L, request, 401L)).thenReturn(
+                new PostPageQueryResult(List.of(first, last), true, 401L));
+
+        PostPageResponse response = postQueryService.getPosts(99L, request);
+
+        assertThat(response.page()).isEqualTo(200);
+        assertThat(response.cursorRequired()).isTrue();
+        assertThat(response.nextCursor().postId()).isEqualTo(10L);
+        assertThat(response.hasNext()).isTrue();
+        verify(boardReader).validateReadable(99L, 3L);
+    }
 
     @Test
     void 게시글_검색시_검색_결과를_응답으로_조립한다() {

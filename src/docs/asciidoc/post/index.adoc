@@ -1,6 +1,21 @@
 == 게시글 API
 
-=== 게시글 목록 조회
+=== 게시글 목록 페이지 조회
+
+최신순 앞쪽 목록은 Redis Sorted Set 캐시를 사용하며, offset 페이지는 최대 200까지 제공한다.
+`cursorRequired=true`이면 `nextCursor`를 사용해 커서 조회로 이어간다.
+
+==== 요청
+
+include::{snippets}/posts/get-post-page/http-request.adoc[]
+include::{snippets}/posts/get-post-page/query-parameters.adoc[]
+
+==== 응답
+
+include::{snippets}/posts/get-post-page/http-response.adoc[]
+include::{snippets}/posts/get-post-page/response-fields.adoc[]
+
+=== 게시글 목록 커서 조회
 
 ==== 요청
 

@@ -137,6 +137,64 @@ class PostControllerDocsTest extends RestDocsSupport {
     }
 
     @Test
+    void 게시글_목록은_200페이지까지_offset_조회하고_cursor_handoff를_제공한다() throws Exception {
+        when(postQueryService.getPosts(anyLong(), any())).thenReturn(new PostPageResponse(
+                List.of(),
+                200,
+                20,
+                true,
+                200,
+                true,
+                false,
+                true,
+                new PostCursorResponse(LocalDateTime.of(2026, 1, 20, 10, 0), 30L),
+                new PostCursorResponse(LocalDateTime.of(2026, 1, 19, 22, 30), 10L),
+                true
+        ));
+
+        mockMvc.perform(get("/api/v1/posts")
+                        .session(createSession())
+                        .queryParam("boardId", "3")
+                        .queryParam("page", "200")
+                        .queryParam("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.page").value(200))
+                .andExpect(jsonPath("$.data.cursorRequired").value(true))
+                .andExpect(jsonPath("$.data.nextCursor.postId").value(10))
+                .andDo(document("posts/get-post-page",
+                        queryParameters(
+                                parameterWithName("boardId").description("조회할 게시판 ID"),
+                                parameterWithName("category").description("게시글 카테고리").optional(),
+                                parameterWithName("sort").description("정렬 (`LATEST` 또는 `VIEW_COUNT`)").optional(),
+                                parameterWithName("page").description("페이지 번호 (최대 200)").optional(),
+                                parameterWithName("size").description("페이지 크기").optional()
+                        ),
+                        relaxedResponseFields(
+                                fieldWithPath("data.posts").type(JsonFieldType.ARRAY).description("게시글 목록"),
+                                fieldWithPath("data.page").type(JsonFieldType.NUMBER).description("현재 페이지"),
+                                fieldWithPath("data.size").type(JsonFieldType.NUMBER).description("페이지 크기"),
+                                fieldWithPath("data.hasNext").type(JsonFieldType.BOOLEAN).description("다음 목록 존재 여부"),
+                                fieldWithPath("data.lastPage").type(JsonFieldType.NUMBER).description("현재 페이지 블록의 마지막 페이지"),
+                                fieldWithPath("data.hasNextBlock").type(JsonFieldType.BOOLEAN).description("다음 페이지 블록 존재 여부"),
+                                fieldWithPath("data.hasPrev").type(JsonFieldType.BOOLEAN).description("이전 페이지 존재 여부"),
+                                fieldWithPath("data.prevCursor").type(JsonFieldType.OBJECT).description("커서 전환 시 이전 경계"),
+                                fieldWithPath("data.nextCursor").type(JsonFieldType.OBJECT).description("200페이지 이후 조회에 사용할 커서"),
+                                fieldWithPath("data.cursorRequired").type(JsonFieldType.BOOLEAN).description("다음 조회부터 커서가 필요한지 여부")
+                        )
+                ));
+    }
+
+    @Test
+    void 게시글_offset_목록은_200페이지를_초과할_수_없다() throws Exception {
+        mockMvc.perform(get("/api/v1/posts")
+                        .session(createSession())
+                        .queryParam("boardId", "3")
+                        .queryParam("page", "201")
+                        .queryParam("size", "20"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void 게시글_검색() throws Exception {
         when(postQueryService.searchPosts(anyLong(), any())).thenReturn(new PostPageResponse(
                 List.of(
